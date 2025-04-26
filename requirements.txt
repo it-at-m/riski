@@ -4,5 +4,7 @@ gitdb==4.0.12
     # via gitpython
 gitpython==3.1.44
     # via riski-extraktor (pyproject.toml)
+pyyaml==6.0.2
+    # via riski-extraktor (pyproject.toml)
 smmap==5.0.2
     # via gitdb
