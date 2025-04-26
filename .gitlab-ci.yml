@@ -16,13 +16,17 @@ variables:
   OPENSHIFT_APP_NAME: riski-extraktor
   OPENSHIFT_BRANCH_INTEGRATION: "true"
   OPENSHIFT_TEST_TOKEN: $OPENSHIFT_K_TOKEN
+
   # OPENSHIFT_DEV_NAMESPACE: TODO 
   OPENSHIFT_DEV_ENV: dev
+
   # OPENSHIFT_TEST_NAMESPACE: TODO
   OPENSHIFT_TEST_ENV: test
+
   # OPENSHIFT_PROD_NAMESPACE: TODO
   OPENSHIFT_PROD_ENV: prod
-  SKIP_DEPLOYMENT: "true"
+  
+  # SKIP_DEPLOYMENT: "true" # If set to true, there will be no deployment rollout after the image build and tagging. Needed for cronjobs.
 
 include:
 # Für Branch Pipelines
