@@ -6,7 +6,7 @@ from datetime import datetime
 from yaml import safe_load
 
 
-def getLogger(name: str = "mta-backend") -> logging.Logger:
+def getLogger(name: str = "riski-extractor") -> logging.Logger:
     """Configures logging and returns a logger with the specified name.
 
     Parameters:
