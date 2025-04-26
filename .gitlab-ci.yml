@@ -26,7 +26,7 @@ variables:
   # OPENSHIFT_PROD_NAMESPACE: TODO
   OPENSHIFT_PROD_ENV: prod
   
-  # SKIP_DEPLOYMENT: "true" # If set to true, there will be no deployment rollout after the image build and tagging. Needed for cronjobs.
+  SKIP_DEPLOYMENT: "true" # If set to true, there will be no deployment rollout after the image build and tagging. Needed for cronjobs.
 
 include:
 # Für Branch Pipelines
