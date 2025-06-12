@@ -4,30 +4,39 @@ title: RIS Internet
 
 erDiagram
 
-    SITZUNG {
-        string sitzungs_id 
-        date datum 
+    STR_SITZUNG {
+        string sitzungs_id
+        date datum
         string art
-        Status status 
-        boolean protokoll_verfuegbar 
-        date verfuegungsdatum 
-        string sitzungsort 
+        Status status
+        boolean protokoll_verfuegbar
+        date verfuegungsdatum
+        string sitzungsort
+        MITGLIEDER vorsitz
+        date abgeschlossen_am
+        string zustaendiges_Referat
+        MITGLIEDER ReferentIn
+        STR_SITZUNG letze_Sitzung
+        STR_SITZUNG naechste_Sitzung
+        TAGESORDNUNGSPUNKT tagesordnung
+        string historie
     }
 
     TAGESORDNUNGSPUNKT {
-        string top_id 
+        string top_id
         string sitzungs_id
-        string nummer 
-        string titel 
-        string kategorie 
-        string zustaendiger_ausschuss 
-        Status status 
+        string nummer
+        string titel
+        string kategorie
+        string zustaendiger_ausschuss
+        Status status
     }
+
     VORGANG {
         string vorgang_id
         string betreff
-        Status status  
-        date startdatum 
+        Status status
+        date startdatum
         string wahlperiode
         string typ
         string bezirksausschuss
@@ -37,26 +46,42 @@ erDiagram
 
     DOKUMENT {
         string dokument_id
-        string name 
-        string dateiformat 
-        string groesse 
+        string name
+        string dateiformat
+        string groesse
     }
 
     ANTRAG {
-
+        string antrags_id
+        string betreff
+        date erstellt_am
+        date regestriert_am
+        string wahlperiode
+        string gestellt_von
+        MITGLIEDER initiative
+        string zustaendiges_Referat
+        string art
+        string typ
+        string bearbeitungsart
+        date bearbeotinungsfrist
+        date erledigt_am
+        DOKUMENT dokumente
+        string ergebnis
+        string historie
     }
-    BV_Empfehlung{
+    BV_Empfehlung {
+        string bv_id
         string betreff
         date beschlossen_am
         date regestriert_am
         string wahlperiode
         string stadtbezirk
-        string zuständiges_Referat
+        string zustaendiges_Referat
         string art
         string typ
         string bearbeotungsart
         date bearbeotinungsfrist
-        date fristverlängerung
+        date fristverlaengerung
         string ergebnisse
         string historie
         DOKUMENT dokumente
@@ -67,7 +92,7 @@ erDiagram
         string kurzinformationen
         date freigabe
         string wahlperiode
-        string zuständiges_Referat
+        string zustaendiges_Referat
         MITGLIEDER ReferentIn
         string art
         string typ
@@ -76,9 +101,9 @@ erDiagram
         string historie
     }
     AUSSCHUSS {
-        string ausschuss_id 
-        string name 
-        string zustaendigkeit 
+        string ausschuss_id
+        string name
+        string zustaendigkeit
         MITGLIEDER mitglieder
     }
 
@@ -87,13 +112,20 @@ erDiagram
         string fraktion
     }
 
-    %% Beziehungen
-    SITZUNG ||--o{ TAGESORDNUNGSPUNKT : "enthält"
-    TAGESORDNUNGSPUNKT ||--o{ DOKUMENT : "hat"
-    TAGESORDNUNGSPUNKT ||--o{ VORGANG : "hat"
-    TAGESORDNUNGSPUNKT ||--o{ ANTRAG : "hat"
+%% Beziehungen
     AUSSCHUSS ||--o{ MITGLIEDER : "hat"
-    SITZUNGSVORLAGE ||--o{ DOKUMENT : "hat"
+
+    STR_SITZUNG ||--o{ TAGESORDNUNGSPUNKT : "enthaelt"
+
     TAGESORDNUNGSPUNKT ||--o{ SITZUNGSVORLAGE : "hat"
     TAGESORDNUNGSPUNKT ||--o{ BV_Empfehlung: "hat"
+    TAGESORDNUNGSPUNKT ||--o{ VORGANG : "hat"
+
+    TAGESORDNUNGSPUNKT ||--o{ ANTRAG : "hat"
+
+    ANTRAG||--o{ DOKUMENT : "hat"
+    STR_SITZUNG ||--o{ DOKUMENT : "hat"
+    TAGESORDNUNGSPUNKT ||--o{ DOKUMENT : "hat"
+    SITZUNGSVORLAGE ||--o{ DOKUMENT : "hat"
     BV_Empfehlung ||--o{ DOKUMENT : "hat"
+    TAGESORDNUNGSPUNKT ||--o{ DOKUMENT : "hat"
