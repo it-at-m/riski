@@ -223,6 +223,42 @@ class File(BaseModel):
     deleted: bool
 
 
+class Body(BaseModel):
+    """Körperschaft, z.B. Stadt, Gemeinde oder Landkreis"""
+
+    type: str
+    name: str
+    shortName: str
+    system: HttpUrl
+    website: HttpUrl
+    license: HttpUrl
+    licenseValidSince: datetime
+    oparlSince: datetime
+    ags: str
+    rgs: str
+    equivalent: List[HttpUrl]
+    contactEmail: str
+    contactName: str
+    organization: HttpUrl
+    person: HttpUrl
+    meeting: HttpUrl
+    paper: HttpUrl
+    legislativeTerm: LegislativeTerm
+    agendaItem: HttpUrl
+    consultation: HttpUrl
+    file: HttpUrl
+    locationList: HttpUrl
+    legislativeTermList: HttpUrl
+    membership: HttpUrl
+    classification: str
+    location: Location
+    keyword: List[str]
+    created: datetime
+    modified: datetime
+    web: HttpUrl
+    deleted: bool
+
+
 # Forward references for Membership and AgendaItem
 Person.model_rebuild()
 Meeting.model_rebuild()
