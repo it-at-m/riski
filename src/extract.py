@@ -7,12 +7,13 @@ load_dotenv()
 
 ### end of special import block ###
 
+import re
 from logging import Logger
 
-from httpx import Client, HTTPError
+from bs4 import BeautifulSoup
+from httpx import Client
 
 from src.logtools import getLogger
-from src.parser.str_parser import STRParser
 
 
 class RISExtractor:
@@ -29,29 +30,131 @@ class RISExtractor:
 
     def run(self, starturl) -> object:
         headers = {
+            "Host": "risi.muenchen.de",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
             "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Referer": "https://risi.muenchen.de/risi/aktuelles;jsessionid=69719131B6C58A78576F94C4C79BE292?0",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": "https://risi.muenchen.de",
             "DNT": "1",
             "Connection": "keep-alive",
-            "Cookie": "JSESSIONID=69719131B6C58A78576F94C4C79BE292; TS01bf1f22=01021d36f23e894e8dbf03139da8bf38baa9f2c103f587bfd07bf6e281fc44a772f811006104b1a6cf63c67eaa4fd5c00f2e4a20d3fff63f61ac8e8878ddd8c507df28720a32d3eb9ca9bc1c31bef44906ec3446af; BIGSC=!CZZ8PasfiCXK6KRV6YO9XTLAuDl7H4gXAIsd/pXeGlr6wuKtWFV3a79APtoF0jB4qofBsbd83xssE8M=; TS01678d7d=01021d36f2fccc159ee5daf83860baf0d4a6088f9897de055b42f7cfad2630d73b3327d69704e6bdec1e834d1e08e847ef6f29d1a7a90512ad6821775ffc07c4f05617bc67; TS459ee6d1027=087179dd52ab2000f535b67220834db39745c2d1b38ade2249368a93fe803d9077b959aae6576f0d08a4cb704e11300083745f9e6c1019b5fd89082312f7456a499808fe2b395c7939f63a4c725e17647b85dc42234a284a461b9bbedd7a419d",
+            "Referer": "https://risi.muenchen.de/risi/sitzung/uebersicht?35",
             "Upgrade-Insecure-Requests": "1",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
             "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
             "Priority": "u=0, i",
         }
 
+        cookies = {
+            "JSESSIONID": "DE95B28FD88097ECE8F840D6CA9D648E",
+            "TS01bf1f22": "01021d36f2fa8486d59b77193395d3bac4b2c57f4ed5749755746adfe20b64e3d507857e6b26a163b01116bf6567acde96dd02cfe156f0a4770d023dbd0a1a591af3e7e61fbbbfb8a896c70c5e1c87b9e026147ce1",
+            "BIGSC": "!csfTCAT9c4AlhplV6YO9XTLAuDl7H5dCnKpWer4QfxQ3O+9vkGE85UUTKPMx6TiC07rFtekbC/3dz6A=",
+            "TS01678d7d": "01021d36f28f6a310b2424caeca9f493172f37f3040eee0dcb5dacefb27aeff02531a4e36b179ff1ec4e024ab1bedee9fcc7e6aee5e75d17c906183a0a235f599fbf7723f1",
+            "TS459ee6d1027": "087179dd52ab20005ece71a313bacf9efb202ba477593fadff2844849dab296c32a126aba66cd5da08448fd333113000db16a3f39ef2ac1cf55f60c0dd0b8dd39f6bbb6b10bee24af68d3cd8e712af6b3c8cb097a819fb888bbd49f11ac3b8ef",
+        }
+
+        suche_data = {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
+
+        base_url = "https://risi.muenchen.de/risi/sitzung"
         try:
-            response = self.client.get(url=starturl, headers=headers)
-            response.raise_for_status()
-            strparser = STRParser()
-            strparser.parse(url=starturl, html=response.text)
-        except HTTPError as e:
-            self.logger.error(f"Failed to fetch '{starturl}': {e}")
-        return object
+            #    response = self.client.get(url=starturl, headers=headers)
+            #   response.raise_for_status()
+            #   strparser = STRParser()
+            #    strparser.parse(url=starturl, html=response.text)
+            # except HTTPError as e:
+            #   self.logger.error(f"Failed to fetch '{starturl}': {e}")
+            # return object
+            response = self.client.post(url=starturl, headers=headers, cookies=cookies, data=suche_data)
+            if response.status_code == 302:
+                redirect_url = response.headers.get("Location")
+                print(f"Redirect URL: {redirect_url}")
+                init_url = base_url + redirect_url[1:]
+                # If you want to send a GET request to the redirect URL
+                redirect_response = self.client.get(url=init_url, cookies=cookies)
+                print(f"Response from redirect URL: {redirect_response.status_code}")
+            # Print the content of the redirected page
+            else:
+                print(f"Response status code: {response.status_code}")
+                print(response.text)  # Print the content of the original response
+            result_per_page_url = (
+                base_url
+                + "/uebersicht?"
+                + str(int(redirect_url.split("?")[1]))
+                + "-1.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
+            )
+            data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "0"}
+            first_page_response = self.client.post(url=result_per_page_url, cookies=cookies, data=data)
+            print(f"Response status code: {first_page_response.status_code}")
+            if first_page_response.status_code == 302:
+                redirect_url = first_page_response.headers.get("Location")
+                print(f"First Page Redirect URL: {redirect_url}")
+                first_page_redirect_url = base_url + redirect_url[1:]
+                # If you want to send a GET request to the redirect URL
+                first_page_redirect_response = self.client.get(url=first_page_redirect_url, cookies=cookies)
+                print(f"Response from redirect URL: {first_page_redirect_response.status_code}")
+            else:
+                print(f"Response status code: {response.status_code}")
+                print(response.text)  # Print the content of the original response
+
+            # Suchkriterien anpassen
+            first_page_redirect_url = "/uebersicht?" + str(int(first_page_redirect_url.split("?")[1]) + 1)
+            suche_url = base_url + first_page_redirect_url + "-1.-form"
+            print(suche_url)
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            # self.client.post(url=suche_url, headers=headers, cookies=cookies, data=suche_data)
+            suche1_response = self.client.post(url=suche_url, headers=headers, cookies=cookies, data=suche_data)
+            if suche1_response.status_code == 302:
+                redirect_url = suche1_response.headers.get("Location")
+                print(redirect_url)
+            access_denied = False
+            meetings = []
+            while not access_denied:
+                # Nächste seite weitergehen
+                next_page_url = base_url + redirect_url[1:]
+                next_page_response = self.client.get(url=next_page_url, cookies=cookies)
+                next_page_response.raise_for_status()
+                # TODO: SEITE ÜBERGEBEN
+                # TODO:Parse str_detail links from html
+                print(next_page_response)
+                soup = BeautifulSoup(response.text, "html.parser")
+                # Auf nächste Seite navigieren
+                soup = BeautifulSoup(next_page_response.text, "html.parser")
+                scripts = soup.find_all("script")
+
+                ajax_urls = []
+                for script in scripts:
+                    if script.string:
+                        matches = re.findall(r'Wicket\.Ajax\.ajax\(\{"u":"([^"]+)"', script.string)
+                        ajax_urls.extend(matches)
+
+                # Optional: Filter auf "last" pageLink
+                last_links = [u for u in ajax_urls if "nav_top-next" in u]
+                for link in last_links:
+                    print("Gefundene Wicket-URL:", link)
+                headers = {
+                    "User-Agent": "Mozilla/5.0",
+                    "Referer": "https://risi.muenchen.de/risi/sitzung" + redirect_url[1:],  # uebersicht?234",
+                    "Accept": "text/xml",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Wicket-Ajax": "true",
+                    "Wicket-Ajax-BaseURL": "sitzung" + redirect_url[1:],
+                    "Wicket-FocusedElementId": "idb",
+                    "Priority": "u=0",
+                }
+                page_url = base_url + last_links[0][1:] + "&_=1"
+                print(page_url)
+                page_response = self.client.get(url=page_url, cookies=cookies, headers=headers)
+                page_response.raise_for_status()
+                # print(page_response.text)
+                if page_response.headers.get("Ajax-Location") == "../error/accessdenied":
+                    access_denied = True
+            return meetings
+        except Exception as e:
+            self.logger.error(f"Fehler beim Abrufen der Kalenderseite {starturl}: {e}")
+            return []
 
 
 def main() -> None:
