@@ -1,96 +1,149 @@
+import locale
 import re
 from datetime import datetime
 from logging import Logger
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from pydantic import HttpUrl
 
-from src.data_models import Meeting
+from src.data_models import Location, Meeting
 from src.logtools import getLogger
 
 
 class STRParser:
     """
-    Parser fuer Stadtratssitzungen
+    Parser für Stadtratssitzungen
     """
 
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
+        self.logger.info("STRParser initialized.")
+
+        try:
+            locale.setlocale(locale.LC_TIME, "de_DE.utf8")
+        except locale.Error:
+            try:
+                locale.setlocale(locale.LC_TIME, "de_DE")
+                self.logger.info("German locale 'de_DE' fallback applied.")
+            except locale.Error:
+                self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
 
     def parse(self, url: str, html: str) -> Meeting:
+        self.logger.info(f"Parsing meeting page: {url}")
         soup = BeautifulSoup(html, "html.parser")
-        # Extracting the title and meeting state
+
+        # --- Title and State ---
         title_element = soup.find("h1", class_="page-title")
         title = title_element.get_text(strip=True) if title_element else "N/A"
+        self.logger.debug(f"Parsed title: {title}")
 
-        # Check if the meeting is cancelled based on title
         cancelled = "(entfällt)" in title
+        self.logger.debug(f"Meeting cancelled: {cancelled}")
 
-        # Extracting dates and other information
+        match = re.search(r"\((.*?)\)", title)
+        meetingState = match.group(1) if match else ""
+        self.logger.debug(f"Meeting state: {meetingState}")
+
+        # --- Date Parsing ---
+        start = datetime.min
+        match = re.search(r"^(.*?),\s*(\d{1,2}\. .*? \d{4}),\s*(\d{1,2}:\d{2}) Uhr\s*\((.*?)\)", title)
+        if match:
+            _, date_str, time_str, meetingState = match.groups()
+            try:
+                start = datetime.strptime(f"{date_str}, {time_str}", "%d. %B %Y, %H:%M")
+                self.logger.debug(f"Parsed start time: {start}")
+            except ValueError as e:
+                self.logger.error(f"Date parsing failed: {e}")
+        else:
+            self.logger.warning("Date format did not match expected pattern.")
+
+        # --- Key-Value Data Extraction ---
         key_value_rows = soup.find_all("div", class_="keyvalue-row")
         data_dict = {}
-
         for row in key_value_rows:
-            key = row.find("div", class_="keyvalue-key").get_text(strip=True)
-            value = row.find("div", class_="keyvalue-value").get_text(strip=True)
-            data_dict[key] = value
+            key_el = row.find("div", class_="keyvalue-key")
+            val_el = row.find("div", class_="keyvalue-value")
+            if key_el and val_el:
+                key = key_el.get_text(strip=True)
+                value = val_el.get_text(strip=True)
+                data_dict[key] = value
+                self.logger.debug(f"Extracted field: {key} = {value}")
 
-        type = data_dict["Gremium:"]
-        print(type)
+        type = data_dict.get("Gremium:", "Unbekannt")
         name = title
-        match = re.search(r"\((.*?)\)", title)
-        if match:
-            in_klammern = match.group(1)  # Der Inhalt in den Klammern
-            meetingState = in_klammern
 
-        else:
-            meetingState = ""
+        # --- Location Object ---
+        location = Location(
+            type="place",
+            name=data_dict.get("Sitzungsort:", "Unbekannt"),
+            description="Ort der Stadtratssitzung",
+            geojson={},
+            streetAddress="",
+            room=data_dict.get("Sitzungsort:", ""),
+            postalCode="",
+            subLocality="",
+            locality="München",
+            bodies=[],
+            organizations=[],
+            persons=[],
+            meetings=[],
+            papers=[],
+            license="",
+            keyword=[],
+            created=datetime.now(),
+            modified=datetime.now(),
+            web=HttpUrl(url),
+            deleted=False,
+        )
+        self.logger.info("Location object created.")
 
-        cancelled = "(entfällt)" in title
+        # --- Organization (as URLs) ---
+        organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
+        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
+        self.logger.debug(f"Organizations: {organization}")
 
-        # Regex, um den Teil vor den Klammern zu extrahieren
-        match = re.search(r"^(.*?)\s*\(.*\)$", title)
-        if match:
-            date_time_str = match.group(1).strip()  # Der Text vor den Klammern
-            date_time_str = date_time_str.replace(" Uhr", "")
-            # Datum und Uhrzeit parsen
-            try:
-                # Datumsformat angeben, das mit dem extrahierten String übereinstimmt
-                # TODO: Englisch/deutsch locale time anpassen
-                start = datetime.strptime(date_time_str, "%A, %d. %B %Y, %H:%M")
+        # --- Participants (as URLs) ---
+        participants = []
+        for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
+            link = li.get("href")
+            if link:
+                full_url = urljoin(url, link)
+                participants.append(full_url)
+        self.logger.debug(f"Participants: {participants}")
 
-            except ValueError as e:
-                print(f"Fehler beim Parsen des Datums: {e}")
-        else:
-            start = datetime.min
-        start = datetime.min
-        end = datetime.min
-        location = None
-        organization = []
-        participant = []
-        invitation = ()
-        resultsProtocol = ()
-        verbatimProtocol = ()
+        # --- Documents ---
         auxiliaryFile = []
+        for doc_link in soup.select("a.downloadlink"):
+            doc_url = urljoin(url, doc_link["href"])
+            doc_title = doc_link.get_text(strip=True)
+            auxiliaryFile.append((doc_title, doc_url))
+            self.logger.debug(f"Document found: {doc_title} ({doc_url})")
+
+        # --- Remaining Fields ---
+        invitation = {}
+        resultsProtocol = {}
+        verbatimProtocol = {}
         agendaItem = []
         license = ""
-        keyword = ""
+        keyword = []
         created = datetime.min
         modified = datetime.min
         web = HttpUrl(url)
         deleted = False
 
+        # --- Assemble Meeting ---
         meeting = Meeting(
             type=type,
             name=name,
             cancelled=cancelled,
             start=start,
-            end=end,
+            end=datetime.min,
             location=location,
             organization=organization,
-            participant=participant,
+            participant=participants,
             invitation=invitation,
             resultsProtocol=resultsProtocol,
             verbatimProtocol=verbatimProtocol,
@@ -105,6 +158,7 @@ class STRParser:
             meetingState=meetingState,
         )
 
+        self.logger.info(f"Meeting object created: {meeting.name}")
         return meeting
 
 
