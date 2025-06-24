@@ -8,10 +8,12 @@ dependencies = [
     "gitpython>=3.1.44",
     "pyyaml>=6.0.2",
     "python-dotenv>=1.0.1",
-    "truststore>=0.8.0", 
+    "truststore>=0.8.0",
     "httpx>=0.28.1",
     "bs4>=0.0.2",
     "load-dotenv>=0.1.0",
+    "pydantic[email]>=2.11.7",
+    "pre-commit>=4.2.0",
 ]
 
 [dependency-groups]
