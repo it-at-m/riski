@@ -128,6 +128,7 @@ class RISExtractor:
                                 response = self.client.get(url=link)
                                 response.raise_for_status()
                                 meeting = self.str_parser.parse(link, response.text)
+                                meetings.append(meeting)
                                 self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
                             except Exception as e:
                                 self.logger.error(f"Fehler beim Parsen von {link}: {e}")
