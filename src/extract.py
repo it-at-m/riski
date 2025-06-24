@@ -8,12 +8,15 @@ load_dotenv()
 ### end of special import block ###
 
 import re
+import xml.etree.ElementTree as ET
 from logging import Logger
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from httpx import Client
 
 from src.logtools import getLogger
+from src.parser.str_parser import STRParser
 
 
 class RISExtractor:
@@ -23,10 +26,29 @@ class RISExtractor:
 
     client: Client
     logger: Logger
+    str_parser: STRParser
 
     def __init__(self) -> None:
         self.client = Client(proxy="http://internet-proxy-client.muenchen.de:80")
         self.logger = getLogger()
+        self.str_parser = STRParser()
+
+    def extract_meeting_links(self, html: str) -> list[str]:
+        base_url = "https://risi.muenchen.de/risi/sitzung/"
+        soup = BeautifulSoup(html, "html.parser")
+        links = [
+            urljoin(base_url, a["href"].lstrip("./")) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")
+        ]
+        return links
+
+    def is_access_denied(self, response_text: str) -> bool:
+        try:
+            root = ET.fromstring(response_text)
+            print(root)
+            redirect = root.findtext("redirect")
+            return redirect and "accessdenied" in redirect.lower()
+        except ET.ParseError:
+            return False
 
     def run(self, starturl) -> object:
         headers = {
@@ -118,9 +140,20 @@ class RISExtractor:
                 next_page_response.raise_for_status()
                 # TODO: SEITE ÜBERGEBEN
                 # TODO:Parse str_detail links from html
-                print(next_page_response)
-                soup = BeautifulSoup(response.text, "html.parser")
-                # Auf nächste Seite navigieren
+                meeting_links = self.extract_meeting_links(next_page_response.text)
+                if not meeting_links:
+                    self.logger.warning("Keine Meetings auf der Übersichtsseite gefunden.")
+                else:
+                    for link in meeting_links:
+                        print(f"[INFO] Lade: {link}")
+                        try:
+                            response = self.client.get(url=link, cookies=cookies)
+                            response.raise_for_status()
+                            meeting = self.str_parser.parse(link, response.text)
+                            print(f"[✓] Parsed: {meeting.name} ({meeting.start})")
+                        except Exception as e:
+                            print(f"[ERROR] {link} -> {e}")
+                    # Auf nächste Seite navigieren
                 soup = BeautifulSoup(next_page_response.text, "html.parser")
                 scripts = soup.find_all("script")
 
@@ -132,6 +165,10 @@ class RISExtractor:
 
                 # Optional: Filter auf "last" pageLink
                 last_links = [u for u in ajax_urls if "nav_top-next" in u]
+                if last_links == []:
+                    access_denied = True
+                    print("[✓] Keine weiteren Seiten mehr vorhanden – Schleife beendet.")
+                    break
                 for link in last_links:
                     print("Gefundene Wicket-URL:", link)
                 headers = {
@@ -149,7 +186,7 @@ class RISExtractor:
                 page_response = self.client.get(url=page_url, cookies=cookies, headers=headers)
                 page_response.raise_for_status()
                 # print(page_response.text)
-                if page_response.headers.get("Ajax-Location") == "../error/accessdenied":
+                if self.is_access_denied(page_response.text):
                     access_denied = True
             return meetings
         except Exception as e:
