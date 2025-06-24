@@ -383,6 +383,15 @@ wheels = [
 ]
 
 [[package]]
+name = "dnspython"
+version = "2.7.0"
+source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/simple" }
+sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/b5/4a/263763cb2ba3816dd94b08ad3a33d5fdae34ecb856678773cc40a3605829/dnspython-2.7.0.tar.gz", hash = "sha256:ce9c432eda0dc91cf618a5cedf1a4e142651196bbcd2c80e89ed5a907e5cfaf1" }
+wheels = [
+    { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/68/1b/e0a87d256e40e8c888847551b20a017a6b98139178505dc7ffb96f04e954/dnspython-2.7.0-py3-none-any.whl", hash = "sha256:b4c34b7d10b51bcc3a5071e7b8dee77939f1e878477eeecc965e9835f63c6c86" },
+]
+
+[[package]]
 name = "docling"
 version = "2.41.0"
 source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/simple" }
@@ -519,6 +528,19 @@ dependencies = [
 ]
 wheels = [
     { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/bb/84/4a2cab0e6adde6a85e7ba543862e5fc0250c51f3ac721a078a55cdcff250/easyocr-1.7.2-py3-none-any.whl", hash = "sha256:5be12f9b0e595d443c9c3d10b0542074b50f0ec2d98b141a109cd961fd1c177c" },
+]
+
+[[package]]
+name = "email-validator"
+version = "2.2.0"
+source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/simple" }
+dependencies = [
+    { name = "dnspython" },
+    { name = "idna" },
+]
+sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/48/ce/13508a1ec3f8bb981ae4ca79ea40384becc868bfae97fd1c942bb3a001b1/email_validator-2.2.0.tar.gz", hash = "sha256:cb690f344c617a714f22e66ae771445a1ceb46821152df8e165c5f9a364582b7" }
+wheels = [
+    { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/d7/ee/bf0adb559ad3c786f12bcbc9296b3f5675f529199bef03e2df281fa1fadb/email_validator-2.2.0-py3-none-any.whl", hash = "sha256:561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631" },
 ]
 
 [[package]]
@@ -2104,6 +2126,11 @@ wheels = [
     { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/6a/c0/ec2b1c8712ca690e5d61979dee872603e92b8a32f94cc1b72d53beab008a/pydantic-2.11.7-py3-none-any.whl", hash = "sha256:dde5df002701f6de26248661f6835bbe296a47bf73990135c7d07ce741b9623b" },
 ]
 
+[package.optional-dependencies]
+email = [
+    { name = "email-validator" },
+]
+
 [[package]]
 name = "pydantic-core"
 version = "2.33.2"
@@ -2560,6 +2587,7 @@ dependencies = [
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-docling" },
+    { name = "pydantic", extra = ["email"] },
     { name = "pymupdf" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
@@ -2583,6 +2611,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=0.3.26" },
     { name = "langchain-community", specifier = ">=0.3.26" },
     { name = "langchain-docling", specifier = ">=1.0.0" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "pymupdf", specifier = ">=1.26.3" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },

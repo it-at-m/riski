@@ -14,9 +14,10 @@ dependencies = [
     "langchain-docling>=1.0.0",
     "pymupdf>=1.26.3",
     "python-dotenv>=1.0.1",
-    "truststore>=0.8.0", 
+    "truststore>=0.8.0",
     "httpx>=0.28.1",
     "bs4>=0.0.2",
+    "pydantic[email]>=2.11.7",
 ]
 
 [dependency-groups]
