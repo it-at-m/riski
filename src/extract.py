@@ -9,7 +9,6 @@ load_dotenv()
 
 import re
 import xml.etree.ElementTree as ET
-from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -23,10 +22,6 @@ class RISExtractor:
     """
     Extractor for the RIS website
     """
-
-    client: Client
-    logger: Logger
-    str_parser: STRParser
 
     def __init__(self) -> None:
         self.client = Client(proxy="http://internet-proxy-client.muenchen.de:80")
@@ -72,29 +67,21 @@ class RISExtractor:
             "Priority": "u=0, i",
         }
 
-        cookies = {
-            "JSESSIONID": "DE95B28FD88097ECE8F840D6CA9D648E",
-            "TS01bf1f22": "01021d36f2fa8486d59b77193395d3bac4b2c57f4ed5749755746adfe20b64e3d507857e6b26a163b01116bf6567acde96dd02cfe156f0a4770d023dbd0a1a591af3e7e61fbbbfb8a896c70c5e1c87b9e026147ce1",
-            "BIGSC": "!csfTCAT9c4AlhplV6YO9XTLAuDl7H5dCnKpWer4QfxQ3O+9vkGE85UUTKPMx6TiC07rFtekbC/3dz6A=",
-            "TS01678d7d": "01021d36f28f6a310b2424caeca9f493172f37f3040eee0dcb5dacefb27aeff02531a4e36b179ff1ec4e024ab1bedee9fcc7e6aee5e75d17c906183a0a235f599fbf7723f1",
-            "TS459ee6d1027": "087179dd52ab20005ece71a313bacf9efb202ba477593fadff2844849dab296c32a126aba66cd5da08448fd333113000db16a3f39ef2ac1cf55f60c0dd0b8dd39f6bbb6b10bee24af68d3cd8e712af6b3c8cb097a819fb888bbd49f11ac3b8ef",
-        }
-
         suche_data = {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
-
         base_url = "https://risi.muenchen.de/risi/sitzung"
+
         try:
-            response = self.client.post(url=starturl, headers=headers, cookies=cookies, data=suche_data)
+            response = self.client.post(url=starturl, headers=headers, data=suche_data)
             if response.status_code == 302:
                 redirect_url = response.headers.get("Location")
                 self.logger.info(f"Redirect URL: {redirect_url}")
                 init_url = base_url + redirect_url[1:]
-                redirect_response = self.client.get(url=init_url, cookies=cookies)
+                redirect_response = self.client.get(url=init_url)
                 self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
             else:
                 self.logger.info(f"Response status code: {response.status_code}")
                 self.logger.debug(f"Response text: {response.text}")
-                redirect_url = None  # Falls kein Redirect, setze redirect_url auf None
+                redirect_url = None
 
             if redirect_url:
                 result_per_page_url = (
@@ -103,25 +90,24 @@ class RISExtractor:
                     + str(int(redirect_url.split("?")[1]))
                     + "-1.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
                 )
-                data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "0"}
-                first_page_response = self.client.post(url=result_per_page_url, cookies=cookies, data=data)
-                self.logger.info(f"Response status code (first page): {first_page_response.status_code}")
+                data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
+                first_page_response = self.client.post(url=result_per_page_url, data=data)
                 if first_page_response.status_code == 302:
                     redirect_url = first_page_response.headers.get("Location")
                     self.logger.info(f"First Page Redirect URL: {redirect_url}")
                     first_page_redirect_url = base_url + redirect_url[1:]
-                    first_page_redirect_response = self.client.get(url=first_page_redirect_url, cookies=cookies)
+                    first_page_redirect_response = self.client.get(url=first_page_redirect_url)
                     self.logger.info(f"Response from first page redirect URL: {first_page_redirect_response.status_code}")
                 else:
                     self.logger.info(f"Response status code (first page non-redirect): {first_page_response.status_code}")
                     self.logger.debug(f"Response text: {first_page_response.text}")
 
-                # Suchkriterien anpassen
                 first_page_redirect_url = "/uebersicht?" + str(int(first_page_redirect_url.split("?")[1]) + 1)
                 suche_url = base_url + first_page_redirect_url + "-1.-form"
                 self.logger.info(f"Such-URL: {suche_url}")
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
-                suche1_response = self.client.post(url=suche_url, headers=headers, cookies=cookies, data=suche_data)
+                self.client.post(url=suche_url, headers=headers, data=suche_data)
+                suche1_response = self.client.post(url=suche_url, headers=headers, data=suche_data)
                 if suche1_response.status_code == 302:
                     redirect_url = suche1_response.headers.get("Location")
                     self.logger.info(f"Suche1 Redirect URL: {redirect_url}")
@@ -130,7 +116,7 @@ class RISExtractor:
                 meetings = []
                 while not access_denied:
                     next_page_url = base_url + redirect_url[1:]
-                    next_page_response = self.client.get(url=next_page_url, cookies=cookies)
+                    next_page_response = self.client.get(url=next_page_url)
                     next_page_response.raise_for_status()
                     meeting_links = self.extract_meeting_links(next_page_response.text)
                     if not meeting_links:
@@ -139,7 +125,7 @@ class RISExtractor:
                         for link in meeting_links:
                             self.logger.info(f"Lade Meeting-Link: {link}")
                             try:
-                                response = self.client.get(url=link, cookies=cookies)
+                                response = self.client.get(url=link)
                                 response.raise_for_status()
                                 meeting = self.str_parser.parse(link, response.text)
                                 self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
@@ -176,7 +162,7 @@ class RISExtractor:
                     }
                     page_url = base_url + last_links[0][1:] + "&_=1"
                     self.logger.info(f"Anfrage der naechsten Seite: {page_url}")
-                    page_response = self.client.get(url=page_url, cookies=cookies, headers=headers)
+                    page_response = self.client.get(url=page_url, headers=headers)
                     page_response.raise_for_status()
                     if self.is_access_denied(page_response.text):
                         access_denied = True
