@@ -27,13 +27,14 @@ class RISExtractor:
         self.client = Client(proxy="http://internet-proxy-client.muenchen.de:80")
         self.logger = getLogger()
         self.str_parser = STRParser()
+        self.base_url = "https://risi.muenchen.de/risi/sitzung"
+        self.uebersicht_path = "/uebersicht"
 
     def extract_meeting_links(self, html: str) -> list[str]:
-        base_url = "https://risi.muenchen.de/risi/sitzung/"
         soup = BeautifulSoup(html, "html.parser")
-        links = [
-            urljoin(base_url, a["href"].lstrip("./")) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")
-        ]
+        path = ""
+        links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
+
         self.logger.info(f"Extracted {len(links)} meeting links from page.")
         return links
 
@@ -47,8 +48,8 @@ class RISExtractor:
             self.logger.debug("Response text is not valid XML, assuming no access denied.")
             return False
 
-    def run(self, starturl) -> object:
-        headers = {
+    def _get_headers(self) -> dict:
+        return {
             "Host": "risi.muenchen.de",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -65,97 +66,135 @@ class RISExtractor:
             "Sec-Fetch-User": "?1",
             "Priority": "u=0, i",
         }
-        base_url = "https://risi.muenchen.de/risi/sitzung"
+
+    def _get_search_request_params(self) -> dict:
+        return {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
+
+    # remove the . from ./xxx
+    def _get_sanitized_url(self, unsanitized_path: str) -> str:
+        return self.base_url + unsanitized_path[1:]
+
+    def _initial_request(self):
+        # make request
+        response = self.client.get(url=self.base_url + self.uebersicht_path, headers=self._get_headers())
+        # evaluate response
+        if response.status_code == 302:
+            redirect_url = response.headers.get("Location")
+            self.logger.info(f"Redirect URL: { redirect_url }")
+            redirect_response = self.client.get(url=self._get_sanitized_url(redirect_url))
+            self.logger.info(f"Response from redirect URL: { redirect_response.status_code }")
+
+    def _filter_sitzungen(self) -> str:
+        filter_url = self.base_url + "/uebersicht?0" + "-1.-form"
+        headers = { "Content-Type": "application/x-www-form-urlencoded" }
+        data = { "von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2" }
+        # self.client.post(url=filter_url, headers=headers, data=data) # do it once - try again
+        response = self.client.post(url=filter_url, headers=headers, data=data)
+
+        if response.status_code == 302:
+            redirect_url = response.headers.get("Location")
+            self.logger.info(f"Suche1 Redirect URL: {redirect_url}")
+            return redirect_url
+        else:
+            raise RuntimeError("Unexpected http response - no redirect url")
+
+    def _set_results_per_page(self, path):
+        url = (
+                self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
+        )
+        data = { "list_container:list:card:cardheader:itemsperpage_dropdown_top": "3" }
+        response = self.client.post(url=url, data=data)
+        if response.status_code == 302:
+            return response.headers.get("Location")
+        else:
+            raise RuntimeError("Unexpected http response - no redirect url")
+
+    # iteration through other request
+    def _get_current_page_text(self, path) -> str:
+        response = self.client.get(url=self._get_sanitized_url(path))
+        response.raise_for_status()
+        return response.text
+
+    def _parse_meeting_links(self, meeting_links: list[str]) -> list[object]:
+        meetings = []
+        for link in meeting_links:
+            self.logger.info(f"Lade Meeting-Link: {link}")
+            try:
+                response = self.client.get(url=link) # Detailseite anfragen
+                response.raise_for_status()
+                meeting = self.str_parser.parse(link, response.text)
+                meetings.append(meeting)
+                self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
+            except Exception as e:
+                self.logger.error(f"Fehler beim Parsen von {link}: {e}")
+        return meetings
+
+    def _get_next_page_path(self, current_page_text) -> str:
+        soup = BeautifulSoup(current_page_text, "html.parser")
+        scripts = soup.find_all("script")
+
+        ajax_urls = []
+        for script in scripts:
+            if script.string:
+                matches = re.findall(r'Wicket\.Ajax\.ajax\(\{"u":"([^"]+)"', script.string)
+                ajax_urls.extend(matches)
+
+        return [u for u in ajax_urls if "nav_top-next" in u][0]
+
+    def _get_next_page(self, path, next_page_link):
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": self._get_sanitized_url(path),
+            "Accept": "text/xml",
+            "X-Requested-With": "XMLHttpRequest",
+            "Wicket-Ajax": "true",
+            "Wicket-Ajax-BaseURL": "sitzung" + path[1:],
+            "Wicket-FocusedElementId": "idb",
+            "Priority": "u=0",
+        }
+
+        page_url = self._get_sanitized_url(next_page_link) + "&_=1"
+        self.logger.info(f"Anfrage der naechsten Seite: { page_url }")
+        page_response = self.client.get(url=page_url, headers=headers)
+        page_response.raise_for_status()
+
+
+    def run(self, starturl) -> object:
 
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
-            response = self.client.get(url=starturl, headers=headers)
-            if response.status_code == 302:
-                redirect_url = response.headers.get("Location")
-                self.logger.info(f"Redirect URL: {redirect_url}")
-                init_url = base_url + redirect_url[1:]
-                redirect_response = self.client.get(url=init_url)
-                self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
+            # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
+            self._initial_request()
 
             # Anfrage zum Filter Setzen (TODO: StartDatum setzen)
-            filter_url = base_url + "/uebersicht?0" + "-1.-form"
-            headers = {"Content-Type": "application/x-www-form-urlencoded"}
-            filter_data = {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
-            self.client.post(url=filter_url, headers=headers, data=filter_data)
-            filter_response = self.client.post(url=filter_url, headers=headers, data=filter_data)
+            # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # redirect url bekommen + filterung nach datum und bereich (nur stadtrat)
+            filter_sitzungen_redirect_path = self._filter_sitzungen()
 
-            if filter_response.status_code == 302:
-                redirect_url = filter_response.headers.get("Location")
-                self.logger.info(f"Suche1 Redirect URL: {redirect_url}")
-
-                # Anfrage für 100 Results per page
-                result_per_page_url = (
-                    base_url
-                    + "/uebersicht?"
-                    + str(int(redirect_url.split("?")[1]))
-                    + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
-                )
-                data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
-                result_per_page_response = self.client.post(url=result_per_page_url, data=data)
-                redirect_url = result_per_page_response.headers.get("Location")
+            # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it #Seitengröße auf 100 setzen
+            results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
 
             # Anfrage und Verarbeitung aller Seiten der Sitzungsliste
+            #4. durchiterieren durch die Pages
             access_denied = False
             meetings = []
             while not access_denied:
-                next_page_url = base_url + redirect_url[1:]
-                next_page_response = self.client.get(url=next_page_url)
-                next_page_response.raise_for_status()
-                meeting_links = self.extract_meeting_links(next_page_response.text)
+                current_page_text = self._get_current_page_text(results_per_page_redirect_path)
+                meeting_links=  self.extract_meeting_links(current_page_text)
+
                 if not meeting_links:
                     self.logger.warning("Keine Meetings auf der Übersichtsseite gefunden.")
                 else:
-                    for link in meeting_links:
-                        self.logger.info(f"Lade Meeting-Link: {link}")
-                        try:
-                            response = self.client.get(url=link)
-                            response.raise_for_status()
-                            meeting = self.str_parser.parse(link, response.text)
-                            meetings.append(meeting)
-                            self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
-                        except Exception as e:
-                            self.logger.error(f"Fehler beim Parsen von {link}: {e}")
+                    meetings.extend(self._parse_meeting_links(meeting_links))
 
-                soup = BeautifulSoup(next_page_response.text, "html.parser")
-                scripts = soup.find_all("script")
+                nav_top_next_link = self._get_next_page_path(current_page_text)
 
-                ajax_urls = []
-                for script in scripts:
-                    if script.string:
-                        matches = re.findall(r'Wicket\.Ajax\.ajax\(\{"u":"([^"]+)"', script.string)
-                        ajax_urls.extend(matches)
-
-                last_links = [u for u in ajax_urls if "nav_top-next" in u]
-                if not last_links:
+                if not nav_top_next_link:
                     access_denied = True
                     self.logger.info("Keine weiteren Seiten mehr vorhanden – Schleife beendet.")
                     break
 
-                for link in last_links:
-                    self.logger.info(f"Gefundene Wicket-URL: {link}")
+                self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
-                headers = {
-                    "User-Agent": "Mozilla/5.0",
-                    "Referer": "https://risi.muenchen.de/risi/sitzung" + redirect_url[1:],
-                    "Accept": "text/xml",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Wicket-Ajax": "true",
-                    "Wicket-Ajax-BaseURL": "sitzung" + redirect_url[1:],
-                    "Wicket-FocusedElementId": "idb",
-                    "Priority": "u=0",
-                }
-                page_url = base_url + last_links[0][1:] + "&_=1"
-                self.logger.info(f"Anfrage der naechsten Seite: {page_url}")
-                page_response = self.client.get(url=page_url, headers=headers)
-                page_response.raise_for_status()
-                if self.is_access_denied(page_response.text):
-                    access_denied = True
-                    self.logger.warning("Zugriff verweigert erkannt, Schleife wird beendet.")
             return meetings
         except Exception as e:
             self.logger.error(f"Fehler beim Abrufen der Kalenderseite {starturl}: {e}")
