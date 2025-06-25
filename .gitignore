@@ -174,4 +174,4 @@ cython_debug/
 .pypirc
 
 /src/docling/docs/
-/src/docling/test_files/
+/src/docling/test_file/md_files/
