@@ -9,7 +9,6 @@ load_dotenv()
 
 import re
 import xml.etree.ElementTree as ET
-from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from httpx import Client
@@ -32,7 +31,6 @@ class RISExtractor:
 
     def extract_meeting_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
-        path = ""
         links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
 
         self.logger.info(f"Extracted {len(links)} meeting links from page.")
@@ -80,14 +78,14 @@ class RISExtractor:
         # evaluate response
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
-            self.logger.info(f"Redirect URL: { redirect_url }")
+            self.logger.info(f"Redirect URL: {redirect_url}")
             redirect_response = self.client.get(url=self._get_sanitized_url(redirect_url))
-            self.logger.info(f"Response from redirect URL: { redirect_response.status_code }")
+            self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
 
     def _filter_sitzungen(self) -> str:
         filter_url = self.base_url + "/uebersicht?0" + "-1.-form"
-        headers = { "Content-Type": "application/x-www-form-urlencoded" }
-        data = { "von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2" }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        data = {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
         # self.client.post(url=filter_url, headers=headers, data=data) # do it once - try again
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
@@ -99,10 +97,8 @@ class RISExtractor:
             raise RuntimeError("Unexpected http response - no redirect url")
 
     def _set_results_per_page(self, path):
-        url = (
-                self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
-        )
-        data = { "list_container:list:card:cardheader:itemsperpage_dropdown_top": "3" }
+        url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
+        data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
         response = self.client.post(url=url, data=data)
         if response.status_code == 302:
             return response.headers.get("Location")
@@ -120,7 +116,7 @@ class RISExtractor:
         for link in meeting_links:
             self.logger.info(f"Lade Meeting-Link: {link}")
             try:
-                response = self.client.get(url=link) # Detailseite anfragen
+                response = self.client.get(url=link)  # Detailseite anfragen
                 response.raise_for_status()
                 meeting = self.str_parser.parse(link, response.text)
                 meetings.append(meeting)
@@ -154,13 +150,11 @@ class RISExtractor:
         }
 
         page_url = self._get_sanitized_url(next_page_link) + "&_=1"
-        self.logger.info(f"Anfrage der naechsten Seite: { page_url }")
+        self.logger.info(f"Anfrage der naechsten Seite: {page_url}")
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-
     def run(self, starturl) -> object:
-
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
@@ -174,12 +168,12 @@ class RISExtractor:
             results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
 
             # Anfrage und Verarbeitung aller Seiten der Sitzungsliste
-            #4. durchiterieren durch die Pages
+            # 4. durchiterieren durch die Pages
             access_denied = False
             meetings = []
             while not access_denied:
                 current_page_text = self._get_current_page_text(results_per_page_redirect_path)
-                meeting_links=  self.extract_meeting_links(current_page_text)
+                meeting_links = self.extract_meeting_links(current_page_text)
 
                 if not meeting_links:
                     self.logger.warning("Keine Meetings auf der Übersichtsseite gefunden.")
