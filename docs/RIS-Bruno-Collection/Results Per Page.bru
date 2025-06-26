@@ -1,0 +1,34 @@
+meta {
+  name: Results Per Page
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://risi.muenchen.de/risi/sitzung/uebersicht?1-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top
+  body: none
+  auth: inherit
+}
+
+params:query {
+  1-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top: 
+}
+
+headers {
+  Accept-Language: de,en-US;q=0.7,en;q=0.3
+  Cache-Control: no-cache
+  User-Agent: bruno-runtime/.0.1
+  Accept: */*
+  Accept-Encoding: gzip, deflate, br
+  Connection: keep-alive
+  Content-Type: application/x-www-form-urlencoded
+}
+
+script:pre-request {
+  req.setMaxRedirects(0);
+  const body = req.getBody();
+  req.setBody({
+    ...body,
+      "list_container:list:card:cardheader:itemsperpage_dropdown_top": 3
+  });
+}
