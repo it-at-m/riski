@@ -1,0 +1,35 @@
+meta {
+  name: Filtered Results
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://risi.muenchen.de/risi/sitzung/uebersicht?2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  2: 
+}
+
+headers {
+  Accept-Language: de,en-US;q=0.7,en;q=0.3
+  Cache-Control: no-cache
+  User-Agent: bruno-runtime/.0.1
+  Accept: */*
+  Accept-Encoding: gzip, deflate, br
+  Connection: keep-alive
+}
+
+body:form-urlencoded {
+  von: 
+  bis: 
+  status: 
+  containerBereichDropDown: bereich: 2
+}
+
+script:pre-request {
+  req.setMaxRedirects(0);
+}
