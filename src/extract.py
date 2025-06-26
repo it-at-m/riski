@@ -74,7 +74,7 @@ class RISExtractor:
 
     def _initial_request(self):
         # make request
-        response = self.client.get(url=self.base_url + self.uebersicht_path, headers=self._get_headers())
+        response = self.client.get(url=self.base_url + self.uebersicht_path)
         # evaluate response
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
@@ -83,7 +83,7 @@ class RISExtractor:
             self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
 
     def _filter_sitzungen(self) -> str:
-        filter_url = self.base_url + "/uebersicht?0" + "-1.-form"
+        filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
         # self.client.post(url=filter_url, headers=headers, data=data) # do it once - try again
@@ -91,7 +91,7 @@ class RISExtractor:
 
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
-            self.logger.info(f"Suche1 Redirect URL: {redirect_url}")
+            self.logger.info(f"Filter Redirect URL: {redirect_url}")
             return redirect_url
         else:
             raise RuntimeError("Unexpected http response - no redirect url")
@@ -108,19 +108,20 @@ class RISExtractor:
     # iteration through other request
     def _get_current_page_text(self, path) -> str:
         response = self.client.get(url=self._get_sanitized_url(path))
+        self.logger.info(f"Anfrage des Seiteninhalts: {self._get_sanitized_url(path)}")
         response.raise_for_status()
-        return response.text
+        return response.text.encode().decode("unicode_escape")
 
     def _parse_meeting_links(self, meeting_links: list[str]) -> list[object]:
         meetings = []
         for link in meeting_links:
-            self.logger.info(f"Lade Meeting-Link: {link}")
+            # self.logger.info(f"Lade Meeting-Link: {link}")
             try:
                 response = self.client.get(url=link)  # Detailseite anfragen
                 response.raise_for_status()
-                meeting = self.str_parser.parse(link, response.text)
+                meeting = self.str_parser.parse(link, response.text.encode().decode("unicode_escape"))
                 meetings.append(meeting)
-                self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
+            #   self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
             except Exception as e:
                 self.logger.error(f"Fehler beim Parsen von {link}: {e}")
         return meetings
