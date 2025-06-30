@@ -374,6 +374,7 @@ dependencies = [
     { name = "pydantic", extra = ["email"] },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "stamina" },
     { name = "truststore" },
 ]
 
@@ -387,6 +388,7 @@ requires-dist = [
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "stamina", specifier = ">=25.1.0" },
     { name = "truststore", specifier = ">=0.8.0" },
 ]
 
@@ -415,6 +417,27 @@ source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi
 sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/3f/f4/4a80cd6ef364b2e8b65b15816a843c0980f7a5a2b4dc701fc574952aa19f/soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a" }
 wheels = [
     { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/e7/9c/0e6afc12c269578be5c0c1c9f4b49a8d32770a080260c333ac04cc1c832d/soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4" },
+]
+
+[[package]]
+name = "stamina"
+version = "25.1.0"
+source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/simple" }
+dependencies = [
+    { name = "tenacity" },
+]
+sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/fd/c4/d242d76ffc88aa1fd14214d3143b542857b32276db4a20f8d99669054a5e/stamina-25.1.0.tar.gz", hash = "sha256:ad674809796ae40512b3b6296cfade826efd63863ff2ca2f59f806342e91e94a" }
+wheels = [
+    { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/14/ba/d03f7ee711391af1d5f4dd7c44f8abdd06bce247028af2441ba8f6ff329b/stamina-25.1.0-py3-none-any.whl", hash = "sha256:c08291da540e6f4243c20f7ee98f0ed0ac9101d639803c481a029b56d7e9b45d" },
+]
+
+[[package]]
+name = "tenacity"
+version = "9.1.2"
+source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/simple" }
+sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/0a/d4/2b0cd0fe285e14b36db076e78c93766ff1d529d70408bd1d2a5a84f1d929/tenacity-9.1.2.tar.gz", hash = "sha256:1169d376c297e7de388d18b4481760d478b0e99a777cad3a9c86e556f4b697cb" }
+wheels = [
+    { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/e5/30/643397144bfbfec6f6ef821f36f33e57d35946c44a2352d3c9f0ae847619/tenacity-9.1.2-py3-none-any.whl", hash = "sha256:f77bf36710d8b73a50b2dd155c97b870017ad21afe6ab300326b0371b3b05138" },
 ]
 
 [[package]]
