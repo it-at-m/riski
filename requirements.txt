@@ -2,7 +2,7 @@
 #    uv pip compile --universal pyproject.toml -o requirements.txt
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.12.13
+aiohttp==3.12.14
     # via langchain-community
 aiosignal==1.4.0
     # via aiohttp
@@ -26,7 +26,7 @@ beautifulsoup4==4.13.4
     #   docling
 bs4==0.0.2
     # via riski-extraktor (pyproject.toml)
-certifi==2025.7.9
+certifi==2025.7.14
     # via
     #   docling
     #   httpcore
@@ -49,7 +49,7 @@ comm==0.2.2
     # via ipykernel
 dataclasses-json==0.6.7
     # via langchain-community
-debugpy==1.8.14
+debugpy==1.8.15
     # via ipykernel
 decorator==5.2.1
     # via ipython
@@ -57,16 +57,16 @@ dill==0.4.0
     # via multiprocess
 dnspython==2.7.0
     # via email-validator
-docling==2.40.0
+docling==2.41.0
     # via
     #   riski-extraktor (pyproject.toml)
     #   langchain-docling
-docling-core==2.42.0
+docling-core==2.43.0
     # via
     #   docling
     #   docling-ibm-models
     #   docling-parse
-docling-ibm-models==3.8.0
+docling-ibm-models==3.8.1
     # via docling
 docling-parse==4.1.0
     # via docling
@@ -89,7 +89,7 @@ frozenlist==1.7.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2025.5.1
+fsspec==2025.7.0
     # via
     #   huggingface-hub
     #   torch
@@ -111,7 +111,7 @@ httpx==0.28.1
     #   langsmith
 httpx-sse==0.4.1
     # via langchain-community
-huggingface-hub==0.33.2
+huggingface-hub==0.33.4
     # via
     #   docling
     #   docling-ibm-models
@@ -160,7 +160,7 @@ langchain==0.3.26
     #   langchain-community
 langchain-community==0.3.27
     # via riski-extraktor (pyproject.toml)
-langchain-core==0.3.68
+langchain-core==0.3.69
     # via
     #   langchain
     #   langchain-community
@@ -170,7 +170,7 @@ langchain-docling==1.0.0
     # via riski-extraktor (pyproject.toml)
 langchain-text-splitters==0.3.8
     # via langchain
-langsmith==0.4.4
+langsmith==0.4.6
     # via
     #   langchain
     #   langchain-community
@@ -276,9 +276,9 @@ opencv-python-headless==4.11.0.86
     #   easyocr
 openpyxl==3.1.5
     # via docling
-orjson==3.10.18 ; platform_python_implementation != 'PyPy'
+orjson==3.11.0 ; platform_python_implementation != 'PyPy'
     # via langsmith
-packaging==24.2
+packaging==25.0
     # via
     #   huggingface-hub
     #   ipykernel
@@ -372,7 +372,7 @@ python-pptx==1.0.2
     # via docling
 pytz==2025.2
     # via pandas
-pywin32==310 ; sys_platform == 'win32'
+pywin32==311 ; sys_platform == 'win32'
     # via
     #   docling-parse
     #   jupyter-core
@@ -453,6 +453,8 @@ sqlalchemy==2.0.41
     #   langchain-community
 stack-data==0.6.3
     # via ipython
+stamina==25.1.0
+    # via riski-extraktor (pyproject.toml)
 sympy==1.14.0
     # via torch
 tabulate==0.9.0
@@ -463,6 +465,7 @@ tenacity==9.1.2
     # via
     #   langchain-community
     #   langchain-core
+    #   stamina
 tifffile==2025.6.11
     # via scikit-image
 tokenizers==0.21.2
@@ -497,7 +500,7 @@ traitlets==5.14.3
     #   jupyter-client
     #   jupyter-core
     #   matplotlib-inline
-transformers==4.53.1
+transformers==4.53.2
     # via
     #   docling-core
     #   docling-ibm-models

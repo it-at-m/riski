@@ -2591,6 +2591,7 @@ dependencies = [
     { name = "pymupdf" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "stamina" },
     { name = "truststore" },
 ]
 
@@ -2615,6 +2616,7 @@ requires-dist = [
     { name = "pymupdf", specifier = ">=1.26.3" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "stamina", specifier = ">=25.1.0" },
     { name = "truststore", specifier = ">=0.8.0" },
 ]
 
@@ -3036,6 +3038,18 @@ dependencies = [
 sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/28/e3/55dcc2cfbc3ca9c29519eb6884dd1415ecb53b0e934862d3559ddcb7e20b/stack_data-0.6.3.tar.gz", hash = "sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9" }
 wheels = [
     { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/f1/7b/ce1eafaf1a76852e2ec9b22edecf1daa58175c090266e9f6c64afcd81d91/stack_data-0.6.3-py3-none-any.whl", hash = "sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695" },
+]
+
+[[package]]
+name = "stamina"
+version = "25.1.0"
+source = { registry = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/simple" }
+dependencies = [
+    { name = "tenacity" },
+]
+sdist = { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/fd/c4/d242d76ffc88aa1fd14214d3143b542857b32276db4a20f8d99669054a5e/stamina-25.1.0.tar.gz", hash = "sha256:ad674809796ae40512b3b6296cfade826efd63863ff2ca2f59f806342e91e94a" }
+wheels = [
+    { url = "https://artifactory.muenchen.de/artifactory/api/pypi/pypi-repos/packages/packages/14/ba/d03f7ee711391af1d5f4dd7c44f8abdd06bce247028af2441ba8f6ff329b/stamina-25.1.0-py3-none-any.whl", hash = "sha256:c08291da540e6f4243c20f7ee98f0ed0ac9101d639803c481a029b56d7e9b45d" },
 ]
 
 [[package]]

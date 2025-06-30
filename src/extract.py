@@ -8,8 +8,9 @@ load_dotenv()
 ### end of special import block ###
 
 import re
-import xml.etree.ElementTree as ET
 
+import httpx
+import stamina
 from bs4 import BeautifulSoup
 from httpx import Client
 
@@ -29,22 +30,12 @@ class RISExtractor:
         self.base_url = "https://risi.muenchen.de/risi/sitzung"
         self.uebersicht_path = "/uebersicht"
 
-    def extract_meeting_links(self, html: str) -> list[str]:
+    def _extract_meeting_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
         links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
 
         self.logger.info(f"Extracted {len(links)} meeting links from page.")
         return links
-
-    def is_access_denied(self, response_text: str) -> bool:
-        try:
-            root = ET.fromstring(response_text)
-            self.logger.debug(f"Parsed XML root tag: {root.tag}")
-            redirect = root.findtext("redirect")
-            return redirect and "accessdenied" in redirect.lower()
-        except ET.ParseError:
-            self.logger.debug("Response text is not valid XML, assuming no access denied.")
-            return False
 
     def _get_headers(self) -> dict:
         return {
@@ -72,6 +63,7 @@ class RISExtractor:
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return self.base_url + unsanitized_path[1:]
 
+    @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _initial_request(self):
         # make request
         response = self.client.get(url=self.base_url + self.uebersicht_path)
@@ -81,11 +73,14 @@ class RISExtractor:
             self.logger.info(f"Redirect URL: {redirect_url}")
             redirect_response = self.client.get(url=self._get_sanitized_url(redirect_url))
             self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
+        else:
+            response.raise_for_status()
 
+    @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _filter_sitzungen(self) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
+        data = {"von": "2026-01-01", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
         # self.client.post(url=filter_url, headers=headers, data=data) # do it once - try again
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
@@ -94,8 +89,9 @@ class RISExtractor:
             self.logger.info(f"Filter Redirect URL: {redirect_url}")
             return redirect_url
         else:
-            raise RuntimeError("Unexpected http response - no redirect url")
+            response.raise_for_status()
 
+    @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self, path):
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
@@ -103,9 +99,10 @@ class RISExtractor:
         if response.status_code == 302:
             return response.headers.get("Location")
         else:
-            raise RuntimeError("Unexpected http response - no redirect url")
+            response.raise_for_status()
 
     # iteration through other request
+    @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_current_page_text(self, path) -> str:
         response = self.client.get(url=self._get_sanitized_url(path))
         self.logger.info(f"Anfrage des Seiteninhalts: {self._get_sanitized_url(path)}")
@@ -117,14 +114,19 @@ class RISExtractor:
         for link in meeting_links:
             # self.logger.info(f"Lade Meeting-Link: {link}")
             try:
-                response = self.client.get(url=link)  # Detailseite anfragen
-                response.raise_for_status()
-                meeting = self.str_parser.parse(link, response.text.encode().decode("unicode_escape"))
+                response = self._get_meeting_html(link)
+                meeting = self.str_parser.parse(link, response.encode().decode("unicode_escape"))
                 meetings.append(meeting)
             #   self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
             except Exception as e:
                 self.logger.error(f"Fehler beim Parsen von {link}: {e}")
         return meetings
+
+    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    def _get_meeting_html(self, link: str) -> str:
+        response = self.client.get(url=link)  # Detailseite anfragen
+        response.raise_for_status()
+        return response.text
 
     def _get_next_page_path(self, current_page_text) -> str:
         soup = BeautifulSoup(current_page_text, "html.parser")
@@ -135,9 +137,14 @@ class RISExtractor:
             if script.string:
                 matches = re.findall(r'Wicket\.Ajax\.ajax\(\{"u":"([^"]+)"', script.string)
                 ajax_urls.extend(matches)
+        ajax_urls = [u for u in ajax_urls if "nav_top-next" in u]
 
-        return [u for u in ajax_urls if "nav_top-next" in u][0]
+        if len(ajax_urls) > 0:
+            return ajax_urls[0]
+        else:
+            return None
 
+    @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_next_page(self, path, next_page_link):
         headers = {
             "User-Agent": "Mozilla/5.0",
@@ -174,7 +181,7 @@ class RISExtractor:
             meetings = []
             while not access_denied:
                 current_page_text = self._get_current_page_text(results_per_page_redirect_path)
-                meeting_links = self.extract_meeting_links(current_page_text)
+                meeting_links = self._extract_meeting_links(current_page_text)
 
                 if not meeting_links:
                     self.logger.warning("Keine Meetings auf der Übersichtsseite gefunden.")
@@ -192,7 +199,7 @@ class RISExtractor:
 
             return meetings
         except Exception as e:
-            self.logger.error(f"Fehler beim Abrufen der Kalenderseite {starturl}: {e}")
+            self.logger.error(f"Fehler beim Abrufen der Sitzungen {starturl}: {e}")
             return []
 
 
