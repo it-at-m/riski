@@ -24,6 +24,7 @@ class System(BaseModel):
 
 
 class Location(BaseModel):
+    id: HttpUrl
     type: str
     description: str
     geojson: dict
@@ -46,6 +47,7 @@ class Location(BaseModel):
 
 
 class LegislativeTerm(BaseModel):
+    id: HttpUrl
     type: str
     body: HttpUrl
     name: str
@@ -60,6 +62,7 @@ class LegislativeTerm(BaseModel):
 
 
 class Organization(BaseModel):
+    id: HttpUrl
     type: str
     body: HttpUrl
     name: str
@@ -85,6 +88,7 @@ class Organization(BaseModel):
 
 
 class Person(BaseModel):
+    id: HttpUrl
     type: str
     body: HttpUrl
     name: str
@@ -111,6 +115,7 @@ class Person(BaseModel):
 
 
 class Membership(BaseModel):
+    id: HttpUrl
     type: str
     person: HttpUrl
     organization: HttpUrl
@@ -128,6 +133,7 @@ class Membership(BaseModel):
 
 
 class Meeting(BaseModel):
+    id: HttpUrl
     type: str
     name: str
     meetingState: str
@@ -151,6 +157,7 @@ class Meeting(BaseModel):
 
 
 class AgendaItem(BaseModel):
+    id: HttpUrl
     type: str
     meeting: HttpUrl
     number: str
@@ -172,6 +179,7 @@ class AgendaItem(BaseModel):
 
 
 class Paper(BaseModel):
+    id: HttpUrl
     type: str
     body: HttpUrl
     name: str
@@ -197,6 +205,7 @@ class Paper(BaseModel):
 
 
 class File(BaseModel):
+    id: HttpUrl
     type: str
     name: str
     fileName: str
@@ -226,6 +235,7 @@ class File(BaseModel):
 class Body(BaseModel):
     """Körperschaft, z.B. Stadt, Gemeinde oder Landkreis"""
 
+    id: HttpUrl
     type: str
     name: str
     shortName: str

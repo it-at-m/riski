@@ -26,6 +26,7 @@ erDiagram
     BODY {
         %%  eine Körperschaft zu repräsentieren. Eine Körperschaft ist in den meisten Fällen eine Gemeinde, eine Stadt oder ein Landkreis.
         %% hier Stadt München
+        url id
         string type
         string name
         string shortName
@@ -61,6 +62,7 @@ erDiagram
 
     LEGISLATIVE_TERM {
         %% entspricht Wahlperiode
+        url id
         string type
         Url body
         string name
@@ -76,6 +78,7 @@ erDiagram
 
     ORGANIZATION {
         %% entspricht Gemium --> Stadtrat, beziksauschuss etc.
+        url id
         string type
         Url body
         string name
@@ -102,6 +105,7 @@ erDiagram
 
     PERSON {
         %% jede Person, die im RIS erwähnt wird
+        url id
         string type
         Url body
         string name
@@ -129,6 +133,7 @@ erDiagram
 
     MEMBERSHIP {
         %% Mitglied in Gremium, Vorsitzende,....
+        url id
         string type
         Url person
         Url organization
@@ -147,6 +152,7 @@ erDiagram
 
     MEETING {
         %% primär erstmal Stadtratssitzungen
+        url id
         string type
         string name
         string meetingState
@@ -171,6 +177,7 @@ erDiagram
 
     AGENDA_ITEM {
         %% Tagesordnungspunkt
+        url id
         string type
         Url meeting
         string number
@@ -193,6 +200,7 @@ erDiagram
 
     PAPER {
         %% entspricht Vorlagen, anträgen, etc.
+        url id
         string type
         Url body
         string name
@@ -223,6 +231,7 @@ erDiagram
 
     FILE {
         %% Dkumente
+        url id
         string type
         string name
         string fileName
@@ -252,6 +261,7 @@ erDiagram
     LOCATION {
         %% jegliche Ortsnagbanen, Adresssen, Geodaten etc.
         %% Beschränkung zunächst auf was klar im RIS verllinkt ist z.B. Sitzungsorte. noch keine 
+        url id
         string type
         string description
         Object geojson
