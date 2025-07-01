@@ -68,7 +68,6 @@ class Organization(BaseModel):
     name: str
     membership: List[HttpUrl]
     meeting: HttpUrl
-    consultation: HttpUrl
     shortName: str
     post: List[str]
     subOrganizationOf: HttpUrl
@@ -164,7 +163,6 @@ class AgendaItem(BaseModel):
     order: int
     name: str
     public: bool
-    consultation: HttpUrl
     result: str
     resolutionText: str
     resolutionFile: dict
@@ -176,6 +174,7 @@ class AgendaItem(BaseModel):
     created: datetime
     modified: datetime
     web: HttpUrl
+    deleted: bool
 
 
 class Paper(BaseModel):
@@ -195,7 +194,6 @@ class Paper(BaseModel):
     originatorPerson: List[HttpUrl]
     underDirectionOf: List[HttpUrl]
     originatorOrganization: List[HttpUrl]
-    consultation: List[dict]
     license: str
     keyword: List[str]
     created: datetime
@@ -255,7 +253,6 @@ class Body(BaseModel):
     paper: HttpUrl
     legislativeTerm: LegislativeTerm
     agendaItem: HttpUrl
-    consultation: HttpUrl
     file: HttpUrl
     locationList: HttpUrl
     legislativeTermList: HttpUrl
