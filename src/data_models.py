@@ -5,14 +5,14 @@ from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 
 class System(BaseModel):
-    id: HttpUrl = Field(..., description="Die eindeutige URL dieses Objekts.")
+    id: HttpUrl = Field(description="Die eindeutige URL dieses Objekts.")
     type: str | None = Field(None, description="Der feste Typ des Objekts: 'https://schema.oparl.org/1.1/System'.")
-    oparlVersion: str = Field(..., description="Die vom System unterstützte OParl-Version (z. B. 'https://schema.oparl.org/1.1/').")
+    oparlVersion: str = Field(description="Die vom System unterstützte OParl-Version (z. B. 'https://schema.oparl.org/1.1/').")
     otherOparlVersions: List[HttpUrl] | None = Field(None, description="Dient der Angabe von System-Objekten mit anderen OParl-Versionen.")
     license: HttpUrl | None = Field(
         None, description="Lizenz, unter der durch diese API abrufbaren Daten stehen, sofern nicht am einzelnen Objekt anders angegeben."
     )
-    body: HttpUrl = Field(..., description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.")
+    body: HttpUrl = Field(description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.")
     name: str | None = Field(
         None,
         description="Benutzerfreundlicher Name für das System, mit dessen Hilfe Nutzerinnen und Nutzer das System erkennen und von anderen unterscheiden können.",
@@ -35,7 +35,7 @@ class System(BaseModel):
 
 
 class Location(BaseModel):
-    id: HttpUrl = Field(..., description="Die eindeutige URL des Orts.")
+    id: HttpUrl = Field(description="Die eindeutige URL des Orts.")
     type: str | None = Field(None, description="Typ des Orts")
     description: str | None = Field(None, description="Textuelle Beschreibung eines Orts, z. B. in Form einer Adresse.")
     geojson: dict | None = Field(
@@ -76,7 +76,7 @@ class Location(BaseModel):
 
 
 class LegislativeTerm(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Wahlperiode.")
+    id: HttpUrl = Field(description="Eindeutige URL der Wahlperiode.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/LegislativeTerm'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Wahlperiode gehört.")
     name: str | None = Field(None, description="Bezeichnung der Wahlperiode.")
@@ -91,7 +91,7 @@ class LegislativeTerm(BaseModel):
 
 
 class Organization(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Organisation.")
+    id: HttpUrl = Field(description="Eindeutige URL der Organisation.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Organization'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
     name: str | None = Field(None, description="Bezeichnung der Organisation.")
@@ -116,7 +116,7 @@ class Organization(BaseModel):
 
 
 class Person(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Person.")
+    id: HttpUrl = Field(description="Eindeutige URL der Person.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Person'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, in der die Person aktiv ist.")
     name: str | None = Field(None, description="Vollständiger Name der Person.")
@@ -142,7 +142,7 @@ class Person(BaseModel):
 
 
 class Membership(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Mitgliedschaft.")
+    id: HttpUrl = Field(description="Eindeutige URL der Mitgliedschaft.")
     type: str | None = Field(None, description="Typ der Mitgliedschaft")
     person: HttpUrl | None = Field(
         None,
@@ -169,7 +169,7 @@ class Membership(BaseModel):
 
 
 class File(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL des Dokuments.")
+    id: HttpUrl = Field(description="Eindeutige URL des Dokuments.")
     type: str | None = Field(None, description="Typ der Datei")
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das Objekt. Sollte keine Dateiendungen wie '.pdf' enthalten.")
     fileName: str | None = Field(
@@ -187,7 +187,7 @@ class File(BaseModel):
     text: str | None = Field(
         None, description="Reine Textwiedergabe des Dateiinhalts, sofern dieser in Textform wiedergegeben werden kann."
     )
-    accessUrl: HttpUrl = Field(..., description="Zwingend erforderliche URL für den allgemeinen Zugriff auf die Datei.")
+    accessUrl: HttpUrl = Field(description="Zwingend erforderliche URL für den allgemeinen Zugriff auf die Datei.")
     downloadUrl: HttpUrl | None = Field(None, description="URL zum Herunterladen der Datei.")
     externalServiceUrl: HttpUrl | None = Field(
         None, description="Externe URL, die zusätzliche Zugriffsoptionen bietet (z.B. ein YouTube-Video)."
@@ -219,7 +219,7 @@ class File(BaseModel):
 
 
 class AgendaItem(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL des Tagesordnungspunkt.")
+    id: HttpUrl = Field(description="Eindeutige URL des Tagesordnungspunkt.")
     type: str | None = Field(None, description="Typ des Tagesordnungspunktes")
     meeting: HttpUrl | None = Field(
         None,
@@ -259,7 +259,7 @@ class AgendaItem(BaseModel):
 
 
 class Paper(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Drucksache.")
+    id: HttpUrl = Field(description="Eindeutige URL der Drucksache.")
     type: str | None = Field(None, description="Typ der Drucksache")
     body: HttpUrl | None = Field(None, description="Körperschaft, zu der die Drucksache gehört.")
     name: str | None = Field(None, description="Titel der Drucksache.")
@@ -302,9 +302,9 @@ class Paper(BaseModel):
 
 
 class Body(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Körperschaft.")
+    id: HttpUrl = Field(description="Eindeutige URL der Körperschaft.")
     type: str | None = Field(None, description="Typangabe: 'https://schema.oparl.org/1.1/Body'.")
-    name: str = Field(..., description="Name der Körperschaft.")
+    name: str = Field(description="Name der Körperschaft.")
     shortName: str | None = Field(None, description="Abkürzung der Körperschaft.")
     system: HttpUrl | None = Field(None, description="Verweis auf das zugehörige System-Objekt.")
     website: HttpUrl | None = Field(None, description="Offizielle Website der Körperschaft.")
@@ -316,16 +316,16 @@ class Body(BaseModel):
     equivalent: List[HttpUrl] | None = Field(None, description="Weitere Körperschaften mit ähnlicher Bedeutung oder Funktion.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse der Körperschaft.")
     contactName: str | None = Field(None, description="Name des Ansprechpartners.")
-    organization: HttpUrl = Field(..., description="Liste der Organisationen der Körperschaft.")
-    person: HttpUrl = Field(..., description="Liste der Personen der Körperschaft.")
-    meeting: HttpUrl = Field(..., description="Liste der Sitzungen der Körperschaft.")
-    paper: HttpUrl = Field(..., description="Liste der Vorlagen dieser Körperschaft.")
-    legislativeTerm: HttpUrl = Field(..., description="Liste der Wahlperioden der Körperschaft.")
-    agendaItem: HttpUrl = Field(..., description="Liste aller Tagesordnungspunkte der Körperschaft.")
-    file: HttpUrl = Field(..., description="Liste aller Dateien der Körperschaft.")
+    organization: HttpUrl = Field(description="Liste der Organisationen der Körperschaft.")
+    person: HttpUrl = Field(description="Liste der Personen der Körperschaft.")
+    meeting: HttpUrl = Field(description="Liste der Sitzungen der Körperschaft.")
+    paper: HttpUrl = Field(description="Liste der Vorlagen dieser Körperschaft.")
+    legislativeTerm: HttpUrl = Field(description="Liste der Wahlperioden der Körperschaft.")
+    agendaItem: HttpUrl = Field(description="Liste aller Tagesordnungspunkte der Körperschaft.")
+    file: HttpUrl = Field(description="Liste aller Dateien der Körperschaft.")
     locationList: HttpUrl | None = Field(None, description="Liste der Orte, die mit dieser Körperschaft verknüpft sind.")
-    legislativeTermList: HttpUrl = Field(..., description="Alternative URL zur Liste der Wahlperioden.")
-    membership: HttpUrl = Field(..., description="Liste der Mitgliedschaften in der Körperschaft.")
+    legislativeTermList: HttpUrl = Field(description="Alternative URL zur Liste der Wahlperioden.")
+    membership: HttpUrl = Field(description="Liste der Mitgliedschaften in der Körperschaft.")
     classification: str | None = Field(None, description="Art der Körperschaft, z. B. 'Stadt' oder 'Kreis'.")
     location: HttpUrl | None = Field(None, description="Ort der Verwaltung dieser Körperschaft.")
     keyword: List[str] | None = Field(None, description="Stichworte zur Körperschaft.")
@@ -336,7 +336,7 @@ class Body(BaseModel):
 
 
 class Meeting(BaseModel):
-    id: HttpUrl = Field(..., description="Eindeutige URL der Sitzung.")
+    id: HttpUrl = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
     name: str | None = Field(None, description="Name der Sitzung.")
     meetingState: str | None = Field(
