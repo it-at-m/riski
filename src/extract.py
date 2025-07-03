@@ -1,4 +1,6 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
+import datetime
+
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
@@ -71,17 +73,15 @@ class RISExtractor:
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
             self.logger.info(f"Redirect URL: {redirect_url}")
-            redirect_response = self.client.get(url=self._get_sanitized_url(redirect_url))
-            self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
+            self.client.get(url=self._get_sanitized_url(redirect_url))
         else:
             response.raise_for_status()
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter_sitzungen(self) -> str:
+    def _filter_sitzungen(self, startdate: datetime.date) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": "2026-01-01", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
-        # self.client.post(url=filter_url, headers=headers, data=data) # do it once - try again
+        data = {"von": startdate.isoformat(), "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         if response.status_code == 302:
@@ -162,7 +162,7 @@ class RISExtractor:
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, starturl) -> object:
+    def run(self, starturl: str, startdate: datetime) -> object:
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
@@ -170,7 +170,7 @@ class RISExtractor:
 
             # Anfrage zum Filter Setzen (TODO: StartDatum setzen)
             # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # redirect url bekommen + filterung nach datum und bereich (nur stadtrat)
-            filter_sitzungen_redirect_path = self._filter_sitzungen()
+            filter_sitzungen_redirect_path = self._filter_sitzungen(startdate)
 
             # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it #Seitengröße auf 100 setzen
             results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
