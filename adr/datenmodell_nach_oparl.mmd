@@ -1,0 +1,310 @@
+---
+title: OPARL Spezifikation
+---
+
+erDiagram
+    SYSTEM {
+        %% repräsentiert eine OParl-Schnittstelle für eine bestimmte OParl-Version
+        url id
+        string type
+        string oparlVersion
+        url[] otherOparlVersions
+        url license
+        url body
+        string name
+        string contactEmail
+        string contactName
+        url website
+        url vendor
+        url product
+        date created
+        date modified
+        url web
+        boolean deleted
+}
+
+    BODY {
+        %%  eine Körperschaft zu repräsentieren. Eine Körperschaft ist in den meisten Fällen eine Gemeinde, eine Stadt oder ein Landkreis.
+        %% hier Stadt München
+        url id
+        string type
+        string name
+        string shortName
+        Url system
+        Url website
+        Url license
+        dateTime licenseValidSince
+        dateTime oparlSince
+        string ags
+        string rgs
+        Url[] equivalent
+        string contactEmail
+        string contactName
+        Url organization
+        Url person
+        Url meeting
+        Url paper
+        Object legislativeTerm
+        Url agendaItem
+        Url consultation
+        Url file
+        Url locationList
+        Url legislativeTermList
+        Url membership
+        string classification
+        Object location
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    LEGISLATIVE_TERM {
+        %% entspricht Wahlperiode
+        url id
+        string type
+        Url body
+        string name
+        date startDate
+        date endDate
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    ORGANIZATION {
+        %% entspricht Gemium --> Stadtrat, beziksauschuss etc.
+        url id
+        string type
+        Url body
+        string name
+        Url[] membership
+        Url meeting
+        Url consultation
+        string shortName
+        string[] post
+        Url subOrganizationOf
+        string organizationType
+        string classification
+        date startDate
+        date endDate
+        Url website
+        Object location
+        Url externalBody
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    PERSON {
+        %% jede Person, die im RIS erwähnt wird
+        url id
+        string type
+        Url body
+        string name
+        string familyName
+        string givenName
+        string formOfAddress
+        string affix
+        string[] title
+        string gender
+        string[] phone
+        string[] email
+        Url location
+        Object locationObject
+        string[] status
+        Object[] membership
+        string life
+        string lifeSource
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    MEMBERSHIP {
+        %% Mitglied in Gremium, Vorsitzende,....
+        url id
+        string type
+        Url person
+        Url organization
+        string role
+        boolean votingRight
+        date startDate
+        date endDate
+        Url onBehalfOf
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    MEETING {
+        %% primär erstmal Stadtratssitzungen
+        url id
+        string type
+        string name
+        string meetingState
+        boolean cancelled
+        dateTime start
+        dateTime end
+        Object location
+        Url[] organization
+        Url[] participant
+        Object invitation
+        Object resultsProtocol
+        Object verbatimProtocol
+        Object[] auxiliaryFile
+        Object[] agendaItem
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    AGENDA_ITEM {
+        %% Tagesordnungspunkt
+        url id
+        string type
+        Url meeting
+        string number
+        integer order
+        string name
+        boolean public
+        Url consultation
+        string result
+        string resolutionText
+        Object resolutionFile
+        Object[] auxiliaryFile
+        dateTime start
+        dateTime end
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    PAPER {
+        %% entspricht Vorlagen, anträgen, etc.
+        url id
+        string type
+        Url body
+        string name
+        string reference
+        date date
+        string paperType
+        Url[] relatedPaper
+        Url[] superordinatedPaper
+        Url[] subordinatedPaper
+        Object mainFile
+        Object[] auxiliaryFile
+        Object[] location
+        Url[] originatorPerson
+        Url[] underDirectionOf
+        Url[] originatorOrganization
+        Object[] consultation
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    CONSULTATION {
+       %% glaube das gibts so nicht im RIS
+    }
+
+    FILE {
+        %% Dkumente
+        url id
+        string type
+        string name
+        string fileName
+        string mimeType
+        date date
+        integer size
+        string sha1Checksum
+        string sha512Checksum
+        string text
+        Url accessUrl
+        Url downloadUrl
+        Url externalServiceUrl
+        Url masterFile
+        Url[] derivativeFile
+        Url fileLicense
+        Url[] meeting
+        Url[] agendaItem
+        Url[] paper
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    LOCATION {
+        %% jegliche Ortsnagbanen, Adresssen, Geodaten etc.
+        %% Beschränkung zunächst auf was klar im RIS verllinkt ist z.B. Sitzungsorte. noch keine 
+        url id
+        string type
+        string description
+        Object geojson
+        string streetAddress
+        string room
+        string postalCode
+        string subLocality
+        string locality
+        Url[] bodies
+        Url[] organizations
+        Url[] persons
+        Url[] meetings
+        Url[] papers
+        string license
+        string[] keyword
+        dateTime created
+        dateTime modified
+        Url web
+        boolean deleted
+    }
+
+    SYSTEM ||--o{ BODY : "contains"
+    BODY ||--o{ LEGISLATIVE_TERM : "has"
+    BODY ||--o{ ORGANIZATION : "has"
+    BODY ||--o{ MEETING : "organizes"
+    BODY ||--o{ PERSON : "has"
+    BODY }o--|| LOCATION : ""
+
+    PERSON ||--o{ MEMBERSHIP : "has"
+    PERSON ||--o{ MEETING : "attends"
+    MEMBERSHIP }o--|| ORGANIZATION : "in"
+    PERSON ||--o{ PAPER : "has"
+
+    ORGANIZATION }o--|| LOCATION : ""
+
+    MEETING ||--o{ AGENDA_ITEM : "contains"
+    MEETING }o--|| LOCATION : "takes place at"
+    MEETING }o--|| CONSULTATION : "has"
+
+    AGENDA_ITEM ||--o{ FILE : "contains"
+    AGENDA_ITEM ||--o{ CONSULTATION : ""
+    PAPER ||--o{ CONSULTATION : "linked to"
+    PAPER ||--o{ FILE : "has"
+    PAPER }o--|| LOCATION : ""
+
