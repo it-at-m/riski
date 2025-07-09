@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "gitpython>=3.1.44",
+    "pytest>=8.4.1",
     "pyyaml>=6.0.2",
+    "sqlmodel>=0.0.24",
 ]
 
 [dependency-groups]
