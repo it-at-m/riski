@@ -23,11 +23,11 @@ def get_processing_time_from_docling(file_path):
         "return_as_file": False,
     }
 
-    with httpx.Client(timeout=2000.0) as async_client:
+    with httpx.Client(timeout=2000.0) as client:
         with open(file_path, "rb") as file:
             files = {"files": (os.path.basename(file_path), file, "application/pdf")}  # Korrektur hier
             try:
-                response = async_client.post(url, files=files, data={"parameters": json.dumps(parameters)})
+                response = client.post(url, files=files, data={"parameters": json.dumps(parameters)})
                 response.raise_for_status()  # Raise an exception for bad status codes
                 return response.json().get("processing_time", None)
             except httpx.HTTPStatusError as e:
@@ -41,7 +41,7 @@ def get_processing_time_from_docling(file_path):
                 print(f"An unexpected error occurred: {e}")
                 return None
             finally:
-                async_client.close()
+                client.close()
 
 
 def save_pdf_batch(doc, start_page, end_page, batch_index, original_filename):
