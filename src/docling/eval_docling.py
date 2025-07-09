@@ -1,9 +1,9 @@
 import json
 import os
 
-import fitz  # PyMuPDF
 import httpx
 import pandas as pd
+import pymupdf as fitz  # PyMuPDF
 
 
 def get_processing_time_from_docling(file_path):
@@ -23,7 +23,7 @@ def get_processing_time_from_docling(file_path):
         "return_as_file": False,
     }
 
-    with httpx.Client(timeout=120.0) as async_client:
+    with httpx.Client(timeout=2000.0) as async_client:
         with open(file_path, "rb") as file:
             files = {"files": (os.path.basename(file_path), file, "application/pdf")}  # Korrektur hier
             try:
@@ -72,8 +72,10 @@ def get_pdf_info(file_path):
     return page_count, text_content
 
 
-def gather_file_info(directory):
+def gather_file_info(directory, md_output_folder):
     """Sammelt Informationen über alle PDF-Dateien in einem Verzeichnis."""
+    os.makedirs(md_output_folder, exist_ok=True)  # Erstelle den Output-Ordner, falls nicht vorhanden
+
     data = []
 
     for filename in os.listdir(directory):
@@ -82,55 +84,44 @@ def gather_file_info(directory):
             file_size = os.path.getsize(file_path)  # Dateigröße in Bytes
             page_count, text_content = get_pdf_info(file_path)
 
-            # Überprüfen Sie die Seitenanzahl und verarbeiten Sie sie nach Bedarf
             if page_count > 10:
-                # Splitten der PDF in Chargen von 5 Seiten
                 doc = fitz.open(file_path)
                 for batch_index in range(0, page_count, 5):
                     end_page = min(batch_index + 5, page_count)
                     batch_pdf_path = save_pdf_batch(doc, batch_index, end_page, batch_index // 5 + 1, filename)
-
-                    # Holen Sie sich die Verarbeitungszeit von der docling-API
                     processing_time = get_processing_time_from_docling(batch_pdf_path)
 
-                    # Überprüfen Sie, ob die Verarbeitungszeit erhalten wurde
                     if processing_time is None:
                         print(f"Verarbeitungszeit für {batch_pdf_path} konnte nicht abgerufen werden.")
-                        processing_time = "N/A"  # Setzen Sie einen Platzhalter, wenn die API fehlschlägt
+                        processing_time = "N/A"
 
-                    # Speichern Sie den Textinhalt in einer .md-Datei
                     md_filename = os.path.splitext(filename)[0] + f"_batch_{batch_index // 5 + 1}.md"
-                    md_file_path = os.path.join(directory, md_filename)
+                    md_file_path = os.path.join(md_output_folder, md_filename)
                     with open(md_file_path, "w", encoding="utf-8") as md_file:
                         md_file.write(text_content)
 
-                    # Füge die gesammelten Informationen zur Liste hinzu
                     data.append(
                         {
                             "Filename": filename,
                             "File Size (bytes)": file_size,
                             "Page Count": page_count,
-                            "Text Content": md_filename,  # Nur den Dateinamen der Markdown-Datei hinzufügen
+                            "Text Content": md_filename,  # Nur den MD-Dateinamen hinzufügen
                             "Processing Time (seconds)": processing_time,
                         }
                     )
                 doc.close()
             else:
-                # Wenn die PDF weniger als oder gleich 10 Seiten hat, verarbeiten Sie sie als Ganzes
                 processing_time = get_processing_time_from_docling(file_path)
 
-                # Überprüfen Sie, ob die Verarbeitungszeit erhalten wurde
                 if processing_time is None:
                     print(f"Verarbeitungszeit für {filename} konnte nicht abgerufen werden.")
                     processing_time = "N/A"
 
-                # Speichern Sie den Textinhalt in einer .md-Datei
                 md_filename = os.path.splitext(filename)[0] + ".md"
-                md_file_path = os.path.join(directory, md_filename)
+                md_file_path = os.path.join(md_output_folder, md_filename)
                 with open(md_file_path, "w", encoding="utf-8") as md_file:
                     md_file.write(text_content)
 
-                # Füge die gesammelten Informationen zur Liste hinzu
                 data.append(
                     {
                         "Filename": filename,
@@ -141,15 +132,13 @@ def gather_file_info(directory):
                     }
                 )
 
-    # Erstelle ein DataFrame aus den gesammelten Daten
     df = pd.DataFrame(data)
     return df
 
 
 # Hauptfunktion
 if __name__ == "__main__":
-    directory = "./docs/"  # Geben Sie hier den Pfad zu Ihrem Ordner an
-    df = gather_file_info(directory)
-
-    # Speichern Sie das DataFrame in einer CSV-Datei mit Semikolon als Trennzeichen
-    df.to_csv("file_info.csv", sep=";", index=False, quoting=pd.io.common.csv.QUOTE_NONNUMERIC)
+    directory = "./test_files/"  # Ordner mit den PDFs
+    md_output_folder = "./md_output_pyPDF/"  # Neuer Ordner für die Markdown-Dateien
+    df = gather_file_info(directory, md_output_folder)
+    df.to_csv("file_info.csv", sep=";", index=False)
