@@ -1,11 +1,21 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import EmailStr, HttpUrl, field_validator
+from sqlmodel import Field, SQLModel
 
 
-class System(BaseModel):
-    id: HttpUrl = Field(description="Die eindeutige URL dieses Objekts.")
+class BaseModel(SQLModel):
+    @field_validator("id", mode="before", check_fields=False)
+    def validate_id(cls, v):
+        if v is None:
+            return None
+        return str(HttpUrl.validate(v))
+
+
+class System(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Die eindeutige URL dieses Objekts.")
     type: str | None = Field(None, description="Der feste Typ des Objekts: 'https://schema.oparl.org/1.1/System'.")
     oparlVersion: str = Field(description="Die vom System unterstützte OParl-Version (z. B. 'https://schema.oparl.org/1.1/').")
     otherOparlVersions: List[HttpUrl] | None = Field(None, description="Dient der Angabe von System-Objekten mit anderen OParl-Versionen.")
@@ -33,9 +43,16 @@ class System(BaseModel):
     web: HttpUrl | None = Field(None, description="URL zur HTML-Ansicht dieses Objekts.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
+    @field_validator("contactEmail", mode="before")
+    def validate_email(cls, v):
+        if v is None:
+            return None
+        return str(EmailStr.validate(v))
 
-class Location(BaseModel):
-    id: HttpUrl = Field(description="Die eindeutige URL des Orts.")
+
+class Location(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Die eindeutige URL des Orts.")
     type: str | None = Field(None, description="Typ des Orts")
     description: str | None = Field(None, description="Textuelle Beschreibung eines Orts, z. B. in Form einer Adresse.")
     geojson: dict | None = Field(
@@ -75,8 +92,9 @@ class Location(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class LegislativeTerm(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Wahlperiode.")
+class LegislativeTerm(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL der Wahlperiode.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/LegislativeTerm'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Wahlperiode gehört.")
     name: str | None = Field(None, description="Bezeichnung der Wahlperiode.")
@@ -90,8 +108,9 @@ class LegislativeTerm(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class Organization(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Organisation.")
+class Organization(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL der Organisation.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Organization'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
     name: str | None = Field(None, description="Bezeichnung der Organisation.")
@@ -115,8 +134,9 @@ class Organization(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class Person(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Person.")
+class Person(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL der Person.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Person'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, in der die Person aktiv ist.")
     name: str | None = Field(None, description="Vollständiger Name der Person.")
@@ -141,8 +161,9 @@ class Person(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class Membership(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Mitgliedschaft.")
+class Membership(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL der Mitgliedschaft.")
     type: str | None = Field(None, description="Typ der Mitgliedschaft")
     person: HttpUrl | None = Field(
         None,
@@ -168,8 +189,9 @@ class Membership(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class File(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL des Dokuments.")
+class File(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL des Dokuments.")
     type: str | None = Field(None, description="Typ der Datei")
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das Objekt. Sollte keine Dateiendungen wie '.pdf' enthalten.")
     fileName: str | None = Field(
@@ -218,8 +240,12 @@ class File(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class AgendaItem(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL des Tagesordnungspunkt.")
+# Meeting hat bereits db_id
+
+
+class AgendaItem(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL des Tagesordnungspunkt.")
     type: str | None = Field(None, description="Typ des Tagesordnungspunktes")
     meeting: HttpUrl | None = Field(
         None,
@@ -245,7 +271,9 @@ class AgendaItem(BaseModel):
         None, description="Text des Beschlusses, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde."
     )
     resolutionFile: File | None = Field(
-        None, description="Datei, die den Beschluss enthält, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde."
+        None,
+        description="Datei, die den Beschluss enthält, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde.",
+        foreign_key="file.db_id",
     )
     auxiliaryFile: List[File] | None = Field(None, description="Weitere Datei-Anhänge zum Tagesordnungspunkt.")
     start: datetime | None = Field(None, description="Datum und Uhrzeit des Anfangszeitpunkts des Tagesordnungspunktes.")
@@ -258,8 +286,9 @@ class AgendaItem(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class Paper(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Drucksache.")
+class Paper(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL der Drucksache.")
     type: str | None = Field(None, description="Typ der Drucksache")
     body: HttpUrl | None = Field(None, description="Körperschaft, zu der die Drucksache gehört.")
     name: str | None = Field(None, description="Titel der Drucksache.")
@@ -275,13 +304,17 @@ class Paper(BaseModel):
     mainFile: File | None = Field(
         None,
         description="Die Hauptdatei zu dieser Drucksache. Beispiel: Die Drucksache repräsentiert eine Beschlussvorlage und die Hauptdatei enthält den Text der Beschlussvorlage. Sollte keine eindeutige Hauptdatei vorhanden sein, wird diese Eigenschaft nicht ausgegeben.",
+        foreign_key="file.db_id",
     )
     auxiliaryFile: List[File] | None = Field(
-        None, description="Alle weiteren Dateien zur Drucksache, ausgenommen der gegebenenfalls in mainFile angegebenen."
+        None,
+        description="Alle weiteren Dateien zur Drucksache, ausgenommen der gegebenenfalls in mainFile angegebenen.",
+        foreign_key="file.db_id",
     )
     location: List[Location] | None = Field(
         None,
         description="Sofern die Drucksache einen inhaltlichen Ortsbezug hat, beschreibt diese Eigenschaft den Ort in Textform und/oder in Form von Geodaten.",
+        foreign_key="location.db_id",
     )
     originatorPerson: List[HttpUrl] | None = Field(
         None, description="Urheber der Drucksache, falls der Urheber eine Person ist. Es können auch mehrere Personen angegeben werden."
@@ -301,8 +334,9 @@ class Paper(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-class Body(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Körperschaft.")
+class Body(BaseModel, table=True):
+    db_id: int = Field(default=None, primary_key=True)
+    id: str = Field(description="Eindeutige URL der Körperschaft.")
     type: str | None = Field(None, description="Typangabe: 'https://schema.oparl.org/1.1/Body'.")
     name: str = Field(description="Name der Körperschaft.")
     shortName: str | None = Field(None, description="Abkürzung der Körperschaft.")
@@ -335,8 +369,9 @@ class Body(BaseModel):
     deleted: bool | None = Field(False, description="Kennzeichnung als gelöscht.")
 
 
-class Meeting(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Sitzung.")
+class Meeting(BaseModel, table=True):
+    db_id: int = Field(description="Eindeutige ID der Sitzung.", primary_key=True)
+    id: str = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
     name: str | None = Field(None, description="Name der Sitzung.")
     meetingState: str | None = Field(
@@ -352,7 +387,7 @@ class Meeting(BaseModel):
         None,
         description="Endzeitpunkt der Sitzung als Datum/Uhrzeit. Bei einer zukünftigen Sitzung ist dies der geplante Zeitpunkt, bei einer stattgefundenen kann es der tatsächliche Endzeitpunkt sein.",
     )
-    location: Location | None = Field(None, description="Sitzungsort.")
+    location: Location | None = Field(None, description="Sitzungsort.", foreign_key="location.db_id")
     organization: List[HttpUrl] | None = Field(
         None,
         description="Gruppierungen, denen die Sitzung zugeordnet ist. Im Regelfall wird hier eine Gruppierung verknüpft sein, es kann jedoch auch gemeinsame Sitzungen mehrerer Gruppierungen geben. Das erste Element sollte dann das federführende Gremium sein.",
@@ -361,21 +396,26 @@ class Meeting(BaseModel):
         None,
         description="Personen, die an der Sitzung teilgenommen haben (d.h. nicht nur die eingeladenen Personen, sondern die tatsächlich Anwesenden). Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
     )
-    invitation: File | None = Field(None, description="Einladungsdokument zur Sitzung.")
+    invitation: File | None = Field(None, description="Einladungsdokument zur Sitzung.", foreign_key="file.db_id")
     resultsProtocol: File | None = Field(
         None,
         description="Ergebnisprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
+        foreign_key="file.db_id",
     )
     verbatimProtocol: File | None = Field(
         None,
         description="Wortprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
+        foreign_key="file.db_id",
     )
     auxiliaryFile: List[File] | None = Field(
         None,
         description="Dateianhang zur Sitzung. Hiermit sind Dateien gemeint, die üblicherweise mit der Einladung zu einer Sitzung verteilt werden, und die nicht bereits über einzelne Tagesordnungspunkte referenziert sind.",
+        foreign_key="file.db_id",
     )
     agendaItem: List[AgendaItem] | None = Field(
-        None, description="Tagesordnungspunkte der Sitzung. Die Reihenfolge ist relevant. Es kann Sitzungen ohne TOPs geben."
+        None,
+        description="Tagesordnungspunkte der Sitzung. Die Reihenfolge ist relevant. Es kann Sitzungen ohne TOPs geben.",
+        foreign_key="agendaitem.db_id",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
     keyword: List[str] | None = Field(None, description="Stichwörter zur Sitzung.")
@@ -385,7 +425,7 @@ class Meeting(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
-# Forward references for Membership and AgendaItem
+# Forward references
 Person.model_rebuild()
 Meeting.model_rebuild()
 AgendaItem.model_rebuild()
