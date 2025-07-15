@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+/src/docling/docs/
+/src/docling/test_file/md_files/
+
+.idea
