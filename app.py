@@ -7,7 +7,7 @@ from src.logtools import getLogger
 from src.version import get_version
 
 DEFAULT_START_URL = "https://risi.muenchen.de/risi/sitzung/uebersicht"
-DEFAULT_START_DATE = ""
+DEFAULT_START_DATE = datetime.date.today().isoformat()
 
 
 def parse_arguments():
@@ -27,7 +27,9 @@ def main():
     version = get_version()
     logger.info(f"RIS Extractor v{version} starting up")
     extractor = extract.RISExtractor()
-    extract_artifacts = extractor.run(args.starturl, datetime.date.fromisoformat(args.startdate))
+    startdate = datetime.date.fromisoformat(args.startdate)
+    logger.info(f"Extracting meetings starting from {startdate}")
+    extract_artifacts = extractor.run(args.starturl, startdate)
     print(extract_artifacts)
     logger.info("Extraction process finished")
     # TODO: Transform
