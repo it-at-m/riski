@@ -4,6 +4,8 @@ import datetime
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
+from src.data_models import ExtractArtifact
+
 inject_into_ssl()
 load_dotenv()
 
@@ -162,7 +164,7 @@ class RISExtractor:
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, starturl: str, startdate: datetime) -> object:
+    def run(self, starturl: str, startdate: datetime.date) -> ExtractArtifact:
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
@@ -197,7 +199,7 @@ class RISExtractor:
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
-            return meetings
+            return ExtractArtifact(meetings=meetings)
         except Exception as e:
             self.logger.error(f"Fehler beim Abrufen der Sitzungen {starturl}: {e}")
             return []
@@ -215,7 +217,7 @@ def main() -> None:
     starturl = "https://risi.muenchen.de/"
 
     extractor = RISExtractor()
-    extract_artifact = extractor.run(starturl)
+    extract_artifact = extractor.run(starturl, datetime.date(2025, 6, 1))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 

@@ -385,6 +385,10 @@ class Meeting(BaseModel):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
 
+class ExtractArtifact(BaseModel):
+    meetings: list[Meeting]
+
+
 # Forward references for Membership and AgendaItem
 Person.model_rebuild()
 Meeting.model_rebuild()
