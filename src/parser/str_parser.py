@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from pydantic import HttpUrl
 
-from src.data_models import Location, Meeting
+from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
 
 
@@ -44,11 +44,11 @@ class STRParser:
         self.logger.debug(f"Meeting cancelled: {cancelled}")
 
         match = re.search(r"\((.*?)\)", title)
-        meetingState = match.group(1) if match else ""
+        meetingState = match.group(1) if match else None
         self.logger.debug(f"Meeting state: {meetingState}")
 
         # --- Date Parsing ---
-        start = datetime.min
+        start = None
         match = re.search(r"^(.*?),\s*(\d{1,2}\. .*? \d{4}),\s*(\d{1,2}:\d{2}) Uhr\s*\((.*?)\)", title)
         if match:
             _, date_str, time_str, meetingState = match.groups()
@@ -75,25 +75,16 @@ class STRParser:
         type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
+        # TODO: load if already exists (find by name?)
+
         # --- Location Object ---
         location = Location(
+            id=None,
             type="place",
-            name=data_dict.get("Sitzungsort:", "Unbekannt"),
             description="Ort der Stadtratssitzung",
-            geojson={},
-            streetAddress="",
             room=data_dict.get("Sitzungsort:", ""),
-            postalCode="",
-            subLocality="",
             locality="München",
-            bodies=[],
-            organizations=[],
-            persons=[],
-            meetings=[],
-            papers=[],
-            license="",
-            keyword=[],
-            created=datetime.now(),
+            created=datetime.now(),  # TODO: check if already exists
             modified=datetime.now(),
             web=HttpUrl(url),
             deleted=False,
@@ -102,7 +93,8 @@ class STRParser:
 
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
+        organization = [HttpUrl(urljoin(url, a.get("href"))) for a in organization_links if a.get("href")]
+        organization = organization if len(organization) > 0 else None
         self.logger.debug(f"Organizations: {organization}")
 
         # --- Participants (as URLs) ---
@@ -110,47 +102,38 @@ class STRParser:
         for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
             link = li.get("href")
             if link:
-                full_url = urljoin(url, link)
+                full_url = HttpUrl(urljoin(url, link))
                 participants.append(full_url)
+        participants = participants if len(participants) > 0 else None
         self.logger.debug(f"Participants: {participants}")
 
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = urljoin(url, doc_link["href"])
+            doc_url = HttpUrl(urljoin(url, doc_link["href"]))
             doc_title = doc_link.get_text(strip=True)
-            auxiliaryFile.append({"title": doc_title, "url": doc_url})
+            if doc_url:
+                auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
             self.logger.debug(f"Document found: {doc_title} ({doc_url})")
+        auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        invitation = {}
-        resultsProtocol = {}
-        verbatimProtocol = {}
-        agendaItem = []
-        license = ""
-        keyword = []
-        created = datetime.min
-        modified = datetime.min
+        created = datetime.now()  # TODO: check if already exists?
+        modified = datetime.now()
         web = HttpUrl(url)
         deleted = False
 
         # --- Assemble Meeting ---
         meeting = Meeting(
+            id=None,
             type=type,
             name=name,
             cancelled=cancelled,
             start=start,
-            end=datetime.min,
             location=location,
             organization=organization,
             participant=participants,
-            invitation=invitation,
-            resultsProtocol=resultsProtocol,
-            verbatimProtocol=verbatimProtocol,
             auxiliaryFile=auxiliaryFile,
-            agendaItem=agendaItem,
-            license=license,
-            keyword=keyword,
             created=created,
             modified=modified,
             web=web,
