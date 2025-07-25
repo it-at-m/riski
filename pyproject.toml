@@ -5,16 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "docling>=2.38.0",
     "gitpython>=3.1.44",
+    "ipykernel>=6.29.5",
+    "langchain>=0.3.26",
+    "langchain-community>=0.3.26",
     "pyyaml>=6.0.2",
-    "python-dotenv>=1.0.1",
-    "truststore>=0.8.0",
-    "httpx>=0.28.1",
-    "bs4>=0.0.2",
-    "load-dotenv>=0.1.0",
-    "pydantic[email]>=2.11.7",
+    "langchain-docling>=1.0.0",
+    "pymupdf>=1.26.3",
     "pre-commit>=4.2.0",
-    "stamina>=25.1.0",
 ]
 
 [dependency-groups]
