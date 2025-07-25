@@ -35,7 +35,7 @@ class System(BaseModel):
 
 
 class Location(BaseModel):
-    id: HttpUrl = Field(description="Die eindeutige URL des Orts.")
+    id: HttpUrl | None = Field(description="Die eindeutige URL des Orts.")
     type: str | None = Field(None, description="Typ des Orts")
     description: str | None = Field(None, description="Textuelle Beschreibung eines Orts, z. B. in Form einer Adresse.")
     geojson: dict | None = Field(
@@ -336,7 +336,7 @@ class Body(BaseModel):
 
 
 class Meeting(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Sitzung.")
+    id: HttpUrl | None = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
     name: str | None = Field(None, description="Name der Sitzung.")
     meetingState: str | None = Field(
@@ -383,6 +383,10 @@ class Meeting(BaseModel):
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Sitzung.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+
+
+class ExtractArtifact(BaseModel):
+    meetings: list[Meeting]
 
 
 # Forward references for Membership and AgendaItem
