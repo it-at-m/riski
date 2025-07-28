@@ -17,7 +17,7 @@ import httpx
 import stamina
 
 
-class RefExtractor:
+class ReferentenExtractor:
     """
     Extractor for the Referent:innen on the RIS website
     """
@@ -36,25 +36,6 @@ class RefExtractor:
 
         self.logger.info(f"Extracted {len(links)} meeting links from page.")
         return links
-
-    def _get_headers(self) -> dict:
-        return {
-            "Host": "risi.muenchen.de",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://risi.muenchen.de",
-            "DNT": "1",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Priority": "u=0, i",
-        }
 
     # remove the . from ./xxx
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
