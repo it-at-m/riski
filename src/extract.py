@@ -1,21 +1,23 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
+import datetime
+import re
+
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
+
+from src.data_models import ExtractArtifact
+from src.logtools import getLogger
+from src.parser.str_parser import STRParser
 
 inject_into_ssl()
 load_dotenv()
 
 ### end of special import block ###
 
-import re
 
 import httpx
 import stamina
-from bs4 import BeautifulSoup
-from httpx import Client
-
-from src.logtools import getLogger
-from src.parser.str_parser import STRParser
 
 
 class RISExtractor:
@@ -24,7 +26,7 @@ class RISExtractor:
     """
 
     def __init__(self) -> None:
-        self.client = Client(proxy="http://internet-proxy-client.muenchen.de:80")
+        self.client = httpx.Client(proxy="http://internet-proxy-client.muenchen.de:80")
         self.logger = getLogger()
         self.str_parser = STRParser()
         self.base_url = "https://risi.muenchen.de/risi/sitzung"
@@ -71,17 +73,15 @@ class RISExtractor:
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
             self.logger.info(f"Redirect URL: {redirect_url}")
-            redirect_response = self.client.get(url=self._get_sanitized_url(redirect_url))
-            self.logger.info(f"Response from redirect URL: {redirect_response.status_code}")
+            self.client.get(url=self._get_sanitized_url(redirect_url))
         else:
             response.raise_for_status()
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter_sitzungen(self) -> str:
+    def _filter_sitzungen(self, startdate: datetime.date) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": "2026-01-01", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
-        # self.client.post(url=filter_url, headers=headers, data=data) # do it once - try again
+        data = {"von": startdate.isoformat(), "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         if response.status_code == 302:
@@ -162,7 +162,7 @@ class RISExtractor:
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, starturl) -> object:
+    def run(self, starturl: str, startdate: datetime.date) -> ExtractArtifact:
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
@@ -170,7 +170,7 @@ class RISExtractor:
 
             # Anfrage zum Filter Setzen (TODO: StartDatum setzen)
             # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # redirect url bekommen + filterung nach datum und bereich (nur stadtrat)
-            filter_sitzungen_redirect_path = self._filter_sitzungen()
+            filter_sitzungen_redirect_path = self._filter_sitzungen(startdate)
 
             # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it #Seitengröße auf 100 setzen
             results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
@@ -197,7 +197,7 @@ class RISExtractor:
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
-            return meetings
+            return ExtractArtifact(meetings=meetings)
         except Exception as e:
             self.logger.error(f"Fehler beim Abrufen der Sitzungen {starturl}: {e}")
             return []
@@ -215,11 +215,11 @@ def main() -> None:
     starturl = "https://risi.muenchen.de/"
 
     extractor = RISExtractor()
-    extract_artifact = extractor.run(starturl)
+    extract_artifact = extractor.run(starturl, datetime.date(2025, 6, 1))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
-    with open("artifacts/extraction.json", "w", encoding="utf-8") as file:
+    with open("artifacts/meeting.json", "w", encoding="utf-8") as file:
         file.write(extract_artifact.model_dump_json(indent=4))
 
     logger.info("Extraction process finished")

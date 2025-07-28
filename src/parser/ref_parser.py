@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from httpx import Client
 from pydantic import HttpUrl
 
-from src.data_models import Location, Person
+from src.data_models import Person
 from src.logtools import getLogger
 
 
@@ -43,7 +43,7 @@ class RefParser:
                 aktueller_titel += teil
                 in_title = True
             elif ")" in teil and in_title:
-                aktueller_titel += teil
+                aktueller_titel += " " + teil
                 in_title = False
                 titel_array.append(aktueller_titel)
                 aktueller_titel = ""
@@ -122,50 +122,21 @@ class RefParser:
 
         # --- Assemble Person ---
         person = Person(
+            id=url,
             type="https://schema.oparl.org/1.1/Person",
             familyName=nachname,
             givenName=" ".join(vornamen),
             name=name,
-            body=HttpUrl(url),  # Evtl schauen wie STR das macht
+            # schauen wie STR das macht oder leer lassen
             created=create_date,
             formOfAddress=anrede,
-            keyword=[],
-            license="",
             life=data_dict["Lebenslauf:"],
             lifeSource=url,
-            membership=[],  # STR Parser checken
             modified=create_date,
             status=[status],
             title=self._get_titles(pot_titles),
             web=HttpUrl(url),
-            affix="",
             deleted=False,
-            email=[],
-            gender="",
-            location=url,
-            locationObject=Location(
-                type="place",
-                name=data_dict.get("Sitzungsort:", "Unbekannt"),
-                description="Ort der Stadtratssitzung",
-                geojson={},
-                streetAddress="",
-                room=data_dict.get("Sitzungsort:", ""),
-                postalCode="",
-                subLocality="",
-                locality="München",
-                bodies=[],
-                organizations=[],
-                persons=[],
-                meetings=[],
-                papers=[],
-                license="",
-                keyword=[],
-                created=datetime.now(),
-                modified=datetime.now(),
-                web=HttpUrl(url),
-                deleted=False,
-            ),
-            phone=[],
         )
 
         self.logger.info(f"Person object created: {person.givenName} {person.familyName}")

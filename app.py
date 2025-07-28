@@ -3,6 +3,7 @@ import datetime
 import sys
 
 from src import extract
+from src.extractor.ref_extractor import RefExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -31,6 +32,12 @@ def main():
     logger.info(f"Extracting meetings starting from {startdate}")
     extract_artifacts = extractor.run(args.starturl, startdate)
     print(extract_artifacts)
+
+    logger.info("Extracting refernten")
+    ref_extractor = RefExtractor()
+    ref_extract_artifacts = ref_extractor.run(args.starturl)
+    print(ref_extract_artifacts)
+
     logger.info("Extraction process finished")
     # TODO: Transform
     logger.info("RIS Indexer completed successfully")
