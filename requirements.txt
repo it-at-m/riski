@@ -465,7 +465,7 @@ tenacity==9.1.2
     #   langchain-core
 tifffile==2025.6.11
     # via scikit-image
-tokenizers==0.21.2
+tokenizers==0.20.0
     # via transformers
 torch==2.7.1
     # via
