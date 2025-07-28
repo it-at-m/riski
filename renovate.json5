@@ -1,6 +1,19 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>it-at-m/.github//renovate-configs/renovate-config.json5"
-  ]
-}
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  description: "Renovate config for KICC",
+  extends: [
+    "config:best-practices", // best practices
+    "customManagers:githubActionsVersions", // manages _VERSION variables in GitHub Action workflows
+    "helpers:pinGitHubActionDigestsToSemver", // pin to digest with semver as comment
+    ":pinAllExceptPeerDependencies", // pin all dependencies except peer dependencies
+    "schedule:weekly", // only weekly updates
+    ":separateMultipleMajorReleases", // separate major updates of dependencies into separate PRs
+    ":timezone(Europe/Berlin)", // sets correct timezone for schedule based operations
+    "security:openssf-scorecard", // show OpenSSF badge on pull requests to evaluate security health metrics for dependencies
+  ],
+  labels: ["renovate", "lifecycle"],
+  lockFileMaintenance: {
+    enabled: true,
+  },
+  reviewers: ["freinold", "a-wittmann", "shteenft"],
+} 
