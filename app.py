@@ -3,7 +3,7 @@ import datetime
 import sys
 
 from src import extract
-from src.extractor.ref_extractor import RefExtractor
+from src.extractor.referenten_extractor import RefExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -35,7 +35,7 @@ def main():
 
     logger.info("Extracting refernten")
     ref_extractor = RefExtractor()
-    ref_extract_artifacts = ref_extractor.run(args.starturl)
+    ref_extract_artifacts = ref_extractor.run()
     print(ref_extract_artifacts)
 
     logger.info("Extraction process finished")

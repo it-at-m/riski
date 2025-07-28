@@ -3,14 +3,13 @@ from datetime import datetime
 from logging import Logger
 
 from bs4 import BeautifulSoup
-from httpx import Client
 from pydantic import HttpUrl
 
 from src.data_models import Person
 from src.logtools import getLogger
 
 
-class RefParser:
+class ReferentenParser:
     """
     Parser für Stadtratssitzungen
     """
@@ -30,7 +29,7 @@ class RefParser:
     Bei diesen Strings kann es sein, dass ein Titel wie Dr.(Univ. Florenz) aufgeteilt ist in ['Dr.(Univ.','Florenz)']
     Diese müssne wieder zu einem Titel zusammgesetzt werden.
     Es werden der Reihe nach alle Strings durchlaufen und wenn eine '(' ohne ')' gefunden wird, wird ein temporärer
-    string angelegt und solange die bestandeteile zu einem String zusammegefügt, bis eine ')' gefunden wird.
+    string angelegt und solange die bestandeteile zu einem String zusammegefügt, bis eine ')' gefunden wird.  (Stand: 2025-07-03)
     """
 
     def _get_titles(self, titles: list[str]) -> list[str]:
@@ -83,7 +82,7 @@ class RefParser:
         Vor der Änderung war somit lediglich ein Nachname zulässig, weshalb alle Namen davor automatisch Vornamen sind.
         Mit der Änderung ist das nicht mehr der Fall, da so allerdings überhaupt keine Differenzierung der Namen möglich wäre
         wird diese Annahme im Code weiter getroffen. Sollte das zu Problemen führen müsste man die Daten manuell korrigieren 
-        oder den Code anpassen bzw. entfernen.
+        oder den Code anpassen bzw. entfernen. (Stand: 2025-07-03)
         """
         # Nachname
         namensbestandteile = name.split(" ")
@@ -127,7 +126,6 @@ class RefParser:
             familyName=nachname,
             givenName=" ".join(vornamen),
             name=name,
-            # schauen wie STR das macht oder leer lassen
             created=create_date,
             formOfAddress=anrede,
             life=data_dict["Lebenslauf:"],
@@ -141,18 +139,3 @@ class RefParser:
 
         self.logger.info(f"Person object created: {person.givenName} {person.familyName}")
         return person
-
-
-def test():
-    parser = RefParser()
-    client = Client(proxy="http://internet-proxy-client.muenchen.de:80")
-    response = client.get("https://risi.muenchen.de/risi/person/detail/1152817", follow_redirects=True)
-    print(response)
-    input()
-    res = parser.parse("https://risi.muenchen.de/risi/person/detail/1152817", response.text)
-    print(res)
-    return
-
-
-if __name__ == "__main__":
-    test()
