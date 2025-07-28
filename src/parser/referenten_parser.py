@@ -11,14 +11,14 @@ from src.logtools import getLogger
 
 class ReferentenParser:
     """
-    Parser für Stadtratssitzungen
+    Parser für Referent*innen
     """
 
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("RefParser initialized.")
+        self.logger.info("Referenten Parser initialized.")
 
     """
     Methode zum Extrahieren der Akademischen Titel einer Person aus dem Namen.

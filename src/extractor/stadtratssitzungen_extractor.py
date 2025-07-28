@@ -20,7 +20,7 @@ import httpx
 import stamina
 
 
-class RISExtractor:
+class StadtratssitzungenExtractor:
     """
     Extractor for the RIS website
     """
@@ -214,7 +214,7 @@ def main() -> None:
 
     starturl = "https://risi.muenchen.de/"
 
-    extractor = RISExtractor()
+    extractor = StadtratssitzungenExtractor()
     extract_artifact = extractor.run(starturl, datetime.date(2025, 6, 1))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")

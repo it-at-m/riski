@@ -2,8 +2,8 @@ import argparse
 import datetime
 import sys
 
-from src import extract
 from src.extractor.referenten_extractor import ReferentenExtractor
+from src.extractor.stadtratssitzungen_extractor import StadtratssitzungenExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -27,7 +27,7 @@ def main():
     logger = getLogger()
     version = get_version()
     logger.info(f"RIS Extractor v{version} starting up")
-    extractor = extract.RISExtractor()
+    extractor = StadtratssitzungenExtractor()
     startdate = datetime.date.fromisoformat(args.startdate)
     logger.info(f"Extracting meetings starting from {startdate}")
     extract_artifacts = extractor.run(args.starturl, startdate)
