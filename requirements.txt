@@ -10,10 +10,6 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.9.0
     # via httpx
-appnope==0.1.4 ; sys_platform == 'darwin'
-    # via ipykernel
-asttokens==3.0.0
-    # via stack-data
 attrs==25.3.0
     # via
     #   aiohttp
@@ -28,10 +24,8 @@ certifi==2025.7.14
     #   httpcore
     #   httpx
     #   requests
-cffi==1.17.1 ; implementation_name == 'pypy' or platform_python_implementation == 'PyPy'
-    # via
-    #   pyzmq
-    #   zstandard
+cffi==1.17.1 ; platform_python_implementation == 'PyPy'
+    # via zstandard
 cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.4.2
@@ -41,17 +35,10 @@ click==8.2.1
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
     #   click
-    #   ipython
     #   pytest
     #   tqdm
-comm==0.2.2
-    # via ipykernel
 dataclasses-json==0.6.7
     # via langchain-community
-debugpy==1.8.15
-    # via ipykernel
-decorator==5.2.1
-    # via ipython
 dill==0.4.0
     # via multiprocess
 distlib==0.3.9
@@ -73,8 +60,6 @@ easyocr==1.7.2
     # via docling
 et-xmlfile==2.0.0
     # via openpyxl
-executing==2.2.0
-    # via stack-data
 filelock==3.18.0
     # via
     #   huggingface-hub
@@ -125,14 +110,6 @@ imageio==2.37.0
     # via scikit-image
 iniconfig==2.1.0
     # via pytest
-ipykernel==6.29.5
-    # via riski-extraktor (pyproject.toml)
-ipython==9.4.0
-    # via ipykernel
-ipython-pygments-lexers==1.1.1
-    # via ipython
-jedi==0.19.2
-    # via ipython
 jinja2==3.1.6
     # via torch
 jsonlines==3.1.0
@@ -147,12 +124,6 @@ jsonschema==4.24.0
     # via docling-core
 jsonschema-specifications==2025.4.1
     # via jsonschema
-jupyter-client==8.6.3
-    # via ipykernel
-jupyter-core==5.8.1
-    # via
-    #   ipykernel
-    #   jupyter-client
 langchain==0.3.26
     # via
     #   riski-extraktor (pyproject.toml)
@@ -191,10 +162,6 @@ markupsafe==3.0.2
     # via jinja2
 marshmallow==3.26.1
     # via dataclasses-json
-matplotlib-inline==0.1.7
-    # via
-    #   ipykernel
-    #   ipython
 mdurl==0.1.2
     # via markdown-it-py
 mpire==2.10.2
@@ -209,8 +176,6 @@ multiprocess==0.70.18
     # via mpire
 mypy-extensions==1.1.0
     # via typing-inspect
-nest-asyncio==1.6.0
-    # via ipykernel
 networkx==3.5
     # via
     #   scikit-image
@@ -282,7 +247,6 @@ orjson==3.11.0 ; platform_python_implementation != 'PyPy'
 packaging==25.0
     # via
     #   huggingface-hub
-    #   ipykernel
     #   langchain-core
     #   langsmith
     #   lazy-loader
@@ -294,10 +258,6 @@ pandas==2.3.1
     # via
     #   docling
     #   docling-core
-parso==0.8.4
-    # via jedi
-pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
-    # via ipython
 pillow==11.3.0
     # via
     #   docling
@@ -310,30 +270,20 @@ pillow==11.3.0
     #   scikit-image
     #   torchvision
 platformdirs==4.3.8
-    # via
-    #   jupyter-core
-    #   virtualenv
+    # via virtualenv
 pluggy==1.6.0
     # via
     #   docling
     #   pytest
 pre-commit==4.2.0
     # via riski-extraktor (pyproject.toml)
-prompt-toolkit==3.0.51
-    # via ipython
 propcache==0.3.2
     # via
     #   aiohttp
     #   yarl
-psutil==7.0.0
-    # via ipykernel
-ptyprocess==0.7.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
-    # via pexpect
-pure-eval==0.2.3
-    # via stack-data
 pyclipper==1.3.0.post6
     # via easyocr
-pycparser==2.22 ; implementation_name == 'pypy' or platform_python_implementation == 'PyPy'
+pycparser==2.22 ; platform_python_implementation == 'PyPy'
     # via cffi
 pydantic==2.11.7
     # via
@@ -354,8 +304,6 @@ pydantic-settings==2.10.1
     #   langchain-community
 pygments==2.19.2
     # via
-    #   ipython
-    #   ipython-pygments-lexers
     #   mpire
     #   pytest
     #   rich
@@ -370,9 +318,7 @@ pytest==8.4.1
 python-bidi==0.6.6
     # via easyocr
 python-dateutil==2.9.0.post0
-    # via
-    #   jupyter-client
-    #   pandas
+    # via pandas
 python-docx==1.2.0
     # via docling
 python-dotenv==1.1.1
@@ -384,7 +330,6 @@ pytz==2025.2
 pywin32==311 ; sys_platform == 'win32'
     # via
     #   docling-parse
-    #   jupyter-core
     #   mpire
 pyyaml==6.0.2
     # via
@@ -397,10 +342,6 @@ pyyaml==6.0.2
     #   langchain-core
     #   pre-commit
     #   transformers
-pyzmq==27.0.0
-    # via
-    #   ipykernel
-    #   jupyter-client
 referencing==0.36.2
     # via
     #   jsonschema
@@ -464,8 +405,6 @@ sqlalchemy==2.0.41
     #   sqlmodel
 sqlmodel==0.0.24
     # via riski-extraktor (pyproject.toml)
-stack-data==0.6.3
-    # via ipython
 sympy==1.14.0
     # via torch
 tabulate==0.9.0
@@ -490,10 +429,6 @@ torchvision==0.22.1
     # via
     #   docling-ibm-models
     #   easyocr
-tornado==6.5.1
-    # via
-    #   ipykernel
-    #   jupyter-client
 tqdm==4.67.1
     # via
     #   docling
@@ -502,14 +437,6 @@ tqdm==4.67.1
     #   mpire
     #   semchunk
     #   transformers
-traitlets==5.14.3
-    # via
-    #   comm
-    #   ipykernel
-    #   ipython
-    #   jupyter-client
-    #   jupyter-core
-    #   matplotlib-inline
 transformers==4.53.2
     # via
     #   docling-core
@@ -527,7 +454,6 @@ typing-extensions==4.14.1
     #   beautifulsoup4
     #   docling-core
     #   huggingface-hub
-    #   ipython
     #   langchain-core
     #   pydantic
     #   pydantic-core
@@ -551,8 +477,6 @@ urllib3==2.5.0
     # via requests
 virtualenv==20.31.2
     # via pre-commit
-wcwidth==0.2.13
-    # via prompt-toolkit
 xlsxwriter==3.2.5
     # via python-pptx
 yarl==1.20.1
