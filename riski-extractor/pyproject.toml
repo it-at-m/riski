@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Python application for extracting information from munich's political information system RIS"
 readme = "README.md"
 requires-python = "==3.11.13"
-license = { file = "../LICENSE" }
+license = { file = "LICENSE" }
 authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
     { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
