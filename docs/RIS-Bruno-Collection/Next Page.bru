@@ -1,0 +1,37 @@
+meta {
+  name: Next Page
+  type: http
+  seq: 5
+}
+
+get {
+  url: https://risi.muenchen.de/risi/sitzung/uebersicht?2-3.0-list_container-list-card-cardheader-nav_top-next&_=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  2-3.0-list_container-list-card-cardheader-nav_top-next: 
+  _: 1
+}
+
+headers {
+  Accept-Language: de,en-US;q=0.7,en;q=0.3
+  Cache-Control: no-cache
+  User-Agent: bruno-runtime/.0.1
+  Accept: */*
+  Accept-Encoding: gzip, deflate, br
+  Connection: keep-alive
+  Wicket-Ajax: true
+  Wicket-Ajax-BaseURL: sitzung/uebersicht?0
+  Wicket-FocusedElementId: idb
+  X-Requested-With: XMLHttpRequest
+  Priority: u=0
+}
+
+body:form-urlencoded {
+  von: 
+  bis: 
+  status: 
+  containerBereichDropDown: bereich: 2
+}
