@@ -1,175 +1,311 @@
+import os
 from datetime import datetime
-from typing import List
+from enum import Enum
+from typing import List, Optional
 
-from pydantic import EmailStr, HttpUrl, field_validator
-from sqlmodel import Field, SQLModel
+from dotenv import load_dotenv
+from pydantic import Field
+from sqlalchemy import JSON
+from sqlmodel import Column, Relationship, Session, SQLModel, create_engine, select, text
 
-
-class BaseModel(SQLModel):
-    @field_validator("id", mode="before", check_fields=False)
-    def validate_id(cls, v):
-        if v is None:
-            return None
-        return str(HttpUrl.validate(v))
+load_dotenv()
 
 
-class System(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class SYSTEM_OTHER_OPARL_VERSION(SQLModel, check_tables_exist=True, table=True):
+    __tablename__ = "system_other_oparl_version"
+
+    db_id: int = Field(primary_key=True)
+    # Zusammengesetzter Primärschlüssel
+    system_id: int = Field(foreign_key="system.db_id", primary_key=True)
+    other_version_id: int = Field(foreign_key="system.db_id", primary_key=True)
+
+    # Beziehungen (Relationship)
+    system: "System" = Relationship(back_populates="other_oparl_versions")
+    other_version: "System" = Relationship(back_populates="other_oparl_versions_reverse")
+
+
+class System(SQLModel, check_tables_exist=True, table=True):
+    __tablename__ = "system"
+
+    db_id: int = Field(primary_key=True)
     id: str = Field(description="Die eindeutige URL dieses Objekts.")
-    type: str | None = Field(None, description="Der feste Typ des Objekts: 'https://schema.oparl.org/1.1/System'.")
+    type: str | None = Field(
+        None,
+        description="Der feste Typ des Objekts: 'https://schema.oparl.org/1.1/System'.",
+    )
     oparlVersion: str = Field(description="Die vom System unterstützte OParl-Version (z. B. 'https://schema.oparl.org/1.1/').")
-    otherOparlVersions: List[HttpUrl] | None = Field(None, description="Dient der Angabe von System-Objekten mit anderen OParl-Versionen.")
-    license: HttpUrl | None = Field(
+    otherOparlVersions: str | None = Field(None, description="Dient der Angabe von System-Objekten mit anderen OParl-Versionen.")
+    license: str | None = Field(
         None, description="Lizenz, unter der durch diese API abrufbaren Daten stehen, sofern nicht am einzelnen Objekt anders angegeben."
     )
-    body: HttpUrl = Field(description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.")
-    name: str | None = Field(
-        None,
-        description="Benutzerfreundlicher Name für das System, mit dessen Hilfe Nutzerinnen und Nutzer das System erkennen und von anderen unterscheiden können.",
-    )
-    contactEmail: EmailStr | None = Field(
-        None,
-        description="E-Mail-Adresse für Anfragen zur OParl-API. Die Angabe einer E-Mail-Adresse dient sowohl NutzerInnen wie auch Entwickelnden von Clients zur Kontaktaufnahme mit dem Betreiber.",
-    )
-    contactName: str | None = Field(
-        None,
-        description="Name der Ansprechpartnerin bzw. des Ansprechpartners oder der Abteilung, die über die in contactEmail angegebene Adresse erreicht werden kann.",
-    )
-    website: HttpUrl | None = Field(None, description="URL der Website des parlamentarischen Informationssystems")
-    vendor: HttpUrl | None = Field(None, description="URL der Website des Softwareanbieters, von dem die OParl-Server-Software stammt.")
-    product: HttpUrl | None = Field(None, description="URL zu Informationen über die auf dem System genutzte OParl-Server-Software")
+    body: str = Field(description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.")
+    name: str | None = Field(None, description="Benutzerfreundlicher Name für das System.")
+    contactEmail: str | None = Field(None, description="E-Mail-Adresse für Anfragen zur OParl-API.")
+    contactName: str | None = Field(None, description="Name der Ansprechpartnerin bzw. des Ansprechpartners.")
+    website: str | None = Field(None, description="URL der Website des parlamentarischen Informationssystems")
+    vendor: str | None = Field(None, description="URL der Website des Softwareanbieters")
+    product: str | None = Field(None, description="URL zu Informationen über die verwendete OParl-Server-Software")
     created: datetime | None = Field(None, description="Zeitpunkt der Erstellung dieses Objekts.")
     modified: datetime | None = Field(None, description="Zeitpunkt der letzten Änderung dieses Objekts.")
-    web: HttpUrl | None = Field(None, description="URL zur HTML-Ansicht dieses Objekts.")
+    web: str | None = Field(None, description="URL zur HTML-Ansicht dieses Objekts.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
-    @field_validator("contactEmail", mode="before")
-    def validate_email(cls, v):
-        if v is None:
-            return None
-        return str(EmailStr.validate(v))
+    # Relationships
+    other_oparl_versions: List[SYSTEM_OTHER_OPARL_VERSION] = Relationship(back_populates="system_other_oparl_version")
+    other_oparl_versions_reverse: List[SYSTEM_OTHER_OPARL_VERSION] = Relationship(back_populates="system_other_oparl_version")
 
 
-class Location(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class Location(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Die eindeutige URL des Orts.")
     type: str | None = Field(None, description="Typ des Orts")
     description: str | None = Field(None, description="Textuelle Beschreibung eines Orts, z. B. in Form einer Adresse.")
     geojson: dict | None = Field(
-        None,
-        description="Geodaten-Repräsentation des Orts. Muss der GeoJSON-Spezifikation entsprechen, d.h. es muss ein vollständiges Feature-Objekt ausgegeben werden.",
+        default=None,
+        sa_column=Column(JSON),
+        description="Geodaten-Repräsentation des Orts als GeoJSON-Feature-Objekt.",
     )
     streetAddress: str | None = Field(None, description="Straße und Hausnummer der Anschrift.")
     room: str | None = Field(None, description="Raumangabe der Anschrift.")
     postalCode: str | None = Field(None, description="Postleitzahl der Anschrift.")
     subLocality: str | None = Field(None, description="Untergeordnete Ortsangabe der Anschrift, z.B. Stadtbezirk, Ortsteil oder Dorf.")
     locality: str | None = Field(None, description="Ortsangabe der Anschrift.")
-    bodies: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Body-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
-    organizations: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Organisation-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
-    persons: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Person-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
-    meetings: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Meeting-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
-    papers: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Paper-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
     license: str | None = Field(None, description="Lizenz für die bereitgestellten Informationen.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Wahlperiode.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht des Objekts.")
+    web: str | None = Field(None, description="HTML-Ansicht des Objekts.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+    # Relationships
+    bodies: List["Body"] = Relationship(back_populates="location_bodies")
+    organizations: List["Organization"] = Relationship(back_populates="location_organizations")
+    persons: List["Person"] = Relationship(back_populates="location_persons")
+    meetings: List["Meeting"] = Relationship(back_populates="location_meetings")
+    papers: List["Paper"] = Relationship(back_populates="location_papers")  #
+    keywords: List["LocationKeyword"] = Relationship(back_populates="location_keyword")
 
 
-class LegislativeTerm(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class LocationBodies(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "location_bodies"
+    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    body_id: int = Field(foreign_key="body.db_id", primary_key=True)
+
+
+class LocationOrganizations(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "location_organizations"
+    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+
+
+class LocationPersons(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "location_persons"
+    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+
+
+class LocationMeetings(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "location_meetings"
+    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id", primary_key=True)
+
+
+class LocationPapers(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "location_papers"
+    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
+
+
+class LocationKeyword(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "location_keyword"
+    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    keyword: str = Field(primary_key=True)
+
+
+class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Wahlperiode.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/LegislativeTerm'.")
-    body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Wahlperiode gehört.")
+    body: str | None = Field(None, description="Verweis auf die Körperschaft, zu der die Wahlperiode gehört.")
     name: str | None = Field(None, description="Bezeichnung der Wahlperiode.")
     startDate: datetime | None = Field(None, description="Beginn der Wahlperiode.")
     endDate: datetime | None = Field(None, description="Ende der Wahlperiode.")
     license: str | None = Field(None, description="Lizenz für die bereitgestellten Informationen.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Wahlperiode.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht des Objekts.")
+    web: str | None = Field(None, description="HTML-Ansicht des Objekts.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+    keywords: List["LegislativeTermKeyword"] = Relationship(back_populates="legislative_term_keyword")
 
 
-class Organization(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class LegislativeTermKeyword(SQLModel, table=True, check_tables_exist=True, eck_tables_exist=True):
+    __tablename__ = "legislative_term_keyword"
+
+    legislative_term_id: str = Field(foreign_key="legislative_term.id", primary_key=True, description="URL der zugehörigen LegislativeTerm")
+    keyword: str = Field(primary_key=True, description="Zugehöriges Keyword")
+
+    # Reverse Relationship
+    legislative_term: List["LegislativeTerm"] = Relationship(back_populates="legislative_term")
+
+
+class OrganizationType(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "organization_type"
+
+    db_id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(description="Name des Organisationstyps")
+    description: str | None = Field(None, description="Beschreibung des Typs")
+
+
+class Organization(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Organisation.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Organization'.")
-    body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
+    body: str | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
     name: str | None = Field(None, description="Bezeichnung der Organisation.")
-    membership: List[HttpUrl] | None = Field(None, description="Liste der zugehörigen Mitgliedschaften.")
-    meeting: HttpUrl | None = Field(None, description="Liste der Sitzungen dieser Organisation.")
+    meeting: str | None = Field(None, description="Liste der Sitzungen dieser Organisation.")
     shortName: str | None = Field(None, description="Abkürzung der Organisation.")
-    post: List[str] | None = Field(None, description="Posten oder Ämter, die in der Organisation existieren.")
-    subOrganizationOf: HttpUrl | None = Field(None, description="Verweis auf die übergeordnete Organisation.")
-    organizationType: str | None = Field(None, description="Typ der Organisation, z. B. Ausschuss, Fraktion.")
+    subOrganizationOf: str | None = Field(None, description="Verweis auf die übergeordnete Organisation.")
     classification: str | None = Field(None, description="Klassifizierung, z. B. gesetzlich, freiwillig.")
     startDate: datetime | None = Field(None, description="Beginn der Organisation.")
     endDate: datetime | None = Field(None, description="Beendigung der Organisation.")
-    website: HttpUrl | None = Field(None, description="Website der Organisation.")
-    location: HttpUrl | None = Field(None, description="Ort, an dem die Organisation ansässig ist.")
-    externalBody: HttpUrl | None = Field(None, description="Verweis auf eine externe Körperschaft (nur bei Importen).")
+    website: str | None = Field(None, description="Website der Organisation.")
+    location: int | None = Field(None, description="Ort, an dem die Organisation ansässig ist.", foreign_key="location.db_id")
+    externalBody: str | None = Field(None, description="Verweis auf eine externe Körperschaft (nur bei Importen).")
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Organisation.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Organisation.")
+    web: str | None = Field(None, description="HTML-Ansicht der Organisation.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
+    membership: List["Membership"] = Relationship(back_populates="organization_membership")
+    post: List["OrganizationPost"] = Relationship(back_populates="organization_post")
+    subOrganizations: List["Organization"] = Relationship(
+        back_populates="parentOrganization",
+    )
+    parentOrganization: List["Organization"] = Relationship(back_populates="organization_sub_organization")
+    keywords: List["OrganizationKeyword"] = Relationship(back_populates="organization_keyword")
+    organizationType: OrganizationType = Relationship(back_populates="organization_type")
 
-class Person(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+
+class OrganizationMembership(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "organization_membership"
+    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
+
+
+class OrganizationPost(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "organization_post"
+    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    post: str = Field(primary_key=True)
+
+
+class OrganizationSubOrganization(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "organization_sub_organization"
+    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    sub_organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+
+
+class OrganizationKeyword(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "organization_keyword"
+    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    keyword: str = Field(primary_key=True)
+
+
+class PersonTitleLink(SQLModel, table=True):
+    __tablename__ = "person_title"
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    title: str = Field(primary_key=True)
+    person: "Person" = Relationship(back_populates="title_links")
+
+
+class PersonPhoneLink(SQLModel, table=True):
+    __tablename__ = "person_phone"
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    phone: str = Field(primary_key=True)
+    person: "Person" = Relationship(back_populates="phone_links")
+
+
+class PersonEmailLink(SQLModel, table=True):
+    __tablename__ = "person_email"
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    email: str = Field(primary_key=True)
+    person: "Person" = Relationship(back_populates="email_links")
+
+
+class PersonStatusLink(SQLModel, table=True):
+    __tablename__ = "person_status"
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    status: str = Field(primary_key=True)
+    person: "Person" = Relationship(back_populates="status_links")
+
+
+class PersonMembershipLink(SQLModel, table=True):
+    __tablename__ = "person_membership"
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
+    person: "Person" = Relationship(back_populates="membership_links")
+
+
+class PersonKeywordLink(SQLModel, table=True):
+    __tablename__ = "person_keyword"
+    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    keyword: str = Field(primary_key=True)
+    person: "Person" = Relationship(back_populates="keyword_links")
+
+
+class Person(SQLModel, table=True):
+    __tablename__ = "person"
+
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Person.")
-    type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Person'.")
-    body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, in der die Person aktiv ist.")
-    name: str | None = Field(None, description="Vollständiger Name der Person.")
-    familyName: str | None = Field(None, description="Nachname der Person.")
-    givenName: str | None = Field(None, description="Vorname der Person.")
-    formOfAddress: str | None = Field(None, description="Anrede der Person (z. B. Frau, Herr).")
-    affix: str | None = Field(None, description="Namenszusatz (z. B. von, zu, Freiherr).")
-    title: List[str] | None = Field(None, description="Titel der Person (z. B. Dr., Prof.).")
-    gender: str | None = Field(None, description="Geschlecht der Person.")
-    phone: List[str] | None = Field(None, description="Telefonnummer(n) der Person.")
-    email: List[str] | None = Field(None, description="E-Mail-Adresse(n) der Person.")
-    location: HttpUrl | None = Field(None, description="Verweis auf einen Ort, der mit der Person verknüpft ist.")
-    status: List[str] | None = Field(None, description="Statusinformationen zur Person (z. B. Mandat ruhend).")
-    membership: List[HttpUrl] | None = Field(None, description="Verweise auf Mitgliedschaften.")
-    life: str | None = Field(None, description="Lebensdaten der Person (z. B. Geburtsdatum).")
-    lifeSource: str | None = Field(None, description="Quelle der Lebensdaten.")
-    license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
-    created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
-    modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
-    deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+    type: str | None = Field(None, description="Typ des Objekts")
+    body: str | None = Field(None, description="Körperschaft")
+    name: str | None = Field(None, description="Vollständiger Name")
+    familyName: str | None = Field(None, description="Familienname")
+    givenName: str | None = Field(None, description="Vorname")
+    formOfAddress: str | None = Field(None, description="Anrede")
+    affix: str | None = Field(None, description="Namenszusatz")
+    gender: str | None = Field(None, description="Geschlecht")
+    location: int | None = Field(foreign_key="location.db_id", description="Ort")
+    life: str | None = Field(None, description="Lebensdaten")
+    lifeSource: str | None = Field(None, description="Quelle der Lebensdaten")
+    license: str | None = Field(None, description="Lizenz")
+    created: datetime | None = Field(None, description="Erstellungszeitpunkt")
+    modified: datetime | None = Field(None, description="Letzte Änderung")
+    web: str | None = Field(None, description="HTML-Ansicht der Person")
+    deleted: bool = Field(default=False, description="Markiert als gelöscht")
+
+    title: List[PersonTitleLink] = Relationship(back_populates="person_title")
+
+    phone: List[PersonPhoneLink] = Relationship(back_populates="person_phone")
+
+    email: List[PersonEmailLink] = Relationship(back_populates="person_email")
+
+    status: List[PersonStatusLink] = Relationship(back_populates="person_status")
+
+    keywords: List[PersonKeywordLink] = Relationship(back_populates="person_keyword")
+
+    membership: List[PersonMembershipLink] = Relationship(back_populates="person_membership")
 
 
-class Membership(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class MembershipKeyword(SQLModel, table=True):
+    __tablename__ = "membership_keyword"
+    membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
+    keyword: str = Field(primary_key=True)
+
+    membership: "Membership" = Relationship(back_populates="keywords")
+
+
+class Membership(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Mitgliedschaft.")
     type: str | None = Field(None, description="Typ der Mitgliedschaft")
-    person: HttpUrl | None = Field(
+    person: str | None = Field(
         None,
         description="Rückverweis auf die Person, die Mitglied ist. Wird nur ausgegeben, wenn das Membership-Objekt einzeln abgerufen wird.",
+        foreign_key="person.db_id",
     )
-    organization: HttpUrl | None = Field(None, description="Die Gruppierung, in der die Person Mitglied ist oder war.")
+    organization: str | None = Field(
+        None, description="Die Gruppierung, in der die Person Mitglied ist oder war.", foreign_key="organizsation.db_id"
+    )
     role: str | None = Field(
         None,
         description="Rolle der Person für die Gruppierung. Kann genutzt werden, um verschiedene Arten von Mitgliedschaften, z.B. in Gremien, zu unterscheiden.",
@@ -177,20 +313,55 @@ class Membership(BaseModel, table=True):
     votingRight: bool | None = Field(None, description="Gibt an, ob die Person in der Gruppierung stimmberechtigtes Mitglied ist.")
     startDate: datetime | None = Field(None, description="Datum, an dem die Mitgliedschaft beginnt.")
     endDate: datetime | None = Field(None, description="Datum, an dem die Mitgliedschaft endet.")
-    onBehalfOf: HttpUrl | None = Field(
+    onBehalfOf: str | None = Field(
         None,
         description="Die Gruppierung, für die die Person in der unter organization angegebenen Organisation sitzt. Beispiel: Mitgliedschaft als Vertreter einer Ratsfraktion, einer Gruppierung oder einer externen Organisation.",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
+    web: str | None = Field(None, description="HTML-Ansicht der Person.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+    keywords: List[MembershipKeyword] = Relationship(back_populates="membership")
 
 
-class File(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class FileDerivativeLink(SQLModel, table=True):
+    file_id: int = Field(foreign_key="file.db_id")
+    FileDerivative_file: int = Field(foreign_key="file.db_id")
+
+    file: "File" = Relationship(back_populates="derivative_files")
+
+
+class FileMeetingLink(SQLModel, table=True):
+    file_id: int = Field(foreign_key="file.db_id")
+    meeting_id: int = Field(foreign_key="mmeting.db_id")
+
+    file: "File" = Relationship(back_populates="meetings")
+
+
+class FileAgendaItemLink(SQLModel, table=True):
+    file_id: int = Field(foreign_key="file.db_id")
+    agendaItem: int = Field(foreign_key="agendaitem.db_id")
+
+    file: "File" = Relationship(back_populates="agenda_items")
+
+
+class FilePaperLink(SQLModel, table=True):
+    file_id: int = Field(foreign_key="file.db_id")
+    paper_id: int = Field(foreign_key="paper.db_id")
+
+    file: "File" = Relationship(back_populates="papers")
+
+
+class FileKeywordLink(SQLModel, table=True):
+    file_id: int = Field(foreign_key="file.db_id")
+    keyword: str
+
+    file: "File" = Relationship(back_populates="keywords")
+
+
+class File(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL des Dokuments.")
     type: str | None = Field(None, description="Typ der Datei")
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das Objekt. Sollte keine Dateiendungen wie '.pdf' enthalten.")
@@ -209,47 +380,45 @@ class File(BaseModel, table=True):
     text: str | None = Field(
         None, description="Reine Textwiedergabe des Dateiinhalts, sofern dieser in Textform wiedergegeben werden kann."
     )
-    accessUrl: HttpUrl = Field(description="Zwingend erforderliche URL für den allgemeinen Zugriff auf die Datei.")
-    downloadUrl: HttpUrl | None = Field(None, description="URL zum Herunterladen der Datei.")
-    externalServiceUrl: HttpUrl | None = Field(
+    accessUrl: str = Field(description="Zwingend erforderliche URL für den allgemeinen Zugriff auf die Datei.")
+    downloadUrl: str | None = Field(None, description="URL zum Herunterladen der Datei.")
+    externalServiceUrl: str | None = Field(
         None, description="Externe URL, die zusätzliche Zugriffsoptionen bietet (z.B. ein YouTube-Video)."
     )
-    masterFile: HttpUrl | None = Field(None, description="Datei, von der das aktuelle Objekt abgeleitet wurde.")
-    derivativeFile: List[HttpUrl] | None = Field(None, description="Dateien, die von dem aktuellen Objekt abgeleitet wurden.")
-    fileLicense: HttpUrl | None = Field(
+    masterFile: str | None = Field(None, description="Datei, von der das aktuelle Objekt abgeleitet wurde.")
+    fileLicense: str | None = Field(
         None,
         description="Lizenz, unter der die Datei angeboten wird. Wenn diese Eigenschaft nicht verwendet wird, ist der Wert von license oder die Lizenz eines übergeordneten Objektes maßgeblich.",
     )
-    meeting: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Meeting-Objekte. Wird nur ausgegeben, wenn das File-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
-    agendaItem: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf AgendaItem-Objekte. Wird nur ausgegeben, wenn das File-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
-    paper: List[HttpUrl] | None = Field(
-        None,
-        description="Rückverweise auf Paper-Objekte. Wird nur ausgegeben, wenn das File-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
-    )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
+
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
+    web: str | None = Field(None, description="HTML-Ansicht der Person.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
+    derivative_file: List[FileDerivativeLink] = Relationship(back_populates="file")
+    meeting: List[FileMeetingLink] = Relationship(back_populates="file")
+    agendaItem: List[FileAgendaItemLink] = Relationship(back_populates="file")
+    paper: List[FilePaperLink] = Relationship(back_populates="file")
+    keyword: List[FileKeywordLink] = Relationship(back_populates="file")
 
-# Meeting hat bereits db_id
+
+class AgendaItemKeywordLink(SQLModel, table=True):
+    agendaitem_id: int = Field(foreign_key="agendaitem.db_id")
+    keyword: str
+
+    agendaitem: "AgendaItem" = Relationship(back_populates="keywords")
 
 
-class AgendaItem(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class AgendaItem(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL des Tagesordnungspunkt.")
     type: str | None = Field(None, description="Typ des Tagesordnungspunktes")
-    meeting: HttpUrl | None = Field(
+    meeting: str | None = Field(
         None,
         description="Rückverweis auf das Meeting, welches nur dann ausgegeben werden muss, wenn das AgendaItem-Objekt einzeln abgerufen wird.",
+        foreign_key="mmeting.db_id",
     )
     number: str | None = Field(
         None,
@@ -275,22 +444,44 @@ class AgendaItem(BaseModel, table=True):
         description="Datei, die den Beschluss enthält, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde.",
         foreign_key="file.db_id",
     )
-    auxiliaryFile: List[File] | None = Field(None, description="Weitere Datei-Anhänge zum Tagesordnungspunkt.")
     start: datetime | None = Field(None, description="Datum und Uhrzeit des Anfangszeitpunkts des Tagesordnungspunktes.")
     end: datetime | None = Field(None, description="Endzeitpunkt des Tagesordnungspunktes als Datum/Uhrzeit.")
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
+    web: str | None = Field(None, description="HTML-Ansicht der Person.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+    auxiliaryFile: List[FileAgendaItemLink] = Relationship(back_populates="file")
+
+    keyword: List[AgendaItemKeywordLink] = Relationship(back_populates="agendaitem")
 
 
-class Paper(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+class PaperType(SQLModel, table=True):
+    __tablename__ = "paper_type"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(description="Bezeichnung des Paper-Typs")
+
+    # Beziehung zu Subtypen
+    subtypes: List["PaperSubtypeEnum"] = Relationship(back_populates="parent_type")
+
+
+class PaperSubtype(SQLModel, table=True):
+    __tablename__ = "paper_subtype"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(..., description="Bezeichnung des Paper-Subtyps")
+
+    # FK auf PaperTypeEnum
+    paper_type_id: int = Field(foreign_key="paper_type.id", description="Referenz auf den übergeordneten Paper-Typ")
+    parent_type: PaperType = Relationship(back_populates="subtypes")
+
+
+class Paper(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Drucksache.")
     type: str | None = Field(None, description="Typ der Drucksache")
-    body: HttpUrl | None = Field(None, description="Körperschaft, zu der die Drucksache gehört.")
+    body: str | None = Field(None, description="Körperschaft, zu der die Drucksache gehört.")
     name: str | None = Field(None, description="Titel der Drucksache.")
     reference: str | None = Field(
         None,
@@ -298,79 +489,222 @@ class Paper(BaseModel, table=True):
     )
     date: datetime | None = Field(None, description="Datum, welches als Ausgangspunkt für Fristen usw. verwendet wird.")
     paperType: str | None = Field(None, description="Art der Drucksache, z. B. Beantwortung einer Anfrage.")
-    relatedPaper: List[HttpUrl] | None = Field(None, description="Inhaltlich verwandte Drucksachen.")
-    superordinatedPaper: List[HttpUrl] | None = Field(None, description="Übergeordnete Drucksachen.")
-    subordinatedPaper: List[HttpUrl] | None = Field(None, description="Untergeordnete Drucksachen.")
+    relatedPaper: List[str] | None = Field(None, description="Inhaltlich verwandte Drucksachen.")
+    superordinatedPaper: List[str] | None = Field(None, description="Übergeordnete Drucksachen.")
+    subordinatedPaper: List[str] | None = Field(None, description="Untergeordnete Drucksachen.")
     mainFile: File | None = Field(
         None,
         description="Die Hauptdatei zu dieser Drucksache. Beispiel: Die Drucksache repräsentiert eine Beschlussvorlage und die Hauptdatei enthält den Text der Beschlussvorlage. Sollte keine eindeutige Hauptdatei vorhanden sein, wird diese Eigenschaft nicht ausgegeben.",
-        foreign_key="file.db_id",
-    )
-    auxiliaryFile: List[File] | None = Field(
-        None,
-        description="Alle weiteren Dateien zur Drucksache, ausgenommen der gegebenenfalls in mainFile angegebenen.",
-        foreign_key="file.db_id",
-    )
-    location: List[Location] | None = Field(
-        None,
-        description="Sofern die Drucksache einen inhaltlichen Ortsbezug hat, beschreibt diese Eigenschaft den Ort in Textform und/oder in Form von Geodaten.",
-        foreign_key="location.db_id",
-    )
-    originatorPerson: List[HttpUrl] | None = Field(
-        None, description="Urheber der Drucksache, falls der Urheber eine Person ist. Es können auch mehrere Personen angegeben werden."
-    )
-    underDirectionOf: List[HttpUrl] | None = Field(
-        None, description="Federführung. Amt oder Abteilung, für die Inhalte oder Beantwortung der Drucksache verantwortlich."
-    )
-    originatorOrganization: List[HttpUrl] | None = Field(
-        None,
-        description="Urheber der Drucksache, falls der Urheber eine Gruppierung ist. Es können auch mehrere Gruppierungen angegeben werden.",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
     keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
+    web: str | None = Field(None, description="HTML-Ansicht der Person.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
+    auxiliary_files: List["PaperFileLink"] = Relationship(back_populates="paper")
+    related_papers: List["PaperRelatedLink"] = Relationship(back_populates="paper")
+    super_papers: List["PaperSuperordinatedLink"] = Relationship(back_populates="paper")
+    sub_papers: List["PaperSubordinatedLink"] = Relationship(back_populates="paper")
+    locations: List["PaperLocationLink"] = Relationship(back_populates="paper")
+    originator_persons: List["PaperOriginatorPersonLink"] = Relationship(back_populates="paper")
+    originator_orgs: List["PaperOriginatorOrgLink"] = Relationship(back_populates="paper")
+    under_direction_of: List["PaperDirectionLink"] = Relationship(back_populates="paper")
+    keywords: List["PaperKeywordLink"] = Relationship(back_populates="paper")
 
-class Body(BaseModel, table=True):
-    db_id: int = Field(default=None, primary_key=True)
+    paper_type_id: Optional[int] = Field(foreign_key="paper_type.id", description="Typ des Dokuments")
+    paper_type: PaperType = Relationship(back_populates="paper_types")
+
+    paper_subtype_id: int = Field(foreign_key="paper_subtype.id", description="Subtyp des Dokuments")
+    paper_subtype: PaperSubtype = Relationship(back_populates="paper_subtypes")
+
+
+class PaperFileLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    file_id: int = Field(foreign_key="file.db_id")
+
+    paper: "Paper" = Relationship(back_populates="auxiliary_files")
+    file: "File" = Relationship()
+
+
+class PaperRelatedLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    related_paper_url: str = Field(description="Verwandte Drucksache als URL")
+
+    paper: "Paper" = Relationship(back_populates="related_papers")
+
+
+class PaperSuperordinatedLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    superordinated_paper_url: str = Field(description="Übergeordnete Drucksache")
+
+    paper: "Paper" = Relationship(back_populates="super_papers")
+
+
+class PaperSubordinatedLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    subordinated_paper_url: str = Field(description="Untergeordnete Drucksache")
+
+    paper: "Paper" = Relationship(back_populates="sub_papers")
+
+
+class PaperLocationLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    location_id: int = Field(foreign_key="location.db_id")
+
+    paper: "Paper" = Relationship(back_populates="locations")
+    location: "Location" = Relationship()
+
+
+class PaperOriginatorPersonLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    person_name: str = Field(description="Name der Person")
+
+    paper: "Paper" = Relationship(back_populates="originator_persons")
+
+
+class PaperOriginatorOrgLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    organization_name: int = Field(description="Name der Organisation", foreign_key="organization.db_id")
+
+    paper: "Paper" = Relationship(back_populates="originator_orgs")
+
+
+class PaperDirectionLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    direction_name: str = Field(description="Amt oder Abteilung, federführend")
+
+    paper: "Paper" = Relationship(back_populates="under_direction_of")
+
+
+class PaperKeywordLink(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id")
+    keyword: str = Field(description="Schlagwort zur Drucksache")
+
+    paper: "Paper" = Relationship(back_populates="keywords")
+
+
+class BodyEquivalentLink(SQLModel, table=True):
+    """Verknüpfung Body <-> weitere Körperschaften (equivalent)"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    body_id: int = Field(foreign_key="body.db_id")
+    equivalent_url: str = Field(description="URL einer vergleichbaren Körperschaft")
+
+    body: "Body" = Relationship(back_populates="equivalents")
+
+
+class BodyKeywordLink(SQLModel, table=True):
+    """Verknüpfung Body <-> Keywords"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    body_id: int = Field(foreign_key="body.db_id")
+    keyword: str = Field(description="Schlagwort")
+
+    body: "Body" = Relationship(back_populates="keywords")
+
+
+class Body(SQLModel, table=True, check_tables_exist=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Körperschaft.")
     type: str | None = Field(None, description="Typangabe: 'https://schema.oparl.org/1.1/Body'.")
     name: str = Field(description="Name der Körperschaft.")
     shortName: str | None = Field(None, description="Abkürzung der Körperschaft.")
-    system: HttpUrl | None = Field(None, description="Verweis auf das zugehörige System-Objekt.")
-    website: HttpUrl | None = Field(None, description="Offizielle Website der Körperschaft.")
-    license: HttpUrl | None = Field(None, description="Standardlizenz für Daten dieser Körperschaft.")
+    system: str | None = Field(None, description="Verweis auf das zugehörige System-Objekt.")
+    website: str | None = Field(None, description="Offizielle Website der Körperschaft.")
+    license: str | None = Field(None, description="Standardlizenz für Daten dieser Körperschaft.")
     licenseValidSince: datetime | None = Field(None, description="Zeitpunkt, seit dem die Lizenz gilt.")
     oparlSince: datetime | None = Field(None, description="Zeitpunkt, ab dem die API für diese Körperschaft bereitsteht.")
     ags: str | None = Field(None, description="Amtlicher Gemeindeschlüssel.")
     rgs: str | None = Field(None, description="Regionalschlüssel.")
-    equivalent: List[HttpUrl] | None = Field(None, description="Weitere Körperschaften mit ähnlicher Bedeutung oder Funktion.")
+    equivalent: List[str] | None = Field(None, description="Weitere Körperschaften mit ähnlicher Bedeutung oder Funktion.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse der Körperschaft.")
     contactName: str | None = Field(None, description="Name des Ansprechpartners.")
-    organization: HttpUrl = Field(description="Liste der Organisationen der Körperschaft.")
-    person: HttpUrl = Field(description="Liste der Personen der Körperschaft.")
-    meeting: HttpUrl = Field(description="Liste der Sitzungen der Körperschaft.")
-    paper: HttpUrl = Field(description="Liste der Vorlagen dieser Körperschaft.")
-    legislativeTerm: HttpUrl = Field(description="Liste der Wahlperioden der Körperschaft.")
-    agendaItem: HttpUrl = Field(description="Liste aller Tagesordnungspunkte der Körperschaft.")
-    file: HttpUrl = Field(description="Liste aller Dateien der Körperschaft.")
-    locationList: HttpUrl | None = Field(None, description="Liste der Orte, die mit dieser Körperschaft verknüpft sind.")
-    legislativeTermList: HttpUrl = Field(description="Alternative URL zur Liste der Wahlperioden.")
-    membership: HttpUrl = Field(description="Liste der Mitgliedschaften in der Körperschaft.")
+    organization: str = Field(description="Liste der Organisationen der Körperschaft.")
+    person: str = Field(description="Liste der Personen der Körperschaft.")
+    meeting: str = Field(description="Liste der Sitzungen der Körperschaft.")
+    paper: str = Field(description="Liste der Vorlagen dieser Körperschaft.")
+    legislativeTerm: str = Field(description="Liste der Wahlperioden der Körperschaft.")
+    agendaItem: str = Field(description="Liste aller Tagesordnungspunkte der Körperschaft.")
+    file: str = Field(description="Liste aller Dateien der Körperschaft.")
+    locationList: str | None = Field(None, description="Liste der Orte, die mit dieser Körperschaft verknüpft sind.")
+    legislativeTermList: str = Field(description="Alternative URL zur Liste der Wahlperioden.")
+    membership: str = Field(description="Liste der Mitgliedschaften in der Körperschaft.")
     classification: str | None = Field(None, description="Art der Körperschaft, z. B. 'Stadt' oder 'Kreis'.")
-    location: HttpUrl | None = Field(None, description="Ort der Verwaltung dieser Körperschaft.")
-    keyword: List[str] | None = Field(None, description="Stichworte zur Körperschaft.")
+    location: str | None = Field(None, description="Ort der Verwaltung dieser Körperschaft.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Körperschaft.")
+    web: str | None = Field(None, description="HTML-Ansicht der Körperschaft.")
     deleted: bool | None = Field(False, description="Kennzeichnung als gelöscht.")
+    equivalents: list[BodyEquivalentLink] = Relationship(back_populates="body")
+    keywords: list[BodyKeywordLink] = Relationship(back_populates="body")
 
 
-class Meeting(BaseModel, table=True):
-    db_id: int = Field(description="Eindeutige ID der Sitzung.", primary_key=True)
+class MeetingOrganizationLink(SQLModel, table=True):
+    """Verknüpfung Meeting <-> Organization"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id")
+    organization_name: str = Field(description="Name oder ID der Organisation")
+
+    meeting: "Meeting" = Relationship(back_populates="organizations")
+
+
+class MeetingParticipantLink(SQLModel, table=True):
+    """Verknüpfung Meeting <-> Teilnehmer (Personen)"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id")
+    person_name: str = Field(description="Name oder ID der Person")
+
+    meeting: "Meeting" = Relationship(back_populates="participants")
+
+
+class MeetingAuxFileLink(SQLModel, table=True):
+    """Verknüpfung Meeting <-> zusätzliche Dateien"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id")
+    file_id: int = Field(foreign_key="file.db_id")
+
+    meeting: "Meeting" = Relationship(back_populates="auxiliary_files")
+    file: "File" = Relationship()
+
+
+class MeetingAgendaItemLink(SQLModel, table=True):
+    """Verknüpfung Meeting <-> AgendaItems (Reihenfolge relevant)"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id")
+    agenda_item_id: int = Field(foreign_key="agendaitem.db_id")
+    order: int | None = Field(None, description="Position des AgendaItems")
+
+    meeting: "Meeting" = Relationship(back_populates="agenda_items")
+    agenda_item: "AgendaItem" = Relationship()
+
+
+class MeetingKeywordLink(SQLModel, table=True):
+    """Verknüpfung Meeting <-> Keywords"""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id")
+    keyword: str = Field(description="Schlagwort")
+
+    meeting: "Meeting" = Relationship(back_populates="keywords")
+
+
+class Meeting(SQLModel, table=True):
+    db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
     name: str | None = Field(None, description="Name der Sitzung.")
@@ -387,45 +721,131 @@ class Meeting(BaseModel, table=True):
         None,
         description="Endzeitpunkt der Sitzung als Datum/Uhrzeit. Bei einer zukünftigen Sitzung ist dies der geplante Zeitpunkt, bei einer stattgefundenen kann es der tatsächliche Endzeitpunkt sein.",
     )
-    location: Location | None = Field(None, description="Sitzungsort.", foreign_key="location.db_id")
-    organization: List[HttpUrl] | None = Field(
-        None,
-        description="Gruppierungen, denen die Sitzung zugeordnet ist. Im Regelfall wird hier eine Gruppierung verknüpft sein, es kann jedoch auch gemeinsame Sitzungen mehrerer Gruppierungen geben. Das erste Element sollte dann das federführende Gremium sein.",
-    )
-    participant: List[HttpUrl] | None = Field(
-        None,
-        description="Personen, die an der Sitzung teilgenommen haben (d.h. nicht nur die eingeladenen Personen, sondern die tatsächlich Anwesenden). Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
-    )
-    invitation: File | None = Field(None, description="Einladungsdokument zur Sitzung.", foreign_key="file.db_id")
-    resultsProtocol: File | None = Field(
+    location: int | None = Field(None, description="Sitzungsort.", foreign_key="location.db_id")
+
+    invitation: int | None = Field(None, description="Einladungsdokument zur Sitzung.", foreign_key="file.db_id")
+    resultsProtocol: int | None = Field(
         None,
         description="Ergebnisprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
         foreign_key="file.db_id",
     )
-    verbatimProtocol: File | None = Field(
+    verbatimProtocol: int | None = Field(
         None,
         description="Wortprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
         foreign_key="file.db_id",
     )
-    auxiliaryFile: List[File] | None = Field(
-        None,
-        description="Dateianhang zur Sitzung. Hiermit sind Dateien gemeint, die üblicherweise mit der Einladung zu einer Sitzung verteilt werden, und die nicht bereits über einzelne Tagesordnungspunkte referenziert sind.",
-        foreign_key="file.db_id",
-    )
-    agendaItem: List[AgendaItem] | None = Field(
-        None,
-        description="Tagesordnungspunkte der Sitzung. Die Reihenfolge ist relevant. Es kann Sitzungen ohne TOPs geben.",
-        foreign_key="agendaitem.db_id",
-    )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Sitzung.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
-    web: HttpUrl | None = Field(None, description="HTML-Ansicht der Sitzung.")
+    web: str | None = Field(None, description="HTML-Ansicht der Sitzung.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+    organizations: list[MeetingOrganizationLink] = Relationship(back_populates="meeting")
+    participants: list[MeetingParticipantLink] = Relationship(back_populates="meeting")
+    auxiliary_files: list[MeetingAuxFileLink] = Relationship(back_populates="meeting")
+    agenda_items: list[MeetingAgendaItemLink] = Relationship(back_populates="meeting")
+    keywords: list[MeetingKeywordLink] = Relationship(back_populates="meeting")
 
 
-# Forward references
-Person.model_rebuild()
-Meeting.model_rebuild()
-AgendaItem.model_rebuild()
+##############################################
+################ Enums #######################
+##############################################
+class OrganizationTypeEnum(str, Enum):
+    COUNCIL = "Stadtrat"
+    FACTION = "Faktion"
+    BV = "Bürgerversammlung"
+    BA = "Bezirksausschuss"
+    OTHER = "Other"
+
+
+class PaperTypeEnum(str, Enum):
+    STR_ANTRAG = "Str-Antrag"
+    BA_ANTRAG = "BA-Antrag"
+    SITZUNGSVORLAGE = "Sitzungsvorlage"
+    BV_EMPFEHLUNG = "BV-Empfehlung"
+    BV_ANFRAGE = "BV-Anfrage"
+
+
+class PaperSubtypeEnum(str, Enum):
+    # Subtypen für Str-Antrag
+    DRINGLICHKEITSANTRAG = "Dringlichkeitsantrag"
+    ANTRAG = "Antrag"
+    ANFRAGE = "Anfrage"
+    AENDERUNGSANTRAG = "Änderungsantrag"
+
+    # Subtypen für BA-Antrag
+    BA_ANTRAG = "BA-Antrag"
+
+    # Subtypen für BV-Empfehlung
+    BV_EMPFEHLUNG = "BV-Empfehlung"
+
+    # Subtypen für BV-Anfrage
+    BV_ANFRAGE = "BV-Anfrage"
+
+    # Subtypen für Sitzungsvorlage
+    BESCHLUSSVORLAGE_VB = "Beschlussvorlage VB"
+    BESCHLUSSVORLAGE_SB = "Beschlussvorlage SB"
+    BESCHLUSSVORLAGE_SB_VB = "Beschlussvorlage SB+VB"
+    BEKANNTGABE = "Bekanntgabe"
+    DIREKT = "Direkt"
+    SITZUNGSVORLAGE_DA = "Sitzungsvorlage zur DA"
+
+
+###########################################################
+#############  Datenbankschema erstellen ##################
+###########################################################
+engine = create_engine(os.getenv("DATABASE_URL"), echo=True)
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def check_tables_exist():
+    with engine.connect() as conn:
+        result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public'"))
+        tables = [row[0] for row in result]
+        print("Vorhandene Tabellen:", tables)
+
+
+def seed_organization_types(session: Session):
+    existing = session.exec(select(OrganizationType)).all()
+    if existing:
+        return  # Tabelle schon befüllt
+
+    for enum_value in OrganizationTypeEnum:
+        org_type = OrganizationType(name=enum_value.value)
+        session.add(org_type)
+    session.commit()
+
+
+def seed_paper_types(session: Session):
+    existing = session.exec(select(PaperType)).all()
+    if existing:
+        return  # Tabelle schon befüllt
+
+    for enum_value in PaperTypeEnum:
+        paper_type = PaperType(name=enum_value.value)
+        session.add(paper_type)
+    session.commit()
+
+
+def seed_paper_subtypes(session: Session):
+    existing = session.exec(select(PaperSubtype)).all()
+    if existing:
+        return  # Tabelle schon befüllt
+
+    for enum_value in PaperSubtypeEnum:
+        paper_subtype = PaperSubtype(name=enum_value.value)
+        session.add(paper_subtype)
+    session.commit()
+
+
+def seed_all_enums(session: Session):
+    seed_organization_types(session)
+    seed_paper_types(session)
+    seed_paper_subtypes(session)
+
+
+if __name__ == "__main__":
+    create_db_and_tables()
+    check_tables_exist()
