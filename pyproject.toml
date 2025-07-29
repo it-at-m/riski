@@ -15,6 +15,7 @@ dependencies = [
     "pymupdf>=1.26.3",
     "pre-commit>=4.2.0",
     "sqlmodel>=0.0.24",
+    "psycopg2>=2.9.10",
 ]
 
 [dependency-groups]

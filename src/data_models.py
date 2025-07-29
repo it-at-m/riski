@@ -4,30 +4,31 @@ from enum import Enum
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from pydantic import Field
 from sqlalchemy import JSON
-from sqlmodel import Column, Relationship, Session, SQLModel, create_engine, select, text
+from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select, text
 
 load_dotenv()
 
 
-class SYSTEM_OTHER_OPARL_VERSION(SQLModel, check_tables_exist=True, table=True):
+class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True):
     __tablename__ = "system_other_oparl_version"
-
-    db_id: int = Field(primary_key=True)
     # Zusammengesetzter Primärschlüssel
-    system_id: int = Field(foreign_key="system.db_id", primary_key=True)
-    other_version_id: int = Field(foreign_key="system.db_id", primary_key=True)
+    system_id: Optional[int] = Field(foreign_key="system.db_id", primary_key=True)
+    other_version_id: Optional[int] = Field(foreign_key="system.db_id", primary_key=True)
 
-    # Beziehungen (Relationship)
-    system: "System" = Relationship(back_populates="other_oparl_versions")
-    other_version: "System" = Relationship(back_populates="other_oparl_versions_reverse")
+    system: "System" = Relationship(
+        back_populates="other_oparl_versions", sa_relationship_kwargs={"foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.system_id]"}
+    )
+    other_version: "System" = Relationship(
+        back_populates="other_oparl_versions_reverse",
+        sa_relationship_kwargs={"foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.other_version_id]"},
+    )
 
 
 class System(SQLModel, check_tables_exist=True, table=True):
     __tablename__ = "system"
 
-    db_id: int = Field(primary_key=True)
+    db_id: Optional[int] = Field(primary_key=True)
     id: str = Field(description="Die eindeutige URL dieses Objekts.")
     type: str | None = Field(
         None,
@@ -51,8 +52,12 @@ class System(SQLModel, check_tables_exist=True, table=True):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
 
     # Relationships
-    other_oparl_versions: List[SYSTEM_OTHER_OPARL_VERSION] = Relationship(back_populates="system_other_oparl_version")
-    other_oparl_versions_reverse: List[SYSTEM_OTHER_OPARL_VERSION] = Relationship(back_populates="system_other_oparl_version")
+    other_oparl_versions: List[SYSTEM_OTHER_OPARL_VERSION] = Relationship(
+        back_populates="system", sa_relationship_kwargs={"foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.system_id]"}
+    )
+    other_oparl_versions_reverse: List[SYSTEM_OTHER_OPARL_VERSION] = Relationship(
+        back_populates="other_version", sa_relationship_kwargs={"foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.other_version_id]"}
+    )
 
 
 class Location(SQLModel, table=True, check_tables_exist=True):
@@ -136,7 +141,7 @@ class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
     keywords: List["LegislativeTermKeyword"] = Relationship(back_populates="legislative_term_keyword")
 
 
-class LegislativeTermKeyword(SQLModel, table=True, check_tables_exist=True, eck_tables_exist=True):
+class LegislativeTermKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "legislative_term_keyword"
 
     legislative_term_id: str = Field(foreign_key="legislative_term.id", primary_key=True, description="URL der zugehörigen LegislativeTerm")
@@ -209,49 +214,49 @@ class OrganizationKeyword(SQLModel, table=True, check_tables_exist=True):
     keyword: str = Field(primary_key=True)
 
 
-class PersonTitleLink(SQLModel, table=True):
+class PersonTitleLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_title"
     person_id: int = Field(foreign_key="person.db_id", primary_key=True)
     title: str = Field(primary_key=True)
     person: "Person" = Relationship(back_populates="title_links")
 
 
-class PersonPhoneLink(SQLModel, table=True):
+class PersonPhoneLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_phone"
     person_id: int = Field(foreign_key="person.db_id", primary_key=True)
     phone: str = Field(primary_key=True)
     person: "Person" = Relationship(back_populates="phone_links")
 
 
-class PersonEmailLink(SQLModel, table=True):
+class PersonEmailLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_email"
     person_id: int = Field(foreign_key="person.db_id", primary_key=True)
     email: str = Field(primary_key=True)
     person: "Person" = Relationship(back_populates="email_links")
 
 
-class PersonStatusLink(SQLModel, table=True):
+class PersonStatusLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_status"
     person_id: int = Field(foreign_key="person.db_id", primary_key=True)
     status: str = Field(primary_key=True)
     person: "Person" = Relationship(back_populates="status_links")
 
 
-class PersonMembershipLink(SQLModel, table=True):
+class PersonMembershipLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_membership"
     person_id: int = Field(foreign_key="person.db_id", primary_key=True)
     membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
     person: "Person" = Relationship(back_populates="membership_links")
 
 
-class PersonKeywordLink(SQLModel, table=True):
+class PersonKeywordLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_keyword"
     person_id: int = Field(foreign_key="person.db_id", primary_key=True)
     keyword: str = Field(primary_key=True)
     person: "Person" = Relationship(back_populates="keyword_links")
 
 
-class Person(SQLModel, table=True):
+class Person(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person"
 
     db_id: Optional[int] = Field(default=None, primary_key=True)
@@ -273,7 +278,7 @@ class Person(SQLModel, table=True):
     web: str | None = Field(None, description="HTML-Ansicht der Person")
     deleted: bool = Field(default=False, description="Markiert als gelöscht")
 
-    title: List[PersonTitleLink] = Relationship(back_populates="person_title")
+    title: List[PersonTitleLink] = Relationship(back_populates="person")
 
     phone: List[PersonPhoneLink] = Relationship(back_populates="person_phone")
 
@@ -286,7 +291,7 @@ class Person(SQLModel, table=True):
     membership: List[PersonMembershipLink] = Relationship(back_populates="person_membership")
 
 
-class MembershipKeyword(SQLModel, table=True):
+class MembershipKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "membership_keyword"
     membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
     keyword: str = Field(primary_key=True)
@@ -304,7 +309,7 @@ class Membership(SQLModel, table=True, check_tables_exist=True):
         foreign_key="person.db_id",
     )
     organization: str | None = Field(
-        None, description="Die Gruppierung, in der die Person Mitglied ist oder war.", foreign_key="organizsation.db_id"
+        None, description="Die Gruppierung, in der die Person Mitglied ist oder war.", foreign_key="organization.db_id"
     )
     role: str | None = Field(
         None,
@@ -326,41 +331,43 @@ class Membership(SQLModel, table=True, check_tables_exist=True):
 
 
 class FileDerivativeLink(SQLModel, table=True):
-    file_id: int = Field(foreign_key="file.db_id")
-    FileDerivative_file: int = Field(foreign_key="file.db_id")
+    __tablename__ = "file_derivative_link"
+    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    FileDerivative_file: int = Field(foreign_key="file.db_id", primary_key=True)
 
     file: "File" = Relationship(back_populates="derivative_files")
 
 
 class FileMeetingLink(SQLModel, table=True):
-    file_id: int = Field(foreign_key="file.db_id")
-    meeting_id: int = Field(foreign_key="mmeting.db_id")
+    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    meeting_id: int = Field(foreign_key="meeting.db_id", primary_key=True)
 
     file: "File" = Relationship(back_populates="meetings")
 
 
 class FileAgendaItemLink(SQLModel, table=True):
-    file_id: int = Field(foreign_key="file.db_id")
-    agendaItem: int = Field(foreign_key="agendaitem.db_id")
+    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    agendaItem: int = Field(foreign_key="agendaitem.db_id", primary_key=True)
 
     file: "File" = Relationship(back_populates="agenda_items")
 
 
 class FilePaperLink(SQLModel, table=True):
-    file_id: int = Field(foreign_key="file.db_id")
-    paper_id: int = Field(foreign_key="paper.db_id")
+    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
 
     file: "File" = Relationship(back_populates="papers")
 
 
 class FileKeywordLink(SQLModel, table=True):
-    file_id: int = Field(foreign_key="file.db_id")
-    keyword: str
+    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    keyword: str = Field(primary_key=True)
 
     file: "File" = Relationship(back_populates="keywords")
 
 
 class File(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "file"
     db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL des Dokuments.")
     type: str | None = Field(None, description="Typ der Datei")
@@ -404,9 +411,9 @@ class File(SQLModel, table=True, check_tables_exist=True):
     keyword: List[FileKeywordLink] = Relationship(back_populates="file")
 
 
-class AgendaItemKeywordLink(SQLModel, table=True):
-    agendaitem_id: int = Field(foreign_key="agendaitem.db_id")
-    keyword: str
+class AgendaItemKeywordLink(SQLModel, table=True, check_tables_exist=True):
+    agendaitem_id: int = Field(foreign_key="agendaitem.db_id", primary_key=True)
+    keyword: str = Field(primary_key=True)
 
     agendaitem: "AgendaItem" = Relationship(back_populates="keywords")
 
@@ -418,7 +425,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     meeting: str | None = Field(
         None,
         description="Rückverweis auf das Meeting, welches nur dann ausgegeben werden muss, wenn das AgendaItem-Objekt einzeln abgerufen wird.",
-        foreign_key="mmeting.db_id",
+        foreign_key="meeting.db_id",
     )
     number: str | None = Field(
         None,
@@ -439,7 +446,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     resolutionText: str | None = Field(
         None, description="Text des Beschlusses, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde."
     )
-    resolutionFile: File | None = Field(
+    resolutionFile: int | None = Field(
         None,
         description="Datei, die den Beschluss enthält, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde.",
         foreign_key="file.db_id",
@@ -456,14 +463,14 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     keyword: List[AgendaItemKeywordLink] = Relationship(back_populates="agendaitem")
 
 
-class PaperType(SQLModel, table=True):
+class PaperType(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_type"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(description="Bezeichnung des Paper-Typs")
 
     # Beziehung zu Subtypen
-    subtypes: List["PaperSubtypeEnum"] = Relationship(back_populates="parent_type")
+    subtypes: List["PaperSubtype"] = Relationship(back_populates="parent_type")
 
 
 class PaperSubtype(SQLModel, table=True):
@@ -489,15 +496,12 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
     )
     date: datetime | None = Field(None, description="Datum, welches als Ausgangspunkt für Fristen usw. verwendet wird.")
     paperType: str | None = Field(None, description="Art der Drucksache, z. B. Beantwortung einer Anfrage.")
-    relatedPaper: List[str] | None = Field(None, description="Inhaltlich verwandte Drucksachen.")
-    superordinatedPaper: List[str] | None = Field(None, description="Übergeordnete Drucksachen.")
-    subordinatedPaper: List[str] | None = Field(None, description="Untergeordnete Drucksachen.")
-    mainFile: File | None = Field(
+    mainFile: int | None = Field(
         None,
         description="Die Hauptdatei zu dieser Drucksache. Beispiel: Die Drucksache repräsentiert eine Beschlussvorlage und die Hauptdatei enthält den Text der Beschlussvorlage. Sollte keine eindeutige Hauptdatei vorhanden sein, wird diese Eigenschaft nicht ausgegeben.",
+        foreign_key="file.db_id",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: str | None = Field(None, description="HTML-Ansicht der Person.")
@@ -520,7 +524,7 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
     paper_subtype: PaperSubtype = Relationship(back_populates="paper_subtypes")
 
 
-class PaperFileLink(SQLModel, table=True):
+class PaperFileLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     file_id: int = Field(foreign_key="file.db_id")
@@ -529,7 +533,7 @@ class PaperFileLink(SQLModel, table=True):
     file: "File" = Relationship()
 
 
-class PaperRelatedLink(SQLModel, table=True):
+class PaperRelatedLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     related_paper_url: str = Field(description="Verwandte Drucksache als URL")
@@ -537,7 +541,7 @@ class PaperRelatedLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="related_papers")
 
 
-class PaperSuperordinatedLink(SQLModel, table=True):
+class PaperSuperordinatedLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     superordinated_paper_url: str = Field(description="Übergeordnete Drucksache")
@@ -545,7 +549,7 @@ class PaperSuperordinatedLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="super_papers")
 
 
-class PaperSubordinatedLink(SQLModel, table=True):
+class PaperSubordinatedLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     subordinated_paper_url: str = Field(description="Untergeordnete Drucksache")
@@ -553,7 +557,7 @@ class PaperSubordinatedLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="sub_papers")
 
 
-class PaperLocationLink(SQLModel, table=True):
+class PaperLocationLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     location_id: int = Field(foreign_key="location.db_id")
@@ -562,7 +566,7 @@ class PaperLocationLink(SQLModel, table=True):
     location: "Location" = Relationship()
 
 
-class PaperOriginatorPersonLink(SQLModel, table=True):
+class PaperOriginatorPersonLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     person_name: str = Field(description="Name der Person")
@@ -570,7 +574,7 @@ class PaperOriginatorPersonLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="originator_persons")
 
 
-class PaperOriginatorOrgLink(SQLModel, table=True):
+class PaperOriginatorOrgLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     organization_name: int = Field(description="Name der Organisation", foreign_key="organization.db_id")
@@ -578,7 +582,7 @@ class PaperOriginatorOrgLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="originator_orgs")
 
 
-class PaperDirectionLink(SQLModel, table=True):
+class PaperDirectionLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     direction_name: str = Field(description="Amt oder Abteilung, federführend")
@@ -586,7 +590,7 @@ class PaperDirectionLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="under_direction_of")
 
 
-class PaperKeywordLink(SQLModel, table=True):
+class PaperKeywordLink(SQLModel, table=True, check_tables_exist=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     paper_id: int = Field(foreign_key="paper.db_id")
     keyword: str = Field(description="Schlagwort zur Drucksache")
@@ -594,7 +598,7 @@ class PaperKeywordLink(SQLModel, table=True):
     paper: "Paper" = Relationship(back_populates="keywords")
 
 
-class BodyEquivalentLink(SQLModel, table=True):
+class BodyEquivalentLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Body <-> weitere Körperschaften (equivalent)"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -604,7 +608,7 @@ class BodyEquivalentLink(SQLModel, table=True):
     body: "Body" = Relationship(back_populates="equivalents")
 
 
-class BodyKeywordLink(SQLModel, table=True):
+class BodyKeywordLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Body <-> Keywords"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -627,7 +631,6 @@ class Body(SQLModel, table=True, check_tables_exist=True):
     oparlSince: datetime | None = Field(None, description="Zeitpunkt, ab dem die API für diese Körperschaft bereitsteht.")
     ags: str | None = Field(None, description="Amtlicher Gemeindeschlüssel.")
     rgs: str | None = Field(None, description="Regionalschlüssel.")
-    equivalent: List[str] | None = Field(None, description="Weitere Körperschaften mit ähnlicher Bedeutung oder Funktion.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse der Körperschaft.")
     contactName: str | None = Field(None, description="Name des Ansprechpartners.")
     organization: str = Field(description="Liste der Organisationen der Körperschaft.")
@@ -650,7 +653,7 @@ class Body(SQLModel, table=True, check_tables_exist=True):
     keywords: list[BodyKeywordLink] = Relationship(back_populates="body")
 
 
-class MeetingOrganizationLink(SQLModel, table=True):
+class MeetingOrganizationLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> Organization"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -660,7 +663,7 @@ class MeetingOrganizationLink(SQLModel, table=True):
     meeting: "Meeting" = Relationship(back_populates="organizations")
 
 
-class MeetingParticipantLink(SQLModel, table=True):
+class MeetingParticipantLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> Teilnehmer (Personen)"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -670,7 +673,7 @@ class MeetingParticipantLink(SQLModel, table=True):
     meeting: "Meeting" = Relationship(back_populates="participants")
 
 
-class MeetingAuxFileLink(SQLModel, table=True):
+class MeetingAuxFileLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> zusätzliche Dateien"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -681,7 +684,7 @@ class MeetingAuxFileLink(SQLModel, table=True):
     file: "File" = Relationship()
 
 
-class MeetingAgendaItemLink(SQLModel, table=True):
+class MeetingAgendaItemLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> AgendaItems (Reihenfolge relevant)"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -693,7 +696,7 @@ class MeetingAgendaItemLink(SQLModel, table=True):
     agenda_item: "AgendaItem" = Relationship()
 
 
-class MeetingKeywordLink(SQLModel, table=True):
+class MeetingKeywordLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> Keywords"""
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -703,7 +706,7 @@ class MeetingKeywordLink(SQLModel, table=True):
     meeting: "Meeting" = Relationship(back_populates="keywords")
 
 
-class Meeting(SQLModel, table=True):
+class Meeting(SQLModel, table=True, check_tables_exist=True):
     db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
