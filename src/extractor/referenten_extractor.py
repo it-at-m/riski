@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
 from src.data_models import Person
+from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 from src.parser.referenten_parser import ReferentenParser
 
@@ -23,7 +24,7 @@ class ReferentenExtractor:
     """
 
     def __init__(self) -> None:
-        self.client = httpx.Client(proxy="http://internet-proxy-client.muenchen.de:80")
+        self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
         self.logger = getLogger()
         self.ref_parser = ReferentenParser()
         self.base_url = "https://risi.muenchen.de/risi/person"

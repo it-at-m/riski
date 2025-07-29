@@ -144,13 +144,12 @@ class StadtratssitzungenExtractor:
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, starturl: str, startdate: datetime.date) -> list[Meeting]:
+    def run(self, startdate: datetime.date) -> list[Meeting]:
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
             self._initial_request()
 
-            # Anfrage zum Filter Setzen (TODO: StartDatum setzen)
             # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # redirect url bekommen + filterung nach datum und bereich (nur stadtrat)
             filter_sitzungen_redirect_path = self._filter_sitzungen(startdate)
 
@@ -181,7 +180,7 @@ class StadtratssitzungenExtractor:
 
             return meetings
         except Exception as e:
-            self.logger.error(f"Fehler beim Abrufen der Sitzungen {starturl}: {e}")
+            self.logger.error(f"Fehler beim Abrufen der Sitzungen: {e}")
             return []
 
 
@@ -194,10 +193,8 @@ def main() -> None:
     logger.info("Starting extraction process")
     logger.info("Loading sitemap from 'artifacts/sitemap.json'")
 
-    starturl = "https://risi.muenchen.de/"
-
     extractor = StadtratssitzungenExtractor()
-    extract_artifact = extractor.run(starturl, datetime.date(2025, 6, 1))
+    extract_artifact = extractor.run(datetime.date(2025, 6, 1))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
