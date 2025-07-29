@@ -9,7 +9,7 @@ from truststore import inject_into_ssl
 from src.data_models import Meeting
 from src.envtools import getenv_with_exception
 from src.logtools import getLogger
-from src.parser.str_parser import STRParser
+from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
 
 inject_into_ssl()
 load_dotenv()
@@ -29,7 +29,7 @@ class StadtratssitzungenExtractor:
     def __init__(self) -> None:
         self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
         self.logger = getLogger()
-        self.str_parser = STRParser()
+        self.str_parser = StadtratssitzungenParser()
         self.base_url = "https://risi.muenchen.de/risi/sitzung"
         self.uebersicht_path = "/uebersicht"
 

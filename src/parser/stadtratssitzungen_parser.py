@@ -11,7 +11,7 @@ from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
 
 
-class STRParser:
+class StadtratssitzungenParser:
     """
     Parser für Stadtratssitzungen
     """
@@ -20,7 +20,7 @@ class STRParser:
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("STRParser initialized.")
+        self.logger.info("StadtratssitzungenParser initialized.")
 
         try:
             locale.setlocale(locale.LC_TIME, "de_DE.utf8")
