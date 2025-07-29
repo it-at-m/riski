@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
-from src.data_models import ExtractArtifact
+from src.data_models import Meeting
 from src.logtools import getLogger
 from src.parser.str_parser import STRParser
 
@@ -109,7 +109,7 @@ class StadtratssitzungenExtractor:
         response.raise_for_status()
         return response.text.encode().decode("unicode_escape")
 
-    def _parse_meeting_links(self, meeting_links: list[str]) -> list[object]:
+    def _parse_meeting_links(self, meeting_links: list[str]) -> list[Meeting]:
         meetings = []
         for link in meeting_links:
             # self.logger.info(f"Lade Meeting-Link: {link}")
@@ -162,7 +162,7 @@ class StadtratssitzungenExtractor:
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, starturl: str, startdate: datetime.date) -> ExtractArtifact:
+    def run(self, starturl: str, startdate: datetime.date) -> list[Meeting]:
         try:
             # Initiale Anfrage für Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
@@ -197,7 +197,7 @@ class StadtratssitzungenExtractor:
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
-            return ExtractArtifact(meetings=meetings)
+            return meetings
         except Exception as e:
             self.logger.error(f"Fehler beim Abrufen der Sitzungen {starturl}: {e}")
             return []
