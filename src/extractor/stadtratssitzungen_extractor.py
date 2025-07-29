@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
 from src.data_models import Meeting
+from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 from src.parser.str_parser import STRParser
 
@@ -26,7 +27,7 @@ class StadtratssitzungenExtractor:
     """
 
     def __init__(self) -> None:
-        self.client = httpx.Client(proxy="http://internet-proxy-client.muenchen.de:80")
+        self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
         self.logger = getLogger()
         self.str_parser = STRParser()
         self.base_url = "https://risi.muenchen.de/risi/sitzung"
@@ -38,25 +39,6 @@ class StadtratssitzungenExtractor:
 
         self.logger.info(f"Extracted {len(links)} meeting links from page.")
         return links
-
-    def _get_headers(self) -> dict:
-        return {
-            "Host": "risi.muenchen.de",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "de,en-US;q=0.7,en;q=0.3",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://risi.muenchen.de",
-            "DNT": "1",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Priority": "u=0, i",
-        }
 
     def _get_search_request_params(self) -> dict:
         return {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
