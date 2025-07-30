@@ -127,6 +127,7 @@ class LocationKeyword(SQLModel, table=True, check_tables_exist=True):
 
 
 class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
+    __tablename__ = "legislative_term"
     db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Wahlperiode.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/LegislativeTerm'.")
@@ -145,7 +146,9 @@ class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
 class LegislativeTermKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "legislative_term_keyword"
 
-    legislative_term_id: str = Field(foreign_key="legislative_term.id", primary_key=True, description="URL der zugehörigen LegislativeTerm")
+    legislative_term_id: int = Field(
+        foreign_key="legislative_term.db_id", primary_key=True, description="URL der zugehörigen LegislativeTerm"
+    )
     keyword: str = Field(primary_key=True, description="Zugehöriges Keyword")
 
     # Reverse Relationship
@@ -304,12 +307,12 @@ class Membership(SQLModel, table=True, check_tables_exist=True):
     db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL der Mitgliedschaft.")
     type: str | None = Field(None, description="Typ der Mitgliedschaft")
-    person: str | None = Field(
+    person: int | None = Field(
         None,
         description="Rückverweis auf die Person, die Mitglied ist. Wird nur ausgegeben, wenn das Membership-Objekt einzeln abgerufen wird.",
         foreign_key="person.db_id",
     )
-    organization: str | None = Field(
+    organization: int | None = Field(
         None, description="Die Gruppierung, in der die Person Mitglied ist oder war.", foreign_key="organization.db_id"
     )
     role: str | None = Field(
@@ -423,7 +426,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     db_id: Optional[int] = Field(default=None, primary_key=True)
     id: str = Field(description="Eindeutige URL des Tagesordnungspunkt.")
     type: str | None = Field(None, description="Typ des Tagesordnungspunktes")
-    meeting: str | None = Field(
+    meeting: int | None = Field(
         None,
         description="Rückverweis auf das Meeting, welches nur dann ausgegeben werden muss, wenn das AgendaItem-Objekt einzeln abgerufen wird.",
         foreign_key="meeting.db_id",
