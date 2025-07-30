@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
@@ -6,6 +5,8 @@ from typing import List, Optional
 from dotenv import load_dotenv
 from sqlalchemy import JSON
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select, text
+
+from envtools import getenv_with_exception
 
 load_dotenv()
 
@@ -796,7 +797,8 @@ class PaperSubtypeEnum(str, Enum):
 ###########################################################
 #############  Datenbankschema erstellen ##################
 ###########################################################
-engine = create_engine(os.getenv("DATABASE_URL"), echo=True)
+
+engine = create_engine(getenv_with_exception("DATABASE_URL"), echo=True)
 
 
 def create_db_and_tables():
