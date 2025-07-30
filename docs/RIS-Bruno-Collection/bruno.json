@@ -1,0 +1,23 @@
+{
+  "filesCount": 0,
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "name": "RIS Crawler",
+  "proxy": {
+    "auth": {
+      "enabled": false,
+      "password": "",
+      "username": ""
+    },
+    "bypassProxy": "",
+    "enabled": true,
+    "hostname": "internet-proxy-client.muenchen.de",
+    "port": 80,
+    "protocol": "http"
+  },
+  "size": 0,
+  "type": "collection",
+  "version": "1"
+}

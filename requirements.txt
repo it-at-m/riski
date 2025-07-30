@@ -17,7 +17,11 @@ attrs==25.3.0
     #   jsonschema
     #   referencing
 beautifulsoup4==4.13.4
-    # via docling
+    # via
+    #   bs4
+    #   docling
+bs4==0.0.2
+    # via riski-extraktor (pyproject.toml)
 certifi==2025.7.14
     # via
     #   docling
@@ -43,11 +47,13 @@ dill==0.4.0
     # via multiprocess
 distlib==0.3.9
     # via virtualenv
+dnspython==2.7.0
+    # via email-validator
 docling==2.41.0
     # via
     #   riski-extraktor (pyproject.toml)
     #   langchain-docling
-docling-core==2.42.0
+docling-core==2.43.0
     # via
     #   docling
     #   docling-ibm-models
@@ -58,6 +64,8 @@ docling-parse==4.1.0
     # via docling
 easyocr==1.7.2
     # via docling
+email-validator==2.2.0
+    # via pydantic
 et-xmlfile==2.0.0
     # via openpyxl
 filelock==3.18.0
@@ -89,7 +97,9 @@ hf-xet==1.1.5 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or 
 httpcore==1.0.9
     # via httpx
 httpx==0.28.1
-    # via langsmith
+    # via
+    #   riski-extraktor (pyproject.toml)
+    #   langsmith
 httpx-sse==0.4.1
     # via langchain-community
 huggingface-hub==0.33.4
@@ -103,6 +113,7 @@ identify==2.6.12
 idna==3.10
     # via
     #   anyio
+    #   email-validator
     #   httpx
     #   requests
     #   yarl
@@ -289,6 +300,7 @@ pycparser==2.22 ; platform_python_implementation == 'PyPy'
     # via cffi
 pydantic==2.11.7
     # via
+    #   riski-extraktor (pyproject.toml)
     #   docling
     #   docling-core
     #   docling-ibm-models
@@ -324,7 +336,9 @@ python-dateutil==2.9.0.post0
 python-docx==1.2.0
     # via docling
 python-dotenv==1.1.1
-    # via pydantic-settings
+    # via
+    #   riski-extraktor (pyproject.toml)
+    #   pydantic-settings
 python-pptx==1.0.2
     # via docling
 pytz==2025.2
@@ -407,6 +421,8 @@ sqlalchemy==2.0.41
     #   sqlmodel
 sqlmodel==0.0.24
     # via riski-extraktor (pyproject.toml)
+stamina==25.1.0
+    # via riski-extraktor (pyproject.toml)
 sympy==1.14.0
     # via torch
 tabulate==0.9.0
@@ -417,6 +433,7 @@ tenacity==9.1.2
     # via
     #   langchain-community
     #   langchain-core
+    #   stamina
 tifffile==2025.6.11
     # via scikit-image
 tokenizers==0.21.2
@@ -445,6 +462,8 @@ transformers==4.53.2
     #   docling-ibm-models
 triton==3.3.1 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
+truststore==0.10.1
+    # via riski-extraktor (pyproject.toml)
 typer==0.16.0
     # via
     #   docling
