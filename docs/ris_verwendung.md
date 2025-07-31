@@ -1,11 +1,11 @@
 # Programmatische Anfrage des RIS
 
 Das RIS bringt einige Besonderheiten mit sich, die die programmatische Verwendung erschweren.
-Diese sind uns noch nicht vollständig verständlich und bekannt, hier soll jedoch trotzdem kurz der aktuelle Wissensstand skiziiert werden mit dem wir efolgreich waren.
+Diese sind uns noch nicht vollständig verständlich und bekannt, hier soll jedoch trotzdem kurz der aktuelle Wissensstand skizziert werden, mit dem wir erfolgreich waren.
 
 ## Netzwerkanalyse Browser
 
-Für ein erstes Verständnis des Systemns haben wir versucht die Netzwerkanalyse des Browsers zu verwenden.
+Für ein erstes Verständnis des Systems haben wir versucht die Netzwerkanalyse des Browsers zu verwenden.
 Wichtig ist hierbei, dass die Requests bei Verwendung andere Tools teilweise andere Ergebnisse liefern.
 Für einen groben Überblick, wie das so ungefähr funktioniert und welche Requests überhaupt abgesetzt werden gut, für
 eine genaue Planung des Skripts nicht gut.
@@ -23,7 +23,7 @@ Neben der SessionID werden beim ersten Request auch noch 4 Cookies mitgeliefert.
 
 ## HTTP 302
 
-Das RIS speichert sehr viel State für die User, wobei nciht so ganz klar ist wie das ganze genau abläuft.
+Das RIS speichert sehr viel State für die User, wobei nicht ganz klar ist, wie das genau abläuft.
 Eine der Hauptimplikationen dieses Managements ist es, dass das RIS eine "ID" pro Session hochzählt, unter der
 der State zu einem bestimmten Zeitpunkt erreichbar ist.
 Das RIS antwortet daher in extrem vielen Fällen mit HTTP 302 und gibt als Location den Link mit der neuen
@@ -89,5 +89,5 @@ Priority:u=0
 
 Wir hatten das Problem, dass unser State teilweise nicht dauerhaft mitgenommen wurde. Wenn wir also zum Beispiel die Anzahl der Ergebnisse pro Seite
 auf 100 gesetzt haben und danach die Sitzungsliste gefiltert haben wurde diese Einstellung wieder auf 10 resettet. Wenn erst gefiltert und dann auf 100 erhöht wurde hat das geklappt,
-Da muss man also ggf. ein wenig rumprobieren.
-Für diese ganzen Tests war Postman recht hilfreich.
+daher muss man ggf. etwas experimentieren.
+Für diese ganzen Tests war Bruno recht hilfreich.

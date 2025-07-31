@@ -90,26 +90,26 @@ class RISExtractor:
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_current_page_text(self, path) -> str:
         response = self.client.get(url=self._get_sanitized_url(path))
-        self.logger.info(f"Anfrage des Seiteninhalts: {self._get_sanitized_url(path)}")
+        self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
         response.raise_for_status()
         return response.text.encode().decode("unicode_escape")
 
     def _parse_meeting_links(self, meeting_links: list[str]) -> list[object]:
         meetings = []
         for link in meeting_links:
-            # self.logger.info(f"Lade Meeting-Link: {link}")
+            self.logger.debug(f"Load meeting link: {link}")
             try:
                 response = self._get_meeting_html(link)
                 meeting = self.str_parser.parse(link, response.encode().decode("unicode_escape"))
                 meetings.append(meeting)
-            #   self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
+                self.logger.debug(f"Parsed: {meeting.name} ({meeting.start})")
             except Exception as e:
-                self.logger.error(f"Fehler beim Parsen von {link}: {e}")
+                self.logger.error(f"Error parsing {link}: {e}")
         return meetings
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_meeting_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # Detailseite anfragen
+        response = self.client.get(url=link)  # get detail page
         response.raise_for_status()
         return response.text
 
@@ -143,25 +143,25 @@ class RISExtractor:
         }
 
         page_url = self._get_sanitized_url(next_page_link) + "&_=1"
-        self.logger.info(f"Anfrage der naechsten Seite: {page_url}")
+        self.logger.info(f"Get next page: {page_url}")
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
     def run(self, starturl: str, startdate: datetime.date) -> ExtractArtifact:
         try:
-            # Initiale Anfrage für Cookies, SessionID etc.
-            # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
+            # Initial request for Cookies, SessionID etc.
+            # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # for cookies and hallo
             self._initial_request()
 
-            # Anfrage zum Filter Setzen (TODO: StartDatum setzen)
-            # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # redirect url bekommen + filterung nach datum und bereich (nur stadtrat)
+            # Request to set Filters
+            # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # get redirect url + filter by datum and domain (only stadtrat)
             filter_sitzungen_redirect_path = self._filter_sitzungen(startdate)
 
-            # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it #Seitengröße auf 100 setzen
+            # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it # set result size to 100
             results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
 
-            # Anfrage und Verarbeitung aller Seiten der Sitzungsliste
-            # 4. durchiterieren durch die Pages
+            # request and procss all pages of meetings list
+            # 4. iterate over Pages
             access_denied = False
             meetings = []
             while not access_denied:
@@ -169,7 +169,7 @@ class RISExtractor:
                 meeting_links = self._extract_meeting_links(current_page_text)
 
                 if not meeting_links:
-                    self.logger.warning("Keine Meetings auf der Übersichtsseite gefunden.")
+                    self.logger.warning("No Meetings found on overview page.")
                 else:
                     meetings.extend(self._parse_meeting_links(meeting_links))
 
@@ -177,15 +177,15 @@ class RISExtractor:
 
                 if not nav_top_next_link:
                     access_denied = True
-                    self.logger.info("Keine weiteren Seiten mehr vorhanden – Schleife beendet.")
+                    self.logger.info("No further pages found – loop terminated.")
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
             return ExtractArtifact(meetings=meetings)
         except Exception as e:
-            self.logger.error(f"Fehler beim Abrufen der Sitzungen {starturl}: {e}")
-            return []
+            self.logger.error(f"Error requesting meetings {starturl}: {e}")
+            return ExtractArtifact(meetings=[])
 
 
 def main() -> None:
@@ -200,7 +200,7 @@ def main() -> None:
     starturl = "https://risi.muenchen.de/"
 
     extractor = RISExtractor()
-    extract_artifact = extractor.run(starturl, datetime.date(2025, 6, 1))
+    extract_artifact = extractor.run(starturl, datetime.date.today() - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 

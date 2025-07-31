@@ -13,8 +13,8 @@
     },
     "bypassProxy": "",
     "enabled": true,
-    "hostname": "internet-proxy-client.muenchen.de",
-    "port": 80,
+    "hostname": "",
+    "port": 0,
     "protocol": "http"
   },
   "size": 0,

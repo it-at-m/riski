@@ -16,7 +16,9 @@ def parse_arguments():
         description="RIS Indexer - Collect, Extract, Transform, and Load data from Rathausinformationssystem website"
     )
     parser.add_argument("--starturl", default=DEFAULT_START_URL, help=f"URL to the sitemap (default: {DEFAULT_START_URL})")
-    parser.add_argument("--startdate", default=DEFAULT_START_DATE, help="Startdate for filtering STR-Meetings (default: Empty String)")
+    parser.add_argument(
+        "--startdate", default=DEFAULT_START_DATE, help="Startdate for filtering STR-Meetings in ISO format (default: today's date)"
+    )
 
     return parser.parse_args()
 
@@ -32,7 +34,6 @@ def main():
     extract_artifacts = extractor.run(args.starturl, startdate)
     print(extract_artifacts)
     logger.info("Extraction process finished")
-    # TODO: Transform
     logger.info("RIS Indexer completed successfully")
     return 0
 
