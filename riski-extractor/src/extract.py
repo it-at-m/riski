@@ -1,5 +1,6 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
 import datetime
+import os
 
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
@@ -203,6 +204,7 @@ def main() -> None:
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
+    os.makedirs("artifacts", exist_ok=True)
     with open("artifacts/extraction.json", "w", encoding="utf-8") as file:
         file.write(extract_artifact.model_dump_json(indent=4))
 
