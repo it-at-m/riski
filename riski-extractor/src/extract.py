@@ -195,7 +195,6 @@ def main() -> None:
     logger = getLogger()
 
     logger.info("Starting extraction process")
-    logger.info("Loading sitemap from 'artifacts/sitemap.json'")
 
     starturl = "https://risi.muenchen.de/"
 
