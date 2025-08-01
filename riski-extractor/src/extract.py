@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
-from src.data_models import ExtractArtifact
+from src.data_models import ExtractArtifact, Meeting
 from src.envtools import getenv_with_exception
 
 inject_into_ssl()
@@ -48,7 +48,9 @@ class RISExtractor:
 
     # remove the . from ./xxx
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
-        return self.base_url + unsanitized_path[1:]
+        if unsanitized_path.startswith("."):
+            return self.base_url + unsanitized_path[1:]
+        return self.base_url + unsanitized_path
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _initial_request(self):
@@ -61,6 +63,7 @@ class RISExtractor:
             self.client.get(url=self._get_sanitized_url(redirect_url))
         else:
             response.raise_for_status()
+            raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _filter_sitzungen(self, startdate: datetime.date) -> str:
@@ -75,6 +78,7 @@ class RISExtractor:
             return redirect_url
         else:
             response.raise_for_status()
+            raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self, path):
@@ -85,6 +89,7 @@ class RISExtractor:
             return response.headers.get("Location")
         else:
             response.raise_for_status()
+            raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     # iteration through other request
     @stamina.retry(on=httpx.HTTPError, attempts=5)
@@ -94,7 +99,7 @@ class RISExtractor:
         response.raise_for_status()
         return response.text.encode().decode("unicode_escape")
 
-    def _parse_meeting_links(self, meeting_links: list[str]) -> list[object]:
+    def _parse_meeting_links(self, meeting_links: list[str]) -> list[Meeting]:
         meetings = []
         for link in meeting_links:
             self.logger.debug(f"Load meeting link: {link}")
@@ -196,10 +201,8 @@ def main() -> None:
 
     logger.info("Starting extraction process")
 
-    starturl = "https://risi.muenchen.de/"
-
     extractor = RISExtractor()
-    extract_artifact = extractor.run(starturl, datetime.date.today() - datetime.timedelta(days=30))
+    extract_artifact = extractor.run(datetime.date.today() - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
