@@ -141,11 +141,3 @@ class STRParser:
 
         self.logger.info(f"Meeting object created: {meeting.name}")
         return meeting
-
-
-def main():
-    return
-
-
-if __name__ == "__main__":
-    main()
