@@ -1,0 +1,44 @@
+meta {
+  name: Filter Sitzungen
+  type: http
+  seq: 2
+}
+
+post {
+  url: https://risi.muenchen.de/risi/sitzung/uebersicht?0-1.-form
+  body: none
+  auth: inherit
+}
+
+params:query {
+  0-1.-form: 
+}
+
+headers {
+  Accept-Language: de,en-US;q=0.7,en;q=0.3
+  Cache-Control: no-cache
+  User-Agent: bruno-runtime/.0.1
+  Accept: */*
+  Accept-Encoding: gzip, deflate, br
+  Connection: keep-alive
+  Content-Type: application/x-www-form-urlencoded
+}
+
+body:form-urlencoded {
+  von: 
+  bis: 
+  status: 
+  containerBereichDropDown: bereich: 2
+}
+
+script:pre-request {
+  req.setMaxRedirects(0);
+  const body = req.getBody();
+  req.setBody({
+    ...body,
+      von: "",
+      bis: "",
+      status: "",
+      "containerBereichDropDown:bereich": 2
+  });
+}
