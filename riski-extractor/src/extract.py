@@ -152,7 +152,7 @@ class RISExtractor:
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, starturl: str, startdate: datetime.date) -> ExtractArtifact:
+    def run(self, startdate: datetime.date) -> ExtractArtifact:
         try:
             # Initial request for Cookies, SessionID etc.
             # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # for cookies and hallo
@@ -188,8 +188,7 @@ class RISExtractor:
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
             return ExtractArtifact(meetings=meetings)
-        except Exception as e:
-            self.logger.error(f"Error requesting meetings {starturl}: {e}")
+        except Exception as e:            
             return ExtractArtifact(meetings=[])
 
 
