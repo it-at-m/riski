@@ -25,7 +25,7 @@ def main():
     args = parse_arguments()
     logger = getLogger()
     version = get_version()
-    logger.info(f"RIS Extractor v{version} starting up")
+    logger.info(f"RIS Indexer v{version} starting up")
     extractor = extract.RISExtractor()
     startdate = datetime.date.fromisoformat(args.startdate)
     logger.info(f"Extracting meetings starting from {startdate}")
