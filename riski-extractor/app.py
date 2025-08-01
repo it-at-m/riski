@@ -27,7 +27,13 @@ def main():
     version = get_version()
     logger.info(f"RIS Indexer v{version} starting up")
     extractor = extract.RISExtractor()
-    startdate = datetime.date.fromisoformat(args.startdate)
+
+    try:
+        startdate = datetime.date.fromisoformat(args.startdate)
+    except ValueError as e:
+        logger.error(f"Invalid date format: {args.startdate}. Expected ISO format (YYYY-MM-DD): {e}")
+        return 1
+
     logger.info(f"Extracting meetings starting from {startdate}")
     extract_artifacts = extractor.run(startdate)
     print(extract_artifacts)
