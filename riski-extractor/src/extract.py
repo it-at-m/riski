@@ -53,7 +53,7 @@ class RISExtractor:
         return self.base_url + unsanitized_path
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _initial_request(self):
+    def _initial_request(self) -> None:
         # make request
         response = self.client.get(url=self.base_url + self.uebersicht_path)
         # evaluate response
@@ -81,7 +81,7 @@ class RISExtractor:
             raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _set_results_per_page(self, path):
+    def _set_results_per_page(self, path) -> str:
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
         response = self.client.post(url=url, data=data)
@@ -135,7 +135,7 @@ class RISExtractor:
             return None
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_next_page(self, path, next_page_link):
+    def _get_next_page(self, path, next_page_link) -> None:
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Referer": self._get_sanitized_url(path),
