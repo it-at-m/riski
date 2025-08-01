@@ -188,7 +188,7 @@ class RISExtractor:
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
             return ExtractArtifact(meetings=meetings)
-        except Exception as e:            
+        except Exception:
             return ExtractArtifact(meetings=[])
 
 
