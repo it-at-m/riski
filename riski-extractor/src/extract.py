@@ -118,7 +118,7 @@ class RISExtractor:
         response.raise_for_status()
         return response.text
 
-    def _get_next_page_path(self, current_page_text) -> str:
+    def _get_next_page_path(self, current_page_text) -> str | None:
         soup = BeautifulSoup(current_page_text, "html.parser")
         scripts = soup.find_all("script")
 

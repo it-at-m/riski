@@ -177,9 +177,6 @@ cython_debug/
 /src/docling/docs/
 /src/docling/test_file/md_files/
 
-# Intellij data
-.idea
-
 # Postgres Data
 pgdata/
 
