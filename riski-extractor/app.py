@@ -2,7 +2,7 @@ import argparse
 import datetime
 import sys
 
-from src import extract
+from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -14,9 +14,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="RIS Indexer - Collect, Extract, Transform, and Load data from Rathausinformationssystem website"
     )
-    parser.add_argument(
-        "--startdate", default=DEFAULT_START_DATE, help="Startdate for filtering STR-Meetings in ISO format (default: today's date)"
-    )
+    parser.add_argument("--startdate", default=DEFAULT_START_DATE, help="Startdate for filtering STR-Meetings (default: Empty String)")
 
     return parser.parse_args()
 
@@ -25,19 +23,28 @@ def main():
     args = parse_arguments()
     logger = getLogger()
     version = get_version()
-    logger.info(f"RIS Indexer v{version} starting up")
-    extractor = extract.RISExtractor()
 
-    try:
-        startdate = datetime.date.fromisoformat(args.startdate)
-    except ValueError as e:
-        logger.error(f"Invalid date format: {args.startdate}. Expected ISO format (YYYY-MM-DD): {e}")
-        return 1
+    startdate = datetime.date.fromisoformat(args.startdate)
 
-    logger.info(f"Extracting meetings starting from {startdate}")
-    extract_artifacts = extractor.run(startdate)
-    print(extract_artifacts)
+    logger.info(f"RIS Extractor v{version} starting up")
+
+    # logger.info(f"Extracting meetings starting from {startdate}")
+    # sitzungen_extractor = StadtratssitzungenExtractor()
+    # ext_meeting_list = sitzungen_extractor.run(startdate)
+    # print(ext_meeting_list)
+
+    # logger.info("Extracting refernten")
+    # ref_extractor = ReferentenExtractor()
+    # ext_referenten_list = ref_extractor.run()
+    # print(ext_referenten_list)
+
+    logger.info("Extracting city council member")
+    city_council_member_extractor = CityCouncilMemberExtractor()
+    extracted_city_council_member_list = city_council_member_extractor.run(startdate)
+    print(len(extracted_city_council_member_list))
+
     logger.info("Extraction process finished")
+    # TODO: Transform
     logger.info("RIS Indexer completed successfully")
     return 0
 
