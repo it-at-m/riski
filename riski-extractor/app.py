@@ -3,6 +3,8 @@ import datetime
 import sys
 
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
+from src.extractor.referenten_extractor import ReferentenExtractor
+from src.extractor.stadtratssitzungen_extractor import StadtratssitzungenExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -28,15 +30,15 @@ def main():
 
     logger.info(f"RIS Extractor v{version} starting up")
 
-    # logger.info(f"Extracting meetings starting from {startdate}")
-    # sitzungen_extractor = StadtratssitzungenExtractor()
-    # ext_meeting_list = sitzungen_extractor.run(startdate)
-    # print(ext_meeting_list)
+    logger.info(f"Extracting meetings starting from {startdate}")
+    sitzungen_extractor = StadtratssitzungenExtractor()
+    ext_meeting_list = sitzungen_extractor.run(startdate)
+    print(ext_meeting_list)
 
-    # logger.info("Extracting refernten")
-    # ref_extractor = ReferentenExtractor()
-    # ext_referenten_list = ref_extractor.run()
-    # print(ext_referenten_list)
+    logger.info("Extracting refernten")
+    ref_extractor = ReferentenExtractor()
+    ext_referenten_list = ref_extractor.run()
+    print(ext_referenten_list)
 
     logger.info("Extracting city council member")
     city_council_member_extractor = CityCouncilMemberExtractor()
