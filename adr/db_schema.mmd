@@ -1,142 +1,105 @@
-
 erDiagram
-    file ||--o{ file_meeting : FK
-    meeting ||--o{ file_meeting : FK
-    file ||--o{ file_paper : FK
-    paper ||--o{ file_paper : FK
-    file ||--o{ file_keyword : FK
-    keyword ||--o{ file_keyword : FK
-    meeting ||--o{ agenda_item : FK
-    file ||--o{ agenda_item : FK
-    file ||--o{ paper_file : FK
-    paper ||--o{ paper_file : FK
-    paper ||--o{ paper_related_paper : FK
-    paper ||--o{ paper_related_paper : FK
-    paper ||--o{ paper_superordinated_paper : FK
-    paper ||--o{ paper_superordinated_paper : FK
-    paper ||--o{ paper_subordinated_paper : FK
-    paper ||--o{ paper_subordinated_paper : FK
-    location ||--o{ paper_location : FK
-    paper ||--o{ paper_location : FK
-    paper ||--o{ paper_Originator_person : FK
-    person ||--o{ paper_Originator_person : FK
-    organization ||--o{ paper_originator_organization : FK
-    paper ||--o{ paper_originator_organization : FK
-    organization ||--o{ paper_direction_link : FK
-    paper ||--o{ paper_direction_link : FK
-    keyword ||--o{ paper_keyword : FK
-    paper ||--o{ paper_keyword : FK
-    body ||--o{ equivalent_bodies : FK
-    body ||--o{ equivalent_bodies : FK
-    body ||--o{ body_keyword : FK
-    keyword ||--o{ body_keyword : FK
-    meeting ||--o{ meeting_organization : FK
-    meeting ||--o{ meeting_participant : FK
-    file ||--o{ meeting_aux_file : FK
-    meeting ||--o{ meeting_aux_file : FK
-    keyword ||--o{ meeting_keyword : FK
-    meeting ||--o{ meeting_keyword : FK
-    agenda_item ||--o{ file_agenda : FK
-    file ||--o{ file_agenda : FK
     agenda_item ||--o{ agendaitem_keyword : FK
-    keyword ||--o{ agendaitem_keyword : FK
-    agenda_item ||--o{ meeting_agenda_item : FK
-    meeting ||--o{ meeting_agenda_item : FK
     agenda_item ||--o{ consultation : FK
-    meeting ||--o{ consultation : FK
-    paper ||--o{ consultation : FK
-    consultation ||--o{ consultationkeywordlink : FK
-    keyword ||--o{ consultationkeywordlink : FK
-    organization ||--o{ post : FK
-    system ||--o{ system_other_oparl_version : FK
-    system ||--o{ system_other_oparl_version : FK
+    agenda_item ||--o{ file_agenda : FK
+    agenda_item ||--o{ meeting_agenda_item : FK
+    body ||--o{ body_keyword : FK
+    body ||--o{ equivalent_bodies : FK
+    body ||--o{ equivalent_bodies : FK
     body ||--o{ location_bodies : FK
+    body ||--o{ system : FK
+    consultation ||--o{ consultationkeywordlink : FK
+    file ||--o{ agenda_item : FK
+    file ||--o{ file_agenda : FK
+    file ||--o{ file_derivative_link : FK
+    file ||--o{ file_derivative_link : FK
+    file ||--o{ file_keyword : FK
+    file ||--o{ file_meeting : FK
+    file ||--o{ file_paper : FK
+    file ||--o{ meeting : FK
+    file ||--o{ meeting : FK
+    file ||--o{ meeting : FK
+    file ||--o{ meeting_aux_file : FK
+    file ||--o{ paper : FK
+    file ||--o{ paper_file : FK
+    keyword ||--o{ agendaitem_keyword : FK
+    keyword ||--o{ body_keyword : FK
+    keyword ||--o{ consultationkeywordlink : FK
+    keyword ||--o{ file_keyword : FK
+    keyword ||--o{ legislative_term_keyword : FK
+    keyword ||--o{ location_keyword : FK
+    keyword ||--o{ meeting_keyword : FK
+    keyword ||--o{ membership_keyword : FK
+    keyword ||--o{ organization_keyword : FK
+    keyword ||--o{ paper_keyword : FK
+    keyword ||--o{ person_keyword : FK
+    legislative_term ||--o{ legislative_term_keyword : FK
     location ||--o{ location_bodies : FK
     location ||--o{ location_keyword : FK
-    legislative_term ||--o{ legislative_term_keyword : FK
-    location ||--o{ organization : FK
-    location ||--o{ person : FK
-    file ||--o{ file_derivative_link : FK
-    file ||--o{ file_derivative_link : FK
-    file ||--o{ filekeywordlink : FK
-    paper_type ||--o{ paper_subtype : FK
-    body ||--o{ bodyequivalentlink : FK
-    body ||--o{ bodykeywordlink : FK
-    file ||--o{ meeting : FK
-    location ||--o{ meeting : FK
-    file ||--o{ meeting : FK
-    file ||--o{ meeting : FK
-    location ||--o{ location_organizations : FK
-    organization ||--o{ location_organizations : FK
-    location ||--o{ location_persons : FK
-    person ||--o{ location_persons : FK
     location ||--o{ location_meetings : FK
+    location ||--o{ location_organizations : FK
+    location ||--o{ location_papers : FK
+    location ||--o{ location_persons : FK
+    location ||--o{ meeting : FK
+    location ||--o{ organization : FK
+    location ||--o{ paper_location : FK
+    location ||--o{ person : FK
+    meeting ||--o{ agenda_item : FK
+    meeting ||--o{ consultation : FK
+    meeting ||--o{ file_meeting : FK
     meeting ||--o{ location_meetings : FK
+    meeting ||--o{ meeting_agenda_item : FK
+    meeting ||--o{ meeting_aux_file : FK
+    meeting ||--o{ meeting_keyword : FK
+    meeting ||--o{ meeting_organization : FK
+    meeting ||--o{ meeting_participant : FK
+    meeting ||--o{ organization : FK
+    membership ||--o{ membership_keyword : FK
+    membership ||--o{ organization_membership : FK
+    membership ||--o{ person_membership : FK
+    organization ||--o{ location_organizations : FK
+    organization ||--o{ meeting_organization : FK
+    organization ||--o{ membership : FK
+    organization ||--o{ organization : FK
+    organization ||--o{ organization_keyword : FK
+    organization ||--o{ organization_membership : FK
     organization ||--o{ organization_post : FK
     organization ||--o{ organization_sub_organization : FK
     organization ||--o{ organization_sub_organization : FK
-    organization ||--o{ organization_keyword : FK
-    person ||--o{ person_title : FK
-    person ||--o{ person_phone : FK
-    person ||--o{ person_email : FK
-    person ||--o{ person_status : FK
-    person ||--o{ person_keyword : FK
-    organization ||--o{ membership : FK
-    person ||--o{ membership : FK
-    file ||--o{ filemeetinglink : FK
-    meeting ||--o{ filemeetinglink : FK
-    meeting ||--o{ agendaitem : FK
-    file ||--o{ agendaitem : FK
-    file ||--o{ paper : FK
+    organization ||--o{ paper_direction_link : FK
+    organization ||--o{ paper_originator_organization : FK
+    organization ||--o{ post : FK
+    organization_type ||--o{ organization : FK
+    paper ||--o{ consultation : FK
+    paper ||--o{ file_paper : FK
+    paper ||--o{ location_papers : FK
+    paper ||--o{ paper_Originator_person : FK
+    paper ||--o{ paper_direction_link : FK
+    paper ||--o{ paper_file : FK
+    paper ||--o{ paper_keyword : FK
+    paper ||--o{ paper_location : FK
+    paper ||--o{ paper_originator_organization : FK
+    paper ||--o{ paper_related_paper : FK
+    paper ||--o{ paper_related_paper : FK
+    paper ||--o{ paper_subordinated_paper : FK
+    paper ||--o{ paper_subordinated_paper : FK
+    paper ||--o{ paper_superordinated_paper : FK
+    paper ||--o{ paper_superordinated_paper : FK
     paper_subtype ||--o{ paper : FK
     paper_type ||--o{ paper : FK
-    meeting ||--o{ meetingorganizationlink : FK
-    meeting ||--o{ meetingparticipantlink : FK
-    file ||--o{ meetingauxfilelink : FK
-    meeting ||--o{ meetingauxfilelink : FK
-    meeting ||--o{ meetingkeywordlink : FK
-    location ||--o{ location_papers : FK
-    paper ||--o{ location_papers : FK
-    membership ||--o{ organization_membership : FK
-    organization ||--o{ organization_membership : FK
-    membership ||--o{ person_membership : FK
+    paper_type ||--o{ paper_subtype : FK
+    person ||--o{ location_persons : FK
+    person ||--o{ meeting_participant : FK
+    person ||--o{ paper_Originator_person : FK
+    person ||--o{ person_keyword : FK
     person ||--o{ person_membership : FK
-    membership ||--o{ membership_keyword : FK
-    agendaitem ||--o{ fileagendaitemlink : FK
-    file ||--o{ fileagendaitemlink : FK
-    file ||--o{ filepaperlink : FK
-    paper ||--o{ filepaperlink : FK
-    agendaitem ||--o{ agendaitemkeywordlink : FK
-    file ||--o{ paperfilelink : FK
-    paper ||--o{ paperfilelink : FK
-    paper ||--o{ paperrelatedlink : FK
-    paper ||--o{ papersuperordinatedlink : FK
-    paper ||--o{ papersubordinatedlink : FK
-    location ||--o{ paperlocationlink : FK
-    paper ||--o{ paperlocationlink : FK
-    paper ||--o{ paperoriginatorpersonlink : FK
-    organization ||--o{ paperoriginatororglink : FK
-    paper ||--o{ paperoriginatororglink : FK
-    paper ||--o{ paperdirectionlink : FK
-    paper ||--o{ paperkeywordlink : FK
-    agendaitem ||--o{ meetingagendaitemlink : FK
-    meeting ||--o{ meetingagendaitemlink : FK
-    file_meeting {
-        INTEGER file_id
-        INTEGER meeting_id
-    }
-    file_paper {
-        INTEGER file_id
-        INTEGER paper_id
-    }
-    file_keyword {
-        INTEGER file_id
-        INTEGER keyword
-    }
-    keyword {
-        INTEGER db_id
-        VARCHAR name
-    }
+    person ||--o{ person_title : FK
+    post ||--o{ organization_post : FK
+    system ||--o{ system_other_oparl_version : FK
+    system ||--o{ system_other_oparl_version : FK
+    title ||--o{ person : FK
+    title ||--o{ person_title : FK
+
     agenda_item {
         INTEGER db_id
         VARCHAR id
@@ -157,157 +120,9 @@ erDiagram
         VARCHAR web
         BOOLEAN deleted
     }
-    paper_file {
-        INTEGER paper_id
-        INTEGER file_id
-    }
-    paper_related_paper {
-        INTEGER paper_id
-        INTEGER related_paper_url
-    }
-    paper_superordinated_paper {
-        INTEGER paper_id
-        INTEGER superordinated_paper_url
-    }
-    paper_subordinated_paper {
-        INTEGER paper_id
-        INTEGER subordinated_paper_url
-    }
-    paper_location {
-        INTEGER paper_id
-        INTEGER location_id
-    }
-    paper_Originator_person {
-        INTEGER paper_id
-        INTEGER person_name
-    }
-    paper_originator_organization {
-        INTEGER paper_id
-        INTEGER organization_name
-    }
-    paper_direction_link {
-        INTEGER paper_id
-        INTEGER direction_name
-    }
-    paper_keyword {
-        INTEGER paper_id
-        INTEGER keyword
-    }
-    equivalent_bodies {
-        INTEGER body_id
-        INTEGER equivalent_url
-    }
-    body_keyword {
-        INTEGER body_id
-        INTEGER keyword
-    }
-    meeting_organization {
-        INTEGER id
-        INTEGER meeting_id
-        VARCHAR organization_name
-    }
-    meeting_participant {
-        INTEGER id
-        INTEGER meeting_id
-        VARCHAR person_name
-    }
-    meeting_aux_file {
-        INTEGER id
-        INTEGER meeting_id
-        INTEGER file_id
-    }
-    meeting_keyword {
-        INTEGER meeting_id
-        INTEGER keyword
-    }
-    file_agenda {
-        INTEGER file_id
-        INTEGER agendaItem
-    }
     agendaitem_keyword {
         INTEGER agendaitem_id
         INTEGER keyword
-    }
-    meeting_agenda_item {
-        INTEGER id
-        INTEGER meeting_id
-        INTEGER agenda_item_id
-    }
-    consultation {
-        INTEGER db_id
-        VARCHAR id
-        VARCHAR url
-        INTEGER paper
-        INTEGER agenda_item
-        INTEGER meeting
-        BOOLEAN authoritative
-        VARCHAR role
-        VARCHAR license
-        TIMESTAMP created
-        TIMESTAMP modified
-        VARCHAR web
-    }
-    consultationkeywordlink {
-        INTEGER consultation_id
-        INTEGER keyword_id
-    }
-    post {
-        INTEGER db_id
-        VARCHAR name
-        INTEGER organization_id
-    }
-    title {
-        INTEGER db_id
-        VARCHAR title
-    }
-    organization_type {
-        INTEGER db_id
-        VARCHAR name
-        VARCHAR description
-    }
-    system {
-        INTEGER db_id
-        VARCHAR id
-        VARCHAR type
-        VARCHAR oparlVersion
-        VARCHAR otherOparlVersions
-        VARCHAR license
-        VARCHAR body
-        VARCHAR name
-        VARCHAR contactEmail
-        VARCHAR contactName
-        VARCHAR website
-        VARCHAR vendor
-        VARCHAR product
-        TIMESTAMP created
-        TIMESTAMP modified
-        VARCHAR web
-        BOOLEAN deleted
-    }
-    system_other_oparl_version {
-        INTEGER system_id
-        INTEGER other_version_id
-    }
-    location {
-        INTEGER db_id
-        VARCHAR id
-        VARCHAR type
-        VARCHAR description
-        JSON geojson
-        VARCHAR streetAddress
-        VARCHAR room
-        VARCHAR postalCode
-        VARCHAR subLocality
-        VARCHAR locality
-        VARCHAR license
-        TIMESTAMP created
-        TIMESTAMP modified
-        VARCHAR web
-        BOOLEAN deleted
-    }
-    location_bodies {
-        INTEGER location_id
-        INTEGER body_id
     }
     body {
         INTEGER db_id
@@ -341,68 +156,31 @@ erDiagram
         VARCHAR web
         BOOLEAN deleted
     }
-    location_keyword {
-        INTEGER location_id
-        VARCHAR keyword
+    body_keyword {
+        INTEGER body_id
+        INTEGER keyword
     }
-    legislative_term {
+    consultation {
         INTEGER db_id
         VARCHAR id
-        VARCHAR type
-        VARCHAR body
-        VARCHAR name
-        TIMESTAMP startDate
-        TIMESTAMP endDate
+        VARCHAR url
+        INTEGER paper
+        INTEGER agenda_item
+        INTEGER meeting
+        BOOLEAN authoritative
+        VARCHAR role
         VARCHAR license
         TIMESTAMP created
         TIMESTAMP modified
         VARCHAR web
-        BOOLEAN deleted
     }
-    legislative_term_keyword {
-        INTEGER legislative_term_id
-        VARCHAR keyword
+    consultationkeywordlink {
+        INTEGER consultation_id
+        INTEGER keyword_id
     }
-    organization {
-        INTEGER db_id
-        VARCHAR id
-        VARCHAR type
-        VARCHAR body
-        VARCHAR name
-        VARCHAR meeting
-        VARCHAR shortName
-        VARCHAR subOrganizationOf
-        VARCHAR classification
-        TIMESTAMP startDate
-        TIMESTAMP endDate
-        VARCHAR website
-        INTEGER location
-        VARCHAR externalBody
-        VARCHAR license
-        TIMESTAMP created
-        TIMESTAMP modified
-        VARCHAR web
-        BOOLEAN deleted
-    }
-    person {
-        INTEGER db_id
-        VARCHAR id
-        VARCHAR type
-        VARCHAR body
-        VARCHAR name
-        VARCHAR familyName
-        VARCHAR givenName
-        VARCHAR formOfAddress
-        VARCHAR affix
-        VARCHAR gender
-        INTEGER location
-        VARCHAR life
-        VARCHAR lifeSource
-        VARCHAR license
-        TIMESTAMP created
-        TIMESTAMP modified
-        VARCHAR web
-        BOOLEAN deleted
+    equivalent_bodies {
+        INTEGER body_id_a
+        INTEGER body_id_b
     }
     file {
         INTEGER db_id
@@ -427,32 +205,88 @@ erDiagram
         VARCHAR web
         BOOLEAN deleted
     }
+    file_agenda {
+        INTEGER file_id
+        INTEGER agendaItem
+    }
     file_derivative_link {
         INTEGER file_id
-        INTEGER FileDerivative_file
+        INTEGER derivative_file_id
     }
-    filekeywordlink {
+    file_keyword {
         INTEGER file_id
-        VARCHAR keyword
+        INTEGER keyword
     }
-    paper_type {
-        INTEGER id
+    file_meeting {
+        INTEGER file_id
+        INTEGER meeting_id
+    }
+    file_paper {
+        INTEGER file_id
+        INTEGER paper_id
+    }
+    keyword {
+        INTEGER db_id
         VARCHAR name
     }
-    paper_subtype {
-        INTEGER id
+    legislative_term {
+        INTEGER db_id
+        VARCHAR id
+        VARCHAR type
+        VARCHAR body
         VARCHAR name
-        INTEGER paper_type_id
+        TIMESTAMP startDate
+        TIMESTAMP endDate
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
     }
-    bodyequivalentlink {
-        INTEGER id
-        INTEGER body_id
-        VARCHAR equivalent_url
+    legislative_term_keyword {
+        INTEGER legislative_term_id
+        INTEGER keyword
     }
-    bodykeywordlink {
-        INTEGER id
+    location {
+        INTEGER db_id
+        VARCHAR id
+        VARCHAR type
+        VARCHAR description
+        JSON geojson
+        VARCHAR streetAddress
+        VARCHAR room
+        VARCHAR postalCode
+        VARCHAR subLocality
+        VARCHAR locality
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    location_bodies {
+        INTEGER location_id
         INTEGER body_id
-        VARCHAR keyword
+    }
+    location_keyword {
+        INTEGER location_id
+        INTEGER keyword
+    }
+    location_meetings {
+        INTEGER location_id
+        INTEGER meeting_id
+    }
+    location_organizations {
+        INTEGER location_id
+        INTEGER organization_id
+    }
+    location_papers {
+        INTEGER location_id
+        INTEGER paper_id
+    }
+    location_persons {
+        INTEGER location_id
+        INTEGER person_id
     }
     meeting {
         INTEGER db_id
@@ -473,55 +307,33 @@ erDiagram
         VARCHAR web
         BOOLEAN deleted
     }
-    location_organizations {
-        INTEGER location_id
-        INTEGER organization_id
-    }
-    location_persons {
-        INTEGER location_id
-        INTEGER person_id
-    }
-    location_meetings {
-        INTEGER location_id
+    meeting_agenda_item {
+        INTEGER id
         INTEGER meeting_id
+        INTEGER agenda_item_id
     }
-    organization_post {
+    meeting_aux_file {
+        INTEGER id
+        INTEGER meeting_id
+        INTEGER file_id
+    }
+    meeting_keyword {
+        INTEGER meeting_id
+        INTEGER keyword
+    }
+    meeting_organization {
+        INTEGER meeting_id
         INTEGER organization_id
-        VARCHAR post
     }
-    organization_sub_organization {
-        INTEGER organization_id
-        INTEGER sub_organization_id
-    }
-    organization_keyword {
-        INTEGER organization_id
-        VARCHAR keyword
-    }
-    person_title {
-        INTEGER person_id
-        VARCHAR title
-    }
-    person_phone {
-        INTEGER person_id
-        VARCHAR phone
-    }
-    person_email {
-        INTEGER person_id
-        VARCHAR email
-    }
-    person_status {
-        INTEGER person_id
-        VARCHAR status
-    }
-    person_keyword {
-        INTEGER person_id
-        VARCHAR keyword
+    meeting_participant {
+        INTEGER id
+        INTEGER meeting_id
+        INTEGER person_name
     }
     membership {
         INTEGER db_id
         VARCHAR id
         VARCHAR type
-        INTEGER person
         INTEGER organization
         VARCHAR role
         BOOLEAN votingRight
@@ -534,29 +346,52 @@ erDiagram
         VARCHAR web
         BOOLEAN deleted
     }
-    filemeetinglink {
-        INTEGER file_id
-        INTEGER meeting_id
+    membership_keyword {
+        INTEGER membership_id
+        INTEGER keyword
     }
-    agendaitem {
+    organization {
         INTEGER db_id
         VARCHAR id
         VARCHAR type
-        INTEGER meeting
-        VARCHAR number
-        INTEGER order
+        VARCHAR body
         VARCHAR name
-        BOOLEAN public
-        VARCHAR result
-        VARCHAR resolutionText
-        INTEGER resolutionFile
-        TIMESTAMP start
-        TIMESTAMP end
+        INTEGER meeting_id
+        VARCHAR shortName
+        INTEGER subOrganizationOf
+        VARCHAR classification
+        TIMESTAMP startDate
+        TIMESTAMP endDate
+        VARCHAR website
+        INTEGER location
+        VARCHAR externalBody
         VARCHAR license
         TIMESTAMP created
         TIMESTAMP modified
         VARCHAR web
         BOOLEAN deleted
+        INTEGER organization_type_id
+    }
+    organization_keyword {
+        INTEGER organization_id
+        INTEGER keyword
+    }
+    organization_membership {
+        INTEGER organization_id
+        INTEGER membership_id
+    }
+    organization_post {
+        INTEGER organization_id
+        INTEGER post_str
+    }
+    organization_sub_organization {
+        INTEGER organization_id
+        INTEGER sub_organization_id
+    }
+    organization_type {
+        INTEGER db_id
+        VARCHAR name
+        VARCHAR description
     }
     paper {
         INTEGER db_id
@@ -573,105 +408,119 @@ erDiagram
         TIMESTAMP modified
         VARCHAR web
         BOOLEAN deleted
-        INTEGER paper_type_id
-        INTEGER paper_subtype_id
+        INTEGER paper_type
+        INTEGER paper_subtype
     }
-    meetingorganizationlink {
-        INTEGER id
-        INTEGER meeting_id
-        VARCHAR organization_name
+    paper_Originator_person {
+        INTEGER paper_id
+        INTEGER person_name
     }
-    meetingparticipantlink {
-        INTEGER id
-        INTEGER meeting_id
-        VARCHAR person_name
+    paper_direction_link {
+        INTEGER paper_id
+        INTEGER direction_name
     }
-    meetingauxfilelink {
-        INTEGER id
-        INTEGER meeting_id
+    paper_file {
+        INTEGER paper_id
         INTEGER file_id
     }
-    meetingkeywordlink {
-        INTEGER id
-        INTEGER meeting_id
-        VARCHAR keyword
-    }
-    location_papers {
-        INTEGER location_id
+    paper_keyword {
         INTEGER paper_id
+        INTEGER keyword
     }
-    organization_membership {
-        INTEGER organization_id
-        INTEGER membership_id
+    paper_location {
+        INTEGER paper_id
+        INTEGER location_id
+    }
+    paper_originator_organization {
+        INTEGER paper_id
+        INTEGER organization_name
+    }
+    paper_related_paper {
+        INTEGER from_paper_id
+        INTEGER to_paper_id
+    }
+    paper_subordinated_paper {
+        INTEGER paper_id
+        INTEGER subordinated_paper_url
+    }
+    paper_subtype {
+        INTEGER id
+        VARCHAR name
+        INTEGER paper_type_id
+    }
+    paper_superordinated_paper {
+        INTEGER paper_id
+        INTEGER superordinated_paper_url
+    }
+    paper_type {
+        INTEGER id
+        VARCHAR name
+    }
+    person {
+        INTEGER db_id
+        VARCHAR id
+        VARCHAR type
+        VARCHAR body
+        VARCHAR name
+        VARCHAR familyName
+        VARCHAR givenName
+        VARCHAR formOfAddress
+        VARCHAR affix
+        VARCHAR gender
+        INTEGER location
+        VARCHAR life
+        VARCHAR lifeSource
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+        INTEGER title
+        JSON phone
+        JSON email
+        JSON status
+    }
+    person_keyword {
+        INTEGER person_id
+        INTEGER keyword
     }
     person_membership {
         INTEGER person_id
         INTEGER membership_id
     }
-    membership_keyword {
-        INTEGER membership_id
-        VARCHAR keyword
+    person_title {
+        INTEGER person_id
+        INTEGER title_id
     }
-    fileagendaitemlink {
-        INTEGER file_id
-        INTEGER agendaItem
+    post {
+        INTEGER db_id
+        VARCHAR name
+        INTEGER organization_id
     }
-    filepaperlink {
-        INTEGER file_id
-        INTEGER paper_id
+    system {
+        INTEGER db_id
+        VARCHAR id
+        VARCHAR type
+        VARCHAR oparlVersion
+        VARCHAR otherOparlVersions
+        VARCHAR license
+        INTEGER body
+        VARCHAR name
+        VARCHAR contactEmail
+        VARCHAR contactName
+        VARCHAR website
+        VARCHAR vendor
+        VARCHAR product
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
     }
-    agendaitemkeywordlink {
-        INTEGER agendaitem_id
-        VARCHAR keyword
+    system_other_oparl_version {
+        INTEGER system_id
+        INTEGER other_version_id
     }
-    paperfilelink {
-        INTEGER id
-        INTEGER paper_id
-        INTEGER file_id
-    }
-    paperrelatedlink {
-        INTEGER id
-        INTEGER paper_id
-        VARCHAR related_paper_url
-    }
-    papersuperordinatedlink {
-        INTEGER id
-        INTEGER paper_id
-        VARCHAR superordinated_paper_url
-    }
-    papersubordinatedlink {
-        INTEGER id
-        INTEGER paper_id
-        VARCHAR subordinated_paper_url
-    }
-    paperlocationlink {
-        INTEGER id
-        INTEGER paper_id
-        INTEGER location_id
-    }
-    paperoriginatorpersonlink {
-        INTEGER id
-        INTEGER paper_id
-        VARCHAR person_name
-    }
-    paperoriginatororglink {
-        INTEGER id
-        INTEGER paper_id
-        INTEGER organization_name
-    }
-    paperdirectionlink {
-        INTEGER id
-        INTEGER paper_id
-        VARCHAR direction_name
-    }
-    paperkeywordlink {
-        INTEGER id
-        INTEGER paper_id
-        VARCHAR keyword
-    }
-    meetingagendaitemlink {
-        INTEGER id
-        INTEGER meeting_id
-        INTEGER agenda_item_id
-        INTEGER order
+    title {
+        INTEGER db_id
+        VARCHAR title
     }
