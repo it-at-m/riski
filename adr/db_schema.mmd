@@ -93,12 +93,10 @@ erDiagram
     person ||--o{ paper_Originator_person : FK
     person ||--o{ person_keyword : FK
     person ||--o{ person_membership : FK
-    person ||--o{ person_title : FK
     post ||--o{ organization_post : FK
     system ||--o{ system_other_oparl_version : FK
     system ||--o{ system_other_oparl_version : FK
     title ||--o{ person : FK
-    title ||--o{ person_title : FK
 
     agenda_item {
         INTEGER db_id
@@ -487,10 +485,6 @@ erDiagram
     person_membership {
         INTEGER person_id
         INTEGER membership_id
-    }
-    person_title {
-        INTEGER person_id
-        INTEGER title_id
     }
     post {
         INTEGER db_id

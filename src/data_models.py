@@ -302,16 +302,6 @@ class Title(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "title"
     db_id: int = Field(primary_key=True)
     title: str = Field()
-    person_links: List["Person"] = Relationship(back_populates="title")
-
-
-class PersonTitleLink(SQLModel, table=True, check_tables_exist=True):
-    __tablename__ = "person_title"
-    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
-    title_id: int = Field(foreign_key="title.db_id", primary_key=True)
-
-    person: "Person" = Relationship(back_populates="title_links")
-    title: "Title" = Relationship(back_populates="person_links")
 
 
 class PersonMembershipLink(SQLModel, table=True, check_tables_exist=True):
@@ -358,7 +348,6 @@ class Person(SQLModel, table=True, check_tables_exist=True):
     deleted: bool = Field(default=False, description="Markiert als gelöscht")
 
     title: int = Field(default=None, foreign_key="title.db_id")
-    title_links: List["PersonTitleLink"] = Relationship(back_populates="person")
     phone: List[str] = Field(sa_column=Column(JSON), default=[])
     email: List[str] = Field(sa_column=Column(JSON), default=[])
 
