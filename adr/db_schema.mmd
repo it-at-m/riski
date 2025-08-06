@@ -99,17 +99,17 @@ erDiagram
     title ||--o{ person : FK
 
     agenda_item {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
-        INTEGER meeting
+        UUID meeting
         VARCHAR number
-        INTEGER order
+        UUID order
         VARCHAR name
         BOOLEAN public
         VARCHAR result
         VARCHAR resolutionText
-        INTEGER resolutionFile
+        UUID resolutionFile
         TIMESTAMP start
         TIMESTAMP end
         VARCHAR license
@@ -119,11 +119,11 @@ erDiagram
         BOOLEAN deleted
     }
     agendaitem_keyword {
-        INTEGER agendaitem_id
-        INTEGER keyword
+        UUID agendaitem_id
+        UUID keyword
     }
     body {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR name
@@ -155,16 +155,16 @@ erDiagram
         BOOLEAN deleted
     }
     body_keyword {
-        INTEGER body_id
-        INTEGER keyword
+        UUID body_id
+        UUID keyword
     }
     consultation {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR url
-        INTEGER paper
-        INTEGER agenda_item
-        INTEGER meeting
+        UUID paper
+        UUID agenda_item
+        UUID meeting
         BOOLEAN authoritative
         VARCHAR role
         VARCHAR license
@@ -173,22 +173,22 @@ erDiagram
         VARCHAR web
     }
     consultationkeywordlink {
-        INTEGER consultation_id
-        INTEGER keyword_id
+        UUID consultation_id
+        UUID keyword_id
     }
     equivalent_bodies {
-        INTEGER body_id_a
-        INTEGER body_id_b
+        UUID body_id_a
+        UUID body_id_b
     }
     file {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR name
         VARCHAR fileName
         VARCHAR mimeType
         TIMESTAMP date
-        INTEGER size
+        UUID size
         VARCHAR sha1Checksum
         VARCHAR sha512Checksum
         VARCHAR text
@@ -204,31 +204,31 @@ erDiagram
         BOOLEAN deleted
     }
     file_agenda {
-        INTEGER file_id
-        INTEGER agendaItem
+        UUID file_id
+        UUID agendaItem
     }
     file_derivative_link {
-        INTEGER file_id
-        INTEGER derivative_file_id
+        UUID file_id
+        UUID derivative_file_id
     }
     file_keyword {
-        INTEGER file_id
-        INTEGER keyword
+        UUID file_id
+        UUID keyword
     }
     file_meeting {
-        INTEGER file_id
-        INTEGER meeting_id
+        UUID file_id
+        UUID meeting_id
     }
     file_paper {
-        INTEGER file_id
-        INTEGER paper_id
+        UUID file_id
+        UUID paper_id
     }
     keyword {
-        INTEGER db_id
+        UUID db_id
         VARCHAR name
     }
     legislative_term {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR body
@@ -242,11 +242,11 @@ erDiagram
         BOOLEAN deleted
     }
     legislative_term_keyword {
-        INTEGER legislative_term_id
-        INTEGER keyword
+        UUID legislative_term_id
+        UUID keyword
     }
     location {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR description
@@ -263,31 +263,31 @@ erDiagram
         BOOLEAN deleted
     }
     location_bodies {
-        INTEGER location_id
-        INTEGER body_id
+        UUID location_id
+        UUID body_id
     }
     location_keyword {
-        INTEGER location_id
-        INTEGER keyword
+        UUID location_id
+        UUID keyword
     }
     location_meetings {
-        INTEGER location_id
-        INTEGER meeting_id
+        UUID location_id
+        UUID meeting_id
     }
     location_organizations {
-        INTEGER location_id
-        INTEGER organization_id
+        UUID location_id
+        UUID organization_id
     }
     location_papers {
-        INTEGER location_id
-        INTEGER paper_id
+        UUID location_id
+        UUID paper_id
     }
     location_persons {
-        INTEGER location_id
-        INTEGER person_id
+        UUID location_id
+        UUID person_id
     }
     meeting {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR name
@@ -295,10 +295,10 @@ erDiagram
         BOOLEAN cancelled
         TIMESTAMP start
         TIMESTAMP end
-        INTEGER location
-        INTEGER invitation
-        INTEGER resultsProtocol
-        INTEGER verbatimProtocol
+        UUID location
+        UUID invitation
+        UUID resultsProtocol
+        UUID verbatimProtocol
         VARCHAR license
         TIMESTAMP created
         TIMESTAMP modified
@@ -306,33 +306,30 @@ erDiagram
         BOOLEAN deleted
     }
     meeting_agenda_item {
-        INTEGER id
-        INTEGER meeting_id
-        INTEGER agenda_item_id
+        UUID meeting_id
+        UUID agenda_item_id
     }
     meeting_aux_file {
-        INTEGER id
-        INTEGER meeting_id
-        INTEGER file_id
+        UUID meeting_id
+        UUID file_id
     }
     meeting_keyword {
-        INTEGER meeting_id
-        INTEGER keyword
+        UUID meeting_id
+        UUID keyword
     }
     meeting_organization {
-        INTEGER meeting_id
-        INTEGER organization_id
+        UUID meeting_id
+        UUID organization_id
     }
     meeting_participant {
-        INTEGER id
-        INTEGER meeting_id
-        INTEGER person_name
+        UUID meeting_id
+        UUID person_name
     }
     membership {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
-        INTEGER organization
+        UUID organization
         VARCHAR role
         BOOLEAN votingRight
         TIMESTAMP startDate
@@ -345,54 +342,54 @@ erDiagram
         BOOLEAN deleted
     }
     membership_keyword {
-        INTEGER membership_id
-        INTEGER keyword
+        UUID membership_id
+        UUID keyword
     }
     organization {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR body
         VARCHAR name
-        INTEGER meeting_id
+        UUID meeting_id
         VARCHAR shortName
-        INTEGER subOrganizationOf
+        UUID subOrganizationOf
         VARCHAR classification
         TIMESTAMP startDate
         TIMESTAMP endDate
         VARCHAR website
-        INTEGER location
+        UUID location
         VARCHAR externalBody
         VARCHAR license
         TIMESTAMP created
         TIMESTAMP modified
         VARCHAR web
         BOOLEAN deleted
-        INTEGER organization_type_id
+        UUID organization_type_id
     }
     organization_keyword {
-        INTEGER organization_id
-        INTEGER keyword
+        UUID organization_id
+        UUID keyword
     }
     organization_membership {
-        INTEGER organization_id
-        INTEGER membership_id
+        UUID organization_id
+        UUID membership_id
     }
     organization_post {
-        INTEGER organization_id
-        INTEGER post_str
+        UUID organization_id
+        UUID post_str
     }
     organization_sub_organization {
-        INTEGER organization_id
-        INTEGER sub_organization_id
+        UUID organization_id
+        UUID sub_organization_id
     }
     organization_type {
-        INTEGER db_id
+        UUID db_id
         VARCHAR name
         VARCHAR description
     }
     paper {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR body
@@ -400,62 +397,62 @@ erDiagram
         VARCHAR reference
         TIMESTAMP date
         VARCHAR paperType
-        INTEGER mainFile
+        UUID mainFile
         VARCHAR license
         TIMESTAMP created
         TIMESTAMP modified
         VARCHAR web
         BOOLEAN deleted
-        INTEGER paper_type
-        INTEGER paper_subtype
+        UUID paper_type
+        UUID paper_subtype
     }
     paper_Originator_person {
-        INTEGER paper_id
-        INTEGER person_name
+        UUID paper_id
+        UUID person_name
     }
     paper_direction_link {
-        INTEGER paper_id
-        INTEGER direction_name
+        UUID paper_id
+        UUID direction_name
     }
     paper_file {
-        INTEGER paper_id
-        INTEGER file_id
+        UUID paper_id
+        UUID file_id
     }
     paper_keyword {
-        INTEGER paper_id
-        INTEGER keyword
+        UUID paper_id
+        UUID keyword
     }
     paper_location {
-        INTEGER paper_id
-        INTEGER location_id
+        UUID paper_id
+        UUID location_id
     }
     paper_originator_organization {
-        INTEGER paper_id
-        INTEGER organization_name
+        UUID paper_id
+        UUID organization_name
     }
     paper_related_paper {
-        INTEGER from_paper_id
-        INTEGER to_paper_id
+        UUID from_paper_id
+        UUID to_paper_id
     }
     paper_subordinated_paper {
-        INTEGER paper_id
-        INTEGER subordinated_paper_url
+        UUID paper_id
+        UUID subordinated_paper_url
     }
     paper_subtype {
-        INTEGER id
+        UUID id
         VARCHAR name
-        INTEGER paper_type_id
+        UUID paper_type_id
     }
     paper_superordinated_paper {
-        INTEGER paper_id
-        INTEGER superordinated_paper_url
+        UUID paper_id
+        UUID superordinated_paper_url
     }
     paper_type {
-        INTEGER id
+        UUID id
         VARCHAR name
     }
     person {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR body
@@ -465,7 +462,7 @@ erDiagram
         VARCHAR formOfAddress
         VARCHAR affix
         VARCHAR gender
-        INTEGER location
+        UUID location
         VARCHAR life
         VARCHAR lifeSource
         VARCHAR license
@@ -473,32 +470,32 @@ erDiagram
         TIMESTAMP modified
         VARCHAR web
         BOOLEAN deleted
-        INTEGER title
+        UUID title
         JSON phone
         JSON email
         JSON status
     }
     person_keyword {
-        INTEGER person_id
-        INTEGER keyword
+        UUID person_id
+        UUID keyword
     }
     person_membership {
-        INTEGER person_id
-        INTEGER membership_id
+        UUID person_id
+        UUID membership_id
     }
     post {
-        INTEGER db_id
+        UUID db_id
         VARCHAR name
-        INTEGER organization_id
+        UUID organization_id
     }
     system {
-        INTEGER db_id
+        UUID db_id
         VARCHAR id
         VARCHAR type
         VARCHAR oparlVersion
         VARCHAR otherOparlVersions
         VARCHAR license
-        INTEGER body
+        UUID body
         VARCHAR name
         VARCHAR contactEmail
         VARCHAR contactName
@@ -511,10 +508,10 @@ erDiagram
         BOOLEAN deleted
     }
     system_other_oparl_version {
-        INTEGER system_id
-        INTEGER other_version_id
+        UUID system_id
+        UUID other_version_id
     }
     title {
-        INTEGER db_id
+        UUID db_id
         VARCHAR title
     }

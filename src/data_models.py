@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
@@ -14,14 +15,14 @@ load_dotenv()
 
 class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "system_other_oparl_version"
-    system_id: int = Field(foreign_key="system.db_id", primary_key=True)
-    other_version_id: int = Field(foreign_key="system.db_id", primary_key=True)
+    system_id: uuid.UUID = Field(foreign_key="system.db_id", primary_key=True)
+    other_version_id: uuid.UUID = Field(foreign_key="system.db_id", primary_key=True)
 
 
 class PaperType(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_type"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Bezeichnung des Paper-Typs")
 
     # Beziehung zu Subtypen
@@ -31,66 +32,66 @@ class PaperType(SQLModel, table=True, check_tables_exist=True):
 class PaperSubtype(SQLModel, table=True):
     __tablename__ = "paper_subtype"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Bezeichnung des Paper-Subtyps")
 
     # FK auf PaperTypeEnum
-    paper_type_id: int = Field(foreign_key="paper_type.id", description="Referenz auf den übergeordneten Paper-Typ")
+    paper_type_id: uuid.UUID = Field(foreign_key="paper_type.id", description="Referenz auf den übergeordneten Paper-Typ")
     parent_type: PaperType = Relationship(back_populates="subtypes")
 
 
 class PaperRelatedPaper(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_related_paper"
-    from_paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    to_paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
+    from_paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    to_paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
 
 
 class PaperSuperordinatedLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_superordinated_paper"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    superordinated_paper_url: int = Field(description="Übergeordnete Drucksache", foreign_key="paper.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    superordinated_paper_url: uuid.UUID = Field(description="Übergeordnete Drucksache", foreign_key="paper.db_id", primary_key=True)
 
 
 class PaperSubordinatedLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_subordinated_paper"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    subordinated_paper_url: int = Field(description="Untergeordnete Drucksache", foreign_key="paper.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    subordinated_paper_url: uuid.UUID = Field(description="Untergeordnete Drucksache", foreign_key="paper.db_id", primary_key=True)
 
 
 class PaperLocationLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_location"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
 
 
 class PaperOriginatorPersonLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_Originator_person"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    person_name: int = Field(description="Name der Person", foreign_key="person.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    person_name: uuid.UUID = Field(description="Name der Person", foreign_key="person.db_id", primary_key=True)
 
 
 class PaperOriginatorOrgLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_originator_organization"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    organization_name: int = Field(description="Name der Organisation", foreign_key="organization.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    organization_name: uuid.UUID = Field(description="Name der Organisation", foreign_key="organization.db_id", primary_key=True)
 
 
 class PaperDirectionLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_direction_link"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    direction_name: int = Field(foreign_key="organization.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    direction_name: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
 
 
 class PaperKeywordLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_keyword"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class System(SQLModel, check_tables_exist=True, table=True):
     __tablename__ = "system"
 
-    db_id: Optional[int] = Field(primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Die eindeutige URL dieses Objekts.")
     type: str | None = Field(
         None,
@@ -101,7 +102,9 @@ class System(SQLModel, check_tables_exist=True, table=True):
     license: str | None = Field(
         None, description="Lizenz, unter der durch diese API abrufbaren Daten stehen, sofern nicht am einzelnen Objekt anders angegeben."
     )
-    body: int = Field(description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.", foreign_key="body.db_id")
+    body: uuid.UUID = Field(
+        description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.", foreign_key="body.db_id"
+    )
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das System.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse für Anfragen zur OParl-API.")
     contactName: str | None = Field(None, description="Name der Ansprechpartnerin bzw. des Ansprechpartners.")
@@ -124,43 +127,43 @@ class System(SQLModel, check_tables_exist=True, table=True):
 
 class LocationBodies(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location_bodies"
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
-    body_id: int = Field(foreign_key="body.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
+    body_id: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
 
 
 class LocationOrganizations(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location_organizations"
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
-    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
+    organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
 
 
 class LocationPersons(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location_persons"
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
-    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
+    person_id: uuid.UUID = Field(foreign_key="person.db_id", primary_key=True)
 
 
 class LocationMeetings(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location_meetings"
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
-    meeting_id: int = Field(foreign_key="meeting.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
 
 
 class LocationPapers(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location_papers"
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
 
 
 class LocationKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location_keyword"
-    location_id: int = Field(foreign_key="location.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Location(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "location"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Die eindeutige URL des Orts.")
     type: str | None = Field(None, description="Typ des Orts")
     description: str | None = Field(None, description="Textuelle Beschreibung eines Orts, z. B. in Form einer Adresse.")
@@ -190,15 +193,15 @@ class Location(SQLModel, table=True, check_tables_exist=True):
 
 class LegislativeTermKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "legislative_term_keyword"
-    legislative_term_id: int = Field(
+    legislative_term_id: uuid.UUID = Field(
         foreign_key="legislative_term.db_id", primary_key=True, description="URL der zugehörigen LegislativeTerm"
     )
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True, description="Zugehöriges Keyword")
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Zugehöriges Keyword")
 
 
 class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "legislative_term"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Wahlperiode.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/LegislativeTerm'.")
     body: str | None = Field(None, description="Verweis auf die Körperschaft, zu der die Wahlperiode gehört.")
@@ -215,7 +218,7 @@ class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
 
 class OrganizationType(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "organization_type"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Name des Organisationstyps")
     description: str | None = Field(None, description="Beschreibung des Typs")
     organizations: List["Organization"] = Relationship(back_populates="organizationType")
@@ -223,58 +226,60 @@ class OrganizationType(SQLModel, table=True, check_tables_exist=True):
 
 class OrganizationMembership(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "organization_membership"
-    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
-    membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
+    organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
+    membership_id: uuid.UUID = Field(foreign_key="membership.db_id", primary_key=True)
 
 
 class OrganizationPost(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "organization_post"
-    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
-    post_str: int = Field(foreign_key="post.db_id", primary_key=True)
+    organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
+    post_str: uuid.UUID = Field(foreign_key="post.db_id", primary_key=True)
 
 
 class OrganizationSubOrganization(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "organization_sub_organization"
-    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
-    sub_organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
+    sub_organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
 
 
 class OrganizationKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "organization_keyword"
-    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id")
+    organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Post(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "post"
 
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Eindeutige URL des Postens.")
-    organization_id: Optional[int] = Field(default=None, foreign_key="organization.db_id")
+    organization_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, foreign_key="organization.db_id")
     organizations: List["Organization"] = Relationship(back_populates="post", link_model=OrganizationPost)
 
 
 class MeetingOrganizationLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "meeting_organization"
-    meeting_id: int = Field(foreign_key="meeting.db_id", primary_key=True)
-    organization_id: int = Field(foreign_key="organization.db_id", primary_key=True)
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
 
 
 class Organization(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "organization"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Organisation.")
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Organization'.")
     body: str | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
     name: str | None = Field(None, description="Bezeichnung der Organisation.")
-    meeting_id: int | None = Field(None, description="Liste der Sitzungen dieser Organisation.", foreign_key="meeting.db_id")
+    meeting_id: uuid.UUID | None = Field(None, description="Liste der Sitzungen dieser Organisation.", foreign_key="meeting.db_id")
     shortName: str | None = Field(None, description="Abkürzung der Organisation.")
-    subOrganizationOf: int | None = Field(default=None, foreign_key="organization.db_id", description="FK auf übergeordnete Organisation")
+    subOrganizationOf: uuid.UUID | None = Field(
+        default=None, foreign_key="organization.db_id", description="FK auf übergeordnete Organisation"
+    )
     classification: str | None = Field(None, description="Klassifizierung, z. B. gesetzlich, freiwillig.")
     startDate: datetime | None = Field(None, description="Beginn der Organisation.")
     endDate: datetime | None = Field(None, description="Beendigung der Organisation.")
     website: str | None = Field(None, description="Website der Organisation.")
-    location: int | None = Field(None, description="Ort, an dem die Organisation ansässig ist.", foreign_key="location.db_id")
+    location: uuid.UUID | None = Field(None, description="Ort, an dem die Organisation ansässig ist.", foreign_key="location.db_id")
     externalBody: str | None = Field(None, description="Verweis auf eine externe Körperschaft (nur bei Importen).")
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
@@ -283,7 +288,7 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
     membership: List["Membership"] = Relationship(link_model=OrganizationMembership)
     post: List["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
-    subOrganizationOf: Optional[int] = Field(default=None, foreign_key="organization.db_id")
+    subOrganizationOf: Optional[uuid.UUID] = Field(default=None, foreign_key="organization.db_id")
 
     # Relationships
     parentOrganization: Optional["Organization"] = Relationship(
@@ -291,7 +296,7 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
     )
     subOrganizations: List["Organization"] = Relationship(back_populates="parentOrganization")
     keywords: List["Keyword"] = Relationship(back_populates="organizations", link_model=OrganizationKeyword)
-    organization_type_id: Optional[int] = Field(foreign_key="organization_type.db_id")
+    organization_type_id: Optional[uuid.UUID] = Field(foreign_key="organization_type.db_id")
     organizationType: OrganizationType = Relationship(back_populates="organizations")
     papers: List["Paper"] = Relationship(back_populates="originator_orgs", link_model=PaperOriginatorOrgLink)
     directed_papers: List["Paper"] = Relationship(back_populates="under_direction_of", link_model=PaperDirectionLink)
@@ -300,35 +305,34 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
 
 class Title(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "title"
-    db_id: int = Field(primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     title: str = Field()
 
 
 class PersonMembershipLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_membership"
-    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
-    membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
+    person_id: uuid.UUID = Field(foreign_key="person.db_id", primary_key=True)
+    membership_id: uuid.UUID = Field(foreign_key="membership.db_id", primary_key=True)
 
 
 class PersonKeywordLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person_keyword"
-    person_id: int = Field(foreign_key="person.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    person_id: uuid.UUID = Field(foreign_key="person.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class MeetingParticipantLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> Teilnehmer (Personen)"""
 
     __tablename__ = "meeting_participant"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    meeting_id: int = Field(foreign_key="meeting.db_id")
-    person_name: int = Field(foreign_key="person.db_id", description="Name oder ID der Person")
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    person_name: uuid.UUID = Field(foreign_key="person.db_id", description="Name oder ID der Person", primary_key=True)
 
 
 class Person(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "person"
 
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Person.")
     type: str | None = Field(None, description="Typ des Objekts")
     body: str | None = Field(None, description="Körperschaft")
@@ -338,7 +342,7 @@ class Person(SQLModel, table=True, check_tables_exist=True):
     formOfAddress: str | None = Field(None, description="Anrede")
     affix: str | None = Field(None, description="Namenszusatz")
     gender: str | None = Field(None, description="Geschlecht")
-    location: int | None = Field(foreign_key="location.db_id", description="Ort")
+    location: uuid.UUID | None = Field(foreign_key="location.db_id", description="Ort")
     life: str | None = Field(None, description="Lebensdaten")
     lifeSource: str | None = Field(None, description="Quelle der Lebensdaten")
     license: str | None = Field(None, description="Lizenz")
@@ -347,7 +351,7 @@ class Person(SQLModel, table=True, check_tables_exist=True):
     web: str | None = Field(None, description="HTML-Ansicht der Person")
     deleted: bool = Field(default=False, description="Markiert als gelöscht")
 
-    title: int = Field(default=None, foreign_key="title.db_id")
+    title: uuid.UUID = Field(default=None, foreign_key="title.db_id")
     phone: List[str] = Field(sa_column=Column(JSON), default=[])
     email: List[str] = Field(sa_column=Column(JSON), default=[])
 
@@ -365,16 +369,16 @@ class Person(SQLModel, table=True, check_tables_exist=True):
 
 class MembershipKeyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "membership_keyword"
-    membership_id: int = Field(foreign_key="membership.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    membership_id: uuid.UUID = Field(foreign_key="membership.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Membership(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "membership"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Mitgliedschaft.")
     type: str | None = Field(None, description="Typ der Mitgliedschaft")
-    organization: int | None = Field(
+    organization: uuid.UUID | None = Field(
         None, description="Die Gruppierung, in der die Person Mitglied ist oder war.", foreign_key="organization.db_id"
     )
     role: str | None = Field(
@@ -400,43 +404,43 @@ class Membership(SQLModel, table=True, check_tables_exist=True):
 
 class FileDerivativeLink(SQLModel, table=True):
     __tablename__ = "file_derivative_link"
-    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
-    derivative_file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    derivative_file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
 
 
 class FileMeetingLink(SQLModel, table=True):
     __tablename__ = "file_meeting"
-    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
-    meeting_id: int = Field(foreign_key="meeting.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
 
 
 class FileAgendaItemLink(SQLModel, table=True):
     __tablename__ = "file_agenda"
-    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
-    agendaItem: int = Field(foreign_key="agenda_item.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    agendaItem: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
 
 
 class FilePaperLink(SQLModel, table=True):
     __tablename__ = "file_paper"
-    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
 
 
 class FileKeywordLink(SQLModel, table=True):
     __tablename__ = "file_keyword"
-    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class PaperFileLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_file"
-    paper_id: int = Field(foreign_key="paper.db_id", primary_key=True)
-    file_id: int = Field(foreign_key="file.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
 
 
 class File(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "file"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL des Dokuments.")
     type: str | None = Field(None, description="Typ der Datei")
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das Objekt. Sollte keine Dateiendungen wie '.pdf' enthalten.")
@@ -446,7 +450,7 @@ class File(SQLModel, table=True, check_tables_exist=True):
     )
     mimeType: str | None = Field(None, description="MIME-Typ der Datei")
     date: datetime | None = Field(None, description="Datum, das als Ausgangspunkt für Fristen usw. verwendet wird.")
-    size: int | None = Field(None, description="Größe der Datei in Bytes")
+    size: uuid.UUID | None = Field(None, description="Größe der Datei in Bytes")
     sha1Checksum: str | None = Field(
         None,
         description="[Veraltet] SHA1-Prüfziffer des Dateiinhalt in hexadezimaler Schreibweise. Sollte nicht mehr verwendet werden, da SHA1 als unsicher gilt. Stattdessen sollte sha512Checksum verwendet werden.",
@@ -488,25 +492,24 @@ class File(SQLModel, table=True, check_tables_exist=True):
 
 class AgendaItemKeywordLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "agendaitem_keyword"
-    agendaitem_id: int = Field(foreign_key="agenda_item.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    agendaitem_id: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class MeetingAgendaItemLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> AgendaItems (Reihenfolge relevant)"""
 
     __tablename__ = "meeting_agenda_item"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    meeting_id: int = Field(foreign_key="meeting.db_id")
-    agenda_item_id: int = Field(foreign_key="agenda_item.db_id")
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    agenda_item_id: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
 
 
 class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "agenda_item"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL des Tagesordnungspunkt.")
     type: str | None = Field(None, description="Typ des Tagesordnungspunktes")
-    meeting: int | None = Field(
+    meeting: uuid.UUID | None = Field(
         None,
         description="Rückverweis auf das Meeting, welches nur dann ausgegeben werden muss, wenn das AgendaItem-Objekt einzeln abgerufen wird.",
         foreign_key="meeting.db_id",
@@ -515,7 +518,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
         None,
         description="Gliederungs-Nummer des Tagesordnungspunktes. Eine beliebige Zeichenkette, wie z. B. '10.', '10.1', 'C', 'c)' o. ä.",
     )
-    order: int | None = Field(
+    order: uuid.UUID | None = Field(
         None,
         description="Die Position des Tagesordnungspunktes in der Sitzung, beginnend bei 0. Diese Nummer entspricht der Position in Meeting:agendaItem.",
     )
@@ -530,7 +533,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     resolutionText: str | None = Field(
         None, description="Text des Beschlusses, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde."
     )
-    resolutionFile: int | None = Field(
+    resolutionFile: uuid.UUID | None = Field(
         None,
         description="Datei, die den Beschluss enthält, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde.",
         foreign_key="file.db_id",
@@ -549,7 +552,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
 
 class Paper(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Drucksache.")
     type: str | None = Field(None, description="Typ der Drucksache")
     body: str | None = Field(None, description="Körperschaft, zu der die Drucksache gehört.")
@@ -560,7 +563,7 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
     )
     date: datetime | None = Field(None, description="Datum, welches als Ausgangspunkt für Fristen usw. verwendet wird.")
     paperType: str | None = Field(None, description="Art der Drucksache, z. B. Beantwortung einer Anfrage.")
-    mainFile: int | None = Field(
+    mainFile: uuid.UUID | None = Field(
         None,
         description="Die Hauptdatei zu dieser Drucksache. Beispiel: Die Drucksache repräsentiert eine Beschlussvorlage und die Hauptdatei enthält den Text der Beschlussvorlage. Sollte keine eindeutige Hauptdatei vorhanden sein, wird diese Eigenschaft nicht ausgegeben.",
         foreign_key="file.db_id",
@@ -616,28 +619,28 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
     under_direction_of: List["Organization"] = Relationship(back_populates="directed_papers", link_model=PaperDirectionLink)
     keywords: List["Keyword"] = Relationship(back_populates="paper", link_model=PaperKeywordLink)
 
-    paper_type: int = Field(foreign_key="paper_type.id", description="Typ des Dokuments")
+    paper_type: uuid.UUID = Field(foreign_key="paper_type.id", description="Typ des Dokuments")
 
-    paper_subtype: int = Field(foreign_key="paper_subtype.id", description="Subtyp des Dokuments")
+    paper_subtype: uuid.UUID = Field(foreign_key="paper_subtype.id", description="Subtyp des Dokuments")
 
 
 class BodyEquivalentLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "equivalent_bodies"
-    body_id_a: int = Field(foreign_key="body.db_id", primary_key=True)
-    body_id_b: int = Field(foreign_key="body.db_id", primary_key=True)
+    body_id_a: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
+    body_id_b: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
 
 
 class BodyKeywordLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Body <-> Keywords"""
 
     __tablename__ = "body_keyword"
-    body_id: int = Field(foreign_key="body.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    body_id: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Body(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "body"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Körperschaft.")
     type: str | None = Field(None, description="Typangabe: 'https://schema.oparl.org/1.1/Body'.")
     name: str = Field(description="Name der Körperschaft.")
@@ -693,22 +696,21 @@ class MeetingAuxFileLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> zusätzliche Dateien"""
 
     __tablename__ = "meeting_aux_file"
-    id: Optional[int] = Field(default=None, primary_key=True)
-    meeting_id: int = Field(foreign_key="meeting.db_id")
-    file_id: int = Field(foreign_key="file.db_id")
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
 
 
 class MeetingKeywordLink(SQLModel, table=True, check_tables_exist=True):
     """Verknüpfung Meeting <-> Keywords"""
 
     __tablename__ = "meeting_keyword"
-    meeting_id: int = Field(foreign_key="meeting.db_id", primary_key=True)
-    keyword: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Meeting(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "meeting"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
     name: str | None = Field(None, description="Name der Sitzung.")
@@ -725,15 +727,15 @@ class Meeting(SQLModel, table=True, check_tables_exist=True):
         None,
         description="Endzeitpunkt der Sitzung als Datum/Uhrzeit. Bei einer zukünftigen Sitzung ist dies der geplante Zeitpunkt, bei einer stattgefundenen kann es der tatsächliche Endzeitpunkt sein.",
     )
-    location: int | None = Field(None, description="Sitzungsort.", foreign_key="location.db_id")
+    location: uuid.UUID | None = Field(None, description="Sitzungsort.", foreign_key="location.db_id")
 
-    invitation: int | None = Field(None, description="Einladungsdokument zur Sitzung.", foreign_key="file.db_id")
-    resultsProtocol: int | None = Field(
+    invitation: uuid.UUID | None = Field(None, description="Einladungsdokument zur Sitzung.", foreign_key="file.db_id")
+    resultsProtocol: uuid.UUID | None = Field(
         None,
         description="Ergebnisprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
         foreign_key="file.db_id",
     )
-    verbatimProtocol: int | None = Field(
+    verbatimProtocol: uuid.UUID | None = Field(
         None,
         description="Wortprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
         foreign_key="file.db_id",
@@ -751,18 +753,18 @@ class Meeting(SQLModel, table=True, check_tables_exist=True):
 
 
 class ConsultationKeywordLink(SQLModel, table=True):
-    consultation_id: int = Field(foreign_key="consultation.db_id", primary_key=True)
-    keyword_id: int = Field(foreign_key="keyword.db_id", primary_key=True)
+    consultation_id: uuid.UUID = Field(foreign_key="consultation.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Consultation(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "consultation"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(default=None)
     url: str = Field(default=None, description="URL dieses Consultation-Objekts")
-    paper: int | None = Field(default=None, foreign_key="paper.db_id")
-    agenda_item: int | None = Field(default=None, foreign_key="agenda_item.db_id")
-    meeting: int | None = Field(default=None, foreign_key="meeting.db_id")
+    paper: uuid.UUID | None = Field(default=None, foreign_key="paper.db_id")
+    agenda_item: uuid.UUID | None = Field(default=None, foreign_key="agenda_item.db_id")
+    meeting: uuid.UUID | None = Field(default=None, foreign_key="meeting.db_id")
     authoritative: bool = Field(default=False, description="Wurde ein Beschluss gefasst?")
     role: str | None = Field(default=None, description="Funktion der Beratung (z.B. Anhörung, Vorberatung)")
     license: str | None = Field(default=None, description="Lizenz der Daten")
@@ -774,7 +776,7 @@ class Consultation(SQLModel, table=True, check_tables_exist=True):
 
 class Keyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "keyword"
-    db_id: Optional[int] = Field(default=None, primary_key=True)
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     locations: List["Location"] = Relationship(back_populates="keywords", link_model=LocationKeyword)
     legislative_term: List["LegislativeTerm"] = Relationship(back_populates="keywords", link_model=LegislativeTermKeyword)
