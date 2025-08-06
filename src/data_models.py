@@ -101,7 +101,7 @@ class System(SQLModel, check_tables_exist=True, table=True):
     license: str | None = Field(
         None, description="Lizenz, unter der durch diese API abrufbaren Daten stehen, sofern nicht am einzelnen Objekt anders angegeben."
     )
-    body: str = Field(description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.")
+    body: int = Field(description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.", foreign_key="body.db_id")
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das System.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse für Anfragen zur OParl-API.")
     contactName: str | None = Field(None, description="Name der Ansprechpartnerin bzw. des Ansprechpartners.")
@@ -267,7 +267,7 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Organization'.")
     body: str | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
     name: str | None = Field(None, description="Bezeichnung der Organisation.")
-    meeting_id: str | None = Field(None, description="Liste der Sitzungen dieser Organisation.", foreign_key="meeting.db_id")
+    meeting_id: int | None = Field(None, description="Liste der Sitzungen dieser Organisation.", foreign_key="meeting.db_id")
     shortName: str | None = Field(None, description="Abkürzung der Organisation.")
     subOrganizationOf: int | None = Field(default=None, foreign_key="organization.db_id", description="FK auf übergeordnete Organisation")
     classification: str | None = Field(None, description="Klassifizierung, z. B. gesetzlich, freiwillig.")
@@ -302,7 +302,7 @@ class Title(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "title"
     db_id: int = Field(primary_key=True)
     title: str = Field()
-    person_links: List["PersonTitleLink"] = Relationship(back_populates="title")
+    person_links: List["Person"] = Relationship(back_populates="title")
 
 
 class PersonTitleLink(SQLModel, table=True, check_tables_exist=True):
