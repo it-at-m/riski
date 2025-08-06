@@ -64,6 +64,9 @@ class CityCouncilMemberExtractor:
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self, path: str):
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
+
+        # The '3' corresponds to the third entry of a dropdown menu to select the number items on the page.
+        # The entries in the menu are [10, 20, 50, 100]. The Dropdown uses a 0 based index.
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": 3}
         response = self.client.post(url=url, data=data)
         if response.status_code == 302:
