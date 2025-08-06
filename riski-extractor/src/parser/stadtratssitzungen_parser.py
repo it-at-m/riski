@@ -11,7 +11,7 @@ from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
 
 
-class STRParser:
+class StadtratssitzungenParser:
     """
     Parser für Stadtratssitzungen
     """
@@ -20,7 +20,7 @@ class STRParser:
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("STRParser initialized.")
+        self.logger.info("StadtratssitzungenParser initialized.")
 
         try:
             locale.setlocale(locale.LC_TIME, "de_DE.utf8")
@@ -75,6 +75,8 @@ class STRParser:
         type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
+        # TODO: load if already exists (find by name?)
+
         # --- Location Object ---
         location = Location(
             id=None,
@@ -82,7 +84,7 @@ class STRParser:
             description="Ort der Stadtratssitzung",
             room=data_dict.get("Sitzungsort:", ""),
             locality="München",
-            created=datetime.now(),
+            created=datetime.now(),  # TODO: check if already exists
             modified=datetime.now(),
             web=HttpUrl(url),
             deleted=False,
@@ -116,7 +118,7 @@ class STRParser:
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now()
+        created = datetime.now()  # TODO: check if already exists?
         modified = datetime.now()
         web = HttpUrl(url)
         deleted = False
