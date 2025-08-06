@@ -102,9 +102,6 @@ class System(SQLModel, check_tables_exist=True, table=True):
     license: str | None = Field(
         None, description="Lizenz, unter der durch diese API abrufbaren Daten stehen, sofern nicht am einzelnen Objekt anders angegeben."
     )
-    body: uuid.UUID = Field(
-        description="Link zur Objektliste mit allen Körperschaften, die auf dem System existieren.", foreign_key="body.db_id"
-    )
     name: str | None = Field(None, description="Benutzerfreundlicher Name für das System.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse für Anfragen zur OParl-API.")
     contactName: str | None = Field(None, description="Name der Ansprechpartnerin bzw. des Ansprechpartners.")
@@ -123,6 +120,7 @@ class System(SQLModel, check_tables_exist=True, table=True):
             "foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.system_id, SYSTEM_OTHER_OPARL_VERSION.other_version_id]",
         },
     )
+    bodies: List["Body"] = Relationship(back_populates="system_link")
 
 
 class LocationBodies(SQLModel, table=True, check_tables_exist=True):
@@ -690,6 +688,8 @@ class Body(SQLModel, table=True, check_tables_exist=True):
         },
     )
     keywords: list["Keyword"] = Relationship(back_populates="body", link_model=BodyKeywordLink)
+    system_id: Optional[uuid.UUID] = Field(default=None, foreign_key="system.db_id")
+    system_link: Optional["System"] = Relationship(back_populates="bodies")
 
 
 class MeetingAuxFileLink(SQLModel, table=True, check_tables_exist=True):
