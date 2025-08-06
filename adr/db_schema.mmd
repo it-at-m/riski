@@ -7,7 +7,6 @@ erDiagram
     body ||--o{ equivalent_bodies : FK
     body ||--o{ equivalent_bodies : FK
     body ||--o{ location_bodies : FK
-    body ||--o{ system : FK
     consultation ||--o{ consultationkeywordlink : FK
     file ||--o{ agenda_item : FK
     file ||--o{ file_agenda : FK
@@ -94,6 +93,7 @@ erDiagram
     person ||--o{ person_keyword : FK
     person ||--o{ person_membership : FK
     post ||--o{ organization_post : FK
+    system ||--o{ body : FK
     system ||--o{ system_other_oparl_version : FK
     system ||--o{ system_other_oparl_version : FK
     title ||--o{ person : FK
@@ -153,6 +153,7 @@ erDiagram
         TIMESTAMP modified
         VARCHAR web
         BOOLEAN deleted
+        UUID system_id
     }
     body_keyword {
         UUID body_id
@@ -495,7 +496,6 @@ erDiagram
         VARCHAR oparlVersion
         VARCHAR otherOparlVersions
         VARCHAR license
-        UUID body
         VARCHAR name
         VARCHAR contactEmail
         VARCHAR contactName
