@@ -17,8 +17,10 @@ dependencies = [
     "langchain-docling>=1.0.0",
     "langchain-openai>=0.3.28",
     "pydantic[email]>=2.11.7",
+    "pytest>=8.4.1",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
+    "sqlmodel>=0.0.24",
     "stamina>=25.1.0",
     "tokenizers==0.21.2",
     "truststore>=0.10.1",
@@ -41,3 +43,6 @@ torch = [{ index = "pytorch-cpu" }]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
