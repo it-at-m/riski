@@ -28,13 +28,6 @@ repos:
     # Checks that all your JSON files are pretty. "Pretty" here means that keys are sorted and indented.
     args: [ --autofix, --no-ensure-ascii ]
     exclude: '\.ipynb$'
-- repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.6.6
-  hooks:
-  # Compile requirements
-  - id: pip-compile
-    args: [ --universal, pyproject.toml, -o, requirements.txt ]
-    files: ^(.*\/)?(uv\.lock|pyproject\.toml)$
 - repo: https://github.com/kynan/nbstripout
   rev: 0.8.1
   hooks:

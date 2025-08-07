@@ -3,7 +3,6 @@ from datetime import datetime
 
 import pytest
 from sqlmodel import Session, SQLModel, create_engine
-
 from src.data_models import (
     AgendaItem,
     Body,
