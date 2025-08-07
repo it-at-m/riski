@@ -1,21 +1,19 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
-
-from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
+
+inject_into_ssl()
+load_dotenv()
+### end of special import block ###
+
+import httpx
+import stamina
+from bs4 import BeautifulSoup
 
 from src.data_models import Person
 from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 from src.parser.referenten_parser import ReferentenParser
-
-inject_into_ssl()
-load_dotenv()
-
-### end of special import block ###
-
-import httpx
-import stamina
 
 
 class ReferentenExtractor:

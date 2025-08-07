@@ -1,25 +1,23 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
+from dotenv import load_dotenv
+from truststore import inject_into_ssl
+
+inject_into_ssl()
+load_dotenv()
+### end of special import block ###
+
 import datetime
 import os
 import re
 
+import httpx
+import stamina
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-from truststore import inject_into_ssl
 
 from src.data_models import ExtractArtifact, Meeting
 from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
-
-inject_into_ssl()
-load_dotenv()
-
-### end of special import block ###
-
-
-import httpx
-import stamina
 
 
 class StadtratssitzungenExtractor:
