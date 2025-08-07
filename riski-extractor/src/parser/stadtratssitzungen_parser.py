@@ -75,8 +75,6 @@ class StadtratssitzungenParser:
         type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
-        # TODO: load if already exists (find by name?)
-
         # --- Location Object ---
         location = Location(
             id=None,
@@ -84,7 +82,7 @@ class StadtratssitzungenParser:
             description="Ort der Stadtratssitzung",
             room=data_dict.get("Sitzungsort:", ""),
             locality="München",
-            created=datetime.now(),  # TODO: check if already exists
+            created=datetime.now(),
             modified=datetime.now(),
             web=HttpUrl(url),
             deleted=False,
@@ -118,7 +116,7 @@ class StadtratssitzungenParser:
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now()  # TODO: check if already exists?
+        created = datetime.now()
         modified = datetime.now()
         web = HttpUrl(url)
         deleted = False

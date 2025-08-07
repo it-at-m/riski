@@ -1,5 +1,5 @@
 {
-  "filesCount": 0,
+  "filesCount": 6,
   "ignore": [
     "node_modules",
     ".git"
@@ -12,12 +12,12 @@
       "username": ""
     },
     "bypassProxy": "",
-    "enabled": true,
-    "hostname": "internet-proxy-client.muenchen.de",
-    "port": 80,
+    "enabled": false,
+    "hostname": "",
+    "port": 0,
     "protocol": "http"
   },
-  "size": 0,
+  "size": 3050,
   "type": "collection",
   "version": "1"
 }

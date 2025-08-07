@@ -1,12 +1,13 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
 import datetime
+import os
 import re
 
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
-from src.data_models import Meeting
+from src.data_models import ExtractArtifact, Meeting
 from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
@@ -45,10 +46,12 @@ class StadtratssitzungenExtractor:
 
     # remove the . from ./xxx
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
-        return self.base_url + unsanitized_path[1:]
+        if unsanitized_path.startswith("."):
+            return self.base_url + unsanitized_path[1:]
+        return self.base_url + unsanitized_path
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _initial_request(self):
+    def _initial_request(self) -> None:
         # make request
         response = self.client.get(url=self.base_url + self.uebersicht_path)
         # evaluate response
@@ -58,6 +61,7 @@ class StadtratssitzungenExtractor:
             self.client.get(url=self._get_sanitized_url(redirect_url))
         else:
             response.raise_for_status()
+            raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _filter_sitzungen(self, startdate: datetime.date) -> str:
@@ -72,9 +76,10 @@ class StadtratssitzungenExtractor:
             return redirect_url
         else:
             response.raise_for_status()
+            raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _set_results_per_page(self, path):
+    def _set_results_per_page(self, path) -> str:
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
         response = self.client.post(url=url, data=data)
@@ -82,31 +87,32 @@ class StadtratssitzungenExtractor:
             return response.headers.get("Location")
         else:
             response.raise_for_status()
+            raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     # iteration through other request
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_current_page_text(self, path) -> str:
         response = self.client.get(url=self._get_sanitized_url(path))
-        self.logger.info(f"Anfrage des Seiteninhalts: {self._get_sanitized_url(path)}")
+        self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
         response.raise_for_status()
         return response.text.encode().decode("unicode_escape")
 
     def _parse_meeting_links(self, meeting_links: list[str]) -> list[Meeting]:
         meetings = []
         for link in meeting_links:
-            # self.logger.info(f"Lade Meeting-Link: {link}")
+            self.logger.debug(f"Load meeting link: {link}")
             try:
                 response = self._get_meeting_html(link)
                 meeting = self.str_parser.parse(link, response.encode().decode("unicode_escape"))
                 meetings.append(meeting)
-            #   self.logger.info(f"Parsed: {meeting.name} ({meeting.start})")
+                self.logger.debug(f"Parsed: {meeting.name} ({meeting.start})")
             except Exception as e:
-                self.logger.error(f"Fehler beim Parsen von {link}: {e}")
+                self.logger.error(f"Error parsing {link}: {e}")
         return meetings
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_meeting_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # Detailseite anfragen
+        response = self.client.get(url=link)  # get detail page
         response.raise_for_status()
         return response.text
 
@@ -127,7 +133,7 @@ class StadtratssitzungenExtractor:
             return None
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_next_page(self, path, next_page_link):
+    def _get_next_page(self, path, next_page_link) -> None:
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Referer": self._get_sanitized_url(path),
@@ -140,24 +146,25 @@ class StadtratssitzungenExtractor:
         }
 
         page_url = self._get_sanitized_url(next_page_link) + "&_=1"
-        self.logger.info(f"Anfrage der naechsten Seite: {page_url}")
+        self.logger.info(f"Get next page: {page_url}")
         page_response = self.client.get(url=page_url, headers=headers)
         page_response.raise_for_status()
 
-    def run(self, startdate: datetime.date) -> list[Meeting]:
+    def run(self, startdate: datetime.date) -> ExtractArtifact:
         try:
-            # Initiale Anfrage für Cookies, SessionID etc.
-            # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # Für cookies und hallo
+            # Initial request for Cookies, SessionID etc.
+            # 1. https://risi.muenchen.de/risi/sitzung/uebersicht # for cookies and hallo
             self._initial_request()
 
-            # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # redirect url bekommen + filterung nach datum und bereich (nur stadtrat)
+            # Request to set Filters
+            # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # get redirect url + filter by datum and domain (only stadtrat)
             filter_sitzungen_redirect_path = self._filter_sitzungen(startdate)
 
-            # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it #Seitengröße auf 100 setzen
+            # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it # set result size to 100
             results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
 
-            # Anfrage und Verarbeitung aller Seiten der Sitzungsliste
-            # 4. durchiterieren durch die Pages
+            # request and procss all pages of meetings list
+            # 4. iterate over Pages
             access_denied = False
             meetings = []
             while not access_denied:
@@ -165,7 +172,7 @@ class StadtratssitzungenExtractor:
                 meeting_links = self._extract_meeting_links(current_page_text)
 
                 if not meeting_links:
-                    self.logger.warning("Keine Meetings auf der Übersichtsseite gefunden.")
+                    self.logger.warning("No Meetings found on overview page.")
                 else:
                     meetings.extend(self._parse_meeting_links(meeting_links))
 
@@ -173,15 +180,15 @@ class StadtratssitzungenExtractor:
 
                 if not nav_top_next_link:
                     access_denied = True
-                    self.logger.info("Keine weiteren Seiten mehr vorhanden – Schleife beendet.")
+                    self.logger.info("No further pages found – loop terminated.")
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
-            return meetings
+            return ExtractArtifact(meetings=meetings)
         except Exception as e:
-            self.logger.error(f"Fehler beim Abrufen der Sitzungen: {e}")
-            return []
+            self.logger.error(f"Error while extracting meetings: {e}")
+            return ExtractArtifact(meetings=[])
 
 
 def main() -> None:
@@ -191,14 +198,14 @@ def main() -> None:
     logger = getLogger()
 
     logger.info("Starting extraction process")
-    logger.info("Loading sitemap from 'artifacts/sitemap.json'")
 
     extractor = StadtratssitzungenExtractor()
-    extract_artifact = extractor.run(datetime.date(2025, 6, 1))
+    extract_artifact = extractor.run(datetime.date.today() - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
-    with open("artifacts/meeting.json", "w", encoding="utf-8") as file:
+    os.makedirs("artifacts", exist_ok=True)
+    with open("artifacts/meetings.json", "w", encoding="utf-8") as file:
         file.write(extract_artifact.model_dump_json(indent=4))
 
     logger.info("Extraction process finished")
