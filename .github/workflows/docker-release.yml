@@ -48,13 +48,6 @@ jobs:
             echo "tag=${TAG}" >> $GITHUB_OUTPUT
           fi
           echo "repo_lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-      - name: Cache uv cache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
       - name: Set build timestamp
         id: build_ts
         run: echo "BUILD_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
@@ -76,5 +69,3 @@ jobs:
       - name: Image digest
         run: |
           echo "Image built and pushed: ghcr.io/${{ github.repository }}:${{ steps.vars.outputs.tag }}"
-
-  

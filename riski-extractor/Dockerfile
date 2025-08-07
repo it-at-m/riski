@@ -10,10 +10,11 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
+# Leverage layer cache
+COPY pyproject.toml uv.lock ./
+
 # Install the transitive dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --no-dev --locked --no-install-project
 
 COPY . /app
@@ -45,8 +46,8 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
 WORKDIR /app
 
 # Create a non-root user and group with UID/GID 1001
-RUN groupadd -g 1001 appuser && \
-    useradd -m -u 1001 -g appuser appuser
+RUN addgroup -g 1001 -S appuser && \
+    adduser -m -u 1001 -S -G appuser appuser
 
 # Copy the application files from the builder stage
 COPY --from=builder --chown=appuser:appuser /app /app
