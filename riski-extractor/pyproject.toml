@@ -11,7 +11,9 @@ authors = [
     { name = "Annalena Wittmann", email = "annalena.wittmann@muenchen.de" },
 ]
 dependencies = [
+    "bs4>=0.0.2",
     "gitpython>=3.1.45",
+    "httpx>=0.28.1",
     "langchain>=0.3.27",
     "langchain-community>=0.3.27",
     "langchain-docling>=1.0.0",

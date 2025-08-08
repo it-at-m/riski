@@ -1,38 +1,35 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
-import datetime
-import os
-
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
-from src.data_models import ExtractArtifact, Meeting
-from src.envtools import getenv_with_exception
-
 inject_into_ssl()
 load_dotenv()
-
 ### end of special import block ###
 
+import datetime
 import re
 
 import httpx
 import stamina
 from bs4 import BeautifulSoup
-from httpx import Client
 
+from src.data_models import ExtractArtifact, Meeting
+from src.envtools import getenv_with_exception
 from src.logtools import getLogger
-from src.parser.str_parser import STRParser
+from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
 
 
-class RISExtractor:
+class StadtratssitzungenExtractor:
     """
     Extractor for the RIS website
     """
 
     def __init__(self) -> None:
-        self.client = Client(proxy=getenv_with_exception("HTTP_PROXY"))
+        # NOTE: Do not set follow_redirects=True at client level.
+        # Some flows inspect 3xx responses/Location; we decide per request.
+        self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
         self.logger = getLogger()
-        self.str_parser = STRParser()
+        self.str_parser = StadtratssitzungenParser()
         self.base_url = "https://risi.muenchen.de/risi/sitzung"
         self.uebersicht_path = "/uebersicht"
 
@@ -48,31 +45,22 @@ class RISExtractor:
 
     # remove the . from ./xxx
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
-        if unsanitized_path.startswith("."):
-            return self.base_url + unsanitized_path[1:]
-        return self.base_url + unsanitized_path
+        return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _initial_request(self) -> None:
         # make request
-        response = self.client.get(url=self.base_url + self.uebersicht_path)
-        # evaluate response
-        if response.status_code == 302:
-            redirect_url = response.headers.get("Location")
-            self.logger.info(f"Redirect URL: {redirect_url}")
-            self.client.get(url=self._get_sanitized_url(redirect_url))
-        else:
-            response.raise_for_status()
-            raise ValueError(f"Expected redirect but got status {response.status_code}")
+        response = self.client.get(url=self.base_url + self.uebersicht_path, follow_redirects=True)
+        response.raise_for_status()
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter_sitzungen(self, startdate: datetime.date) -> str:
+    def _filter_meetings(self, startdate: datetime.date) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {"von": startdate.isoformat(), "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
-        if response.status_code == 302:
+        if response.is_redirect:
             redirect_url = response.headers.get("Location")
             self.logger.info(f"Filter Redirect URL: {redirect_url}")
             return redirect_url
@@ -83,9 +71,11 @@ class RISExtractor:
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self, path) -> str:
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
-        data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
+        data = {
+            "list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"
+        }  # 3 is the third entry in a dropdown menu representing the count 100
         response = self.client.post(url=url, data=data)
-        if response.status_code == 302:
+        if response.is_redirect:
             return response.headers.get("Location")
         else:
             response.raise_for_status()
@@ -97,7 +87,7 @@ class RISExtractor:
         response = self.client.get(url=self._get_sanitized_url(path))
         self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
         response.raise_for_status()
-        return response.text.encode().decode("unicode_escape")
+        return response.text
 
     def _parse_meeting_links(self, meeting_links: list[str]) -> list[Meeting]:
         meetings = []
@@ -114,7 +104,7 @@ class RISExtractor:
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_meeting_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # get detail page
+        response = self.client.get(url=link, follow_redirects=True)  # get detail page
         response.raise_for_status()
         return response.text
 
@@ -160,7 +150,7 @@ class RISExtractor:
 
             # Request to set Filters
             # 2. https://risi.muenchen.de/risi/sitzung/uebersicht/uebersicht?0-1.-form # get redirect url + filter by datum and domain (only stadtrat)
-            filter_sitzungen_redirect_path = self._filter_sitzungen(startdate)
+            filter_sitzungen_redirect_path = self._filter_meetings(startdate)
 
             # 3. https://risi.muenchen.de/risi/sitzung/uebersicht?1-3.0-list_container-list-card-cardheader-it # set result size to 100
             results_per_page_redirect_path = self._set_results_per_page(filter_sitzungen_redirect_path)
@@ -182,35 +172,12 @@ class RISExtractor:
 
                 if not nav_top_next_link:
                     access_denied = True
-                    self.logger.info("No further pages found – loop terminated.")
+                    self.logger.info("No further pages found - loop terminated.")
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
             return ExtractArtifact(meetings=meetings)
-        except Exception:
+        except Exception as e:
+            self.logger.error(f"Error while extracting meetings: {e}")
             return ExtractArtifact(meetings=[])
-
-
-def main() -> None:
-    """
-    Main function for the extraction process
-    """
-    logger = getLogger()
-
-    logger.info("Starting extraction process")
-
-    extractor = RISExtractor()
-    extract_artifact = extractor.run(datetime.date.today() - datetime.timedelta(days=30))
-
-    logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
-
-    os.makedirs("artifacts", exist_ok=True)
-    with open("artifacts/extraction.json", "w", encoding="utf-8") as file:
-        file.write(extract_artifact.model_dump_json(indent=4))
-
-    logger.info("Extraction process finished")
-
-
-if __name__ == "__main__":
-    main()
