@@ -69,7 +69,7 @@ class HeadOfDepartmentExtractor:
         return response.text
 
     # TODO
-    def _parse_head_of_departments(self, head_of_department_links: list[str]) -> list[object]:
+    def _parse_head_of_departments(self, head_of_department_links: list[str]) -> list[Person]:
         heads_of_departments: list[Person] = []
         for link in head_of_department_links:
             try:
