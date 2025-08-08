@@ -22,6 +22,8 @@ class HeadOfDepartmentExtractor:
     """
 
     def __init__(self) -> None:
+        # NOTE: Do not set follow_redirects=True at client level.
+        # Some flows inspect 3xx responses/Location; we decide per request.
         self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
         self.logger = getLogger()
         self.head_of_department_parser = HeadOfDepartmentParser()
