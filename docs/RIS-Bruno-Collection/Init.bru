@@ -1,0 +1,24 @@
+meta {
+  name: Init
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://risi.muenchen.de/risi/sitzung/uebersicht?0
+  body: none
+  auth: inherit
+}
+
+params:query {
+  0: 
+}
+
+headers {
+  Accept-Language: de,en-US;q=0.7,en;q=0.3
+  Cache-Control: no-cache
+  User-Agent: bruno-runtime/.0.1
+  Accept: */*
+  Accept-Encoding: gzip, deflate, br
+  Connection: keep-alive
+}

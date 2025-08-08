@@ -1,17 +1,25 @@
 [project]
-name = "riski-extraktor"
+name = "riski-extractor"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python application for extracting information from munich's political information system RIS"
 readme = "README.md"
 requires-python = "==3.12.11"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
+    { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
+    { name = "Annalena Wittmann", email = "annalena.wittmann@muenchen.de" },
+]
 dependencies = [
     "gitpython>=3.1.45",
     "langchain>=0.3.27",
     "langchain-community>=0.3.27",
     "langchain-docling>=1.0.0",
     "langchain-openai>=0.3.28",
+    "pydantic[email]>=2.11.7",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
+    "stamina>=25.1.0",
     "tokenizers==0.21.2",
     "torch>=2.8.0",
     "torchvision>=0.23.0",

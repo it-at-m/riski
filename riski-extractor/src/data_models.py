@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
@@ -8,7 +7,7 @@ class System(BaseModel):
     id: HttpUrl = Field(description="Die eindeutige URL dieses Objekts.")
     type: str | None = Field(None, description="Der feste Typ des Objekts: 'https://schema.oparl.org/1.1/System'.")
     oparlVersion: str = Field(description="Die vom System unterstützte OParl-Version (z. B. 'https://schema.oparl.org/1.1/').")
-    otherOparlVersions: List[HttpUrl] | None = Field(None, description="Dient der Angabe von System-Objekten mit anderen OParl-Versionen.")
+    otherOparlVersions: list[HttpUrl] | None = Field(None, description="Dient der Angabe von System-Objekten mit anderen OParl-Versionen.")
     license: HttpUrl | None = Field(
         None, description="Lizenz, unter der durch diese API abrufbaren Daten stehen, sofern nicht am einzelnen Objekt anders angegeben."
     )
@@ -35,7 +34,7 @@ class System(BaseModel):
 
 
 class Location(BaseModel):
-    id: HttpUrl = Field(description="Die eindeutige URL des Orts.")
+    id: HttpUrl | None = Field(description="Die eindeutige URL des Orts.")
     type: str | None = Field(None, description="Typ des Orts")
     description: str | None = Field(None, description="Textuelle Beschreibung eines Orts, z. B. in Form einer Adresse.")
     geojson: dict | None = Field(
@@ -47,28 +46,28 @@ class Location(BaseModel):
     postalCode: str | None = Field(None, description="Postleitzahl der Anschrift.")
     subLocality: str | None = Field(None, description="Untergeordnete Ortsangabe der Anschrift, z.B. Stadtbezirk, Ortsteil oder Dorf.")
     locality: str | None = Field(None, description="Ortsangabe der Anschrift.")
-    bodies: List[HttpUrl] | None = Field(
+    bodies: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Body-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
-    organizations: List[HttpUrl] | None = Field(
+    organizations: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Organisation-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
-    persons: List[HttpUrl] | None = Field(
+    persons: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Person-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
-    meetings: List[HttpUrl] | None = Field(
+    meetings: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Meeting-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
-    papers: List[HttpUrl] | None = Field(
+    papers: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Paper-Objekte. Wird nur ausgegeben, wenn das Location-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
     license: str | None = Field(None, description="Lizenz für die bereitgestellten Informationen.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Wahlperiode.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Wahlperiode.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht des Objekts.")
@@ -83,7 +82,7 @@ class LegislativeTerm(BaseModel):
     startDate: datetime | None = Field(None, description="Beginn der Wahlperiode.")
     endDate: datetime | None = Field(None, description="Ende der Wahlperiode.")
     license: str | None = Field(None, description="Lizenz für die bereitgestellten Informationen.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Wahlperiode.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Wahlperiode.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht des Objekts.")
@@ -95,10 +94,10 @@ class Organization(BaseModel):
     type: str | None = Field(None, description="Typ des Objekts: 'https://schema.oparl.org/1.1/Organization'.")
     body: HttpUrl | None = Field(None, description="Verweis auf die Körperschaft, zu der die Organisation gehört.")
     name: str | None = Field(None, description="Bezeichnung der Organisation.")
-    membership: List[HttpUrl] | None = Field(None, description="Liste der zugehörigen Mitgliedschaften.")
+    membership: list[HttpUrl] | None = Field(None, description="Liste der zugehörigen Mitgliedschaften.")
     meeting: HttpUrl | None = Field(None, description="Liste der Sitzungen dieser Organisation.")
     shortName: str | None = Field(None, description="Abkürzung der Organisation.")
-    post: List[str] | None = Field(None, description="Posten oder Ämter, die in der Organisation existieren.")
+    post: list[str] | None = Field(None, description="Posten oder Ämter, die in der Organisation existieren.")
     subOrganizationOf: HttpUrl | None = Field(None, description="Verweis auf die übergeordnete Organisation.")
     organizationType: str | None = Field(None, description="Typ der Organisation, z. B. Ausschuss, Fraktion.")
     classification: str | None = Field(None, description="Klassifizierung, z. B. gesetzlich, freiwillig.")
@@ -108,7 +107,7 @@ class Organization(BaseModel):
     location: HttpUrl | None = Field(None, description="Ort, an dem die Organisation ansässig ist.")
     externalBody: HttpUrl | None = Field(None, description="Verweis auf eine externe Körperschaft (nur bei Importen).")
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Organisation.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Organisation.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Organisation.")
@@ -124,17 +123,17 @@ class Person(BaseModel):
     givenName: str | None = Field(None, description="Vorname der Person.")
     formOfAddress: str | None = Field(None, description="Anrede der Person (z. B. Frau, Herr).")
     affix: str | None = Field(None, description="Namenszusatz (z. B. von, zu, Freiherr).")
-    title: List[str] | None = Field(None, description="Titel der Person (z. B. Dr., Prof.).")
+    title: list[str] | None = Field(None, description="Titel der Person (z. B. Dr., Prof.).")
     gender: str | None = Field(None, description="Geschlecht der Person.")
-    phone: List[str] | None = Field(None, description="Telefonnummer(n) der Person.")
-    email: List[str] | None = Field(None, description="E-Mail-Adresse(n) der Person.")
+    phone: list[str] | None = Field(None, description="Telefonnummer(n) der Person.")
+    email: list[str] | None = Field(None, description="E-Mail-Adresse(n) der Person.")
     location: HttpUrl | None = Field(None, description="Verweis auf einen Ort, der mit der Person verknüpft ist.")
-    status: List[str] | None = Field(None, description="Statusinformationen zur Person (z. B. Mandat ruhend).")
-    membership: List[HttpUrl] | None = Field(None, description="Verweise auf Mitgliedschaften.")
+    status: list[str] | None = Field(None, description="Statusinformationen zur Person (z. B. Mandat ruhend).")
+    membership: list[HttpUrl] | None = Field(None, description="Verweise auf Mitgliedschaften.")
     life: str | None = Field(None, description="Lebensdaten der Person (z. B. Geburtsdatum).")
     lifeSource: str | None = Field(None, description="Quelle der Lebensdaten.")
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
@@ -161,7 +160,7 @@ class Membership(BaseModel):
         description="Die Gruppierung, für die die Person in der unter organization angegebenen Organisation sitzt. Beispiel: Mitgliedschaft als Vertreter einer Ratsfraktion, einer Gruppierung oder einer externen Organisation.",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
@@ -193,25 +192,25 @@ class File(BaseModel):
         None, description="Externe URL, die zusätzliche Zugriffsoptionen bietet (z.B. ein YouTube-Video)."
     )
     masterFile: HttpUrl | None = Field(None, description="Datei, von der das aktuelle Objekt abgeleitet wurde.")
-    derivativeFile: List[HttpUrl] | None = Field(None, description="Dateien, die von dem aktuellen Objekt abgeleitet wurden.")
+    derivativeFile: list[HttpUrl] | None = Field(None, description="Dateien, die von dem aktuellen Objekt abgeleitet wurden.")
     fileLicense: HttpUrl | None = Field(
         None,
         description="Lizenz, unter der die Datei angeboten wird. Wenn diese Eigenschaft nicht verwendet wird, ist der Wert von license oder die Lizenz eines übergeordneten Objektes maßgeblich.",
     )
-    meeting: List[HttpUrl] | None = Field(
+    meeting: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Meeting-Objekte. Wird nur ausgegeben, wenn das File-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
-    agendaItem: List[HttpUrl] | None = Field(
+    agendaItem: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf AgendaItem-Objekte. Wird nur ausgegeben, wenn das File-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
-    paper: List[HttpUrl] | None = Field(
+    paper: list[HttpUrl] | None = Field(
         None,
         description="Rückverweise auf Paper-Objekte. Wird nur ausgegeben, wenn das File-Objekt nicht als eingebettetes Objekt aufgerufen wird.",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
@@ -247,11 +246,11 @@ class AgendaItem(BaseModel):
     resolutionFile: File | None = Field(
         None, description="Datei, die den Beschluss enthält, falls in diesem Tagesordnungspunkt ein Beschluss gefasst wurde."
     )
-    auxiliaryFile: List[File] | None = Field(None, description="Weitere Datei-Anhänge zum Tagesordnungspunkt.")
+    auxiliaryFile: list[File] | None = Field(None, description="Weitere Datei-Anhänge zum Tagesordnungspunkt.")
     start: datetime | None = Field(None, description="Datum und Uhrzeit des Anfangszeitpunkts des Tagesordnungspunktes.")
     end: datetime | None = Field(None, description="Endzeitpunkt des Tagesordnungspunktes als Datum/Uhrzeit.")
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
@@ -269,32 +268,32 @@ class Paper(BaseModel):
     )
     date: datetime | None = Field(None, description="Datum, welches als Ausgangspunkt für Fristen usw. verwendet wird.")
     paperType: str | None = Field(None, description="Art der Drucksache, z. B. Beantwortung einer Anfrage.")
-    relatedPaper: List[HttpUrl] | None = Field(None, description="Inhaltlich verwandte Drucksachen.")
-    superordinatedPaper: List[HttpUrl] | None = Field(None, description="Übergeordnete Drucksachen.")
-    subordinatedPaper: List[HttpUrl] | None = Field(None, description="Untergeordnete Drucksachen.")
+    relatedPaper: list[HttpUrl] | None = Field(None, description="Inhaltlich verwandte Drucksachen.")
+    superordinatedPaper: list[HttpUrl] | None = Field(None, description="Übergeordnete Drucksachen.")
+    subordinatedPaper: list[HttpUrl] | None = Field(None, description="Untergeordnete Drucksachen.")
     mainFile: File | None = Field(
         None,
         description="Die Hauptdatei zu dieser Drucksache. Beispiel: Die Drucksache repräsentiert eine Beschlussvorlage und die Hauptdatei enthält den Text der Beschlussvorlage. Sollte keine eindeutige Hauptdatei vorhanden sein, wird diese Eigenschaft nicht ausgegeben.",
     )
-    auxiliaryFile: List[File] | None = Field(
+    auxiliaryFile: list[File] | None = Field(
         None, description="Alle weiteren Dateien zur Drucksache, ausgenommen der gegebenenfalls in mainFile angegebenen."
     )
-    location: List[Location] | None = Field(
+    location: list[Location] | None = Field(
         None,
         description="Sofern die Drucksache einen inhaltlichen Ortsbezug hat, beschreibt diese Eigenschaft den Ort in Textform und/oder in Form von Geodaten.",
     )
-    originatorPerson: List[HttpUrl] | None = Field(
+    originatorPerson: list[HttpUrl] | None = Field(
         None, description="Urheber der Drucksache, falls der Urheber eine Person ist. Es können auch mehrere Personen angegeben werden."
     )
-    underDirectionOf: List[HttpUrl] | None = Field(
+    underDirectionOf: list[HttpUrl] | None = Field(
         None, description="Federführung. Amt oder Abteilung, für die Inhalte oder Beantwortung der Drucksache verantwortlich."
     )
-    originatorOrganization: List[HttpUrl] | None = Field(
+    originatorOrganization: list[HttpUrl] | None = Field(
         None,
         description="Urheber der Drucksache, falls der Urheber eine Gruppierung ist. Es können auch mehrere Gruppierungen angegeben werden.",
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Person.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Person.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Person.")
@@ -313,7 +312,7 @@ class Body(BaseModel):
     oparlSince: datetime | None = Field(None, description="Zeitpunkt, ab dem die API für diese Körperschaft bereitsteht.")
     ags: str | None = Field(None, description="Amtlicher Gemeindeschlüssel.")
     rgs: str | None = Field(None, description="Regionalschlüssel.")
-    equivalent: List[HttpUrl] | None = Field(None, description="Weitere Körperschaften mit ähnlicher Bedeutung oder Funktion.")
+    equivalent: list[HttpUrl] | None = Field(None, description="Weitere Körperschaften mit ähnlicher Bedeutung oder Funktion.")
     contactEmail: str | None = Field(None, description="E-Mail-Adresse der Körperschaft.")
     contactName: str | None = Field(None, description="Name des Ansprechpartners.")
     organization: HttpUrl = Field(description="Liste der Organisationen der Körperschaft.")
@@ -328,7 +327,7 @@ class Body(BaseModel):
     membership: HttpUrl = Field(description="Liste der Mitgliedschaften in der Körperschaft.")
     classification: str | None = Field(None, description="Art der Körperschaft, z. B. 'Stadt' oder 'Kreis'.")
     location: HttpUrl | None = Field(None, description="Ort der Verwaltung dieser Körperschaft.")
-    keyword: List[str] | None = Field(None, description="Stichworte zur Körperschaft.")
+    keyword: list[str] | None = Field(None, description="Stichworte zur Körperschaft.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Körperschaft.")
@@ -336,7 +335,7 @@ class Body(BaseModel):
 
 
 class Meeting(BaseModel):
-    id: HttpUrl = Field(description="Eindeutige URL der Sitzung.")
+    id: HttpUrl | None = Field(description="Eindeutige URL der Sitzung.")
     type: str | None = Field(None, description="Typ der Sitzung")
     name: str | None = Field(None, description="Name der Sitzung.")
     meetingState: str | None = Field(
@@ -353,11 +352,11 @@ class Meeting(BaseModel):
         description="Endzeitpunkt der Sitzung als Datum/Uhrzeit. Bei einer zukünftigen Sitzung ist dies der geplante Zeitpunkt, bei einer stattgefundenen kann es der tatsächliche Endzeitpunkt sein.",
     )
     location: Location | None = Field(None, description="Sitzungsort.")
-    organization: List[HttpUrl] | None = Field(
+    organization: list[HttpUrl] | None = Field(
         None,
         description="Gruppierungen, denen die Sitzung zugeordnet ist. Im Regelfall wird hier eine Gruppierung verknüpft sein, es kann jedoch auch gemeinsame Sitzungen mehrerer Gruppierungen geben. Das erste Element sollte dann das federführende Gremium sein.",
     )
-    participant: List[HttpUrl] | None = Field(
+    participant: list[HttpUrl] | None = Field(
         None,
         description="Personen, die an der Sitzung teilgenommen haben (d.h. nicht nur die eingeladenen Personen, sondern die tatsächlich Anwesenden). Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
     )
@@ -370,19 +369,23 @@ class Meeting(BaseModel):
         None,
         description="Wortprotokoll zur Sitzung. Diese Eigenschaft kann selbstverständlich erst nach dem Stattfinden der Sitzung vorkommen.",
     )
-    auxiliaryFile: List[File] | None = Field(
+    auxiliaryFile: list[File] | None = Field(
         None,
         description="Dateianhang zur Sitzung. Hiermit sind Dateien gemeint, die üblicherweise mit der Einladung zu einer Sitzung verteilt werden, und die nicht bereits über einzelne Tagesordnungspunkte referenziert sind.",
     )
-    agendaItem: List[AgendaItem] | None = Field(
+    agendaItem: list[AgendaItem] | None = Field(
         None, description="Tagesordnungspunkte der Sitzung. Die Reihenfolge ist relevant. Es kann Sitzungen ohne TOPs geben."
     )
     license: str | None = Field(None, description="Lizenz für die veröffentlichten Daten.")
-    keyword: List[str] | None = Field(None, description="Stichwörter zur Sitzung.")
+    keyword: list[str] | None = Field(None, description="Stichwörter zur Sitzung.")
     created: datetime | None = Field(None, description="Erstellungszeitpunkt.")
     modified: datetime | None = Field(None, description="Letzte Änderung.")
     web: HttpUrl | None = Field(None, description="HTML-Ansicht der Sitzung.")
     deleted: bool | None = Field(False, description="Markiert dieses Objekt als gelöscht (true).")
+
+
+class ExtractArtifact(BaseModel):
+    meetings: list[Meeting]
 
 
 # Forward references for Membership and AgendaItem

@@ -1,0 +1,23 @@
+{
+  "filesCount": 6,
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "name": "RIS Crawler",
+  "proxy": {
+    "auth": {
+      "enabled": false,
+      "password": "",
+      "username": ""
+    },
+    "bypassProxy": "",
+    "enabled": false,
+    "hostname": "",
+    "port": 0,
+    "protocol": "http"
+  },
+  "size": 3050,
+  "type": "collection",
+  "version": "1"
+}
