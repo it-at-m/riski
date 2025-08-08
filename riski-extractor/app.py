@@ -37,8 +37,8 @@ def main():
 
     logger.info(f"Extracting meetings starting from {startdate}")
     sitzungen_extractor = StadtratssitzungenExtractor()
-    ext_meeting_list = sitzungen_extractor.run(startdate)
-    logger.info(f"Extracted {len(ext_meeting_list.meetings)} meetings")
+    extracted_meeting_list = sitzungen_extractor.run(startdate)
+    logger.info(f"Extracted {len(extracted_meeting_list.meetings)} meetings")
 
     logger.info("Extracting Heads of Departments")
     head_of_department_extractor = HeadOfDepartmentExtractor()

@@ -72,8 +72,11 @@ class HeadOfDepartmentParser:
         name = name.strip()
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
-        status = status_element.get_text()
-        status = status[1 : len(status) - 1]
+        if status_element:
+            status = status_element.get_text()
+            status = status[1 : len(status) - 1]
+        else:
+            status = None
         self.logger.info(status)
 
         """
@@ -93,7 +96,7 @@ class HeadOfDepartmentParser:
 
         potential_titles = []
 
-        # Given name
+        form_of_address: str | None = None
         for i in range(2, len(parts_of_name) + 1):
             if self._is_form_of_address(parts_of_name[-i]):
                 form_of_address = parts_of_name[-i]
@@ -104,7 +107,6 @@ class HeadOfDepartmentParser:
                 given_name.append(parts_of_name[-i])
 
         given_name.reverse()
-
         potential_titles.reverse()
 
         # --- Key-Value Data Extraction ---

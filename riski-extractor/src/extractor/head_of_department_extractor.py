@@ -38,11 +38,11 @@ class HeadOfDepartmentExtractor:
 
     # remove the . from ./xxx
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
-        return self.base_url + unsanitized_path[1:]
+        return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
     # remove the . from ./xxx
     def _get_sanitized_detail_url(self, unsanitized_path: str) -> str:
-        return self.base_url + self.detail_path + unsanitized_path[1:]
+        return f"{self.base_url}/{self.detail_path}/{unsanitized_path.lstrip('./')}"
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _initial_request(self):
@@ -72,33 +72,31 @@ class HeadOfDepartmentExtractor:
         self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
         response = self.client.get(url=self._get_sanitized_url(path))
         response.raise_for_status()
-        return response.text.encode().decode("unicode_escape")
+        return response.text
 
     # TODO
-    def _parse_head_of_departments(self, meeting_links: list[str]) -> list[object]:
-        meetings = []
-        for link in meeting_links:
+    def _parse_head_of_departments(self, head_of_department_links: list[str]) -> list[object]:
+        heads_of_departments: list[Person] = []
+        for link in head_of_department_links:
             try:
                 self.logger.info(link)
                 response = self._get_head_of_department_html(link)
-                meeting = self.head_of_department_parser.parse(link, response.encode().decode("unicode_escape"))
-                meetings.append(meeting)
+                head_of_department = self.head_of_department_parser.parse(link, response.encode().decode("unicode_escape"))
+                heads_of_departments.append(head_of_department)
             except Exception as e:
                 self.logger.error(f"Error parsing {link}: {e}")
-        return meetings
+        return heads_of_departments
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_head_of_department_html(self, link: str) -> str:
         response = self.client.get(url=link)  # Request detailpage
-        if response.status_code == 302:
+        if response.is_redirect:
             redirect_url = response.headers.get("Location")
             self.logger.info(f"Redirect URL: {redirect_url}")
             response = self.client.get(url=self._get_sanitized_detail_url(redirect_url))
+        if response.is_error:
             response.raise_for_status()
-            return response.text
-        else:
-            response.raise_for_status()
-            return response.text
+        return response.text
 
     def run(self) -> list[Person]:
         try:
@@ -106,7 +104,7 @@ class HeadOfDepartmentExtractor:
             self._initial_request()
             results_per_page_redirect_path = self._set_results_per_page()
             # Request and process all pages of the Head of Derpartment overview
-            referenten = []
+            heads_of_departments = []
 
             current_page_text = self._get_current_page_text(results_per_page_redirect_path)
             ref_links = self._extract_head_of_department_links(current_page_text)
@@ -114,9 +112,9 @@ class HeadOfDepartmentExtractor:
             if not ref_links:
                 self.logger.warning("No Heads of Departments found on the overview page.")
             else:
-                referenten.extend(self._parse_head_of_departments(ref_links))
+                heads_of_departments.extend(self._parse_head_of_departments(ref_links))
 
-            return referenten
+            return heads_of_departments
         except Exception as e:
             self.logger.error(f"Error requesting Heads of Departments: {e}")
             return []
