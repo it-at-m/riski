@@ -58,8 +58,9 @@ jobs:
           file: ./riski-extractor/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ steps.vars.outputs.repo_lowercase }}:${{ steps.vars.outputs.tag }}
-            ${{ steps.vars.outputs.tag != 'latest' && format('ghcr.io/{0}:latest', steps.vars.outputs.repo_lowercase) || '' }}
+            ghcr.io/${{ steps.vars.outputs.repo_lowercase }}:${{ steps.vars.outputs.tag }}${{ 
+              steps.vars.outputs.tag != 'latest' && format('\n  ghcr.io/{0}:latest', steps.vars.outputs.repo_lowercase) || '' 
+            }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
