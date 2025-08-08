@@ -3,7 +3,7 @@ name = "riski-extraktor"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = "==3.11.13"
+requires-python = "==3.12.11"
 dependencies = [
     "gitpython>=3.1.45",
     "langchain>=0.3.27",
