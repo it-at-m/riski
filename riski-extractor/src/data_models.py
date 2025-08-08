@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -26,7 +26,7 @@ class PaperType(SQLModel, table=True, check_tables_exist=True):
     name: str = Field(description="Designation of the paper type")
 
     # Relationship to subtypes
-    subtypes: List["PaperSubtype"] = Relationship(back_populates="parent_type")
+    subtypes: list["PaperSubtype"] = Relationship(back_populates="parent_type")
 
 
 class PaperSubtype(SQLModel, table=True):
@@ -113,7 +113,7 @@ class System(SQLModel, check_tables_exist=True, table=True):
     modified: datetime | None = Field(None, description="Time of the last modification of this object.")
     web: str | None = Field(None, description="URL for the HTML view of this object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    other_oparl_versions: List["System"] = Relationship(
+    other_oparl_versions: list["System"] = Relationship(
         link_model=SYSTEM_OTHER_OPARL_VERSION,
         sa_relationship_kwargs={
             "primaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.system_id",
@@ -121,7 +121,7 @@ class System(SQLModel, check_tables_exist=True, table=True):
             "foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.system_id, SYSTEM_OTHER_OPARL_VERSION.other_version_id]",
         },
     )
-    bodies: List["Body"] = Relationship(back_populates="system_link")
+    bodies: list["Body"] = Relationship(back_populates="system_link")
 
 
 class LocationBodies(SQLModel, table=True, check_tables_exist=True):
@@ -184,12 +184,12 @@ class Location(SQLModel, table=True, check_tables_exist=True):
     web: str | None = Field(None, description="HTML view of the object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     # Relationships
-    bodies: List["Body"] = Relationship(link_model=LocationBodies)
-    organizations: List["Organization"] = Relationship(link_model=LocationOrganizations)
-    persons: List["Person"] = Relationship(link_model=LocationPersons)
-    meetings: List["Meeting"] = Relationship(link_model=LocationMeetings)
-    papers: List["Paper"] = Relationship(back_populates="locations", link_model=PaperLocationLink)
-    keywords: List["Keyword"] = Relationship(back_populates="locations", link_model=LocationKeyword)
+    bodies: list["Body"] = Relationship(link_model=LocationBodies)
+    organizations: list["Organization"] = Relationship(link_model=LocationOrganizations)
+    persons: list["Person"] = Relationship(link_model=LocationPersons)
+    meetings: list["Meeting"] = Relationship(link_model=LocationMeetings)
+    papers: list["Paper"] = Relationship(back_populates="locations", link_model=PaperLocationLink)
+    keywords: list["Keyword"] = Relationship(back_populates="locations", link_model=LocationKeyword)
 
 
 class LegislativeTermKeyword(SQLModel, table=True, check_tables_exist=True):
@@ -214,7 +214,7 @@ class LegislativeTerm(SQLModel, table=True, check_tables_exist=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    keywords: List["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
+    keywords: list["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
 
 
 class OrganizationType(SQLModel, table=True, check_tables_exist=True):
@@ -222,7 +222,7 @@ class OrganizationType(SQLModel, table=True, check_tables_exist=True):
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Name of the organization type")
     description: str | None = Field(None, description="Description of the type")
-    organizations: List["Organization"] = Relationship(back_populates="organizationType")
+    organizations: list["Organization"] = Relationship(back_populates="organizationType")
 
 
 class OrganizationMembership(SQLModel, table=True, check_tables_exist=True):
@@ -255,7 +255,7 @@ class Post(SQLModel, table=True, check_tables_exist=True):
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Unique URL of the post.")
     organization_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, foreign_key="organization.db_id")
-    organizations: List["Organization"] = Relationship(back_populates="post", link_model=OrganizationPost)
+    organizations: list["Organization"] = Relationship(back_populates="post", link_model=OrganizationPost)
 
 
 class MeetingOrganizationLink(SQLModel, table=True, check_tables_exist=True):
@@ -271,7 +271,7 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
     type: str | None = Field(None, description="Type of the object: 'https://schema.oparl.org/1.1/Organization'.")
     body: str | None = Field(None, description="Reference to the body to which the organization belongs.")
     name: str | None = Field(None, description="Designation of the organization.")
-    meeting_id: uuid.UUID | None = Field(None, description="List of meetings of this organization.", foreign_key="meeting.db_id")
+    meeting_id: uuid.UUID | None = Field(None, description="list of meetings of this organization.", foreign_key="meeting.db_id")
     shortName: str | None = Field(None, description="Abbreviation of the organization.")
     subOrganizationOf: uuid.UUID | None = Field(default=None, foreign_key="organization.db_id", description="FK to the parent organization")
     classification: str | None = Field(None, description="Classification, e.g., statutory, voluntary.")
@@ -285,21 +285,21 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the organization.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    membership: List["Membership"] = Relationship(link_model=OrganizationMembership)
-    post: List["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
+    membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
+    post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
     subOrganizationOf: Optional[uuid.UUID] = Field(default=None, foreign_key="organization.db_id")
 
     # Relationships
     parentOrganization: Optional["Organization"] = Relationship(
         back_populates="subOrganizations", sa_relationship_kwargs={"remote_side": "Organization.db_id"}
     )
-    subOrganizations: List["Organization"] = Relationship(back_populates="parentOrganization")
-    keywords: List["Keyword"] = Relationship(back_populates="organizations", link_model=OrganizationKeyword)
+    subOrganizations: list["Organization"] = Relationship(back_populates="parentOrganization")
+    keywords: list["Keyword"] = Relationship(back_populates="organizations", link_model=OrganizationKeyword)
     organization_type_id: Optional[uuid.UUID] = Field(foreign_key="organization_type.db_id")
     organizationType: OrganizationType = Relationship(back_populates="organizations")
-    papers: List["Paper"] = Relationship(back_populates="originator_orgs", link_model=PaperOriginatorOrgLink)
-    directed_papers: List["Paper"] = Relationship(back_populates="under_direction_of", link_model=PaperDirectionLink)
-    meetings: List["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
+    papers: list["Paper"] = Relationship(back_populates="originator_orgs", link_model=PaperOriginatorOrgLink)
+    directed_papers: list["Paper"] = Relationship(back_populates="under_direction_of", link_model=PaperDirectionLink)
+    meetings: list["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
 
 
 class Title(SQLModel, table=True, check_tables_exist=True):
@@ -351,19 +351,19 @@ class Person(SQLModel, table=True, check_tables_exist=True):
     deleted: bool = Field(default=False, description="Marked as deleted")
 
     title: uuid.UUID = Field(default=None, foreign_key="title.db_id")
-    phone: List[str] = Field(sa_column=Column(JSON), default=[])
-    email: List[str] = Field(sa_column=Column(JSON), default=[])
+    phone: list[str] = Field(sa_column=Column(JSON), default=[])
+    email: list[str] = Field(sa_column=Column(JSON), default=[])
 
-    status: List[str] = Field(sa_column=Column(JSON), default=[])
+    status: list[str] = Field(sa_column=Column(JSON), default=[])
 
-    keywords: List["Keyword"] = Relationship(
+    keywords: list["Keyword"] = Relationship(
         back_populates="persons",
         link_model=PersonKeywordLink,
     )
 
-    membership: List["Membership"] = Relationship(back_populates="person", link_model=PersonMembershipLink)
-    papers: List["Paper"] = Relationship(back_populates="originator_persons", link_model=PaperOriginatorPersonLink)
-    meetings: List["Meeting"] = Relationship(back_populates="participants", link_model=MeetingParticipantLink)
+    membership: list["Membership"] = Relationship(back_populates="person", link_model=PersonMembershipLink)
+    papers: list["Paper"] = Relationship(back_populates="originator_persons", link_model=PaperOriginatorPersonLink)
+    meetings: list["Meeting"] = Relationship(back_populates="participants", link_model=MeetingParticipantLink)
 
 
 class MembershipKeyword(SQLModel, table=True, check_tables_exist=True):
@@ -396,9 +396,9 @@ class Membership(SQLModel, table=True, check_tables_exist=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    keywords: List["Keyword"] = Relationship(back_populates="memberships", link_model=MembershipKeyword)
+    keywords: list["Keyword"] = Relationship(back_populates="memberships", link_model=MembershipKeyword)
     organizations: Organization = Relationship(link_model=OrganizationMembership)
-    person: List["Person"] = Relationship(back_populates="membership", link_model=PersonMembershipLink)
+    person: list["Person"] = Relationship(back_populates="membership", link_model=PersonMembershipLink)
 
 
 class FileDerivativeLink(SQLModel, table=True):
@@ -472,7 +472,7 @@ class File(SQLModel, table=True, check_tables_exist=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    derivative_files: List["File"] = Relationship(
+    derivative_files: list["File"] = Relationship(
         link_model=FileDerivativeLink,
         sa_relationship_kwargs={
             "primaryjoin": "File.db_id==FileDerivativeLink.file_id",
@@ -480,11 +480,11 @@ class File(SQLModel, table=True, check_tables_exist=True):
             "foreign_keys": [FileDerivativeLink.file_id, FileDerivativeLink.derivative_file_id],
         },
     )
-    meetings: List["Meeting"] = Relationship(back_populates="auxiliary_files", link_model=FileMeetingLink)
-    agendaItem: List["AgendaItem"] = Relationship(back_populates="auxiliaryFile", link_model=FileAgendaItemLink)
-    paper: List["Paper"] = Relationship(back_populates="auxiliary_files", link_model=FilePaperLink)
-    keywords: List["Keyword"] = Relationship(back_populates="files", link_model=FileKeywordLink)
-    papers: List["Paper"] = Relationship(back_populates="auxiliary_files", link_model=PaperFileLink)
+    meetings: list["Meeting"] = Relationship(back_populates="auxiliary_files", link_model=FileMeetingLink)
+    agendaItem: list["AgendaItem"] = Relationship(back_populates="auxiliaryFile", link_model=FileAgendaItemLink)
+    paper: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=FilePaperLink)
+    keywords: list["Keyword"] = Relationship(back_populates="files", link_model=FileKeywordLink)
+    papers: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=PaperFileLink)
 
 
 class AgendaItemKeywordLink(SQLModel, table=True, check_tables_exist=True):
@@ -538,9 +538,9 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    auxiliaryFile: List["File"] = Relationship(back_populates="agendaItem", link_model=FileAgendaItemLink)
-    keywords: List["Keyword"] = Relationship(back_populates="agenda_items", link_model=AgendaItemKeywordLink)
-    meetings: List["Meeting"] = Relationship(back_populates="agenda_items", link_model=MeetingAgendaItemLink)
+    auxiliaryFile: list["File"] = Relationship(back_populates="agendaItem", link_model=FileAgendaItemLink)
+    keywords: list["Keyword"] = Relationship(back_populates="agenda_items", link_model=AgendaItemKeywordLink)
+    meetings: list["Meeting"] = Relationship(back_populates="agenda_items", link_model=MeetingAgendaItemLink)
 
 
 class Paper(SQLModel, table=True, check_tables_exist=True):
@@ -567,8 +567,8 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
 
-    auxiliary_files: List["File"] = Relationship(back_populates="paper", link_model=PaperFileLink)
-    related_papers: List["Paper"] = Relationship(
+    auxiliary_files: list["File"] = Relationship(back_populates="paper", link_model=PaperFileLink)
+    related_papers: list["Paper"] = Relationship(
         back_populates="related_to",
         link_model=PaperRelatedPaper,
         sa_relationship_kwargs={
@@ -578,7 +578,7 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
         },
     )
 
-    related_to: List["Paper"] = Relationship(
+    related_to: list["Paper"] = Relationship(
         back_populates="related_papers",
         link_model=PaperRelatedPaper,
         sa_relationship_kwargs={
@@ -587,7 +587,7 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
             "foreign_keys": "[PaperRelatedPaper.to_paper_id, PaperRelatedPaper.from_paper_id]",
         },
     )
-    super_papers: List["Paper"] = Relationship(
+    super_papers: list["Paper"] = Relationship(
         back_populates="sub_papers",
         link_model=PaperSuperordinatedLink,
         sa_relationship_kwargs={
@@ -596,7 +596,7 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
             "foreign_keys": "[PaperSuperordinatedLink.paper_id, PaperSuperordinatedLink.superordinated_paper_url]",
         },
     )
-    sub_papers: List["Paper"] = Relationship(
+    sub_papers: list["Paper"] = Relationship(
         back_populates="super_papers",
         link_model=PaperSuperordinatedLink,
         sa_relationship_kwargs={
@@ -606,11 +606,11 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
         },
     )
 
-    locations: List["Location"] = Relationship(back_populates="papers", link_model=PaperLocationLink)
-    originator_persons: List["Person"] = Relationship(back_populates="papers", link_model=PaperOriginatorPersonLink)
-    originator_orgs: List["Organization"] = Relationship(back_populates="papers", link_model=PaperOriginatorOrgLink)
-    under_direction_of: List["Organization"] = Relationship(back_populates="directed_papers", link_model=PaperDirectionLink)
-    keywords: List["Keyword"] = Relationship(back_populates="paper", link_model=PaperKeywordLink)
+    locations: list["Location"] = Relationship(back_populates="papers", link_model=PaperLocationLink)
+    originator_persons: list["Person"] = Relationship(back_populates="papers", link_model=PaperOriginatorPersonLink)
+    originator_orgs: list["Organization"] = Relationship(back_populates="papers", link_model=PaperOriginatorOrgLink)
+    under_direction_of: list["Organization"] = Relationship(back_populates="directed_papers", link_model=PaperDirectionLink)
+    keywords: list["Keyword"] = Relationship(back_populates="paper", link_model=PaperKeywordLink)
 
     paper_type: uuid.UUID = Field(foreign_key="paper_type.id", description="Type of the document")
 
@@ -647,23 +647,23 @@ class Body(SQLModel, table=True, check_tables_exist=True):
     rgs: str | None = Field(None, description="Regional key.")
     contactEmail: str | None = Field(None, description="Email address of the body.")
     contactName: str | None = Field(None, description="Name of the contact person.")
-    organization: str = Field(description="List of organizations of the body.")
-    person: str = Field(description="List of persons of the body.")
-    meeting: str = Field(description="List of meetings of the body.")
-    paper: str = Field(description="List of papers of the body.")
-    legislativeTerm: str = Field(description="List of legislative terms of the body.")
-    agendaItem: str = Field(description="List of all agenda items of the body.")
-    file: str = Field(description="List of all files of the body.")
-    locationList: str | None = Field(None, description="List of locations associated with this body.")
+    organization: str = Field(description="list of organizations of the body.")
+    person: str = Field(description="list of persons of the body.")
+    meeting: str = Field(description="list of meetings of the body.")
+    paper: str = Field(description="list of papers of the body.")
+    legislativeTerm: str = Field(description="list of legislative terms of the body.")
+    agendaItem: str = Field(description="list of all agenda items of the body.")
+    file: str = Field(description="list of all files of the body.")
+    locationList: str | None = Field(None, description="list of locations associated with this body.")
     legislativeTermList: str = Field(description="Alternative URL to the list of legislative terms.")
-    membership: str = Field(description="List of memberships in the body.")
+    membership: str = Field(description="list of memberships in the body.")
     classification: str | None = Field(None, description="Type of the body, e.g., 'City' or 'District'.")
     location: str | None = Field(None, description="Location of the administration of this body.")
     created: datetime | None = Field(None, description="Time of creation.")
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the body.")
     deleted: bool | None = Field(False, description="Marks this object as deleted.")
-    equivalents: List["Body"] = Relationship(
+    equivalents: list["Body"] = Relationship(
         back_populates="equivalent_to",
         link_model=BodyEquivalentLink,
         sa_relationship_kwargs={
@@ -673,7 +673,7 @@ class Body(SQLModel, table=True, check_tables_exist=True):
         },
     )
 
-    equivalent_to: List["Body"] = Relationship(
+    equivalent_to: list["Body"] = Relationship(
         back_populates="equivalents",
         link_model=BodyEquivalentLink,
         sa_relationship_kwargs={
@@ -740,7 +740,7 @@ class Meeting(SQLModel, table=True, check_tables_exist=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the meeting.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    organizations: List["Organization"] = Relationship(back_populates="meetings", link_model=MeetingOrganizationLink)
+    organizations: list["Organization"] = Relationship(back_populates="meetings", link_model=MeetingOrganizationLink)
     participants: list["Person"] = Relationship(back_populates="meetings", link_model=MeetingParticipantLink)
     auxiliary_files: list["File"] = Relationship(back_populates="meetings", link_model=MeetingAuxFileLink)
     agenda_items: list["AgendaItem"] = Relationship(back_populates="meetings", link_model=MeetingAgendaItemLink)
@@ -773,17 +773,17 @@ class Keyword(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "keyword"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
-    locations: List["Location"] = Relationship(back_populates="keywords", link_model=LocationKeyword)
-    legislative_term: List["LegislativeTerm"] = Relationship(back_populates="keywords", link_model=LegislativeTermKeyword)
-    agenda_items: List["AgendaItem"] = Relationship(back_populates="keywords", link_model=AgendaItemKeywordLink)
-    meetings: List["Meeting"] = Relationship(back_populates="keywords", link_model=MeetingKeywordLink)
-    persons: List["Person"] = Relationship(back_populates="keywords", link_model=PersonKeywordLink)
-    organizations: List["Organization"] = Relationship(back_populates="keywords", link_model=OrganizationKeyword)
-    files: List["File"] = Relationship(back_populates="keywords", link_model=FileKeywordLink)
-    paper: List["Paper"] = Relationship(back_populates="keywords", link_model=PaperKeywordLink)
-    memberships: List["Membership"] = Relationship(back_populates="keywords", link_model=MembershipKeyword)
-    body: List["Body"] = Relationship(back_populates="keywords", link_model=BodyKeywordLink)
-    consultations: List["Consultation"] = Relationship(back_populates="keywords", link_model=ConsultationKeywordLink)
+    locations: list["Location"] = Relationship(back_populates="keywords", link_model=LocationKeyword)
+    legislative_term: list["LegislativeTerm"] = Relationship(back_populates="keywords", link_model=LegislativeTermKeyword)
+    agenda_items: list["AgendaItem"] = Relationship(back_populates="keywords", link_model=AgendaItemKeywordLink)
+    meetings: list["Meeting"] = Relationship(back_populates="keywords", link_model=MeetingKeywordLink)
+    persons: list["Person"] = Relationship(back_populates="keywords", link_model=PersonKeywordLink)
+    organizations: list["Organization"] = Relationship(back_populates="keywords", link_model=OrganizationKeyword)
+    files: list["File"] = Relationship(back_populates="keywords", link_model=FileKeywordLink)
+    paper: list["Paper"] = Relationship(back_populates="keywords", link_model=PaperKeywordLink)
+    memberships: list["Membership"] = Relationship(back_populates="keywords", link_model=MembershipKeyword)
+    body: list["Body"] = Relationship(back_populates="keywords", link_model=BodyKeywordLink)
+    consultations: list["Consultation"] = Relationship(back_populates="keywords", link_model=ConsultationKeywordLink)
 
 
 class ExtractArtifact(BaseModel):
