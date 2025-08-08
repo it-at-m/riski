@@ -1,5 +1,7 @@
-# Use a full image with uv pre-installed as builder
-FROM ghcr.io/astral-sh/uv:python3.11-alpine AS builder
+# Smallest ubi9 image
+FROM registry.access.redhat.com/ubi10/ubi-micro
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install the project into `/app`
 WORKDIR /app
@@ -17,14 +19,12 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked --no-install-project
 
+# Copy the application files
 COPY . /app
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked
-
-# Use slim image as runner
-FROM ghcr.io/astral-sh/uv:python3.11-alpine AS runner
 
 # Metadata for the image
 ARG IMAGE_CREATED="unknown"
@@ -42,15 +42,8 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.title='riski-extractor' \
     org.opencontainers.image.description="Python application for extracting information from munich's political information system RIS"
 
-# Install the project into `/app`
-WORKDIR /app
-
-# Create a non-root user and group with UID/GID 1001
-RUN addgroup -g 1001 -S appuser && \
-    adduser -m -u 1001 -S -G appuser appuser
-
-# Copy the application files from the builder stage
-COPY --from=builder --chown=appuser:appuser /app /app
+# Give permissions to all so random UID can write
+RUN chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
@@ -62,8 +55,7 @@ ENV HF_HUB_DISABLE_PROGRESS_BARS=1
 # Disable python warnings
 ENV PYTHONWARNINGS="ignore"
 
-# Switch to non-root user
-USER appuser
+ENV APP_VERSION=${IMAGE_VERSION}
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT ["python", "app.py"]
