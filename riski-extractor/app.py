@@ -2,7 +2,7 @@ import argparse
 import datetime
 import sys
 
-from src.extractor.referenten_extractor import ReferentenExtractor
+from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.extractor.stadtratssitzungen_extractor import StadtratssitzungenExtractor
 from src.logtools import getLogger
 from src.version import get_version
@@ -38,12 +38,12 @@ def main():
     logger.info(f"Extracting meetings starting from {startdate}")
     sitzungen_extractor = StadtratssitzungenExtractor()
     ext_meeting_list = sitzungen_extractor.run(startdate)
-    print(ext_meeting_list)
+    logger.info(f"Extracted {len(ext_meeting_list.meetings)} meetings")
 
-    logger.info("Extracting refernten")
-    ref_extractor = ReferentenExtractor()
-    ext_referenten_list = ref_extractor.run()
-    print(ext_referenten_list)
+    logger.info("Extracting Heads of Departments")
+    head_of_department_extractor = HeadOfDepartmentExtractor()
+    extracted_head_of_department_list = head_of_department_extractor.run()
+    logger.info(f"Extracted {len(extracted_head_of_department_list)} Heads of Departments")
 
     logger.info("Extraction process finished")
     logger.info("RIS Indexer completed successfully")

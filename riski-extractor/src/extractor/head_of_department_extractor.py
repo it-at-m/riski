@@ -13,27 +13,27 @@ from bs4 import BeautifulSoup
 from src.data_models import Person
 from src.envtools import getenv_with_exception
 from src.logtools import getLogger
-from src.parser.referenten_parser import ReferentenParser
+from src.parser.head_of_department_parser import HeadOfDepartmentParser
 
 
-class ReferentenExtractor:
+class HeadOfDepartmentExtractor:
     """
-    Extractor for the Referent:innen on the RIS website
+    Extractor for the Heads of Departments on the RIS website
     """
 
     def __init__(self) -> None:
         self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
         self.logger = getLogger()
-        self.ref_parser = ReferentenParser()
+        self.head_of_department_parser = HeadOfDepartmentParser()
         self.base_url = "https://risi.muenchen.de/risi/person"
         self.referenten_path = "/referenten"
         self.detail_path = "/detail"
 
-    def _extract_referenten_links(self, html: str) -> list[str]:
+    def _extract_head_of_department_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
         links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
 
-        self.logger.info(f"Extracted {len(links)} meeting links from page.")
+        self.logger.info(f"Extracted {len(links)} Head of Department links from page.")
         return links
 
     # remove the . from ./xxx
@@ -69,27 +69,27 @@ class ReferentenExtractor:
     # iteration through other request
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_current_page_text(self, path) -> str:
+        self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
         response = self.client.get(url=self._get_sanitized_url(path))
-        self.logger.info(f"Anfrage des Seiteninhalts: {self._get_sanitized_url(path)}")
         response.raise_for_status()
         return response.text.encode().decode("unicode_escape")
 
     # TODO
-    def _parse_ref_links(self, meeting_links: list[str]) -> list[object]:
+    def _parse_head_of_departments(self, meeting_links: list[str]) -> list[object]:
         meetings = []
         for link in meeting_links:
             try:
                 self.logger.info(link)
-                response = self._get_referenten_html(link)
-                meeting = self.ref_parser.parse(link, response.encode().decode("unicode_escape"))
+                response = self._get_head_of_department_html(link)
+                meeting = self.head_of_department_parser.parse(link, response.encode().decode("unicode_escape"))
                 meetings.append(meeting)
             except Exception as e:
-                self.logger.error(f"Fehler beim Parsen von {link}: {e}")
+                self.logger.error(f"Error parsing {link}: {e}")
         return meetings
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_referenten_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # Detailseite anfragen
+    def _get_head_of_department_html(self, link: str) -> str:
+        response = self.client.get(url=link)  # Request detailpage
         if response.status_code == 302:
             redirect_url = response.headers.get("Location")
             self.logger.info(f"Redirect URL: {redirect_url}")
@@ -102,21 +102,21 @@ class ReferentenExtractor:
 
     def run(self) -> list[Person]:
         try:
-            # Initiale Anfrage für Cookies, SessionID etc.
+            # Initial request for cookies, sessionID etc.
             self._initial_request()
             results_per_page_redirect_path = self._set_results_per_page()
-            # Anfrage und Verarbeitung aller Seiten der Sitzungsliste
+            # Request and process all pages of the Head of Derpartment overview
             referenten = []
 
             current_page_text = self._get_current_page_text(results_per_page_redirect_path)
-            ref_links = self._extract_referenten_links(current_page_text)
+            ref_links = self._extract_head_of_department_links(current_page_text)
 
             if not ref_links:
-                self.logger.warning("Keine Referenten auf der Übersichtsseite gefunden.")
+                self.logger.warning("No Heads of Departments found on the overview page.")
             else:
-                referenten.extend(self._parse_ref_links(ref_links))
+                referenten.extend(self._parse_head_of_departments(ref_links))
 
             return referenten
         except Exception as e:
-            self.logger.error(f"Fehler beim Abrufen der Referenten: {e}")
+            self.logger.error(f"Error requesting Heads of Departments: {e}")
             return []
