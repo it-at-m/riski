@@ -1,4 +1,4 @@
-# Smallest ubi9 image
+# Smallest ubi10 image
 FROM registry.access.redhat.com/ubi10/ubi-micro
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
