@@ -40,35 +40,27 @@ class HeadOfDepartmentExtractor:
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
-    # remove the . from ./xxx
-    def _get_sanitized_detail_url(self, unsanitized_path: str) -> str:
-        return f"{self.base_url}/{self.detail_path}/{unsanitized_path.lstrip('./')}"
-
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _initial_request(self):
         # make request
-        response = self.client.get(url=self.base_url + self.referenten_path)
-        # evaluate response
-        if response.status_code == 302:
-            redirect_url = response.headers.get("Location")
-            self.logger.info(f"Redirect URL: {redirect_url}")
-            self.client.get(url=self._get_sanitized_url(redirect_url))
-        else:
-            response.raise_for_status()
+        response = self.client.get(url=self.base_url + self.referenten_path, follow_redirects=True)
+        response.raise_for_status()
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self):
         url = self.base_url + self.referenten_path + "?0-1.0-list-card-cardheader-itemsperpage_dropdown_top"
-        data = {"list:card:cardheader:itemsperpage_dropdown_top": 3}
+        data = {"list:card:cardheader:itemsperpage_dropdown_top": 3}  # 3 is the third entry in a dropdown menu representing the count 100
         response = self.client.post(url=url, data=data)
-        if response.status_code == 302:
+        if response.is_redirect:
             return response.headers.get("Location")
         else:
             response.raise_for_status()
 
     # iteration through other request
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_current_page_text(self, path) -> str:
+    def _get_current_page_text(self, path: str) -> str:
+        if not path:
+            raise ValueError("Empty redirect path detected")
         self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
         response = self.client.get(url=self._get_sanitized_url(path))
         response.raise_for_status()
@@ -89,13 +81,8 @@ class HeadOfDepartmentExtractor:
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_head_of_department_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # Request detailpage
-        if response.is_redirect:
-            redirect_url = response.headers.get("Location")
-            self.logger.info(f"Redirect URL: {redirect_url}")
-            response = self.client.get(url=self._get_sanitized_detail_url(redirect_url))
-        if response.is_error:
-            response.raise_for_status()
+        response = self.client.get(url=link, follow_redirects=True)  # Request detailpage
+        response.raise_for_status()
         return response.text
 
     def run(self) -> list[Person]:
@@ -103,8 +90,8 @@ class HeadOfDepartmentExtractor:
             # Initial request for cookies, sessionID etc.
             self._initial_request()
             results_per_page_redirect_path = self._set_results_per_page()
-            # Request and process all pages of the Head of Derpartment overview
-            heads_of_departments = []
+            # Request and process the single overview page (Munich has ~15 departments; index 3 = 100 items)
+            heads_of_departments: list[Person] = []
 
             current_page_text = self._get_current_page_text(results_per_page_redirect_path)
             ref_links = self._extract_head_of_department_links(current_page_text)
