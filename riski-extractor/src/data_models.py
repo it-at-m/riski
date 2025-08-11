@@ -65,7 +65,7 @@ class PaperLocationLink(SQLModel, table=True, check_tables_exist=True):
 
 
 class PaperOriginatorPersonLink(SQLModel, table=True, check_tables_exist=True):
-    __tablename__ = "paper_Originator_person"
+    __tablename__ = "paper_originator_person"
     paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
     person_id: uuid.UUID = Field(description="Name of the person", foreign_key="person.db_id", primary_key=True)
 
@@ -287,8 +287,6 @@ class Organization(SQLModel, table=True, check_tables_exist=True):
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
     post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
-    subOrganizationOf: Optional[uuid.UUID] = Field(default=None, foreign_key="organization.db_id")
-
     # Relationships
     parentOrganization: Optional["Organization"] = Relationship(
         back_populates="subOrganizations", sa_relationship_kwargs={"remote_side": "Organization.db_id"}
@@ -449,7 +447,7 @@ class File(SQLModel, table=True, check_tables_exist=True):
     )
     mimeType: str | None = Field(None, description="MIME type of the file")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
-    size: uuid.UUID | None = Field(None, description="Size of the file in bytes")
+    size: int | None = Field(None, description="Size of the file in bytes")
     sha1Checksum: str | None = Field(
         None,
         description="[Deprecated] SHA1 checksum of the file content in hexadecimal notation. Should not be used anymore as SHA1 is considered insecure. Instead, sha512Checksum should be used.",

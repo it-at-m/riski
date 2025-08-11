@@ -2143,7 +2143,6 @@ dependencies = [
     { name = "langchain-openai" },
     { name = "psycopg2" },
     { name = "pydantic", extra = ["email"] },
-    { name = "pytest" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
     { name = "sqlalchemy" },
@@ -2164,6 +2163,7 @@ pgvector = [
 dev = [
     { name = "ipykernel" },
     { name = "pre-commit" },
+    { name = "pytest" },
     { name = "ruff" },
     { name = "ty" },
 ]
@@ -2180,7 +2180,6 @@ requires-dist = [
     { name = "psycopg", extras = ["binary", "pool"], marker = "extra == 'pgvector'", specifier = ">=3.2.9" },
     { name = "psycopg2", specifier = ">=2.9.10" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
-    { name = "pytest", specifier = ">=8.4.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "sqlalchemy", specifier = ">=2.0.42" },
@@ -2195,6 +2194,7 @@ provides-extras = ["pgvector"]
 dev = [
     { name = "ipykernel", specifier = ">=6.30.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
     { name = "ruff", specifier = ">=0.12.5" },
     { name = "ty", specifier = ">=0.0.1a16" },
 ]
