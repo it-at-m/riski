@@ -3,14 +3,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from sqlalchemy import JSON
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select, text
 
 from src.envtools import getenv_with_exception
-
-load_dotenv()
 
 
 class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True, check_tables_exist=True):
