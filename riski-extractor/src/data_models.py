@@ -67,13 +67,13 @@ class PaperLocationLink(SQLModel, table=True, check_tables_exist=True):
 class PaperOriginatorPersonLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_Originator_person"
     paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
-    person_name: uuid.UUID = Field(description="Name of the person", foreign_key="person.db_id", primary_key=True)
+    person_id: uuid.UUID = Field(description="Name of the person", foreign_key="person.db_id", primary_key=True)
 
 
 class PaperOriginatorOrgLink(SQLModel, table=True, check_tables_exist=True):
     __tablename__ = "paper_originator_organization"
     paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
-    organization_name: uuid.UUID = Field(description="Name of the organization", foreign_key="organization.db_id", primary_key=True)
+    organization_id: uuid.UUID = Field(description="Name of the organization", foreign_key="organization.db_id", primary_key=True)
 
 
 class PaperDirectionLink(SQLModel, table=True, check_tables_exist=True):
@@ -325,7 +325,7 @@ class MeetingParticipantLink(SQLModel, table=True, check_tables_exist=True):
 
     __tablename__ = "meeting_participant"
     meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
-    person_name: uuid.UUID = Field(foreign_key="person.db_id", description="Name or ID of the person", primary_key=True)
+    person_id: uuid.UUID = Field(foreign_key="person.db_id", description="Name or ID of the person", primary_key=True)
 
 
 class Person(SQLModel, table=True, check_tables_exist=True):
