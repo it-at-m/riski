@@ -513,7 +513,7 @@ class AgendaItem(SQLModel, table=True, check_tables_exist=True):
         None,
         description="Outline number of the agenda item. Any string, such as '10.', '10.1', 'C', 'c)' etc.",
     )
-    order: uuid.UUID | None = Field(
+    order: int | None = Field(
         None,
         description="The position of the agenda item in the meeting, starting from 0. This number corresponds to the position in Meeting:agendaItem.",
     )
@@ -826,7 +826,7 @@ class PaperSubtypeEnum(str, Enum):
     # Subtypes for Meeting Template
     BESCHLUSSVORLAGE_VB = "Resolution Template VB"
     BESCHLUSSVORLAGE_SB = "Resolution Template SB"
-    BESCHLUSSVORLAGE_SB_VB = "Resolution Template SB+VB"
+    BESCHLUSSVORLAGE_SB_VB = "Resolution Template SB VB"
     BEKANNTGABE = "Announcement"
     DIREKT = "Direct"
     SITZUNGSVORLAGE_DA = "Meeting Template for DA"
@@ -890,5 +890,9 @@ def seed_all_enums(session: Session):
 
 
 if __name__ == "__main__":
-    create_db_and_tables()
-    check_tables_exist()
+    try:
+        create_db_and_tables()
+        check_tables_exist()
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        raise

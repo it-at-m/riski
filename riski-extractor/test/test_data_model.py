@@ -247,8 +247,8 @@ def test_meeting_create(session):
 def test_paper_create(session):
     # Create dummy PaperType and PaperSubtype
     paper_type = PaperType(name="Test Paper Type")
-    paper_subtype = PaperSubtype(name="Test Paper Subtype", paper_type_id=uuid.uuid4())
     session.add(paper_type)
+    paper_subtype = PaperSubtype(name="Test Paper Subtype", paper_type_id=paper_type.id)
     session.add(paper_subtype)
     session.commit()
 
