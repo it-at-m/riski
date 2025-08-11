@@ -65,6 +65,8 @@ jobs:
           context: ./riski-extractor
           file: ./riski-extractor/Dockerfile
           push: true
+          sbom: true
+          provenance: true
           tags: |
             ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-extractor:${{ steps.vars.outputs.version }}
             ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-extractor:latest
