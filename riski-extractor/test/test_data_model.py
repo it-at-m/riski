@@ -311,12 +311,15 @@ def test_person_create(session):
 
 # Test for the Membership class
 def test_membership_create(session):
+    organization_type = OrganizationType(name="Test Type")
+    session.add(organization_type)
+    session.commit()
     organization = Organization(
         id="https://example.org/organization/1",
         name="Test Organization",
         created=datetime.now(),
         modified=datetime.now(),
-        organization_type_id=uuid.uuid4(),  # Dummy value
+        organization_type_id=organization_type.db_id,  # Dummy value
     )
     session.add(organization)
     session.commit()
@@ -549,7 +552,7 @@ def test_person_keyword_link_create(session):
 
 # Test for the MeetingParticipantLink class
 def test_meeting_participant_link_create(session):
-    meeting_participant_link = MeetingParticipantLink(meeting_id=uuid.uuid4(), person_name=uuid.uuid4())
+    meeting_participant_link = MeetingParticipantLink(meeting_id=uuid.uuid4(), person_id=uuid.uuid4())
     session.add(meeting_participant_link)
     session.commit()
     assert meeting_participant_link.meeting_id is not None
@@ -653,7 +656,7 @@ def test_organization_keyword_create(session):
 
 # Test for the PaperOriginatorPersonLink class
 def test_paper_originator_person_link_create(session):
-    paper_originator_person_link = PaperOriginatorPersonLink(paper_id=uuid.uuid4(), person_name=uuid.uuid4())
+    paper_originator_person_link = PaperOriginatorPersonLink(paper_id=uuid.uuid4(), person_id=uuid.uuid4())
     session.add(paper_originator_person_link)
     session.commit()
     assert paper_originator_person_link.paper_id is not None
