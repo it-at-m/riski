@@ -432,10 +432,33 @@ def test_consultation_create(session):
 
 # Test for the MembershipKeyword class
 def test_membership_keyword_create(session):
-    membership_keyword = MembershipKeyword(membership_id=uuid.uuid4(), keyword=uuid.uuid4())
+    # Create actual entities
+    organization = Organization(
+        id="https://example.org/organization/1", name="Test Organization", created=datetime.now(), modified=datetime.now()
+    )
+    session.add(organization)
+    session.commit()
+
+    membership = Membership(
+        id="https://example.org/membership/1",
+        role="Test Role",
+        created=datetime.now(),
+        modified=datetime.now(),
+        organization=organization.db_id,
+    )
+    session.add(membership)
+    session.commit()
+
+    keyword = Keyword(name="Test Keyword")
+    session.add(keyword)
+    session.commit()
+
+    # Now create the link with valid references
+    membership_keyword = MembershipKeyword(membership_id=membership.db_id, keyword=keyword.db_id)
     session.add(membership_keyword)
     session.commit()
     assert membership_keyword.membership_id is not None
+    assert membership_keyword.keyword is not None
 
 
 # Test for the ConsultationKeywordLink class
