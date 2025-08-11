@@ -1,0 +1,6 @@
+.venv/
+notebooks/
+README.md
+src/docling/
+pgdata/
+artifacts/
