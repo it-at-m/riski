@@ -43,10 +43,12 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.description="Python application for extracting information from munich's political information system RIS"
 
 # Give permissions to all so random UID can write
-RUN chmod -R g=u /app
+# This should be compatible with OpenShift and plain K8s
+RUN chown -R root:0 /app && chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
+
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1
