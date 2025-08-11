@@ -31,7 +31,7 @@ Das RIS (Rat-Informations-System) verwaltet verschiedene gesetzgeberische Prozes
 A city council MEETING (StR_Sitzung) has multiple AGENDA_ITEMs of which each can have a Sitzungsvorlage or "Beschlussvorlage" (PAPER with accompanying FILE). This relates to one or multiple StR_Antrag or BV_Empfehlung (different type of PAPER). So these will for now be modeled via the relationship relatedPaper. The consultation about those will result in the AGENDA_ITEM's result str, resolutionText, and resolutionFile. A StR_Antrag that wasn't consulted about yet (i.e. when being created) will only exist in its relation to its initiating originatorPersons and/or originatorOrganizations.
 An AGENDA_ITEM can probably consult about only parts of a StR_Antrag and the decision about it (result) can be delayed, so multiple AGENDA_ITEMs can relate to the same StR_Antrag/BV_Empfehlung. That fact is modeled by the list of CONSULTATIONs that the PAPER (= StR_Antrag in that case) contains.
 
-![](Stadtratsantrag_relations_dark.png)
+![Entity relationship diagram to show the relationships between city council applications](Stadtratsantrag_relations_dark.png)
 
 ## Paper Typen
 
