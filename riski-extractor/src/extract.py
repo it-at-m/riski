@@ -1,18 +1,15 @@
 # ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
-import datetime
-import os
 
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
-
-from src.data_models import ExtractArtifact, Meeting
-from src.envtools import getenv_with_exception
 
 inject_into_ssl()
 load_dotenv()
 
 ### end of special import block ###
 
+import datetime
+import os
 import re
 
 import httpx
@@ -20,6 +17,8 @@ import stamina
 from bs4 import BeautifulSoup
 from httpx import Client
 
+from src.data_models import ExtractArtifact, Meeting
+from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 from src.parser.str_parser import STRParser
 
