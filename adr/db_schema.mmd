@@ -1,0 +1,516 @@
+erDiagram
+    agenda_item ||--o{ agendaitem_keyword : FK
+    agenda_item ||--o{ consultation : FK
+    agenda_item ||--o{ file_agenda : FK
+    agenda_item ||--o{ meeting_agenda_item : FK
+    body ||--o{ body_keyword : FK
+    body ||--o{ equivalent_bodies : FK
+    body ||--o{ location_bodies : FK
+    consultation ||--o{ consultationkeywordlink : FK
+    file ||--o{ agenda_item : FK
+    file ||--o{ file_agenda : FK
+    file ||--o{ file_derivative_link : FK
+    file ||--o{ file_derivative_link : FK
+    file ||--o{ file_keyword : FK
+    file ||--o{ file_meeting : FK
+    file ||--o{ file_paper : FK
+    file ||--o{ meeting : FK
+    file ||--o{ meeting : FK
+    file ||--o{ meeting : FK
+    file ||--o{ meeting_aux_file : FK
+    file ||--o{ paper : FK
+    file ||--o{ paper_file : FK
+    keyword ||--o{ agendaitem_keyword : FK
+    keyword ||--o{ body_keyword : FK
+    keyword ||--o{ consultationkeywordlink : FK
+    keyword ||--o{ file_keyword : FK
+    keyword ||--o{ legislative_term_keyword : FK
+    keyword ||--o{ location_keyword : FK
+    keyword ||--o{ meeting_keyword : FK
+    keyword ||--o{ membership_keyword : FK
+    keyword ||--o{ organization_keyword : FK
+    keyword ||--o{ paper_keyword : FK
+    keyword ||--o{ person_keyword : FK
+    legislative_term ||--o{ legislative_term_keyword : FK
+    location ||--o{ location_bodies : FK
+    location ||--o{ location_keyword : FK
+    location ||--o{ location_meetings : FK
+    location ||--o{ location_organizations : FK
+    location ||--o{ location_papers : FK
+    location ||--o{ location_persons : FK
+    location ||--o{ meeting : FK
+    location ||--o{ organization : FK
+    location ||--o{ paper_location : FK
+    location ||--o{ person : FK
+    meeting ||--o{ agenda_item : FK
+    meeting ||--o{ consultation : FK
+    meeting ||--o{ file_meeting : FK
+    meeting ||--o{ location_meetings : FK
+    meeting ||--o{ meeting_agenda_item : FK
+    meeting ||--o{ meeting_aux_file : FK
+    meeting ||--o{ meeting_keyword : FK
+    meeting ||--o{ meeting_organization : FK
+    meeting ||--o{ meeting_participant : FK
+    meeting ||--o{ organization : FK
+    membership ||--o{ membership_keyword : FK
+    membership ||--o{ organization_membership : FK
+    membership ||--o{ person_membership : FK
+    organization ||--o{ location_organizations : FK
+    organization ||--o{ meeting_organization : FK
+    organization ||--o{ membership : FK
+    organization ||--o{ organization : FK
+    organization ||--o{ organization_keyword : FK
+    organization ||--o{ organization_membership : FK
+    organization ||--o{ organization_post : FK
+    organization ||--o{ organization_sub_organization : FK
+    organization ||--o{ organization_sub_organization : FK
+    organization ||--o{ paper_direction_link : FK
+    organization ||--o{ paper_originator_organization : FK
+    organization ||--o{ post : FK
+    organization_type ||--o{ organization : FK
+    paper ||--o{ consultation : FK
+    paper ||--o{ file_paper : FK
+    paper ||--o{ location_papers : FK
+    paper ||--o{ paper_originator_person : FK
+    paper ||--o{ paper_direction_link : FK
+    paper ||--o{ paper_file : FK
+    paper ||--o{ paper_keyword : FK
+    paper ||--o{ paper_location : FK
+    paper ||--o{ paper_originator_organization : FK
+    paper ||--o{ paper_related_paper : FK
+    paper ||--o{ paper_related_paper : FK
+    paper ||--o{ paper_subordinated_paper : FK
+    paper ||--o{ paper_subordinated_paper : FK
+    paper ||--o{ paper_superordinated_paper : FK
+    paper ||--o{ paper_superordinated_paper : FK
+    paper_subtype ||--o{ paper : FK
+    paper_type ||--o{ paper : FK
+    paper_type ||--o{ paper_subtype : FK
+    person ||--o{ location_persons : FK
+    person ||--o{ meeting_participant : FK
+    person ||--o{paper_originator_person : FK
+    person ||--o{ person_keyword : FK
+    person ||--o{ person_membership : FK
+    post ||--o{ organization_post : FK
+    system ||--o{ body : FK
+    system ||--o{ system_other_oparl_version : FK
+    system ||--o{ system_other_oparl_version : FK
+    title ||--o{ person : FK
+
+    agenda_item {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        UUID meeting
+        VARCHAR number
+        UUID order
+        VARCHAR name
+        BOOLEAN public
+        VARCHAR result
+        VARCHAR resolutionText
+        UUID resolutionFile
+        TIMESTAMP start
+        TIMESTAMP end
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    agendaitem_keyword {
+        UUID agendaitem_id PK
+        UUID keyword PK
+    }
+    body {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR name
+        VARCHAR shortName
+        VARCHAR system
+        VARCHAR website
+        VARCHAR license
+        TIMESTAMP licenseValidSince
+        TIMESTAMP oparlSince
+        VARCHAR ags
+        VARCHAR rgs
+        VARCHAR contactEmail
+        VARCHAR contactName
+        VARCHAR organization
+        VARCHAR person
+        VARCHAR meeting
+        VARCHAR paper
+        VARCHAR legislativeTerm
+        VARCHAR agendaItem
+        VARCHAR file
+        VARCHAR locationList
+        VARCHAR legislativeTermList
+        VARCHAR membership
+        VARCHAR classification
+        VARCHAR location
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+        UUID system_id
+    }
+    body_keyword {
+        UUID body_id PK
+        UUID keyword PK
+    }
+    consultation {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR url
+        UUID paper
+        UUID agenda_item
+        UUID meeting
+        BOOLEAN authoritative
+        VARCHAR role
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+    }
+    consultationkeywordlink {
+        UUID consultation_id PK
+        UUID keyword_id PK
+    }
+    equivalent_bodies {
+        UUID body_id_a PK
+        UUID body_id_b PK
+    }
+    file {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR name
+        VARCHAR fileName
+        VARCHAR mimeType
+        TIMESTAMP date
+        INTEGER size
+        VARCHAR sha1Checksum
+        VARCHAR sha512Checksum
+        VARCHAR text
+        VARCHAR accessUrl
+        VARCHAR downloadUrl
+        VARCHAR externalServiceUrl
+        VARCHAR masterFile
+        VARCHAR fileLicense
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    file_agenda {
+        UUID file_id PK
+        UUID agendaItem PK
+    }
+    file_derivative_link {
+        UUID file_id PK
+        UUID derivative_file_id PK
+    }
+    file_keyword { 
+        UUID file_id PK
+        UUID keyword PK
+    }
+    file_meeting {
+        UUID file_id PK
+        UUID meeting_id PK
+    }
+    file_paper {
+        UUID file_id PK
+        UUID paper_id PK
+    }
+    keyword {
+        UUID db_id PK
+        VARCHAR name
+    }
+    legislative_term {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR body
+        VARCHAR name
+        TIMESTAMP startDate
+        TIMESTAMP endDate
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    legislative_term_keyword {
+        UUID legislative_term_id PK
+        UUID keyword PK
+    }
+    location {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR description
+        JSON geojson
+        VARCHAR streetAddress
+        VARCHAR room
+        VARCHAR postalCode
+        VARCHAR subLocality
+        VARCHAR locality
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    location_bodies {
+        UUID location_id PK
+        UUID body_id PK
+    }
+    location_keyword {
+        UUID location_id PK
+        UUID keyword PK
+    }
+    location_meetings {
+        UUID location_id PK
+        UUID meeting_id PK
+    }
+    location_organizations {
+        UUID location_id PK
+        UUID organization_id PK
+    }
+    location_papers {
+        UUID location_id PK
+        UUID paper_id PK
+    }
+    location_persons {
+        UUID location_id PK
+        UUID person_id PK
+    }
+    meeting {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR name
+        VARCHAR meetingState
+        BOOLEAN cancelled
+        TIMESTAMP start
+        TIMESTAMP end
+        UUID location
+        UUID invitation
+        UUID resultsProtocol
+        UUID verbatimProtocol
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    meeting_agenda_item {
+        UUID meeting_id PK
+        UUID agenda_item_id PK
+    }
+    meeting_aux_file {
+        UUID meeting_id PK
+        UUID file_id PK
+    }
+    meeting_keyword {
+        UUID meeting_id PK
+        UUID keyword PK
+    }
+    meeting_organization {
+        UUID meeting_id PK
+        UUID organization_id PK
+    }
+    meeting_participant {
+        UUID meeting_id PK
+        UUID person_id PK
+    }
+    membership {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        UUID organization
+        VARCHAR role
+        BOOLEAN votingRight
+        TIMESTAMP startDate
+        TIMESTAMP endDate
+        VARCHAR onBehalfOf
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    membership_keyword {
+        UUID membership_id PK
+        UUID keyword PK
+    }
+    organization {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR body
+        VARCHAR name
+        UUID meeting_id
+        VARCHAR shortName
+        UUID subOrganizationOf
+        VARCHAR classification
+        TIMESTAMP startDate
+        TIMESTAMP endDate
+        VARCHAR website
+        UUID location
+        VARCHAR externalBody
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+        UUID organization_type_id
+    }
+    organization_keyword {
+        UUID organization_id PK
+        UUID keyword PK
+    }
+    organization_membership {
+        UUID organization_id PK
+        UUID membership_id PK
+    }
+    organization_post {
+        UUID organization_id PK
+        UUID post_str PK
+    }
+    organization_sub_organization {
+        UUID organization_id PK
+        UUID sub_organization_id PK
+    }
+    organization_type {
+        UUID db_id PK
+        VARCHAR name
+        VARCHAR description
+    }
+    paper {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR body
+        VARCHAR name
+        VARCHAR reference
+        TIMESTAMP date
+        VARCHAR paperType
+        UUID mainFile
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+        UUID paper_type
+        UUID paper_subtype
+    }
+   paper_originator_person {
+        UUID paper_id PK
+        UUID person_id PK
+    }
+    paper_direction_link {
+        UUID paper_id PK
+        UUID direction_name PK
+    }
+    paper_file {
+        UUID paper_id PK
+        UUID file_id PK
+    }
+    paper_keyword {
+        UUID paper_id PK
+        UUID keyword PK
+    }
+    paper_location {
+        UUID paper_id PK
+        UUID location_id PK
+    }
+    paper_originator_organization {
+        UUID paper_id PK
+        UUID organization_id PK
+    }
+    paper_related_paper {
+        UUID from_paper_id PK
+        UUID to_paper_id PK
+    }
+    paper_subordinated_paper {
+        UUID paper_id PK
+        UUID subordinated_paper_url PK
+    }
+    paper_subtype {
+        UUID id PK
+        VARCHAR name
+        UUID paper_type_id
+    }
+    paper_superordinated_paper {
+        UUID paper_id PK
+        UUID superordinated_paper_url PK
+    }
+    paper_type {
+        UUID id PK
+        VARCHAR name
+    }
+    person {
+        UUID db_id PK 
+        VARCHAR id
+        VARCHAR type
+        VARCHAR body
+        VARCHAR name
+        VARCHAR familyName
+        VARCHAR givenName
+        VARCHAR formOfAddress
+        VARCHAR affix
+        VARCHAR gender
+        UUID location
+        VARCHAR life
+        VARCHAR lifeSource
+        VARCHAR license
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+        UUID title
+        JSON phone
+        JSON email
+        JSON status
+    }
+    person_keyword {
+        UUID person_id PK
+        UUID keyword PK
+    }
+    person_membership {
+        UUID person_id PK
+        UUID membership_id PK
+    }
+    post {
+        UUID db_id PK 
+        VARCHAR name
+        UUID organization_id
+    }
+    system {
+        UUID db_id PK
+        VARCHAR id
+        VARCHAR type
+        VARCHAR oparlVersion
+        VARCHAR otherOparlVersions
+        VARCHAR license
+        VARCHAR name
+        VARCHAR contactEmail
+        VARCHAR contactName
+        VARCHAR website
+        VARCHAR vendor
+        VARCHAR product
+        TIMESTAMP created
+        TIMESTAMP modified
+        VARCHAR web
+        BOOLEAN deleted
+    }
+    system_other_oparl_version {
+        UUID system_id PK
+        UUID other_version_id PK
+    }
+    title {
+        UUID db_id PK
+        VARCHAR title
+    }
