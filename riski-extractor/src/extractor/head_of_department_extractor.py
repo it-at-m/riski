@@ -66,14 +66,13 @@ class HeadOfDepartmentExtractor:
         response.raise_for_status()
         return response.text
 
-    # TODO
     def _parse_head_of_departments(self, head_of_department_links: list[str]) -> list[Person]:
         heads_of_departments: list[Person] = []
         for link in head_of_department_links:
             try:
                 self.logger.info(link)
                 response = self._get_head_of_department_html(link)
-                head_of_department = self.head_of_department_parser.parse(link, response.encode().decode("unicode_escape"))
+                head_of_department = self.head_of_department_parser.parse(link, response)
                 heads_of_departments.append(head_of_department)
             except Exception:
                 self.logger.exception(f"Error parsing {link}")
@@ -102,6 +101,6 @@ class HeadOfDepartmentExtractor:
                 heads_of_departments.extend(self._parse_head_of_departments(ref_links))
 
             return heads_of_departments
-        except Exception as e:
-            self.logger.error(f"Error requesting Heads of Departments: {e}")
+        except Exception:
+            self.logger.exception("Error requesting Heads of Departments")
             return []

@@ -95,7 +95,7 @@ class StadtratssitzungenExtractor:
             self.logger.debug(f"Load meeting link: {link}")
             try:
                 response = self._get_meeting_html(link)
-                meeting = self.str_parser.parse(link, response.encode().decode("unicode_escape"))
+                meeting = self.str_parser.parse(link, response)
                 meetings.append(meeting)
                 self.logger.debug(f"Parsed: {meeting.name} ({meeting.start})")
             except Exception as e:

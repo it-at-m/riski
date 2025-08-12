@@ -47,7 +47,7 @@ class HeadOfDepartmentParser:
                 title_array.append(current_academic_title)
                 current_academic_title = ""
             elif in_title:
-                current_academic_title += title_part
+                current_academic_title += " " + title_part
             else:
                 title_array.append(title_part)
 
@@ -73,22 +73,22 @@ class HeadOfDepartmentParser:
         name = name.strip()
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
+        status: str | None = None
         if status_element:
-            status = status_element.get_text()
-            status = status[1 : len(status) - 1]
-        else:
-            status = None
+            text = status_element.get_text(strip=True)
+            # Remove surrounding parentheses if present, then trim
+            if len(text) >= 2 and text[0] == "(" and text[-1] == ")":
+                status = text[1:-1].strip()
+            else:
+                status = text
         self.logger.info(status)
 
-        """
-        The code for determining the names is still based on the old naming law before 2024.
-        Since 2024, spouses can also have a double name without a "-" as a married name; this was not possible before.
-        Before the change, only one surname was permitted, which is why all names before that were automatically first names.
-        With the change, this is no longer the case, but since no differentiation of names would be possible at all, 
-        this assumption is still made in the code. If this leads to problems, the data would have to be corrected manually 
-        or the code would have to be adapted or removed. (Status: 2025-07-03)
-        """
-        # Last name
+        # The code for determining the names is still based on the old naming law before 2024.
+        # Since 2024, spouses can also have a double name without a "-" as a married name; this was not possible before.
+        # Before the change, only one surname was permitted, which is why all names before that were automatically first names.
+        # With the change, this is no longer the case, but since no differentiation of names would be possible at all,
+        # this assumption is still made in the code. If this leads to problems, the data would have to be corrected manually
+        # or the code would have to be adapted or removed. (Status: 2025-07-03)
         parts_of_name = name.split(" ")
         self.logger.info(parts_of_name)
         given_name = []
@@ -134,7 +134,7 @@ class HeadOfDepartmentParser:
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
             modified=create_date,
-            status=[status],
+            status=[status] if status else None,
             title=self._get_titles(potential_titles),
             web=HttpUrl(url),
             deleted=False,
