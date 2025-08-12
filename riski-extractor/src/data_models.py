@@ -254,7 +254,7 @@ class Post(SQLModel, table=True, check_tables_exist=True):
 
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Unique URL of the post.")
-    organization_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, foreign_key="organization.db_id")
+    organization_id: Optional[uuid.UUID] = Field(default=None, foreign_key="organization.db_id")
     organizations: list["Organization"] = Relationship(back_populates="post", link_model=OrganizationPost)
 
 
