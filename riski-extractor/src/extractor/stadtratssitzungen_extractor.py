@@ -45,6 +45,7 @@ class StadtratssitzungenExtractor:
 
     # remove the . from ./xxx
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
+        assert unsanitized_path.startswith("./")
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
