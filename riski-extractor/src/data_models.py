@@ -362,6 +362,7 @@ class Person(SQLModel, table=True, check_tables_exist=True):
     membership: list["Membership"] = Relationship(back_populates="person", link_model=PersonMembershipLink)
     papers: list["Paper"] = Relationship(back_populates="originator_persons", link_model=PaperOriginatorPersonLink)
     meetings: list["Meeting"] = Relationship(back_populates="participants", link_model=MeetingParticipantLink)
+    title_obj: Optional["Title"] = Relationship()
 
 
 class MembershipKeyword(SQLModel, table=True, check_tables_exist=True):
