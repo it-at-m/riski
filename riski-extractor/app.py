@@ -2,7 +2,8 @@ import argparse
 import datetime
 import sys
 
-from src import extract
+from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
+from src.extractor.stadtratssitzungen_extractor import StadtratssitzungenExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -25,8 +26,8 @@ def main():
     args = parse_arguments()
     logger = getLogger()
     version = get_version()
+
     logger.info(f"RIS Indexer v{version} starting up")
-    extractor = extract.RISExtractor()
 
     try:
         startdate = datetime.date.fromisoformat(args.startdate)
@@ -35,8 +36,15 @@ def main():
         return 1
 
     logger.info(f"Extracting meetings starting from {startdate}")
-    extract_artifacts = extractor.run(startdate)
-    print(extract_artifacts)
+    sitzungen_extractor = StadtratssitzungenExtractor()
+    extracted_meeting_list = sitzungen_extractor.run(startdate)
+    logger.info(f"Extracted {len(extracted_meeting_list.meetings)} meetings")
+
+    logger.info("Extracting Heads of Departments")
+    head_of_department_extractor = HeadOfDepartmentExtractor()
+    extracted_head_of_department_list = head_of_department_extractor.run()
+    logger.info(f"Extracted {len(extracted_head_of_department_list)} Heads of Departments")
+
     logger.info("Extraction process finished")
     logger.info("RIS Indexer completed successfully")
     return 0
