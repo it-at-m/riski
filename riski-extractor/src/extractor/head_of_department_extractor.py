@@ -29,11 +29,11 @@ class HeadOfDepartmentExtractor:
         self.head_of_department_parser = HeadOfDepartmentParser()
         self.base_url = "https://risi.muenchen.de/risi/person"
         self.referenten_path = "/referenten"
-        self.detail_path = "/detail"
 
     def _extract_head_of_department_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
-        links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
+        raw = [a["href"] for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
+        links = list(dict.fromkeys(self._get_sanitized_url(href) for href in raw))
 
         self.logger.info(f"Extracted {len(links)} Head of Department links from page.")
         return links
@@ -49,14 +49,12 @@ class HeadOfDepartmentExtractor:
         response.raise_for_status()
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _set_results_per_page(self):
+    def _set_results_per_page(self) -> str:
         url = self.base_url + self.referenten_path + "?0-1.0-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list:card:cardheader:itemsperpage_dropdown_top": 3}  # 3 is the third entry in a dropdown menu representing the count 100
         response = self.client.post(url=url, data=data)
-        if response.is_redirect:
-            return response.headers.get("Location")
-        else:
-            response.raise_for_status()
+        assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
+        return response.headers.get("Location")
 
     # iteration through other request
     @stamina.retry(on=httpx.HTTPError, attempts=5)
@@ -77,8 +75,8 @@ class HeadOfDepartmentExtractor:
                 response = self._get_head_of_department_html(link)
                 head_of_department = self.head_of_department_parser.parse(link, response.encode().decode("unicode_escape"))
                 heads_of_departments.append(head_of_department)
-            except Exception as e:
-                self.logger.error(f"Error parsing {link}: {e}")
+            except Exception:
+                self.logger.exception(f"Error parsing {link}")
         return heads_of_departments
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)

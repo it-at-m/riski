@@ -67,7 +67,8 @@ class HeadOfDepartmentParser:
 
         create_date = datetime.now()
 
-        title_element = soup.find("h1", class_="page-title").find("span", class_="d-inline-block")
+        title_wrapper = soup.find("h1", class_="page-title")
+        title_element = title_wrapper.find("span", class_="d-inline-block") if title_wrapper else None
         name = title_element.contents[0] if title_element else "N/A"
         name = name.strip()
 
