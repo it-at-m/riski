@@ -198,15 +198,15 @@ def test_body_create(session):
         id="https://example.org/body/1",
         name="Test Body",
         organization=organization.id,  # Reference to the dummy Organization as a string
-        person=str(person.id),  # Reference to the dummy Person as a string
-        meeting=str(meeting.id),  # Reference to the dummy Meeting as a string
-        paper=str(paper.id),  # Reference to the dummy Paper as a string
-        legislativeTerm=str(legislative_term.id),  # Reference to the dummy LegislativeTerm as a string
-        agendaItem=str(agenda_item.id),  # Reference to the dummy AgendaItem as a string
-        system=str(system.id),  # Reference to the dummy System as a string
+        person=person.id,  # Reference to the dummy Person as a string
+        meeting=meeting.id,  # Reference to the dummy Meeting as a string
+        paper=paper.id,  # Reference to the dummy Paper as a string
+        legislativeTerm=legislative_term.id,  # Reference to the dummy LegislativeTerm as a string
+        agendaItem=agenda_item.id,  # Reference to the dummy AgendaItem as a string
+        system=system.id,  # Reference to the dummy System as a string
         created=datetime.now(),
         modified=datetime.now(),
-        file=str(file.id),
+        file=file.id,
         legislativeTermList=legislative_term_list,
         membership=membership,
     )
