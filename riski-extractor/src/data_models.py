@@ -348,7 +348,7 @@ class Person(SQLModel, table=True, check_tables_exist=True):
     web: str | None = Field(None, description="HTML view of the person")
     deleted: bool = Field(default=False, description="Marked as deleted")
 
-    title: uuid.UUID = Field(default=None, foreign_key="title.db_id")
+    title: uuid.UUID | None = Field(default=None, foreign_key="title.db_id")
     phone: list[str] = Field(sa_column=Column(JSON), default=[])
     email: list[str] = Field(sa_column=Column(JSON), default=[])
 
@@ -611,9 +611,9 @@ class Paper(SQLModel, table=True, check_tables_exist=True):
     under_direction_of: list["Organization"] = Relationship(back_populates="directed_papers", link_model=PaperDirectionLink)
     keywords: list["Keyword"] = Relationship(back_populates="paper", link_model=PaperKeywordLink)
 
-    paper_type: uuid.UUID = Field(foreign_key="paper_type.id", description="Type of the document")
+    paper_type: uuid.UUID | None = Field(default=None, foreign_key="paper_type.id", description="Type of the document")
 
-    paper_subtype: uuid.UUID = Field(foreign_key="paper_subtype.id", description="Subtype of the document")
+    paper_subtype: uuid.UUID | None = Field(default=None, foreign_key="paper_subtype.id", description="Subtype of the document")
 
 
 class BodyEquivalentLink(SQLModel, table=True, check_tables_exist=True):
