@@ -783,44 +783,44 @@ class ExtractArtifact(BaseModel):
 ################ Enums #######################
 ##############################################
 class OrganizationTypeEnum(str, Enum):
-    COUNCIL = "City Council"
-    FACTION = "Faction"
-    BV = "Citizens' Assembly"
-    BA = "District Committee"
-    OTHER = "Other"
+    COUNCIL = "Stadtrat"
+    FACTION = "Fraktion"
+    CITIZENS_ASSEMBLY = "Bürgerversammlung"
+    DISTRICT_COMMITTEE = "Bezirksausschuss"
+    OTHER = "Andere"
 
 
 class PaperTypeEnum(str, Enum):
-    STR_ANTRAG = "Str-Proposal"
-    BA_ANTRAG = "BA-Proposal"
-    SITZUNGSVORLAGE = "Meeting Template"
-    BV_EMPFEHLUNG = "BV-Recommendation"
-    BV_ANFRAGE = "BV-Request"
+    COUNCIL_PROPOSAL = "Stadtratsantrag"
+    DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"
+    MEETING_TEMPLATE = "Sitzungsvorlage"
+    CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
+    CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
 
 
 class PaperSubtypeEnum(str, Enum):
-    # Subtypes for Str-Proposal
-    DRINGLICHKEITSANTRAG = "Urgent Proposal"
-    ANTRAG = "Proposal"
-    ANFRAGE = "Request"
-    AENDERUNGSANTRAG = "Amendment Proposal"
+    # Subtypes for Council Proposal
+    URGENT_PROPOSAL = "Dringlichkeitsantrag"
+    PROPOSAL = "Antrag"
+    REQUEST = "Anfrage"
+    AMENDMENT_PROPOSAL = "Änderungsantrag"
 
-    # Subtypes for BA-Proposal
-    BA_ANTRAG = "BA-Proposal"
+    # Subtypes for District Committee Proposal
+    DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"
 
-    # Subtypes for BV-Recommendation
-    BV_EMPFEHLUNG = "BV-Recommendation"
+    # Subtypes for Citizens' Assembly Recommendation
+    CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
 
-    # Subtypes for BV-Request
-    BV_ANFRAGE = "BV-Request"
+    # Subtypes for Citizens' Assembly Request
+    CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
 
     # Subtypes for Meeting Template
-    BESCHLUSSVORLAGE_VB = "Resolution Template VB"
-    BESCHLUSSVORLAGE_SB = "Resolution Template SB"
-    BESCHLUSSVORLAGE_SB_VB = "Resolution Template SB VB"
-    BEKANNTGABE = "Announcement"
-    DIREKT = "Direct"
-    SITZUNGSVORLAGE_DA = "Meeting Template for DA"
+    RESOLUTION_TEMPLATE_VB = "Beschlussvorlage Verwaltungsbeirat"
+    RESOLUTION_TEMPLATE_SB = "Beschlussvorlage Senatsbeirat"
+    RESOLUTION_TEMPLATE_SB_VB = "Beschlussvorlage Senatsbeirat Verwaltungsbeirat"
+    ANNOUNCEMENT = "Bekanntgabe"
+    DIRECT = "Direkt"
+    MEETING_TEMPLATE_DISTRICT_COMMITTEE = "Sitzungsvorlage für den Bezirksausschuss"
 
 
 ###########################################################
@@ -887,19 +887,24 @@ def seed_paper_subtypes(session: Session):
 
     # Map subtypes to parent types
     subtype_mapping = {
-        PaperSubtypeEnum.DRINGLICHKEITSANTRAG: "Str-Proposal",
-        PaperSubtypeEnum.ANTRAG: "Str-Proposal",
-        PaperSubtypeEnum.ANFRAGE: "Str-Proposal",
-        PaperSubtypeEnum.AENDERUNGSANTRAG: "Str-Proposal",
-        PaperSubtypeEnum.BA_ANTRAG: "BA-Proposal",
-        PaperSubtypeEnum.BV_EMPFEHLUNG: "BV-Recommendation",
-        PaperSubtypeEnum.BV_ANFRAGE: "BV-Request",
-        PaperSubtypeEnum.BESCHLUSSVORLAGE_VB: "Meeting Template",
-        PaperSubtypeEnum.BESCHLUSSVORLAGE_SB: "Meeting Template",
-        PaperSubtypeEnum.BESCHLUSSVORLAGE_SB_VB: "Meeting Template",
-        PaperSubtypeEnum.BEKANNTGABE: "Meeting Template",
-        PaperSubtypeEnum.DIREKT: "Meeting Template",
-        PaperSubtypeEnum.SITZUNGSVORLAGE_DA: "Meeting Template",
+        # Council Proposal
+        PaperSubtypeEnum.URGENT_PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
+        PaperSubtypeEnum.PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
+        PaperSubtypeEnum.REQUEST: PaperTypeEnum.COUNCIL_PROPOSAL,
+        PaperSubtypeEnum.AMENDMENT_PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
+        # District Committee Proposal
+        PaperSubtypeEnum.DISTRICT_COMMITTEE_PROPOSAL: PaperTypeEnum.DISTRICT_COMMITTEE_PROPOSAL,
+        # Citizens' Assembly Recommendation
+        PaperSubtypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION: PaperTypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION,
+        # Citizens' Assembly Request
+        PaperSubtypeEnum.CITIZENS_ASSEMBLY_REQUEST: PaperTypeEnum.CITIZENS_ASSEMBLY_REQUEST,
+        # Meeting Templates
+        PaperSubtypeEnum.RESOLUTION_TEMPLATE_VB: PaperTypeEnum.MEETING_TEMPLATE,
+        PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB: PaperTypeEnum.MEETING_TEMPLATE,
+        PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB_VB: PaperTypeEnum.MEETING_TEMPLATE,
+        PaperSubtypeEnum.ANNOUNCEMENT: PaperTypeEnum.MEETING_TEMPLATE,
+        PaperSubtypeEnum.DIRECT: PaperTypeEnum.MEETING_TEMPLATE,
+        PaperSubtypeEnum.MEETING_TEMPLATE_DISTRICT_COMMITTEE: PaperTypeEnum.MEETING_TEMPLATE,
     }
 
     for enum_value in PaperSubtypeEnum:
