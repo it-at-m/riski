@@ -6,7 +6,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from sqlalchemy import JSON
-from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select, text
+from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select
 
 from src.envtools import getenv_with_exception
 
@@ -852,9 +852,14 @@ def create_db_and_tables():
 
 
 def check_tables_exist():
-    with get_engine().connect() as conn:
-        result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public'"))
-        tables = [row[0] for row in result]
+    engine = get_engine()
+    with engine.connect() as conn:
+        from sqlalchemy import inspect as _inspect
+
+        inspector = _inspect(conn)
+        # Only use 'public' schema for Postgres; None for others like SQLite
+        schema = "public" if engine.url.get_backend_name() == "postgresql" else None
+        tables = inspector.get_table_names(schema=schema)
         print("Existing tables:", tables)
 
 
