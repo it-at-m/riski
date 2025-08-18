@@ -116,7 +116,7 @@ class System(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.system_id",
             "secondaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.other_version_id",
-            "foreign_keys": "[SYSTEM_OTHER_OPARL_VERSION.system_id, SYSTEM_OTHER_OPARL_VERSION.other_version_id]",
+            "foreign_keys": [SYSTEM_OTHER_OPARL_VERSION.system_id, SYSTEM_OTHER_OPARL_VERSION.other_version_id],
         },
     )
     bodies: list["Body"] = Relationship(back_populates="system_link")
@@ -571,7 +571,7 @@ class Paper(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Paper.db_id==PaperRelatedPaper.from_paper_id",
             "secondaryjoin": "Paper.db_id==PaperRelatedPaper.to_paper_id",
-            "foreign_keys": "[PaperRelatedPaper.from_paper_id, PaperRelatedPaper.to_paper_id]",
+            "foreign_keys": [PaperRelatedPaper.from_paper_id, PaperRelatedPaper.to_paper_id],
         },
     )
 
@@ -581,7 +581,7 @@ class Paper(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Paper.db_id==PaperRelatedPaper.to_paper_id",
             "secondaryjoin": "Paper.db_id==PaperRelatedPaper.from_paper_id",
-            "foreign_keys": "[PaperRelatedPaper.to_paper_id, PaperRelatedPaper.from_paper_id]",
+            "foreign_keys": [PaperRelatedPaper.to_paper_id, PaperRelatedPaper.from_paper_id],
         },
     )
     super_papers: list["Paper"] = Relationship(
@@ -590,7 +590,7 @@ class Paper(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Paper.db_id==PaperSuperordinatedLink.paper_id",
             "secondaryjoin": "Paper.db_id==PaperSuperordinatedLink.superordinated_paper_url",
-            "foreign_keys": "[PaperSuperordinatedLink.paper_id, PaperSuperordinatedLink.superordinated_paper_url]",
+            "foreign_keys": [PaperSuperordinatedLink.paper_id, PaperSuperordinatedLink.superordinated_paper_url],
         },
     )
     sub_papers: list["Paper"] = Relationship(
@@ -599,7 +599,7 @@ class Paper(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Paper.db_id==PaperSuperordinatedLink.superordinated_paper_url",
             "secondaryjoin": "Paper.db_id==PaperSuperordinatedLink.paper_id",
-            "foreign_keys": "[PaperSuperordinatedLink.superordinated_paper_url, PaperSuperordinatedLink.paper_id]",
+            "foreign_keys": [PaperSuperordinatedLink.superordinated_paper_url, PaperSuperordinatedLink.paper_id],
         },
     )
 
@@ -666,7 +666,7 @@ class Body(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Body.db_id==BodyEquivalentLink.body_id_a",
             "secondaryjoin": "Body.db_id==BodyEquivalentLink.body_id_b",
-            "foreign_keys": "[BodyEquivalentLink.body_id_a, BodyEquivalentLink.body_id_b]",
+            "foreign_keys": [BodyEquivalentLink.body_id_a, BodyEquivalentLink.body_id_b],
         },
     )
 
@@ -676,7 +676,7 @@ class Body(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "Body.db_id==BodyEquivalentLink.body_id_b",
             "secondaryjoin": "Body.db_id==BodyEquivalentLink.body_id_a",
-            "foreign_keys": "[BodyEquivalentLink.body_id_b, BodyEquivalentLink.body_id_a]",
+            "foreign_keys": [BodyEquivalentLink.body_id_b, BodyEquivalentLink.body_id_a],
         },
     )
     keywords: list["Keyword"] = Relationship(back_populates="body", link_model=BodyKeywordLink)
