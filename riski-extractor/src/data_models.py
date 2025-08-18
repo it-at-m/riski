@@ -10,8 +10,6 @@ from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engi
 
 from src.envtools import getenv_with_exception
 
-load_dotenv()
-
 
 class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True):
     __tablename__ = "system_other_oparl_version"
@@ -837,15 +835,24 @@ class PaperSubtypeEnum(str, Enum):
 #############  Create Database Schema ###################
 ###########################################################
 
-engine = create_engine(getenv_with_exception("DATABASE_URL"), echo=True)
+_engine = None
+
+
+def get_engine():
+    """Lazy initialization of database engine."""
+    global _engine
+    if _engine is None:
+        load_dotenv()
+        _engine = create_engine(getenv_with_exception("DATABASE_URL"), echo=True)
+    return _engine
 
 
 def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(get_engine())
 
 
 def check_tables_exist():
-    with engine.connect() as conn:
+    with _engine.connect() as conn:
         result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public'"))
         tables = [row[0] for row in result]
         print("Existing tables:", tables)
