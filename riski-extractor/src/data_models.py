@@ -394,7 +394,7 @@ class Membership(SQLModel, table=True):
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     keywords: list["Keyword"] = Relationship(back_populates="memberships", link_model=MembershipKeyword)
-    organizations: Organization = Relationship(link_model=OrganizationMembership)
+    organizations: list["Organization"] = Relationship(link_model=OrganizationMembership)
     person: list["Person"] = Relationship(back_populates="membership", link_model=PersonMembershipLink)
 
 
