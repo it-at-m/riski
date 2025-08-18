@@ -416,12 +416,6 @@ class FileAgendaItemLink(SQLModel, table=True):
     agendaItem: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
 
 
-class FilePaperLink(SQLModel, table=True):
-    __tablename__ = "file_paper"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
-
-
 class FileKeywordLink(SQLModel, table=True):
     __tablename__ = "file_keyword"
     file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
@@ -479,7 +473,6 @@ class File(SQLModel, table=True):
     )
     meetings: list["Meeting"] = Relationship(back_populates="auxiliary_files", link_model=FileMeetingLink)
     agendaItem: list["AgendaItem"] = Relationship(back_populates="auxiliaryFile", link_model=FileAgendaItemLink)
-    paper: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=FilePaperLink)
     keywords: list["Keyword"] = Relationship(back_populates="files", link_model=FileKeywordLink)
     papers: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=PaperFileLink)
 
@@ -564,7 +557,7 @@ class Paper(SQLModel, table=True):
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
 
-    auxiliary_files: list["File"] = Relationship(back_populates="paper", link_model=PaperFileLink)
+    auxiliary_files: list["File"] = Relationship(back_populates="papers", link_model=PaperFileLink)
     related_papers: list["Paper"] = Relationship(
         back_populates="related_to",
         link_model=PaperRelatedPaper,
