@@ -901,11 +901,17 @@ def seed_paper_subtypes(session: Session):
     }
 
     for enum_value in PaperSubtypeEnum:
-        parent_type_name = subtype_mapping.get(enum_value)
-        if not parent_type_name or parent_type_name not in paper_types:
-            raise ValueError(f"No parent type found for subtype {enum_value.value}")
+        parent_type_enum = subtype_mapping.get(enum_value)
+        if not parent_type_enum:
+            raise ValueError(f"No parent type mapping for subtype {enum_value.value}")
+        parent_type = paper_types.get(parent_type_enum.value)
+        if not parent_type:
+            raise ValueError(f"No parent type found for subtype {enum_value.value} (expected PaperType '{parent_type_enum.value}')")
 
-        paper_subtype = PaperSubtype(name=enum_value.value, paper_type_id=paper_types[parent_type_name].id)
+        paper_subtype = PaperSubtype(
+            name=enum_value.value,
+            paper_type_id=parent_type.id,
+        )
         session.add(paper_subtype)
     session.commit()
 
