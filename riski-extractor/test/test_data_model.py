@@ -36,6 +36,7 @@ from src.data_models import (
     OrganizationSubOrganization,
     OrganizationType,
     Paper,
+    PaperDirectionLink,
     PaperFileLink,
     PaperLocationLink,
     PaperOriginatorPersonLink,
@@ -500,6 +501,14 @@ def test_paper_subordinated_link_create(session):
     assert paper_subordinated_link.paper_id is not None
 
 
+# Test for the PaperDirectionLink class (if applicable)
+def test_paper_direction_link_create(session):
+    paper_direction_link = PaperDirectionLink(paper_id=uuid.uuid4(), direction_name=uuid.uuid4())
+    session.add(paper_direction_link)
+    session.commit()
+    assert paper_direction_link.paper_id is not None
+
+
 # Test for the PaperFileLink class
 def test_paper_file_link_create(session):
     paper_file_link = PaperFileLink(paper_id=uuid.uuid4(), file_id=uuid.uuid4())
@@ -588,7 +597,7 @@ def test_meeting_keyword_link_create(session):
     assert meeting_keyword_link.meeting_id is not None
 
 
-# Test for the MeetingAuxFileLink class
+# Test for the FileMeetingLink class
 def test_meeting_aux_file_link_create(session):
     meeting_aux_file_link = FileMeetingLink(meeting_id=uuid.uuid4(), file_id=uuid.uuid4())
     session.add(meeting_aux_file_link)
@@ -658,6 +667,7 @@ def test_organization_post_create(session):
     session.add(organization_post)
     session.commit()
     assert organization_post.organization_id is not None
+    assert organization_post.post_str is not None
 
 
 # Test for the OrganizationSubOrganization class
