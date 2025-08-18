@@ -684,14 +684,6 @@ class Body(SQLModel, table=True):
     system_link: Optional["System"] = Relationship(back_populates="bodies")
 
 
-class MeetingAuxFileLink(SQLModel, table=True):
-    """Mapping Meeting <-> additional files"""
-
-    __tablename__ = "meeting_aux_file"
-    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-
-
 class MeetingKeywordLink(SQLModel, table=True):
     """Mapping Meeting <-> Keywords"""
 
@@ -739,7 +731,7 @@ class Meeting(SQLModel, table=True):
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     organizations: list["Organization"] = Relationship(back_populates="meetings", link_model=MeetingOrganizationLink)
     participants: list["Person"] = Relationship(back_populates="meetings", link_model=MeetingParticipantLink)
-    auxiliary_files: list["File"] = Relationship(back_populates="meetings", link_model=MeetingAuxFileLink)
+    auxiliary_files: list["File"] = Relationship(back_populates="meetings", link_model=FileMeetingLink)
     agenda_items: list["AgendaItem"] = Relationship(back_populates="meetings", link_model=MeetingAgendaItemLink)
     keywords: list["Keyword"] = Relationship(back_populates="meetings", link_model=MeetingKeywordLink)
 
@@ -890,8 +882,32 @@ def seed_paper_subtypes(session: Session):
     if existing:
         return  # Table already populated
 
+    # Get paper types first
+    paper_types = {pt.name: pt for pt in session.exec(select(PaperType)).all()}
+
+    # Map subtypes to parent types
+    subtype_mapping = {
+        PaperSubtypeEnum.DRINGLICHKEITSANTRAG: "Str-Proposal",
+        PaperSubtypeEnum.ANTRAG: "Str-Proposal",
+        PaperSubtypeEnum.ANFRAGE: "Str-Proposal",
+        PaperSubtypeEnum.AENDERUNGSANTRAG: "Str-Proposal",
+        PaperSubtypeEnum.BA_ANTRAG: "BA-Proposal",
+        PaperSubtypeEnum.BV_EMPFEHLUNG: "BV-Recommendation",
+        PaperSubtypeEnum.BV_ANFRAGE: "BV-Request",
+        PaperSubtypeEnum.BESCHLUSSVORLAGE_VB: "Meeting Template",
+        PaperSubtypeEnum.BESCHLUSSVORLAGE_SB: "Meeting Template",
+        PaperSubtypeEnum.BESCHLUSSVORLAGE_SB_VB: "Meeting Template",
+        PaperSubtypeEnum.BEKANNTGABE: "Meeting Template",
+        PaperSubtypeEnum.DIREKT: "Meeting Template",
+        PaperSubtypeEnum.SITZUNGSVORLAGE_DA: "Meeting Template",
+    }
+
     for enum_value in PaperSubtypeEnum:
-        paper_subtype = PaperSubtype(name=enum_value.value)
+        parent_type_name = subtype_mapping.get(enum_value)
+        if not parent_type_name or parent_type_name not in paper_types:
+            raise ValueError(f"No parent type found for subtype {enum_value.value}")
+
+        paper_subtype = PaperSubtype(name=enum_value.value, paper_type_id=paper_types[parent_type_name].id)
         session.add(paper_subtype)
     session.commit()
 
