@@ -852,7 +852,7 @@ def create_db_and_tables():
 
 
 def check_tables_exist():
-    with _engine.connect() as conn:
+    with get_engine().connect() as conn:
         result = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public'"))
         tables = [row[0] for row in result]
         print("Existing tables:", tables)
