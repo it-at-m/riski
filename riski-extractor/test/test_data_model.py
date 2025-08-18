@@ -25,7 +25,6 @@ from src.data_models import (
     LocationPapers,
     LocationPersons,
     Meeting,
-    MeetingAuxFileLink,
     MeetingKeywordLink,
     MeetingParticipantLink,
     Membership,
@@ -591,7 +590,7 @@ def test_meeting_keyword_link_create(session):
 
 # Test for the MeetingAuxFileLink class
 def test_meeting_aux_file_link_create(session):
-    meeting_aux_file_link = MeetingAuxFileLink(meeting_id=uuid.uuid4(), file_id=uuid.uuid4())
+    meeting_aux_file_link = FileMeetingLink(meeting_id=uuid.uuid4(), file_id=uuid.uuid4())
     session.add(meeting_aux_file_link)
     session.commit()
     assert meeting_aux_file_link.meeting_id is not None
