@@ -347,10 +347,10 @@ class Person(SQLModel, table=True):
     deleted: bool = Field(default=False, description="Marked as deleted")
 
     title: uuid.UUID | None = Field(default=None, foreign_key="title.db_id")
-    phone: list[str] = Field(sa_column=Column(JSON), default=[])
-    email: list[str] = Field(sa_column=Column(JSON), default=[])
+    phone: list[str] = Field(sa_column=Column(JSON), default_factory=list)
+    email: list[str] = Field(sa_column=Column(JSON), default_factory=list)
 
-    status: list[str] = Field(sa_column=Column(JSON), default=[])
+    status: list[str] = Field(sa_column=Column(JSON), default_factory=list)
 
     keywords: list["Keyword"] = Relationship(
         back_populates="persons",
