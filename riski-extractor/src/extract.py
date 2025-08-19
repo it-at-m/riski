@@ -24,7 +24,10 @@ class RISExtractor:
     """
 
     def __init__(self) -> None:
-        self.client = Client(proxy=config.http_proxy)
+        if config.https_proxy or config.http_proxy:
+            self.client = Client(proxy=config.https_proxy or config.http_proxy)
+        else:
+            self.client = Client()
         self.logger = getLogger()
         self.str_parser = STRParser()
         self.base_url = config.base_url + "/sitzung/"
