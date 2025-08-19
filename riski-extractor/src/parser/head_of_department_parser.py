@@ -7,9 +7,10 @@ from pydantic import HttpUrl
 
 from src.data_models import Person
 from src.logtools import getLogger
+from src.parser.base_parser import BaseParser
 
 
-class HeadOfDepartmentParser:
+class HeadOfDepartmentParser(BaseParser[Person]):
     """
     Parser for Heads of Departments
     """
@@ -62,7 +63,7 @@ class HeadOfDepartmentParser:
         return re.search(form_of_address_regex, name) is not None
 
     def parse(self, url: str, html: str) -> Person:
-        self.logger.info(f"Parsing Head of Department: {url}")
+        self.logger.debug(f"Parsing Head of Department: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
         create_date = datetime.now()
@@ -81,7 +82,6 @@ class HeadOfDepartmentParser:
                 status = text[1:-1].strip()
             else:
                 status = text
-        self.logger.info(status)
 
         # The code for determining the names is still based on the old naming law before 2024.
         # Since 2024, spouses can also have a double name without a "-" as a married name; this was not possible before.
@@ -90,10 +90,8 @@ class HeadOfDepartmentParser:
         # this assumption is still made in the code. If this leads to problems, the data would have to be corrected manually
         # or the code would have to be adapted or removed. (Status: 2025-07-03)
         parts_of_name = name.split(" ")
-        self.logger.info(parts_of_name)
         given_name = []
         last_name = parts_of_name[-1]
-        self.logger.info(last_name)
 
         potential_titles = []
 
@@ -140,5 +138,5 @@ class HeadOfDepartmentParser:
             deleted=False,
         )
 
-        self.logger.info(f"Person object created: {person.givenName} {person.familyName}")
+        self.logger.debug(f"Person object created: {person.givenName} {person.familyName}")
         return person
