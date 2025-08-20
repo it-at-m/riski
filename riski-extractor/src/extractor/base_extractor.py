@@ -172,7 +172,7 @@ class BaseExtractor(ABC, Generic[T]):
         return response.text
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_next_page(self, path, next_page_link):
+    def _get_next_page(self, path: str, next_page_link):
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Referer": self._get_sanitized_url(path),
@@ -180,7 +180,7 @@ class BaseExtractor(ABC, Generic[T]):
             "X-Requested-With": "XMLHttpRequest",
             "Wicket-Ajax": "true",
             "Wicket-FocusedElementId": "idb",
-            "Wicket-Ajax-BaseURL": self._get_sanitized_ajax_url(path),
+            "Wicket-Ajax-BaseURL": path.lstrip("./"),
             "Priority": "u=0",
         }
 

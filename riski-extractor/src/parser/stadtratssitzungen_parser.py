@@ -26,7 +26,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
 
         if platform.system() == "Windows":
             # For Windows, use the specific code page that works
-            locale.setlocale(locale.LC_TIME, "German_Germany.1252")  # Or another suitable code page
+            locale.setlocale(locale.LC_TIME, "German_Germany.1252")
         else:
             try:
                 locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
