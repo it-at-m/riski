@@ -198,7 +198,7 @@ def main() -> None:
     logger.info("Starting extraction process")
 
     extractor = RISExtractor()
-    start_date = config.start_date
+    start_date = start_date = datetime.date.fromisoformat(config.start_date)
     extract_artifact = extractor.run(start_date - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
