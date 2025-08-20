@@ -3,7 +3,7 @@ from functools import lru_cache
 from os import getenv
 from pathlib import Path
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, HttpUrl, PostgresDsn
 from pydantic_settings import (
     BaseSettings,
     CliSettingsSource,
@@ -31,7 +31,7 @@ class Config(BaseSettings):
     )
 
     # === Scraper / Extractor Settings ===
-    base_url: str = Field(
+    base_url: HttpUrl = Field(
         default="https://risi.muenchen.de/risi",
         description="Main target URL or domain to scrape",
     )
@@ -121,7 +121,7 @@ class Config(BaseSettings):
         validation_alias="RISKI_DB_PASSWORD",
         description="Postgres password",
     )
-    database_url: str | None = Field(
+    database_url: PostgresDsn | None = Field(
         default=None,
         validation_alias="DATABASE_URL",
         description="Full Postgres connection URL",
@@ -143,7 +143,7 @@ class Config(BaseSettings):
         validation_alias="TEST_RISKI_DB_PASSWORD",
         description="Test database password",
     )
-    test_database_url: str | None = Field(
+    test_database_url: PostgresDsn | None = Field(
         default=None,
         validation_alias="TEST_DATABASE_URL",
         description="Full test database connection URL",

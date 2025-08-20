@@ -4,7 +4,6 @@ import os
 
 ### end of special import block ###
 import re
-from logging import Logger
 
 import httpx
 import stamina
@@ -17,7 +16,6 @@ from src.logtools import getLogger
 from src.parser.str_parser import STRParser
 
 config: Config = get_config()
-logger: Logger = getLogger()
 
 
 class RISExtractor:
@@ -32,7 +30,7 @@ class RISExtractor:
             self.client = Client(timeout=config.request_timeout)
         self.logger = getLogger()
         self.str_parser = STRParser()
-        self.base_url = config.base_url + "/sitzung/"
+        self.base_url = str(config.base_url) + "/sitzung/"
         self.uebersicht_path = "/uebersicht"
 
     def _extract_meeting_links(self, html: str) -> list[str]:
@@ -196,11 +194,11 @@ def main() -> None:
     """
     Main function for the extraction process
     """
-
+    logger = getLogger()
     logger.info("Starting extraction process")
 
     extractor = RISExtractor()
-    start_date = datetime.date.fromisoformat(config.start_date)
+    start_date = config.start_date
     extract_artifact = extractor.run(start_date - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
