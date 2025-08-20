@@ -9,7 +9,7 @@ from logging import Logger
 import httpx
 import stamina
 from bs4 import BeautifulSoup
-from config import Config, get_config
+from config.config import Config, get_config
 from httpx import Client
 
 from src.data_models import ExtractArtifact, Meeting
@@ -200,7 +200,8 @@ def main() -> None:
     logger.info("Starting extraction process")
 
     extractor = RISExtractor()
-    extract_artifact = extractor.run(config.start_date - datetime.timedelta(days=30))
+    start_date = datetime.date.fromisoformat(config.start_date)
+    extract_artifact = extractor.run(start_date - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
