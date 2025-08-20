@@ -2,17 +2,18 @@ import datetime
 import sys
 from logging import Logger
 
-from config import Config, get_config
+from config.config import Config, get_config
 from src import extract
 from src.logtools import getLogger
 from src.version import get_version
 
-config: Config = get_config()
-logger: Logger = getLogger()
+config: Config
+logger: Logger
 
 
 def main():
-    config.print_config()
+    config = get_config()
+    logger = getLogger()
     version = get_version()
     logger.info(f"RIS Indexer v{version} starting up")
     extractor = extract.RISExtractor()

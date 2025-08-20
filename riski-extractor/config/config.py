@@ -1,6 +1,7 @@
 import datetime
 from functools import lru_cache
 from os import getenv
+from pathlib import Path
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import (
@@ -51,10 +52,6 @@ class Config(BaseSettings):
         default="Mozilla/5.0 (compatible; ScraperBot/1.0)",
         description="User-Agent header for requests",
     )
-    proxies: list[str] | None = Field(
-        default=None,
-        description="Optional list of proxy URLs to use for rotating requests",
-    )
 
     http_proxy: str | None = Field(
         default=None,
@@ -77,11 +74,7 @@ class Config(BaseSettings):
         ge=1,
         description="Request timeout in seconds",
     )
-    request_delay: float = Field(
-        default=1.0,
-        ge=0.0,
-        description="Delay (in seconds) between requests to avoid rate limiting",
-    )
+
     max_retries: int = Field(
         default=5,
         ge=0,
@@ -159,7 +152,7 @@ class Config(BaseSettings):
     # === Settings Behavior ===
     model_config = SettingsConfigDict(
         env_prefix="RISKI_EXTRAKTOR_",  # only applies to extractor-related fields
-        env_file="../.env",
+        env_file=str((Path(__file__).resolve().parents[2] / ".env")),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         env_nested_delimiter="__",
@@ -192,8 +185,17 @@ class Config(BaseSettings):
         super().__init__(**kwargs)
 
     def print_config(self):
-        cfg = get_config()
-        print(cfg.model_dump())
+        print(
+            self.model_dump(
+                exclude={
+                    "openai_api_key",
+                    "riski_db_password",
+                    "database_url",
+                    "test_riski_db_password",
+                    "test_database_url",
+                }
+            )
+        )
 
 
 @lru_cache

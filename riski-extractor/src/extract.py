@@ -4,6 +4,7 @@ import os
 
 ### end of special import block ###
 import re
+from logging import Logger
 
 import httpx
 import stamina
@@ -16,6 +17,7 @@ from src.logtools import getLogger
 from src.parser.str_parser import STRParser
 
 config: Config = get_config()
+logger: Logger = getLogger()
 
 
 class RISExtractor:
@@ -25,9 +27,9 @@ class RISExtractor:
 
     def __init__(self) -> None:
         if config.https_proxy or config.http_proxy:
-            self.client = Client(proxy=config.https_proxy or config.http_proxy)
+            self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
         else:
-            self.client = Client()
+            self.client = Client(timeout=config.request_timeout)
         self.logger = getLogger()
         self.str_parser = STRParser()
         self.base_url = config.base_url + "/sitzung/"
@@ -194,12 +196,11 @@ def main() -> None:
     """
     Main function for the extraction process
     """
-    logger = getLogger()
 
     logger.info("Starting extraction process")
 
     extractor = RISExtractor()
-    extract_artifact = extractor.run(datetime.date.today() - datetime.timedelta(days=30))
+    extract_artifact = extractor.run(config.start_date - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
