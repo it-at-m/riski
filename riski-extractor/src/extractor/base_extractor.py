@@ -151,7 +151,7 @@ class BaseExtractor(ABC, Generic[T]):
         self.logger.info(f"Extracted {len(links)} links to parsable objects from page.")
         return links
 
-    def _get_next_page_path(self, current_page_text) -> str:
+    def _get_next_page_path(self, current_page_text) -> str | None:
         soup = BeautifulSoup(current_page_text, "html.parser")
         scripts = soup.find_all("script")
 
