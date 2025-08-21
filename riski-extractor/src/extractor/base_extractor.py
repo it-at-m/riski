@@ -70,9 +70,6 @@ class BaseExtractor(ABC, Generic[T]):
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
-    def _get_sanitized_ajax_url(self, unsanitized_path: str) -> str:
-        return f"{self.base_path.lstrip('/')}/{unsanitized_path.lstrip('./')}"
-
     def run(self, startdate: datetime.date) -> list[T]:
         try:
             # Initial request for cookies, sessionID etc.
@@ -125,11 +122,20 @@ class BaseExtractor(ABC, Generic[T]):
         you need to return the redirect-Url, that is found as HTTP-Header "Location".
         This should be a relative path.
         """
-        filter_url = self.base_url + "/" + self.base_path + "?0-1.-form"
+        filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {"von": startdate.isoformat(), "bis": ""}
         response = self.client.post(url=filter_url, headers=headers, data=data)
-        assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
+
+        # When sending a filter request the RIS always returns a redirect to the url with the filtered results
+        # If not raise errror for stamina retry
+        if not response.is_redirect:
+            raise httpx.HTTPStatusError(
+                "Expected redirect from filter request",
+                request=response.request,
+                response=response,
+            )
+
         return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
