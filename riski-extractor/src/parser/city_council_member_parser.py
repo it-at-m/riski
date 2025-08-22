@@ -63,7 +63,7 @@ class CityCouncilMemberParser:
         return re.search(anrede_regex, name) is not None
 
     def parse(self, url: str, html: str) -> Person:
-        self.logger.info(f"Parsing city council member: {url}")
+        self.logger.debug(f"Parsing city council member: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
         create_date = datetime.now()
@@ -75,7 +75,7 @@ class CityCouncilMemberParser:
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
         status = status_element.get_text()
         status = status[1 : len(status) - 1]
-        self.logger.info(status)
+        self.logger.debug(status)
 
         """
         The code for determining the names is still based on the old naming law before 2024.
@@ -86,10 +86,10 @@ class CityCouncilMemberParser:
         or the code would have to be adapted or removed. (Status: 2025-07-03)
         """
         parts_of_name = name.split(" ")
-        self.logger.info(parts_of_name)
+        self.logger.debug(parts_of_name)
         given_name = []
         last_name = parts_of_name[-1]
-        self.logger.info(last_name)
+        self.logger.debug(last_name)
 
         potential_titles = []
         form_of_adress = None
@@ -141,5 +141,5 @@ class CityCouncilMemberParser:
             deleted=False,
         )
 
-        self.logger.info(f"City Council member - object created: {person.givenName} {person.familyName}")
+        self.logger.debug(f"City Council member - object created: {person.givenName} {person.familyName}")
         return person
