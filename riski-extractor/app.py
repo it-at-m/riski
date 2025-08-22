@@ -16,7 +16,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="RIS Indexer - Collect, Extract, Transform, and Load data from Rathausinformationssystem website"
     )
-    parser.add_argument("--startdate", default=DEFAULT_START_DATE, help="Startdate for filtering STR-Meetings (default: Empty String)")
+    parser.add_argument(
+        "--startdate", default=DEFAULT_START_DATE, help="Start date for filtering (YYYY-MM-DD). Default: {DEFAULT_START_DATE}"
+    )
 
     return parser.parse_args()
 
@@ -28,10 +30,14 @@ def main():
 
     logger.info(f"RIS Indexer v{version} starting up")
 
-    startdate = datetime.date.fromisoformat(args.startdate)
+    try:
+        startdate = datetime.date.fromisoformat(args.startdate)
+    except ValueError:
+        logger = getLogger()
+        logger.error(f"Invalid --startdate: {args.startdate}. Expected YYYY-MM-DD.")
+        return 1
 
     logger.info(f"RIS Extractor v{version} starting up")
-
     logger.info(f"Extracting meetings starting from {startdate}")
     sitzungen_extractor = StadtratssitzungenExtractor()
     extracted_meeting_list = sitzungen_extractor.run(startdate)

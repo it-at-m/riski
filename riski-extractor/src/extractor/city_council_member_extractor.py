@@ -45,7 +45,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
             response.raise_for_status()
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter_member(self, startdate: datetime.date) -> str:
+    def _filter(self, startdate: datetime.date) -> str:
         filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {"von": startdate.isoformat(), "bis": "", "fraktion": "", "nachname": ""}
