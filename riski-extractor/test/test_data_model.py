@@ -1,7 +1,9 @@
+import os
 import uuid
 from datetime import datetime
 
 import pytest
+from dotenv import load_dotenv
 from sqlmodel import Session, SQLModel, create_engine
 from src.data_models import (
     AgendaItem,
@@ -56,7 +58,12 @@ from src.data_models import (
 # Create a temporary SQLite database for the tests
 @pytest.fixture(scope="module")
 def engine():
-    engine = create_engine("sqlite:///:memory:", echo=True)
+    load_dotenv()
+    DB_USER = os.getenv("RISKI_DB_USER")
+    DB_PASSWORD = os.getenv("RISKI_DB_PASSWORD")
+    DB_NAME = os.getenv("RISKI_DB_NAME")
+    # engine = create_engine("sqlite:///:memory:", echo=True)
+    engine = create_engine(f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}", echo=True)
     SQLModel.metadata.create_all(engine)
     yield engine
     SQLModel.metadata.drop_all(engine)

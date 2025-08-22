@@ -25,7 +25,6 @@ dependencies = [
     "langchain-community>=0.3.27",
     "langchain-docling>=1.0.0",
     "langchain-openai>=0.3.28",
-    "psycopg2>=2.9.10",
     "pydantic[email]>=2.11.7",
     "python-dotenv>=1.1.1",
     "pyyaml>=6.0.2",
