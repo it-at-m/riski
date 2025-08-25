@@ -187,7 +187,7 @@ class BaseExtractor(ABC, Generic[T]):
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _get_next_page(self, path: str, next_page_link):
         headers = {
-            "User-Agent": "Mozilla/5.0",
+            "User-Agent": config.user_agent,
             "Referer": self._get_sanitized_url(path),
             "Accept": "text/xml",
             "X-Requested-With": "XMLHttpRequest",
