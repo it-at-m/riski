@@ -93,14 +93,14 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
             locality="München",
             created=datetime.now(),  # TODO: check if already exists
             modified=datetime.now(),
-            web=HttpUrl(url),
+            web=url,
             deleted=False,
         )
         self.logger.debug("Location object created.")
 
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [HttpUrl(urljoin(url, a.get("href"))) for a in organization_links if a.get("href")]
+        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
         organization = organization if len(organization) > 0 else None
         self.logger.debug(f"Organizations: {organization}")
 
@@ -109,7 +109,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
             link = li.get("href")
             if link:
-                full_url = HttpUrl(urljoin(url, link))
+                full_url = urljoin(url, link)
                 participants.append(full_url)
         participants = participants if len(participants) > 0 else None
         self.logger.debug(f"Participants: {participants}")
@@ -117,7 +117,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = HttpUrl(urljoin(url, doc_link["href"]))
+            doc_url = urljoin(url, doc_link["href"])
             doc_title = doc_link.get_text(strip=True)
             if doc_url:
                 auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))

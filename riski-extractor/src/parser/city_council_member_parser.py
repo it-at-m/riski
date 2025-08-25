@@ -7,9 +7,10 @@ from pydantic import HttpUrl
 
 from src.data_models import Person
 from src.logtools import getLogger
+from src.parser.base_parser import BaseParser
 
 
-class CityCouncilMemberParser:
+class CityCouncilMemberParser(BaseParser[Person]):
     """
     Parser for city council member
     """
@@ -73,8 +74,10 @@ class CityCouncilMemberParser:
         name = name.strip()
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
-        status = status_element.get_text()
-        status = status[1 : len(status) - 1]
+        status = None
+        if status_element:
+            status_text = status_element.get_text()
+            status = status_text[1 : len(status_text) - 1]
         self.logger.debug(status)
 
         """
@@ -113,7 +116,10 @@ class CityCouncilMemberParser:
 
         if person_info:
             card_content = person_info.find("div", class_="card-body")
-            key_value_rows = card_content.find_all("div", class_="keyvalue-row")
+
+            key_value_rows = {}
+            if card_content:
+                key_value_rows = card_content.find_all("div", class_="keyvalue-row")
 
             for row in key_value_rows:
                 key_el = row.find("div", class_="keyvalue-key")
