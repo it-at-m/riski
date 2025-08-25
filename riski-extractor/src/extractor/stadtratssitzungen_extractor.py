@@ -10,10 +10,13 @@ import datetime
 
 import httpx
 import stamina
+from config.config import Config, get_config
 
 from src.data_models import Meeting
 from src.extractor.base_extractor import BaseExtractor
 from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
+
+config: Config = get_config()
 
 
 class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
@@ -22,7 +25,7 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, "https://risi.muenchen.de/risi/sitzung", "/uebersicht", StadtratssitzungenParser())
+        BaseExtractor.__init__(self, str(config.base_url) + "/sitzung", "/uebersicht", StadtratssitzungenParser())
 
     def _get_search_request_params(self) -> dict:
         return {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}

@@ -10,10 +10,13 @@ load_dotenv()
 
 import httpx
 import stamina
+from config.config import Config, get_config
 
 from src.data_models import Person
 from src.extractor.base_extractor import BaseExtractor
 from src.parser.head_of_department_parser import HeadOfDepartmentParser
+
+config: Config = get_config()
 
 
 class HeadOfDepartmentExtractor(BaseExtractor[Person]):
@@ -22,7 +25,7 @@ class HeadOfDepartmentExtractor(BaseExtractor[Person]):
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, "https://risi.muenchen.de/risi/person", "/referenten", HeadOfDepartmentParser())
+        BaseExtractor.__init__(self, str(config.base_url) + "/person", "/referenten", HeadOfDepartmentParser())
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self, path: str) -> str:

@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
 
-from src.envtools import getenv_with_exception
 from src.logtools import getLogger
 
 inject_into_ssl()
@@ -20,10 +19,13 @@ from typing import Generic, TypeVar
 
 import httpx
 import stamina
+from config.config import Config, get_config
+from httpx import Client
 
 from src.parser.base_parser import BaseParser
 
 T = TypeVar("T")
+config: Config = get_config()
 
 
 class BaseExtractor(ABC, Generic[T]):
@@ -38,7 +40,11 @@ class BaseExtractor(ABC, Generic[T]):
     def __init__(self, base_url: str, base_path: str, parser: BaseParser[T]):
         # NOTE: Do not set follow_redirects=True at client level.
         # Some flows inspect 3xx responses/Location; we decide per request.
-        self.client = httpx.Client(proxy=getenv_with_exception("HTTP_PROXY"))
+        if config.https_proxy or config.http_proxy:
+            self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
+        else:
+            self.client = Client(timeout=config.request_timeout)
+
         self.logger = getLogger()
         self.base_url = base_url
         self.base_path = base_path
