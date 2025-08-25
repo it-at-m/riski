@@ -51,7 +51,7 @@ class RISExtractor:
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _initial_request(self) -> None:
-        print(self.base_url)
+        self.logger.debug(self.base_url)
         # make request
         response = self.client.get(url=self.base_url + self.uebersicht_path)
         # evaluate response

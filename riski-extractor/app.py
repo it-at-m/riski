@@ -13,9 +13,11 @@ logger: Logger
 
 def main():
     config = get_config()
+    config.print_config()
     logger = getLogger()
     version = get_version()
     logger.info(f"RIS Indexer v{version} starting up")
+
     extractor = extract.RISExtractor()
     try:
         startdate = datetime.date.fromisoformat(config.start_date)

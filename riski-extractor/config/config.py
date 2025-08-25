@@ -1,5 +1,6 @@
 import datetime
 from functools import lru_cache
+from logging import Logger
 from os import getenv
 from pathlib import Path
 
@@ -11,7 +12,10 @@ from pydantic_settings import (
     SettingsConfigDict,
     YamlConfigSettingsSource,
 )
+from src.logtools import getLogger
 from truststore import inject_into_ssl
+
+logger: Logger
 
 
 class Config(BaseSettings):
@@ -185,7 +189,8 @@ class Config(BaseSettings):
         super().__init__(**kwargs)
 
     def print_config(self):
-        print(
+        logger = getLogger()
+        logger.debug(
             self.model_dump(
                 exclude={
                     "openai_api_key",
