@@ -105,9 +105,9 @@ class BaseExtractor(ABC, Generic[T]):
             self.logger.error(f"Error extracting objects: {e}")
             return []
 
-    def _parse_objects_from_links(self, city_council_member_links: list[str]) -> list[T]:
+    def _parse_objects_from_links(self, object_links: list[str]) -> list[T]:
         extracted_objects = []
-        for link in city_council_member_links:
+        for link in object_links:
             try:
                 response = self._get_object_html(link)
                 extracted_object = self.parser.parse(link, response)
