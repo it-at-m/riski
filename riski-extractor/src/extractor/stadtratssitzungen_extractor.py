@@ -18,7 +18,7 @@ from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
 
 class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
     """
-    Extractor for the RIS website
+    Extractor for Meetings on the RIS website
     """
 
     def __init__(self) -> None:
