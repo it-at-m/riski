@@ -2,26 +2,20 @@
 import datetime
 import os
 
-from dotenv import load_dotenv
-from truststore import inject_into_ssl
-
-from src.data_models import ExtractArtifact, Meeting
-from src.envtools import getenv_with_exception
-
-inject_into_ssl()
-load_dotenv()
-
 ### end of special import block ###
-
 import re
 
 import httpx
 import stamina
 from bs4 import BeautifulSoup
+from config.config import Config, get_config
 from httpx import Client
 
+from src.data_models import ExtractArtifact, Meeting
 from src.logtools import getLogger
 from src.parser.str_parser import STRParser
+
+config: Config = get_config()
 
 
 class RISExtractor:
@@ -30,10 +24,13 @@ class RISExtractor:
     """
 
     def __init__(self) -> None:
-        self.client = Client(proxy=getenv_with_exception("HTTP_PROXY"))
+        if config.https_proxy or config.http_proxy:
+            self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
+        else:
+            self.client = Client(timeout=config.request_timeout)
         self.logger = getLogger()
         self.str_parser = STRParser()
-        self.base_url = "https://risi.muenchen.de/risi/sitzung"
+        self.base_url = str(config.base_url) + "/sitzung/"
         self.uebersicht_path = "/uebersicht"
 
     def _extract_meeting_links(self, html: str) -> list[str]:
@@ -52,8 +49,9 @@ class RISExtractor:
             return self.base_url + unsanitized_path[1:]
         return self.base_url + unsanitized_path
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _initial_request(self) -> None:
+        self.logger.debug(self.base_url)
         # make request
         response = self.client.get(url=self.base_url + self.uebersicht_path)
         # evaluate response
@@ -65,7 +63,7 @@ class RISExtractor:
             response.raise_for_status()
             raise ValueError(f"Expected redirect but got status {response.status_code}")
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _filter_sitzungen(self, startdate: datetime.date) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -80,7 +78,7 @@ class RISExtractor:
             response.raise_for_status()
             raise ValueError(f"Expected redirect but got status {response.status_code}")
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path) -> str:
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
@@ -92,7 +90,7 @@ class RISExtractor:
             raise ValueError(f"Expected redirect but got status {response.status_code}")
 
     # iteration through other request
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_current_page_text(self, path) -> str:
         response = self.client.get(url=self._get_sanitized_url(path))
         self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
@@ -112,7 +110,7 @@ class RISExtractor:
                 self.logger.error(f"Error parsing {link}: {e}")
         return meetings
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_meeting_html(self, link: str) -> str:
         response = self.client.get(url=link)  # get detail page
         response.raise_for_status()
@@ -134,7 +132,7 @@ class RISExtractor:
         else:
             return None
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_next_page(self, path, next_page_link) -> None:
         headers = {
             "User-Agent": "Mozilla/5.0",
@@ -197,11 +195,11 @@ def main() -> None:
     Main function for the extraction process
     """
     logger = getLogger()
-
     logger.info("Starting extraction process")
 
     extractor = RISExtractor()
-    extract_artifact = extractor.run(datetime.date.today() - datetime.timedelta(days=30))
+    start_date = start_date = datetime.date.fromisoformat(config.start_date)
+    extract_artifact = extractor.run(start_date - datetime.timedelta(days=30))
 
     logger.info("Dumping extraction artifact to 'artifacts/extraction.json'")
 
