@@ -57,15 +57,16 @@ class BaseExtractor(ABC, Generic[T]):
         pass
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    @abstractmethod
     def _get_object_html(self, link: str) -> str:
         """
         Method for getting the HTML for parsing. The necessary requests differ
-        form page to page, hence every extractor has to implement their own version
+        for some pages, hence some extractor have to implement their own version
         of this method.
         Must return valid HTML, that can be parsed by the Parser provided in __init__
         """
-        pass
+        response = self.client.get(url=link, follow_redirects=True)  # Detailseite anfragen
+        response.raise_for_status()
+        return response.text
 
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
@@ -104,9 +105,9 @@ class BaseExtractor(ABC, Generic[T]):
             self.logger.error(f"Error extracting objects: {e}")
             return []
 
-    def _parse_objects_from_links(self, city_council_member_links: list[str]) -> list[T]:
+    def _parse_objects_from_links(self, object_links: list[str]) -> list[T]:
         extracted_objects = []
-        for link in city_council_member_links:
+        for link in object_links:
             try:
                 response = self._get_object_html(link)
                 extracted_object = self.parser.parse(link, response)

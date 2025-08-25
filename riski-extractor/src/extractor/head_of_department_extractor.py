@@ -35,9 +35,3 @@ class HeadOfDepartmentExtractor(BaseExtractor[Person]):
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _filter(self, startdate: datetime.date) -> str:
         pass
-
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_object_html(self, link: str) -> str:
-        response = self.client.get(url=link, follow_redirects=True)  # Request detailpage
-        response.raise_for_status()
-        return response.text

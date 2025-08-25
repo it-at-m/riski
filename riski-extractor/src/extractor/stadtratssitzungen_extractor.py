@@ -18,7 +18,7 @@ from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
 
 class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
     """
-    Extractor for the RIS website
+    Extractor for Meetings on the RIS website
     """
 
     def __init__(self) -> None:
@@ -35,12 +35,6 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
 
         assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
         return response.headers.get("Location")
-
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_object_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # Detailseite anfragen
-        response.raise_for_status()
-        return response.text
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _filter(self, startdate: datetime.date) -> str:
