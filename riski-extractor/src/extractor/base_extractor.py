@@ -70,7 +70,7 @@ class BaseExtractor(ABC, Generic[T]):
         of this method.
         Must return valid HTML, that can be parsed by the Parser provided in __init__
         """
-        response = self.client.get(url=link, follow_redirects=True)  # Detailseite anfragen
+        response = self.client.get(url=link, follow_redirects=True)  # request detail page
         response.raise_for_status()
         return response.text
 
