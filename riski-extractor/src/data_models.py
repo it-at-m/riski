@@ -9,8 +9,6 @@ from pydantic import BaseModel
 from sqlalchemy import JSON
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select
 
-from src.envtools import getenv_with_exception
-
 config: Config = get_config()
 
 
@@ -831,7 +829,7 @@ def get_engine():
     global _engine
     if _engine is None:
         load_dotenv()
-        _engine = create_engine(getenv_with_exception("DATABASE_URL"), echo=True)
+        _engine = create_engine(config.database_url, echo=True)
     return _engine
 
 
