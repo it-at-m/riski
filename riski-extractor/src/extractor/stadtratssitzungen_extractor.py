@@ -36,12 +36,6 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
         return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _get_object_html(self, link: str) -> str:
-        response = self.client.get(url=link)  # Detailseite anfragen
-        response.raise_for_status()
-        return response.text
-
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _filter(self, startdate: datetime.date) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
