@@ -1,31 +1,20 @@
-# ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other module
 import re
-from logging import Logger
-
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-from truststore import inject_into_ssl
-
-from src.logtools import getLogger
-
-inject_into_ssl()
-load_dotenv()
-
-### end of special import block ###
-
-import datetime
 from abc import ABC, abstractmethod
+from logging import Logger
 from typing import Generic, TypeVar
 
 import httpx
 import stamina
+from bs4 import BeautifulSoup
 from config.config import Config, get_config
 from httpx import Client
 
+from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
-T = TypeVar("T")
 config: Config = get_config()
+
+T = TypeVar("T")
 
 
 class BaseExtractor(ABC, Generic[T]):
@@ -62,7 +51,7 @@ class BaseExtractor(ABC, Generic[T]):
         """
         pass
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_object_html(self, link: str) -> str:
         """
         Method for getting the HTML for parsing. The necessary requests differ
@@ -77,12 +66,12 @@ class BaseExtractor(ABC, Generic[T]):
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
-    def run(self, startdate: datetime.date) -> list[T]:
+    def run(self) -> list[T]:
         try:
             # Initial request for cookies, sessionID etc.
             self._initial_request()
 
-            filter_redirect_path = self._filter(startdate)
+            filter_redirect_path = self._filter()
             results_per_page_redirect_path = self._set_results_per_page(filter_redirect_path)
 
             # Request and process all extractable objects
@@ -122,8 +111,8 @@ class BaseExtractor(ABC, Generic[T]):
                 self.logger.error(f"Error parsing {link}: {e}")
         return extracted_objects
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter(self, startdate: datetime.date) -> str:
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
+    def _filter(self) -> str:
         """
         Base implementation for filtering. If additional filters are needed this method should be overwritten.
         you need to return the redirect-Url, that is found as HTTP-Header "Location".
@@ -131,7 +120,7 @@ class BaseExtractor(ABC, Generic[T]):
         """
         filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": startdate.isoformat(), "bis": ""}
+        data = {"von": config.start_date, "bis": ""}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         # When sending a filter request the RIS always returns a redirect to the url with the filtered results
@@ -145,7 +134,7 @@ class BaseExtractor(ABC, Generic[T]):
 
         return response.headers.get("Location")
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _initial_request(self):
         # make request
         response = self.client.get(url=self.base_url + self.base_path, follow_redirects=True)
@@ -175,7 +164,7 @@ class BaseExtractor(ABC, Generic[T]):
             return None
 
     # iteration through other request
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_current_page_text(self, path: str) -> str:
         if not path:
             raise ValueError("Empty redirect path detected")
@@ -184,7 +173,7 @@ class BaseExtractor(ABC, Generic[T]):
         response.raise_for_status()
         return response.text
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_next_page(self, path: str, next_page_link):
         headers = {
             "User-Agent": config.user_agent,
