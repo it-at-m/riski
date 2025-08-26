@@ -195,7 +195,7 @@ class LegislativeTermKeyword(SQLModel, table=True):
     legislative_term_id: uuid.UUID = Field(
         foreign_key="legislative_term.db_id", primary_key=True, description="URL of the associated LegislativeTerm"
     )
-    keyword_idF: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
 
 
 class LegislativeTerm(SQLModel, table=True):
