@@ -20,7 +20,6 @@ class CityCouncilMemberParser(BaseParser[Person]):
         self.logger = getLogger()
         self.logger.info("Council member parser initialized.")
 
-    # TODO: Refactor this into own module later on, because every person parser needs this functionality
     def _get_titles(self, titles: list[str]) -> list[str]:
         """
         Method for extracting the academic title of a person from their name.
