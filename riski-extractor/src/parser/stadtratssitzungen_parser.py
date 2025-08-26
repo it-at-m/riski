@@ -62,8 +62,8 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
             try:
                 start = datetime.strptime(f"{date_str}, {time_str}", "%d. %B %Y, %H:%M")
                 self.logger.debug(f"Parsed start time: {start}")
-            except ValueError as e:
-                self.logger.error(f"Date parsing failed: {e}")
+            except ValueError:
+                self.logger.exception("Date parsing failed")
         else:
             self.logger.warning("Date format did not match expected pattern.")
 

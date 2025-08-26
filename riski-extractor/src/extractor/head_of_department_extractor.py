@@ -1,19 +1,12 @@
-# ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
-import datetime
-
-from dotenv import load_dotenv
-from truststore import inject_into_ssl
-
-inject_into_ssl()
-load_dotenv()
-### end of special import block ###
-
 import httpx
 import stamina
+from config.config import Config, get_config
 
 from src.data_models import Person
 from src.extractor.base_extractor import BaseExtractor
 from src.parser.head_of_department_parser import HeadOfDepartmentParser
+
+config: Config = get_config()
 
 
 class HeadOfDepartmentExtractor(BaseExtractor[Person]):
@@ -22,9 +15,9 @@ class HeadOfDepartmentExtractor(BaseExtractor[Person]):
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, "https://risi.muenchen.de/risi/person", "/referenten", HeadOfDepartmentParser())
+        BaseExtractor.__init__(self, str(config.base_url) + "/person", "/referenten", HeadOfDepartmentParser())
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str) -> str:
         url = self.base_url + self.base_path + "?0-1.0-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list:card:cardheader:itemsperpage_dropdown_top": 3}  # 3 is the third entry in a dropdown menu representing the count 100
@@ -32,6 +25,6 @@ class HeadOfDepartmentExtractor(BaseExtractor[Person]):
         assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
         return response.headers.get("Location")
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter(self, startdate: datetime.date) -> str:
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
+    def _filter(self) -> str:
         pass
