@@ -29,11 +29,13 @@ def main():
     head_of_department_extractor = HeadOfDepartmentExtractor()
     extracted_head_of_department_list = head_of_department_extractor.run()
     logger.info(f"Extracted {len(extracted_head_of_department_list)} Heads of Departments")
+    logger.info([hod.name for hod in extracted_head_of_department_list])
 
     logger.info(f"Extracting City Council Member starting from {config.start_date}")
     city_council_member_extractor = CityCouncilMemberExtractor()
     extracted_city_council_member_list = city_council_member_extractor.run()
     logger.info(f"Extracted {len(extracted_city_council_member_list)} Citiy Council Member")
+    logger.info([hod.name for hod in extracted_city_council_member_list])
 
     logger.info("Extraction process finished")
     # TODO: Transform

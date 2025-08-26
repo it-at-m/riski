@@ -67,9 +67,10 @@ class CityCouncilMemberParser(BaseParser[Person]):
 
         create_date = datetime.now(timezone.utc)
 
-        header_el = soup.find("h1", class_="page-title")
-        title_element = header_el.find("span", class_="d-inline-block") if header_el else None
-        name = title_element.get_text(strip=True) if title_element else ""
+        title_wrapper = soup.find("h1", class_="page-title")
+        title_element = title_wrapper.find("span", class_="d-inline-block") if title_wrapper else None
+        name = title_element.contents[0] if title_element else "N/A"
+        name = name.strip()
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
         status = []
