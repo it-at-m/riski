@@ -24,9 +24,6 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
     def __init__(self) -> None:
         BaseExtractor.__init__(self, "https://risi.muenchen.de/risi/sitzung", "/uebersicht", StadtratssitzungenParser())
 
-    def _get_search_request_params(self) -> dict:
-        return {"von": "", "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
-
     @stamina.retry(on=httpx.HTTPError, attempts=5)
     def _set_results_per_page(self, path):
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"

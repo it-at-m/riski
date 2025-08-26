@@ -3,7 +3,6 @@ from datetime import datetime
 from logging import Logger
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
 from src.data_models import Person
 from src.logtools import getLogger
@@ -74,10 +73,10 @@ class CityCouncilMemberParser(BaseParser[Person]):
         name = name.strip()
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
-        status = None
+        status = []
         if status_element:
             status_text = status_element.get_text()
-            status = status_text[1 : len(status_text) - 1]
+            status = [status_text[1 : len(status_text) - 1]]
         self.logger.debug(status)
 
         """
@@ -141,9 +140,9 @@ class CityCouncilMemberParser(BaseParser[Person]):
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
             modified=create_date,
-            status=[status],
+            status=status,
             title=self._get_titles(potential_titles),
-            web=HttpUrl(url),
+            web=url,
             deleted=False,
         )
 
