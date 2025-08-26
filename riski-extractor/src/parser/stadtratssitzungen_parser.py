@@ -6,7 +6,6 @@ from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
 from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
@@ -127,7 +126,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         # --- Remaining Fields ---
         created = datetime.now()  # TODO: check if already exists?
         modified = datetime.now()
-        web = HttpUrl(url)
+        web = url
         deleted = False
 
         # --- Assemble Meeting ---
