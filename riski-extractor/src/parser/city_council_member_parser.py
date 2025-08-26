@@ -59,7 +59,7 @@ class CityCouncilMemberParser(BaseParser[Person]):
         return re.search(special_char_regex, name) is not None
 
     def _is_form_of_address(self, name: str) -> bool:
-        anrede_regex = r"(Frau|Herr)"
+        anrede_regex = r"^(Frau|Herr)$"
         return re.search(anrede_regex, name) is not None
 
     def parse(self, url: str, html: str) -> Person:
@@ -68,9 +68,9 @@ class CityCouncilMemberParser(BaseParser[Person]):
 
         create_date = datetime.now()
 
-        title_element = soup.find("h1", class_="page-title").find("span", class_="d-inline-block")
-        name = title_element.contents[0] if title_element else "N/A"
-        name = name.strip()
+        header_el = soup.find("h1", class_="page-title")
+        title_element = header_el.find("span", class_="d-inline-block") if header_el else None
+        name = title_element.get_text(strip=True) if title_element else ""
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
         status = []
@@ -116,7 +116,7 @@ class CityCouncilMemberParser(BaseParser[Person]):
         if person_info:
             card_content = person_info.find("div", class_="card-body")
 
-            key_value_rows = {}
+            key_value_rows = []
             if card_content:
                 key_value_rows = card_content.find_all("div", class_="keyvalue-row")
 

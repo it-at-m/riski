@@ -174,7 +174,7 @@ class BaseExtractor(ABC, Generic[T]):
         return response.text
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _get_next_page(self, path: str, next_page_link):
+    def _get_next_page(self, path: str, next_page_link: str):
         headers = {
             "User-Agent": config.user_agent,
             "Referer": self._get_sanitized_url(path),

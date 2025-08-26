@@ -1,22 +1,12 @@
-# ruff: noqa: E402 (no import at top level) suppressed on this file as we need to inject the truststore before importing the other modules
-
-import datetime
-
-from dotenv import load_dotenv
-from truststore import inject_into_ssl
-
-from src.data_models import Person
-from src.parser.city_council_member_parser import CityCouncilMemberParser
-
-inject_into_ssl()
-load_dotenv()
-
-### end of special import block ###
-
 import httpx
 import stamina
+from config.config import Config, get_config
 
+from src.data_models import Person
 from src.extractor.base_extractor import BaseExtractor
+from src.parser.city_council_member_parser import CityCouncilMemberParser
+
+config: Config = get_config()
 
 
 class CityCouncilMemberExtractor(BaseExtractor[Person]):
@@ -31,7 +21,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
     def _get_sanitized_detail_url(self, unsanitized_path: str):
         return f"{self.base_url}{self.detail_path}/{unsanitized_path.lstrip('./')}"
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str):
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
 
@@ -44,11 +34,11 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
         else:
             response.raise_for_status()
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
-    def _filter(self, startdate: datetime.date) -> str:
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
+    def _filter(self) -> str:
         filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": startdate.isoformat(), "bis": "", "fraktion": "", "nachname": ""}
+        data = {"von": config.start_date, "bis": "", "fraktion": "", "nachname": ""}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         if response.status_code == 302:
@@ -58,7 +48,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
         else:
             response.raise_for_status()
 
-    @stamina.retry(on=httpx.HTTPError, attempts=5)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_object_html(self, link: str) -> str:
         response = self.client.get(url=link)
         if response.status_code == 302:
