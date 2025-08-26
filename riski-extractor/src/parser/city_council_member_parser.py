@@ -20,20 +20,20 @@ class CityCouncilMemberParser(BaseParser[Person]):
         self.logger = getLogger()
         self.logger.info("Council member parser initialized.")
 
-    """
-    Method for extracting the academic title of a person from their name.
-    A list of potential titles is passed to the method.
-    This list is best obtained by splitting the name at all spaces. 
-    Then all substrings with special characters that are not '-' are determined and transferred.
-
-    With these strings, it is possible that a title such as Dr.(Univ. Florence) is split into ['Dr.(Univ.','Florence)']
-    These must be put together again to form a title.
-    All strings are run through in sequence and if a '(' without ')' is found, a temporary
-    string is created and the existing parts are joined together to form a string until a ')' is found.  
-    """
-
     # TODO: Refactor this into own module later on, because every person parser needs this functionality
     def _get_titles(self, titles: list[str]) -> list[str]:
+        """
+        Method for extracting the academic title of a person from their name.
+        A list of potential titles is passed to the method.
+        This list is best obtained by splitting the name at all spaces.
+        Then all substrings with special characters that are not '-' are determined and transferred.
+
+        With these strings, it is possible that a title such as Dr.(Univ. Florence) is split into ['Dr.(Univ.','Florence)']
+        These must be put together again to form a title.
+        All strings are run through in sequence and if a '(' without ')' is found, a temporary
+        string is created and the existing parts are joined together to form a string until a ')' is found.
+        """
+
         title_array = []
         current_academic_title = ""
         in_title = False
@@ -79,14 +79,12 @@ class CityCouncilMemberParser(BaseParser[Person]):
             status = [status_text[1 : len(status_text) - 1]]
         self.logger.debug(status)
 
-        """
-        The code for determining the names is still based on the old naming law before 2024.
-        Since 2024, spouses can also have a double name without a "-" as a married name; this was not possible before.
-        Before the change, only one surname was permitted, which is why all names before that were automatically first names.
-        With the change, this is no longer the case, but since no differentiation of names would be possible at all, 
-        this assumption is still made in the code. If this leads to problems, the data would have to be corrected manually 
-        or the code would have to be adapted or removed. (Status: 2025-07-03)
-        """
+        # The code for determining the names is still based on the old naming law before 2024.
+        # Since 2024, spouses can also have a double name without a "-" as a married name; this was not possible before.
+        # Before the change, only one surname was permitted, which is why all names before that were automatically first names.
+        # With the change, this is no longer the case, but since no differentiation of names would be possible at all,
+        # this assumption is still made in the code. If this leads to problems, the data would have to be corrected manually
+        # or the code would have to be adapted or removed. (Status: 2025-07-03)
         parts_of_name = name.split(" ")
         self.logger.debug(parts_of_name)
         given_name = []

@@ -15,7 +15,7 @@ class HeadOfDepartmentExtractor(BaseExtractor[Person]):
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, str(config.base_url) + "/person", "/referenten", HeadOfDepartmentParser())
+        super().__init__(str(config.base_url) + "/person", "/referenten", HeadOfDepartmentParser())
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str) -> str:

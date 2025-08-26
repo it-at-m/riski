@@ -21,19 +21,19 @@ class HeadOfDepartmentParser(BaseParser[Person]):
         self.logger = getLogger()
         self.logger.info("Head of Department Parser initialized.")
 
-    """
-    Method for extracting the academic title of a person from their name.
-    A list of potential titles is passed to the method.
-    This list is best obtained by splitting the name at all spaces. 
-    Then all substrings with special characters that are not '-' are determined and transferred.
-
-    With these strings, it is possible that a title such as Dr.(Univ. Florence) is split into ['Dr.(Univ.','Florence)']
-    These must be put together again to form a title.
-    All strings are run through in sequence and if a '(' without ')' is found, a temporary
-    string is created and the existing parts are joined together to form a string until a ')' is found.  
-    """
-
     def _get_titles(self, titles: list[str]) -> list[str]:
+        """
+        Method for extracting the academic title of a person from their name.
+        A list of potential titles is passed to the method.
+        This list is best obtained by splitting the name at all spaces.
+        Then all substrings with special characters that are not '-' are determined and transferred.
+
+        With these strings, it is possible that a title such as Dr.(Univ. Florence) is split into ['Dr.(Univ.','Florence)']
+        These must be put together again to form a title.
+        All strings are run through in sequence and if a '(' without ')' is found, a temporary
+        string is created and the existing parts are joined together to form a string until a ')' is found.
+        """
+
         title_array = []
         current_academic_title = ""
         in_title = False

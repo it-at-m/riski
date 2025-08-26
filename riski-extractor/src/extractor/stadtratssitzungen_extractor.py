@@ -15,7 +15,7 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, str(config.base_url) + "/sitzung", "/uebersicht", StadtratssitzungenParser())
+        super().__init__(str(config.base_url) + "/sitzung", "/uebersicht", StadtratssitzungenParser())
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str):
