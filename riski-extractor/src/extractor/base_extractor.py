@@ -19,8 +19,8 @@ T = TypeVar("T")
 
 class BaseExtractor(ABC, Generic[T]):
     """
-    Base Class for any Extractor for the the RIS website.
-    This Provides the basic extraction functionalty and
+    Base Class for any extractor for the the RIS website.
+    Provides the basic extraction functionality and
     abstract methods where individual handling is necessary.
     """
 
@@ -42,10 +42,10 @@ class BaseExtractor(ABC, Generic[T]):
     @abstractmethod
     def _set_results_per_page(self, path: str) -> str:
         """
-        Method for determinig how many results should be included in the responses.
-        More results, lead to less requests and less overhead.
-        The necessary request differs between the different pages in the RIS, hence
-        every extractor needs to implement their own specific version of it.
+        Method for determining how many results should be included in responses.
+        More results lead to fewer requests and less overhead.
+        The necessary request differs between pages in the RIS; hence,
+        each extractor must implement its own specific version.
 
         Must return a redirect URL from the HTTP-Header "Location"
         """
@@ -55,7 +55,7 @@ class BaseExtractor(ABC, Generic[T]):
     def _get_object_html(self, link: str) -> str:
         """
         Method for getting the HTML for parsing. The necessary requests differ
-        for some pages, hence some extractor have to implement their own version
+        for some pages, hence some extractors have to implement their own version
         of this method.
         Must return valid HTML, that can be parsed by the Parser provided in __init__
         """
@@ -96,8 +96,8 @@ class BaseExtractor(ABC, Generic[T]):
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
             return extracted_objects
-        except Exception as e:
-            self.logger.error(f"Error extracting objects: {e}")
+        except Exception:
+            self.logger.exception("Error extracting objects")
             return []
 
     def _parse_objects_from_links(self, object_links: list[str]) -> list[T]:
@@ -107,8 +107,8 @@ class BaseExtractor(ABC, Generic[T]):
                 response = self._get_object_html(link)
                 extracted_object = self.parser.parse(link, response)
                 extracted_objects.append(extracted_object)
-            except Exception as e:
-                self.logger.error(f"Error parsing {link}: {e}")
+            except Exception:
+                self.logger.exception(f"Error parsing {link}")
         return extracted_objects
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
@@ -147,7 +147,7 @@ class BaseExtractor(ABC, Generic[T]):
         self.logger.info(f"Extracted {len(links)} links to parsable objects from page.")
         return links
 
-    def _get_next_page_path(self, current_page_text) -> str | None:
+    def _get_next_page_path(self, current_page_text: str) -> str | None:
         soup = BeautifulSoup(current_page_text, "html.parser")
         scripts = soup.find_all("script")
 
