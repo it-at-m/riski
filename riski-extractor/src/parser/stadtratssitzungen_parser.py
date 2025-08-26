@@ -1,4 +1,5 @@
 import locale
+import platform
 import re
 from datetime import datetime
 from logging import Logger
@@ -9,9 +10,10 @@ from pydantic import HttpUrl
 
 from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
+from src.parser.base_parser import BaseParser
 
 
-class STRParser:
+class StadtratssitzungenParser(BaseParser[Meeting]):
     """
     Parser für Stadtratssitzungen
     """
@@ -20,19 +22,24 @@ class STRParser:
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("STRParser initialized.")
+        self.logger.info("StadtratssitzungenParser initialized.")
 
-        try:
-            locale.setlocale(locale.LC_TIME, "de_DE.utf8")
-        except locale.Error:
+        if platform.system() == "Windows":
+            # For Windows, use the specific code page that works
+            locale.setlocale(locale.LC_TIME, "German_Germany.1252")
+        else:
             try:
-                locale.setlocale(locale.LC_TIME, "de_DE")
-                self.logger.info("German locale 'de_DE' fallback applied.")
+                locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
+                self.logger.info("German locale 'de_DE.utf8' applied.")
             except locale.Error:
-                self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
+                try:
+                    locale.setlocale(locale.LC_TIME, "de_DE")
+                    self.logger.info("German locale 'de_DE' fallback applied.")
+                except locale.Error:
+                    self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
 
     def parse(self, url: str, html: str) -> Meeting:
-        self.logger.info(f"Parsing meeting page: {url}")
+        self.logger.debug(f"Parsing meeting page: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
         # --- Title and State ---
@@ -55,8 +62,8 @@ class STRParser:
             try:
                 start = datetime.strptime(f"{date_str}, {time_str}", "%d. %B %Y, %H:%M")
                 self.logger.debug(f"Parsed start time: {start}")
-            except ValueError as e:
-                self.logger.error(f"Date parsing failed: {e}")
+            except ValueError:
+                self.logger.exception("Date parsing failed")
         else:
             self.logger.warning("Date format did not match expected pattern.")
 
@@ -87,7 +94,7 @@ class STRParser:
             web=HttpUrl(url),
             deleted=False,
         )
-        self.logger.info("Location object created.")
+        self.logger.debug("Location object created.")
 
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
@@ -139,13 +146,5 @@ class STRParser:
             meetingState=meetingState,
         )
 
-        self.logger.info(f"Meeting object created: {meeting.name}")
+        self.logger.debug(f"Meeting object created: {meeting.name}")
         return meeting
-
-
-def main():
-    return
-
-
-if __name__ == "__main__":
-    main()
