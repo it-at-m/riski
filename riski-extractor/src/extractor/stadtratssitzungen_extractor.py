@@ -22,7 +22,6 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
         response = self.client.post(url=url, data=data)
-
         assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
         return response.headers.get("Location")
 
