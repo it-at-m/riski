@@ -737,8 +737,8 @@ class ConsultationKeywordLink(SQLModel, table=True):
 class Consultation(SQLModel, table=True):
     __tablename__ = "consultation"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(default=None)
-    url: str = Field(default=None, description="URL of this Consultation object")
+    id: str | None = Field(default=None)
+    url: str | None = Field(default=None, description="URL of this Consultation object")
     paper: uuid.UUID | None = Field(default=None, foreign_key="paper.db_id")
     agenda_item: uuid.UUID | None = Field(default=None, foreign_key="agenda_item.db_id")
     meeting: uuid.UUID | None = Field(default=None, foreign_key="meeting.db_id")
