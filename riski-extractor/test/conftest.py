@@ -2,7 +2,6 @@ from datetime import datetime
 
 import pytest
 from config.config import Config, get_config
-from dotenv import load_dotenv
 from sqlmodel import Session, SQLModel, create_engine
 from src.data_models import (
     AgendaItem,
@@ -38,7 +37,6 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="module")
 def engine(pytestconfig):
-    load_dotenv()
     db_url = pytestconfig.getoption("--db-url")
     if not db_url:
         DB_USER = config.test_riski_db_user

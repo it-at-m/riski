@@ -4,7 +4,6 @@ from enum import Enum
 from typing import Optional
 
 from config.config import Config, get_config
-from dotenv import load_dotenv
 from pydantic import BaseModel
 from sqlalchemy import JSON
 from sqlmodel import Column, Field, Relationship, Session, SQLModel, create_engine, select
@@ -196,7 +195,7 @@ class LegislativeTermKeyword(SQLModel, table=True):
     legislative_term_id: uuid.UUID = Field(
         foreign_key="legislative_term.db_id", primary_key=True, description="URL of the associated LegislativeTerm"
     )
-    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
+    keyword_idF: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
 
 
 class LegislativeTerm(SQLModel, table=True):
@@ -828,7 +827,6 @@ def get_engine():
     """Lazy initialization of database engine."""
     global _engine
     if _engine is None:
-        load_dotenv()
         _engine = create_engine(config.database_url, echo=True)
     return _engine
 
