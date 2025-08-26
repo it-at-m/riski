@@ -196,7 +196,7 @@ class LegislativeTermKeyword(SQLModel, table=True):
     legislative_term_id: uuid.UUID = Field(
         foreign_key="legislative_term.db_id", primary_key=True, description="URL of the associated LegislativeTerm"
     )
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
 
 
 class LegislativeTerm(SQLModel, table=True):
@@ -314,7 +314,7 @@ class PersonMembershipLink(SQLModel, table=True):
 class PersonKeywordLink(SQLModel, table=True):
     __tablename__ = "person_keyword"
     person_id: uuid.UUID = Field(foreign_key="person.db_id", primary_key=True)
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class MeetingParticipantLink(SQLModel, table=True):
@@ -367,7 +367,7 @@ class Person(SQLModel, table=True):
 class MembershipKeyword(SQLModel, table=True):
     __tablename__ = "membership_keyword"
     membership_id: uuid.UUID = Field(foreign_key="membership.db_id", primary_key=True)
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Membership(SQLModel, table=True):
@@ -420,7 +420,7 @@ class FileAgendaItemLink(SQLModel, table=True):
 class FileKeywordLink(SQLModel, table=True):
     __tablename__ = "file_keyword"
     file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class PaperFileLink(SQLModel, table=True):
@@ -683,7 +683,7 @@ class MeetingKeywordLink(SQLModel, table=True):
 
     __tablename__ = "meeting_keyword"
     meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
 class Meeting(SQLModel, table=True):
