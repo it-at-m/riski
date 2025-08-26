@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 
 from bs4 import BeautifulSoup
@@ -66,7 +66,7 @@ class CityCouncilMemberParser(BaseParser[Person]):
         self.logger.debug(f"Parsing city council member: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
-        create_date = datetime.now()
+        create_date = datetime.now(timezone.utc)
 
         header_el = soup.find("h1", class_="page-title")
         title_element = header_el.find("span", class_="d-inline-block") if header_el else None

@@ -1,9 +1,8 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
 from src.data_models import Person
 from src.logtools import getLogger
@@ -66,7 +65,7 @@ class HeadOfDepartmentParser(BaseParser[Person]):
         self.logger.debug(f"Parsing Head of Department: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
-        create_date = datetime.now()
+        create_date = datetime.now(timezone.utc)
 
         title_wrapper = soup.find("h1", class_="page-title")
         title_element = title_wrapper.find("span", class_="d-inline-block") if title_wrapper else None
@@ -134,7 +133,7 @@ class HeadOfDepartmentParser(BaseParser[Person]):
             modified=create_date,
             status=[status] if status else None,
             title=self._get_titles(potential_titles),
-            web=HttpUrl(url),
+            web=url,
             deleted=False,
         )
 

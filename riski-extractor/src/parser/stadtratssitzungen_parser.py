@@ -1,7 +1,7 @@
 import locale
 import platform
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 from urllib.parse import urljoin
 
@@ -90,8 +90,8 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
             description="Ort der Stadtratssitzung",
             room=data_dict.get("Sitzungsort:", ""),
             locality="München",
-            created=datetime.now(),  # TODO: check if already exists
-            modified=datetime.now(),
+            created=datetime.now(timezone.utc),  # TODO: check if already exists
+            modified=datetime.now(timezone.utc),
             web=url,
             deleted=False,
         )
@@ -124,8 +124,8 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now()  # TODO: check if already exists?
-        modified = datetime.now()
+        created = datetime.now(timezone.utc)  # TODO: check if already exists?
+        modified = datetime.now(timezone.utc)
         web = url
         deleted = False
 
