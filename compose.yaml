@@ -1,3 +1,5 @@
+volumes:
+  riskidata:
 services:
   db:
     image: pgvector/pgvector:pg17
@@ -9,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - riskidata:/var/lib/postgresql/data
   adminer:
     image: adminer
     restart: always
