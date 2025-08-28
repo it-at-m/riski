@@ -770,6 +770,7 @@ class Keyword(SQLModel, table=True):
 
 class ExtractArtifact(BaseModel):
     meetings: list[Meeting]
+    heads_of_departments: list[Person]
 
 
 ##############################################
