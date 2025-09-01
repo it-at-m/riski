@@ -38,6 +38,7 @@ def main():
     logger.info(f"Extracted {len(extracted_city_council_member_list)} Citiy Council Member")
     logger.info([ccm.name for ccm in extracted_city_council_member_list])
     logger.info(extracted_city_council_member_list[0])
+
     logger.info("Extraction process finished")
     # TODO: Transform
     logger.info("RIS Indexer completed successfully")
