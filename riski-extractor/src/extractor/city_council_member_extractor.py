@@ -29,7 +29,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
         # The entries in the menu are [10, 20, 50, 100]. The Dropdown uses a 0 based index.
         data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
         response = self.client.post(url=url, data=data)
-        if response.status_code == 302:
+        if response.is_redirect:
             return response.headers.get("Location")
         else:
             response.raise_for_status()
@@ -41,7 +41,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
         data = {"von": config.start_date, "bis": "", "fraktion": "", "nachname": ""}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
-        if response.status_code == 302:
+        if response.is_redirect:
             redirect_url = response.headers.get("Location")
             self.logger.debug(f"Filter Redirect URL: {redirect_url}")
             return redirect_url
