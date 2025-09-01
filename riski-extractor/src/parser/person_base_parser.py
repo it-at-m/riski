@@ -43,5 +43,5 @@ class PersonBaseParser(BaseParser[Person]):
         return re.search(special_char_regex, name) is not None
 
     def _is_form_of_address(self, name: str) -> bool:
-        form_of_address_regex = r"(Frau|Herr)"
+        form_of_address_regex = r"^(Frau|Herr)$"
         return re.search(form_of_address_regex, name) is not None

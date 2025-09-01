@@ -27,7 +27,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
 
         # The '3' corresponds to the third entry of a dropdown menu to select the number items on the page.
         # The entries in the menu are [10, 20, 50, 100]. The Dropdown uses a 0 based index.
-        data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": 3}
+        data = {"list_container:list:card:cardheader:itemsperpage_dropdown_top": "3"}
         response = self.client.post(url=url, data=data)
         if response.status_code == 302:
             return response.headers.get("Location")
