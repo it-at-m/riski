@@ -24,6 +24,7 @@ def main():
     sitzungen_extractor = StadtratssitzungenExtractor()
     extracted_meeting_list = sitzungen_extractor.run()
     logger.info(f"Extracted {len(extracted_meeting_list)} meetings")
+    logger.info([obj.name for obj in extracted_meeting_list])
 
     logger.info("Extracting Heads of Departments")
     head_of_department_extractor = HeadOfDepartmentExtractor()
@@ -35,8 +36,8 @@ def main():
     city_council_member_extractor = CityCouncilMemberExtractor()
     extracted_city_council_member_list = city_council_member_extractor.run()
     logger.info(f"Extracted {len(extracted_city_council_member_list)} Citiy Council Member")
-    logger.info([hod.name for hod in extracted_city_council_member_list])
-
+    logger.info([ccm.name for ccm in extracted_city_council_member_list])
+    logger.info(extracted_city_council_member_list[0])
     logger.info("Extraction process finished")
     # TODO: Transform
     logger.info("RIS Indexer completed successfully")

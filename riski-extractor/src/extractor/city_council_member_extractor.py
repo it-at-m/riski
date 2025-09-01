@@ -15,7 +15,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
     """
 
     def __init__(self) -> None:
-        super().__init__("https://risi.muenchen.de/risi/person", "/strmitglieder", CityCouncilMemberParser())
+        super().__init__(str(config.base_url) + "/person", "/strmitglieder", CityCouncilMemberParser())
         self.detail_path = "/detail"
 
     def _get_sanitized_detail_url(self, unsanitized_path: str):
@@ -47,14 +47,3 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
             return redirect_url
         else:
             response.raise_for_status()
-
-    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _get_object_html(self, link: str) -> str:
-        response = self.client.get(url=link)
-        if response.status_code == 302:
-            redirect_url = response.headers.get("Location")
-            self.logger.debug(f"Redirect URL: {redirect_url}")
-            return super()._get_object_html(self._get_sanitized_detail_url(redirect_url))
-        else:
-            response.raise_for_status()
-            return super()._get_object_html(link)
