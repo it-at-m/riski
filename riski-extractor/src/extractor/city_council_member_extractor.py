@@ -18,9 +18,6 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
         super().__init__(str(config.base_url) + "/person", "/strmitglieder", CityCouncilMemberParser())
         self.detail_path = "/detail"
 
-    def _get_sanitized_detail_url(self, unsanitized_path: str):
-        return f"{self.base_url}{self.detail_path}/{unsanitized_path.lstrip('./')}"
-
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str):
         url = self._get_sanitized_url(path) + "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top"
