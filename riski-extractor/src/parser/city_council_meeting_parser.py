@@ -6,23 +6,22 @@ from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
 from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
-class StadtratssitzungenParser(BaseParser[Meeting]):
+class CityCouncilMeetingParser(BaseParser[Meeting]):
     """
-    Parser für Stadtratssitzungen
+    Parser for CityCouncilMeetings
     """
 
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("StadtratssitzungenParser initialized.")
+        self.logger.info("CityCouncilMeetingParser initialized.")
 
         if platform.system() == "Windows":
             # For Windows, use the specific code page that works
@@ -91,14 +90,14 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
             locality="München",
             created=datetime.now(),
             modified=datetime.now(),
-            web=HttpUrl(url),
+            web=url,
             deleted=False,
         )
         self.logger.debug("Location object created.")
 
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [HttpUrl(urljoin(url, a.get("href"))) for a in organization_links if a.get("href")]
+        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
         organization = organization if len(organization) > 0 else None
         self.logger.debug(f"Organizations: {organization}")
 
@@ -107,7 +106,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
             link = li.get("href")
             if link:
-                full_url = HttpUrl(urljoin(url, link))
+                full_url = urljoin(url, link)
                 participants.append(full_url)
         participants = participants if len(participants) > 0 else None
         self.logger.debug(f"Participants: {participants}")
@@ -115,7 +114,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = HttpUrl(urljoin(url, doc_link["href"]))
+            doc_url = urljoin(url, doc_link["href"])
             doc_title = doc_link.get_text(strip=True)
             if doc_url:
                 auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
@@ -125,7 +124,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         # --- Remaining Fields ---
         created = datetime.now()
         modified = datetime.now()
-        web = HttpUrl(url)
+        web = url
         deleted = False
 
         # --- Assemble Meeting ---

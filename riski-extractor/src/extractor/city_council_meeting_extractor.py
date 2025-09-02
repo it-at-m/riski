@@ -4,18 +4,18 @@ from config.config import Config, get_config
 
 from src.data_models import Meeting
 from src.extractor.base_extractor import BaseExtractor
-from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
+from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
 
 config: Config = get_config()
 
 
-class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
+class CityCouncilMeetingExtractor(BaseExtractor[Meeting]):
     """
     Extractor for Meetings on the RIS website
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, str(config.base_url) + "/sitzung", "/uebersicht", StadtratssitzungenParser())
+        BaseExtractor.__init__(self, str(config.base_url) + "/sitzung", "/uebersicht", CityCouncilMeetingParser())
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str):
