@@ -3,11 +3,10 @@ import platform
 import re
 from datetime import datetime
 from logging import Logger
-from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from src.data_models import File, Location, Meeting
+from src.data_models import Location, Meeting
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
@@ -95,32 +94,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         )
         self.logger.debug("Location object created.")
 
-        # --- Organization (as URLs) ---
-        organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
-        organization = organization if len(organization) > 0 else None
-        self.logger.debug(f"Organizations: {organization}")
-
-        # --- Participants (as URLs) ---
-        participants = []
-        for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
-            link = li.get("href")
-            if link:
-                full_url = urljoin(url, link)
-                participants.append(full_url)
-        participants = participants if len(participants) > 0 else None
-        self.logger.debug(f"Participants: {participants}")
-
-        # --- Documents ---
-        auxiliaryFile = []
-        for doc_link in soup.select("a.downloadlink"):
-            doc_url = urljoin(url, doc_link["href"])
-            doc_title = doc_link.get_text(strip=True)
-            if doc_url:
-                auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
-            self.logger.debug(f"Document found: {doc_title} ({doc_url})")
-        auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
-
         # --- Remaining Fields ---
         created = datetime.now()
         modified = datetime.now()
@@ -135,9 +108,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             cancelled=cancelled,
             start=start,
             location=location,
-            organization=organization,
-            participant=participants,
-            auxiliaryFile=auxiliaryFile,
             created=created,
             modified=modified,
             web=web,
