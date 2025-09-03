@@ -6,7 +6,7 @@ from logging import Logger
 
 from bs4 import BeautifulSoup
 
-from src.data_models import Location, Meeting
+from src.data_models import Meeting
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
@@ -80,20 +80,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
-        # --- Location Object ---
-        location = Location(
-            id=data_dict.get("Sitzungsort:", ""),
-            type="place",
-            description="Ort der Stadtratssitzung",
-            room=data_dict.get("Sitzungsort:", ""),
-            locality="München",
-            created=datetime.now(),
-            modified=datetime.now(),
-            web=url,
-            deleted=False,
-        )
-        self.logger.debug("Location object created.")
-
         # --- Remaining Fields ---
         created = datetime.now()
         modified = datetime.now()
@@ -106,7 +92,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             name=name,
             cancelled=cancelled,
             start=start,
-            location=location,
             created=created,
             modified=modified,
             web=url,
