@@ -45,7 +45,7 @@ def get_processing_time_from_docling(file_path):
 
 
 def save_pdf_batch(doc, start_page, end_page, batch_index, original_filename):
-    """Save batch of pages as seperate PDF"""
+    """Save batch of pages as separate PDF"""
     batch_pdf_path = f"{os.path.splitext(original_filename)[0]}_batch_{batch_index}.pdf"
     batch_doc = fitz.open()
 
@@ -92,7 +92,7 @@ def gather_file_info(directory, md_output_folder):
                     processing_time = get_processing_time_from_docling(batch_pdf_path)
 
                     if processing_time is None:
-                        print(f"Cannot retreive execution time for {batch_pdf_path}.")
+                        print(f"Cannot retrieve execution time for {batch_pdf_path}.")
                         processing_time = "N/A"
 
                     md_filename = os.path.splitext(filename)[0] + f"_batch_{batch_index // 5 + 1}.md"
@@ -114,7 +114,7 @@ def gather_file_info(directory, md_output_folder):
                 processing_time = get_processing_time_from_docling(file_path)
 
                 if processing_time is None:
-                    print(f"Could not retreive execution time for {filename}.")
+                    print(f"Could not retrieve execution time for {filename}.")
                     processing_time = "N/A"
 
                 md_filename = os.path.splitext(filename)[0] + ".md"

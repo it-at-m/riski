@@ -60,7 +60,7 @@ uv run ruff format
 ### Run application
 
 ```bash
-# Applikation starten
+# Run application
 uv run app.py -d
 ```
 
