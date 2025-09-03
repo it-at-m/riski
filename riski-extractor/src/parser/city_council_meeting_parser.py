@@ -82,7 +82,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
 
         # --- Location Object ---
         location = Location(
-            id=None,
+            id=data_dict.get("Sitzungsort:", ""),
             type="place",
             description="Ort der Stadtratssitzung",
             room=data_dict.get("Sitzungsort:", ""),
@@ -97,12 +97,11 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         # --- Remaining Fields ---
         created = datetime.now()
         modified = datetime.now()
-        web = url
         deleted = False
 
         # --- Assemble Meeting ---
         meeting = Meeting(
-            id=None,
+            id=url,
             type=type,
             name=name,
             cancelled=cancelled,
@@ -110,7 +109,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             location=location,
             created=created,
             modified=modified,
-            web=web,
+            web=url,
             deleted=deleted,
             meetingState=meetingState,
         )
