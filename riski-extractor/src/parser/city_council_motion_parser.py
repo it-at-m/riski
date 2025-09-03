@@ -24,7 +24,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         self.logger = getLogger()
         self.logger.info("City Council Motions Parser initialized.")
 
-    def _parse_date(self, text: str) -> datetime:
+    def _parse_date(self, text: str) -> datetime | None:
         if not text:
             return None
         text = text.strip()
@@ -33,7 +33,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         except ValueError:
             return None
 
-    def _parse_size_kb(self, fragment: str) -> int:
+    def _parse_size_kb(self, fragment: str) -> int | None:
         m = re.search(r"$$(\d+)\s*KB$$", fragment, flags=re.I)
         if m:
             return int(m.group(1)) * KB
@@ -49,13 +49,14 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             return match.group(1)
         return None
 
-    def parse(self, url: str, html: str) -> Paper:
+    def parse(self, url: str, html: str) -> Paper | None:
         soup = BeautifulSoup(html, "html.parser")
 
         # Title + Reference
         h1 = soup.select_one("h1.page-title")
         name = None
         reference = None
+        title = None
         if h1:
             # Subject is in the "Subject" section
             subj = soup.select_one("span.d-inline-block")
@@ -158,9 +159,13 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             size_text = item.get_text(" ", strip=True)
             size_bytes = self._parse_size_kb(size_text)
 
-            main_file = File(
+            file_obj = File(
                 id=href, web=href, name=filename, size=size_bytes, mimeType="application/pdf" if filename.lower().endswith(".pdf") else None
             )
+            if main_file is None:
+                main_file = file_obj
+            else:
+                aux_files.append(file_obj)
 
         created = datetime.now()
         modified = datetime.now()
