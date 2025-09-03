@@ -1,4 +1,4 @@
-import asyncio  # Um die asynchrone Funktion auszuführen
+import asyncio
 import json
 import os
 
@@ -25,7 +25,7 @@ async def main():
         current_dir = os.path.dirname(__file__)
         file_path = os.path.join(current_dir, "docs/5925887.pdf")
 
-        # Öffnen Sie die Datei in einem Kontextmanager, um sicherzustellen, dass sie geschlossen wird.
+        # open file in context manager to make sure its closed in the end
         with open(file_path, "rb") as file:
             files = {
                 "files": ("docs/5925887.pdf", file, "application/pdf"),
@@ -35,9 +35,8 @@ async def main():
             assert response.status_code == 200, "Response should be 200 OK"
 
             data = response.json()
-            print(data)  # Ausgabe der Antwortdaten
+            print(data)
 
 
-# Starten Sie die Hauptfunktion
 if __name__ == "__main__":
     asyncio.run(main())

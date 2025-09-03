@@ -3,12 +3,12 @@ import os
 
 import httpx
 import pandas as pd
-import pymupdf as fitz  # PyMuPDF
+import pymupdf as fitz
 
 
 def get_processing_time_from_docling(file_path):
-    """Sendet die PDF-Datei an die docling API und gibt die Verarbeitungszeit zurück."""
-    url = "http://localhost:5001/v1alpha/convert/file"  # Passen Sie die URL an
+    """Send PDF File to docling API"""
+    url = "http://localhost:5001/v1alpha/convert/file"
     parameters = {
         "from_formats": ["pdf"],
         "to_formats": ["md"],
@@ -25,10 +25,10 @@ def get_processing_time_from_docling(file_path):
 
     with httpx.Client(timeout=2000.0) as client:
         with open(file_path, "rb") as file:
-            files = {"files": (os.path.basename(file_path), file, "application/pdf")}  # Korrektur hier
+            files = {"files": (os.path.basename(file_path), file, "application/pdf")}
             try:
                 response = client.post(url, files=files, data={"parameters": json.dumps(parameters)})
-                response.raise_for_status()  # Raise an exception for bad status codes
+                response.raise_for_status()
                 return response.json().get("processing_time", None)
             except httpx.HTTPStatusError as e:
                 print(f"HTTP error occurred: {e} - {e.response.text}")
@@ -45,9 +45,9 @@ def get_processing_time_from_docling(file_path):
 
 
 def save_pdf_batch(doc, start_page, end_page, batch_index, original_filename):
-    """Speichert einen Batch von Seiten als separate PDF-Datei."""
+    """Save batch of pages as seperate PDF"""
     batch_pdf_path = f"{os.path.splitext(original_filename)[0]}_batch_{batch_index}.pdf"
-    batch_doc = fitz.open()  # Neues leeres PDF-Dokument
+    batch_doc = fitz.open()
 
     for page_num in range(start_page, end_page):
         batch_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
@@ -59,29 +59,29 @@ def save_pdf_batch(doc, start_page, end_page, batch_index, original_filename):
 
 
 def get_pdf_info(file_path):
-    """Extrahiert Informationen aus einer PDF-Datei und gibt den Text zurück."""
+    """Extract information out of PDF"""
     doc = fitz.open(file_path)
 
-    page_count = doc.page_count  # Seitenanzahl
+    page_count = doc.page_count
     text_content = ""
 
-    for page in doc:  # Durchlaufe alle Seiten und extrahiere den Text
-        text_content += page.get_text() + "\n\n"  # Textinhalt, Seiten mit doppeltem Zeilenumbruch trennen
+    for page in doc:
+        text_content += page.get_text() + "\n\n"
 
     doc.close()
     return page_count, text_content
 
 
 def gather_file_info(directory, md_output_folder):
-    """Sammelt Informationen über alle PDF-Dateien in einem Verzeichnis."""
-    os.makedirs(md_output_folder, exist_ok=True)  # Erstelle den Output-Ordner, falls nicht vorhanden
+    """Collect information about all PDF files"""
+    os.makedirs(md_output_folder, exist_ok=True)
 
     data = []
 
     for filename in os.listdir(directory):
         if filename.endswith(".pdf"):
             file_path = os.path.join(directory, filename)
-            file_size = os.path.getsize(file_path)  # Dateigröße in Bytes
+            file_size = os.path.getsize(file_path)
             page_count, text_content = get_pdf_info(file_path)
 
             if page_count > 10:
@@ -92,7 +92,7 @@ def gather_file_info(directory, md_output_folder):
                     processing_time = get_processing_time_from_docling(batch_pdf_path)
 
                     if processing_time is None:
-                        print(f"Verarbeitungszeit für {batch_pdf_path} konnte nicht abgerufen werden.")
+                        print(f"Cannot retreive execution time for {batch_pdf_path}.")
                         processing_time = "N/A"
 
                     md_filename = os.path.splitext(filename)[0] + f"_batch_{batch_index // 5 + 1}.md"
@@ -105,7 +105,7 @@ def gather_file_info(directory, md_output_folder):
                             "Filename": filename,
                             "File Size (bytes)": file_size,
                             "Page Count": page_count,
-                            "Text Content": md_filename,  # Nur den MD-Dateinamen hinzufügen
+                            "Text Content": md_filename,
                             "Processing Time (seconds)": processing_time,
                         }
                     )
@@ -114,7 +114,7 @@ def gather_file_info(directory, md_output_folder):
                 processing_time = get_processing_time_from_docling(file_path)
 
                 if processing_time is None:
-                    print(f"Verarbeitungszeit für {filename} konnte nicht abgerufen werden.")
+                    print(f"Could not retreive execution time for {filename}.")
                     processing_time = "N/A"
 
                 md_filename = os.path.splitext(filename)[0] + ".md"
@@ -136,9 +136,8 @@ def gather_file_info(directory, md_output_folder):
     return df
 
 
-# Hauptfunktion
 if __name__ == "__main__":
-    directory = "./test_files/"  # Ordner mit den PDFs
-    md_output_folder = "./md_output_pyPDF/"  # Neuer Ordner für die Markdown-Dateien
+    directory = "./test_files/"
+    md_output_folder = "./md_output_pyPDF/"
     df = gather_file_info(directory, md_output_folder)
     df.to_csv("file_info.csv", sep=";", index=False)
