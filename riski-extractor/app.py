@@ -35,7 +35,7 @@ def main():
     logger.info("Extracting City Council Motion")
     city_council_motion_extractor = CityCouncilMotionExtractor()
     extracted_city_council_motion_list = city_council_motion_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_motion_list)} Heads of Departments")
+    logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motion")
     logger.info([obj.name for obj in extracted_city_council_motion_list])
 
     logger.info("Extraction process finished")

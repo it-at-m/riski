@@ -64,7 +64,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         a_tag = soup.find("a", class_="downloadlink text-nohyphens")
         if a_tag and a_tag.text:
             name = a_tag.text.strip()
-        self.logger.info(name)
+        self.logger.debug(name)
 
         if title:
             if "StR-Antrag" in title:
@@ -104,17 +104,17 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             name=title,
             reference=reference,
             web=url,
-            created=datetime.utcnow(),
+            created=datetime.now(),
             date=submitted_date,
             license=None,
         )
 
         if originator:
-            self.logger.info(f"Originator found: {originator}")
+            self.logger.debug(f"Originator found: {originator}")
             # TODO: Lookup in DB  (PaperOriginatorOrgLink oder PaperOriginatorPersonLink)
 
         if file_name:
-            self.logger.info(f"Main file: {file_name}")
+            self.logger.debug(f"Main file: {file_name}")
             # TODO: File-Objekt
 
         return paper
@@ -123,7 +123,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         """
         Processing for City Council Requests.
         """
-        self.logger.info(f"Parsing Anfrage: {reference}")
+        self.logger.debug(f"Parsing Anfrage: {reference}")
 
         # TODO: Extraction of specific data for inquiries
         # Basic metadata (Submitted on, Type, Nature, Deadline, Election period)
@@ -180,5 +180,4 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             modified=modified,
             deleted=False,
         )
-        self.logger.info(paper)
         return paper

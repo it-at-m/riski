@@ -21,20 +21,18 @@ class CityCouncilMotionExtractor(BaseExtractor[Paper]):
     # TODO: no use cause RIS gives the new page in response and not as redirect
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str) -> str:
-        self.logger.info("Filter Results Per Page")
-        url = self.base_url + path + "?1-1.0-color_container-list-card-cardheader-itemsperpage_dropdown_top"
+        self.logger.info("Set results per page to 100")
+        url = self._get_sanitized_url(path) + "-2.0-color_container-list-card-cardheader-itemsperpage_dropdown_top"
         data = {
             "color_container:list:card:cardheader:itemsperpage_dropdown_top": "3"
         }  # 3 is the third entry in a dropdown menu representing the count 100
-        self.client.post(url=url, data=data)
-        response = self.client.get(url=self.base_url + self.base_path)
-        assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
+        response = self.client.post(url=url, data=data)
+        assert response.is_redirect
         return response.headers.get("Location")
 
-    # TODO: no use cause RIS gives the new page in response and not as redirect
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _filter(self) -> str:
-        filter_url = self._get_sanitized_url(self.base_path) + "?0-2.-filtersection_container-form"
+        filter_url = self.base_url + "/uebersicht?0-1.-filtersection_container-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {"von": config.start_date, "bis": ""}
         response = self.client.post(url=filter_url, headers=headers, data=data)
