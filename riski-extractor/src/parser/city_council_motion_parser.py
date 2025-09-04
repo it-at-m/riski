@@ -92,6 +92,15 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                 return self._parse_date(cell.get_text(strip=True))
         return None
 
+    def _extract_description(self, soup: BeautifulSoup) -> str | None:
+        """
+        Extracts the description text from the 'Betreff' section.
+        """
+        section = soup.select_one('section.card[aria-labelledby="sectionheader-betreff"] div.card-body p')
+        if section:
+            return section.get_text(" ", strip=True)
+        return None
+
     def _kv_value(self, key_label: str, soup: BeautifulSoup) -> str | None:
         """Extracts values from key-value container rows by label."""
         for row in soup.select(".keyvalue-container .keyvalue-row"):
@@ -110,6 +119,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         date: datetime | None,
         main_file: File | None,
         auxiliary_files: list[File],
+        description: str | None,
     ) -> Paper:
         """Central builder for Paper objects to avoid duplication."""
         created = datetime.now()
@@ -129,6 +139,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             created=created,
             modified=modified,
             deleted=False,
+            description=description,
         )
 
     def parse(self, url: str, html: str) -> Paper | None:
@@ -167,7 +178,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         """Special handling for 'StR-Antrag' (motions)."""
         submitted_date = self._extract_date_from_table(soup, "Eingereicht am")
         main_file, auxiliary_files = self._extract_files(url, soup)
-
         return self._build_paper(
             url=url,
             document_name=document_name,
@@ -176,6 +186,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             date=submitted_date,
             main_file=main_file,
             auxiliary_files=auxiliary_files,
+            description=self._extract_description(soup),
         )
 
     def _parse_request(self, reference: str | None, document_name: str | None, url: str, soup: BeautifulSoup) -> Paper:
@@ -195,4 +206,5 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             date=submitted_on,
             main_file=main_file,
             auxiliary_files=auxiliary_files,
+            description=self._extract_description(soup),
         )
