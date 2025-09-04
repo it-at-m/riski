@@ -9,13 +9,14 @@ from src.data_models import File, Paper
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
-DATE_FMT = "%d.%m.%Y"
-KB = 1024
+DATE_FORMAT = "%d.%m.%Y"
+KILOBYTE = 1024
 
 
 class CityCouncilMotionParser(BaseParser[Paper]):
     """
-    Parser for City Council Motions
+    Parser for City Council Motions and Requests.
+    Extracts metadata, documents, and relevant information from council pages.
     """
 
     logger: Logger
@@ -25,23 +26,25 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         self.logger.info("City Council Motions Parser initialized.")
 
     def _parse_date(self, text: str) -> datetime | None:
+        """Parse a date string with format dd.mm.yyyy."""
         if not text:
             return None
         text = text.strip()
         try:
-            return datetime.strptime(text, DATE_FMT)
+            return datetime.strptime(text, DATE_FORMAT)
         except ValueError:
             return None
 
     def _parse_size_kb(self, fragment: str) -> int | None:
-        m = re.search(r"$$(\d+)\s*KB$$", fragment, flags=re.I)
-        if m:
-            return int(m.group(1)) * KB
+        """Extract file size in KB and convert to bytes."""
+        match = re.search(r"(\d+)\s*KB", fragment, flags=re.I)
+        if match:
+            return int(match.group(1)) * KILOBYTE
         return None
 
     def _extract_str_code(self, text: str) -> str | None:
         """
-        Extracts the code part like '20-26 / A 05870' or '20-26 / F 01283'
+        Extract the council code part like '20-26 / A 05870' or '20-26 / F 01283'
         from strings that start with 'StR-Antrag' or 'StR-Anfrage'.
         """
         match = re.search(r"StR-(?:Antrag|Anfrage)\s+([\d\-]+ / [A-Z] \d+)", text)
@@ -49,140 +52,147 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             return match.group(1)
         return None
 
-    def parse(self, url: str, html: str) -> Paper | None:
-        soup = BeautifulSoup(html, "html.parser")
-
-        # Title + Reference
-        h1 = soup.select_one("h1.page-title")
-        name = None
-        reference = None
-        title = None
-        if h1:
-            # Subject is in the "Subject" section
-            subj = soup.select_one("span.d-inline-block")
-            title = subj.get_text(" ", strip=True) if subj else None
-            reference = self._extract_str_code(title)
-        a_tag = soup.find("a", class_="downloadlink text-nohyphens")
-        if a_tag and a_tag.text:
-            name = a_tag.text.strip()
-        self.logger.debug(name)
-
-        if title:
-            if "StR-Antrag" in title:
-                return self._parse_antrag(title, reference, name, url, soup)
-            elif "StR-Anfrage" in title:
-                return self._parse_anfrage(title, reference, name, url, soup)
-        # Fallback if nothing matches
-        self.logger.warning("Unknown paper type")
-        return None
-
-    def _parse_antrag(self, title: str, reference: str, name: str, url: str, soup: BeautifulSoup) -> Paper:
-        """Special handling for 'StR-Antrag' papers."""
-
-        a_tag = soup.find("a", class_="downloadlink text-nohyphens")
-        file_name = a_tag.text.strip() if a_tag and a_tag.text else None
-
-        date_tag = soup.find("th", string=lambda t: t and "Eingereicht am" in t)
-        submitted_date = None
-        if date_tag:
-            date_value = date_tag.find_next("td")
-            if date_value:
-                try:
-                    submitted_date = datetime.strptime(date_value.get_text(strip=True), "%d.%m.%Y")
-                except ValueError:
-                    self.logger.warning(f"Could not parse date: {date_value.get_text(strip=True)}")
-
-        originator = None
-        org_tag = soup.find("th", string=lambda t: t and "eingereicht von" in t.lower())
-        if org_tag:
-            originator_cell = org_tag.find_next("td")
-            if originator_cell:
-                originator = originator_cell.get_text(" ", strip=True)
-
-        paper = Paper(
-            id=url,
-            type="Antrag",
-            name=title,
-            reference=reference,
-            web=url,
-            created=datetime.now(),
-            date=submitted_date,
-            license=None,
-        )
-
-        if originator:
-            self.logger.debug(f"Originator found: {originator}")
-            # TODO: Lookup in DB  (PaperOriginatorOrgLink oder PaperOriginatorPersonLink)
-
-        if file_name:
-            self.logger.debug(f"Main file: {file_name}")
-            # TODO: File-Objekt
-
-        return paper
-
-    def _parse_anfrage(self, title: str, reference: str | None, name: str | None, url: str, soup: BeautifulSoup) -> "Paper":
-        """
-        Processing for City Council Requests.
-        """
-        self.logger.debug(f"Parsing Anfrage: {reference}")
-
-        # TODO: Extraction of specific data for inquiries
-        # Basic metadata (Submitted on, Type, Nature, Deadline, Election period)
-        def kv_value(key_label: str) -> str | None:
-            for row in soup.select(".keyvalue-container .keyvalue-row"):
-                k = row.select_one(".keyvalue-key")
-                v = row.select_one(".keyvalue-value")
-                if k and v and k.get_text(strip=True).rstrip(":") == key_label.rstrip(":"):
-                    return v.get_text(" ", strip=True)
-            return None
-
-        gestellt_am = kv_value("Gestellt am:")
-        date = self._parse_date(gestellt_am)
-
-        paper_type = kv_value("Typ:")  # "Application"
-        # art = kv_value("Art:")           # "Public procedure"
-        # frist = kv_value("Bearbeitungs-Frist:")
-        # legislative_term = kv_value("Wahlperiode:")
-        # originator = kv_value("Gestellt von:")  # can be a person or organization --> TODO: find out what and create
-        # direction = kv_value("Zuständiges Referat:")
-
-        # Documents (first document as mainFile)
+    def _extract_files(self, url: str, soup: BeautifulSoup) -> tuple[File | None, list[File]]:
+        """Extract all file objects (first is main file, rest are auxiliary)."""
         main_file: File | None = None
-        aux_files: list[File] = []
+        auxiliary_files: list[File] = []
 
         for item in soup.select("section#id62 + ul li, section#id62 ul li, section#sectionheader-dokumente + ul li"):
             link = item.select_one("a.downloadlink")
             if not link:
                 continue
+
             href = urljoin(url, link.get("href"))
             filename = link.get_text(" ", strip=True)
             size_text = item.get_text(" ", strip=True)
             size_bytes = self._parse_size_kb(size_text)
 
-            file_obj = File(
-                id=href, web=href, name=filename, size=size_bytes, mimeType="application/pdf" if filename.lower().endswith(".pdf") else None
+            file_object = File(
+                id=href,
+                web=href,
+                name=filename,
+                size=size_bytes,
+                mimeType="application/pdf" if filename.lower().endswith(".pdf") else None,
+                type="https://schema.oparl.org/1.1/File",
             )
-            if main_file is None:
-                main_file = file_obj
-            else:
-                aux_files.append(file_obj)
 
+            if main_file is None:
+                main_file = file_object
+            else:
+                auxiliary_files.append(file_object)
+
+        return main_file, auxiliary_files
+
+    def _extract_date_from_table(self, soup: BeautifulSoup, header_text: str) -> datetime | None:
+        """Extract a date from a table row where <th> contains the given header text."""
+        header = soup.find("th", string=lambda t: t and header_text in t)
+        if header:
+            cell = header.find_next("td")
+            if cell:
+                return self._parse_date(cell.get_text(strip=True))
+        return None
+
+    def _kv_value(self, key_label: str, soup: BeautifulSoup) -> str | None:
+        """Extracts values from key-value container rows by label."""
+        for row in soup.select(".keyvalue-container .keyvalue-row"):
+            key = row.select_one(".keyvalue-key")
+            value = row.select_one(".keyvalue-value")
+            if key and value and key.get_text(strip=True).rstrip(":") == key_label.rstrip(":"):
+                return value.get_text(" ", strip=True)
+        return None
+
+    def _build_paper(
+        self,
+        url: str,
+        document_name: str | None,
+        reference: str | None,
+        paper_type: str | None,
+        date: datetime | None,
+        main_file: File | None,
+        auxiliary_files: list[File],
+    ) -> Paper:
+        """Central builder for Paper objects to avoid duplication."""
         created = datetime.now()
         modified = datetime.now()
 
-        paper = Paper(
+        return Paper(
             id=url,
             web=url,
             body=url,
             type="https://schema.oparl.org/1.1/Paper",
             paperType=paper_type,
-            name=name,
+            name=document_name,
             reference=reference,
             date=date,
             mainFile=main_file,
-            auxiliaryFile=aux_files,
+            auxiliaryFile=auxiliary_files,
             created=created,
             modified=modified,
             deleted=False,
         )
-        return paper
+
+    def parse(self, url: str, html: str) -> Paper | None:
+        """Main parser entry point. Determines whether the page is a motion or a request."""
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Extract page title and subject
+        heading = soup.select_one("h1.page-title")
+        document_name = None
+        reference = None
+        title = None
+
+        if heading:
+            subject_tag = soup.select_one("span.d-inline-block")
+            title = subject_tag.get_text(" ", strip=True) if subject_tag else None
+            reference = self._extract_str_code(title) if title else None
+
+        # Extract filename from download link
+        link_tag = soup.find("a", class_="downloadlink text-nohyphens")
+        if link_tag and link_tag.text:
+            document_name = link_tag.text.strip()
+        self.logger.debug(document_name)
+
+        # Dispatch to specific parsers
+        if title:
+            if "StR-Antrag" in title:
+                return self._parse_motion(reference, document_name, url, soup)
+            elif "StR-Anfrage" in title:
+                return self._parse_request(reference, document_name, url, soup)
+
+        # Fallback if no type is recognized
+        self.logger.warning("Unknown paper type")
+        return None
+
+    def _parse_motion(self, reference: str, document_name: str, url: str, soup: BeautifulSoup) -> Paper:
+        """Special handling for 'StR-Antrag' (motions)."""
+        submitted_date = self._extract_date_from_table(soup, "Eingereicht am")
+        main_file, auxiliary_files = self._extract_files(url, soup)
+
+        return self._build_paper(
+            url=url,
+            document_name=document_name,
+            reference=reference,
+            paper_type="Antrag",
+            date=submitted_date,
+            main_file=main_file,
+            auxiliary_files=auxiliary_files,
+        )
+
+    def _parse_request(self, reference: str | None, document_name: str | None, url: str, soup: BeautifulSoup) -> Paper:
+        """Special handling for 'StR-Anfrage' (requests)."""
+        self.logger.debug(f"Parsing Anfrage: {reference}")
+
+        submitted_on_text = self._kv_value("Gestellt am:", soup)
+        submitted_on = self._parse_date(submitted_on_text)
+        paper_type = self._kv_value("Typ:", soup)
+        main_file, auxiliary_files = self._extract_files(url, soup)
+
+        return self._build_paper(
+            url=url,
+            document_name=document_name,
+            reference=reference,
+            paper_type=paper_type,
+            date=submitted_on,
+            main_file=main_file,
+            auxiliary_files=auxiliary_files,
+        )
