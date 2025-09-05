@@ -51,6 +51,10 @@ class Config(BaseSettings):
         default=datetime.date.today().isoformat(),
         description="Start date for scraping (ISO format YYYY-MM-DD)",
     )
+    end_date: str = Field(
+        default=datetime.date.today().isoformat(),
+        description="Start date for scraping (ISO format YYYY-MM-DD)",
+    )
 
     user_agent: str = Field(
         default="Mozilla/5.0 (compatible; ScraperBot/1.0)",

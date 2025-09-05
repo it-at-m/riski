@@ -120,7 +120,7 @@ class BaseExtractor(ABC, Generic[T]):
         """
         filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": ""}
+        data = {"von": config.start_date, "bis": config.end_date}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         # When sending a filter request the RIS always returns a redirect to the url with the filtered results
