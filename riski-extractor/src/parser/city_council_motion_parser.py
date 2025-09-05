@@ -167,9 +167,9 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         # Dispatch to specific parsers
         if title:
             if "StR-Antrag" in title:
-                return self._parse_motion(reference, document_name, url, soup)
+                return self._parse_motion(reference, title, url, soup)
             elif "StR-Anfrage" in title:
-                return self._parse_request(reference, document_name, url, soup)
+                return self._parse_request(reference, title, url, soup)
 
         # Fallback if no type is recognized
         self.logger.warning("Unknown paper type")
