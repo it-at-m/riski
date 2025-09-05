@@ -556,7 +556,7 @@ class Paper(SQLModel, table=True):
     modified: datetime | None = Field(None, description="Last modification.")
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-
+    description: str | None = Field(None, description="Short description von RIS page.")
     auxiliary_files: list["File"] = Relationship(back_populates="papers", link_model=PaperFileLink)
     related_papers: list["Paper"] = Relationship(
         back_populates="related_to",
