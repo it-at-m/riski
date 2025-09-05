@@ -74,6 +74,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                 size=size_bytes,
                 mimeType="application/pdf" if filename.lower().endswith(".pdf") else None,
                 type="https://schema.oparl.org/1.1/File",
+                accessUrl=href,
             )
 
             if main_file is None:
@@ -174,8 +175,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         self.logger.warning("Unknown paper type")
         return None
 
-    def _parse_motion(self, reference: str, document_name: str, url: str, soup: BeautifulSoup) -> Paper:
-        """Special handling for 'StR-Antrag' (motions)."""
+    def _parse_motion(self, reference: str | None, document_name: str | None, url: str, soup: BeautifulSoup) -> Paper:
         submitted_date = self._extract_date_from_table(soup, "Eingereicht am")
         main_file, auxiliary_files = self._extract_files(url, soup)
         return self._build_paper(
