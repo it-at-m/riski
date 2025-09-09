@@ -35,7 +35,7 @@ def main():
     logger.info(f"Extracting City Council Member starting from {config.start_date}")
     city_council_member_extractor = CityCouncilMemberExtractor()
     extracted_city_council_member_list = city_council_member_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_member_list)} Citiy Council Member")
+    logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Member")
     logger.debug([ccm.name for ccm in extracted_city_council_member_list])
 
     logger.info("Extraction process finished")
