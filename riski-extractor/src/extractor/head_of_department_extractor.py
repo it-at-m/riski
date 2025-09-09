@@ -4,7 +4,7 @@ from config.config import Config, get_config
 
 from src.data_models import Person
 from src.extractor.base_extractor import BaseExtractor
-from src.parser.head_of_department_parser import HeadOfDepartmentParser
+from src.parser.person_parser import PersonParser
 
 config: Config = get_config()
 
@@ -15,7 +15,7 @@ class HeadOfDepartmentExtractor(BaseExtractor[Person]):
     """
 
     def __init__(self) -> None:
-        super().__init__(str(config.base_url) + "/person", "/referenten", HeadOfDepartmentParser())
+        super().__init__(str(config.base_url) + "/person", "/referenten", PersonParser(), "", "")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str) -> str:
