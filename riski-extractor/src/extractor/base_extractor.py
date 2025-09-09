@@ -46,6 +46,7 @@ class BaseExtractor(ABC, Generic[T]):
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str):
         url = f"{self._get_sanitized_url(path)}{self.results_filter_identifier_url}"
+        self.logger.info(url)
         data = {self.results_filter_identifier_key: "3"}
         response = self.client.post(url=url, data=data)
 
