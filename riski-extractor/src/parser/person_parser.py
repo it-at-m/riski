@@ -14,7 +14,7 @@ class PersonParser(BaseParser[Person]):
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("Head of Department Parser initialized.")
+        self.logger.info("Person Parser initialized.")
 
     def _get_titles(self, titles: list[str]) -> list[str]:
         """
@@ -58,7 +58,7 @@ class PersonParser(BaseParser[Person]):
         return re.search(form_of_address_regex, name) is not None
 
     def parse(self, url: str, html: str) -> Person:
-        self.logger.debug(f"Parsing city council member: {url}")
+        self.logger.debug(f"Parsing person: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
         create_date = datetime.now(timezone.utc)
@@ -140,5 +140,5 @@ class PersonParser(BaseParser[Person]):
             deleted=False,
         )
 
-        self.logger.debug(f"City Council member - object created: {person.givenName} {person.familyName}")
+        self.logger.debug(f"Person - object created: {person.givenName} {person.familyName}")
         return person
