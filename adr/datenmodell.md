@@ -4,11 +4,9 @@
 
 Accepted
 
-## Kontext
+## Context
 
 The RIS (Rat-Informations-System = Council Information System) manages various legislative processes, including meetings, agenda items, motions, and documents. The goal of this ADR is to define how the data structures within the RIS can best be represented for us. One possibility is OParl. OParl is a standardized API for public data from parliamentary processes that improves the accessibility and interoperability of government data.
-
-Translated with DeepL.com (free version)
 
 ## Mapping RIS to Oparl
 

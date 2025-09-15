@@ -32,7 +32,7 @@
   - Headings, paragraphs, or columns are not recognized correctly
   - Layout-dependent information (e.g., footnotes, margin notes) is lost
 
-### 7. Images without embedded text
+### 5. Images without embedded text
 
 - Site plans, maps, or schematic representations usually consist only of pixel images
 - No text recognition possible without additional manual annotation
