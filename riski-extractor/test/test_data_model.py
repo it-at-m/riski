@@ -52,11 +52,11 @@ from src.data_models import (
 
 # Test for the System class
 def test_system_create(session, system):
-    # Hole System aus der DB per Query
+    # Fetch system from DB with query
     statement = select(System).where(System.id == system.id)
     db_system = session.exec(statement).one()
 
-    # Prüfe, dass das gleiche Objekt in der DB liegt
+    # Check for equality
     assert db_system.id == system.id
     assert db_system.name == system.name
     assert db_system.oparlVersion == system.oparlVersion

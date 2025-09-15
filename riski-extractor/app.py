@@ -2,9 +2,9 @@ import sys
 from logging import Logger
 
 from config.config import Config, get_config
+from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
-from src.extractor.stadtratssitzungen_extractor import StadtratssitzungenExtractor
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -21,7 +21,7 @@ def main():
     logger.info(f"RIS Indexer v{version} starting up")
 
     logger.info(f"Extracting meetings starting from {config.start_date}")
-    sitzungen_extractor = StadtratssitzungenExtractor()
+    sitzungen_extractor = CityCouncilMeetingExtractor()
     extracted_meeting_list = sitzungen_extractor.run()
     logger.info(f"Extracted {len(extracted_meeting_list)} meetings")
     logger.debug([obj.name for obj in extracted_meeting_list])

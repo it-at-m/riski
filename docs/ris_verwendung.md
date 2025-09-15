@@ -1,42 +1,42 @@
-# Programmatische Anfrage des RIS
+# Programmatic query of the RIS
 
-Das RIS bringt einige Besonderheiten mit sich, die die programmatische Verwendung erschweren.
-Diese sind uns noch nicht vollständig verständlich und bekannt, hier soll jedoch trotzdem kurz der aktuelle Wissensstand skizziert werden, mit dem wir erfolgreich waren.
+The RIS has some special features that make programmatic use difficult.
+We do not yet fully understand and know these, but we will nevertheless briefly outline the current state of knowledge with which we have been successful.
 
-## Netzwerkanalyse Browser
+## Network analysis browser
 
-Für ein erstes Verständnis des Systems haben wir versucht die Netzwerkanalyse des Browsers zu verwenden.
-Wichtig ist hierbei, dass die Requests bei Verwendung andere Tools teilweise andere Ergebnisse liefern.
-Für einen groben Überblick, wie das so ungefähr funktioniert und welche Requests überhaupt abgesetzt werden gut, für
-eine genaue Planung des Skripts nicht gut.
-Das ist vor allem hilfreich weil die meisten Buttons auf der Seite hrefs dahinter haben sondern über irgendwelche JS-Funktionen weiterleiten oder laden.
-In unserem Fall haben wir darüber die Requests für die Navigation in der Liste ermitteln können, die sonst eher nicht gefunden worden wären.
+To gain an initial understanding of the system, we tried to use the browser's network analysis.
+It is important to note that requests using other tools sometimes deliver different results.
+This is good for a rough overview of how it works and which requests are actually sent, but not good for
+precise planning of the script.
+This is particularly helpful because most buttons on the page do not have hrefs behind them, but instead redirect or load via some JS functions.
+In our case, this allowed us to determine the requests for navigation in the list, which otherwise would not have been found.
 
 ## SessionID
 
-Bei erstmaligem Anfragen des RIS durch einen neuen Client, also ohne Cookies und SessionID, erhält dieser eine neue ID vom Server und einen Redirect zu einer URL in der ebenfalls die SessionID steht.
-Hier wird auch die "StateID" das erste mal gesetzt und beginnt, zumindest in unseren Beobachtungen, bei 0.
+When a new client requests the RIS for the first time, i.e., without cookies and SessionID, it receives a new ID from the server and a redirect to a URL that also contains the SessionID.
+This is also where the “StateID” is set for the first time and, at least in our observations, starts at 0.
 
 ## Cookies
 
-Neben der SessionID werden beim ersten Request auch noch 4 Cookies mitgeliefert. Wofür diese Cookies genau relevant sind haben wir bei unseren Arbeiten nicht erkennen können, aber wir haben sie sicherheitshalber mal mitgenommen.
+In addition to the SessionID, 4 cookies are also delivered with the first request. We were unable to determine exactly what these cookies are relevant for in our work, but we included them anyway to be on the safe side.
 
 ## HTTP 302
 
-Das RIS speichert sehr viel State für die User, wobei nicht ganz klar ist, wie das genau abläuft.
-Eine der Hauptimplikationen dieses Managements ist es, dass das RIS eine "ID" pro Session hochzählt, unter der
-der State zu einem bestimmten Zeitpunkt erreichbar ist.
-Das RIS antwortet daher in extrem vielen Fällen mit HTTP 302 und gibt als Location den Link mit der neuen
-ID zu dem State den man gerade geändert hat an. In der Regel muss also entweder "Follow-Redirects" auf TRUE gesetzt werden,
-oder ein manuelles Folgen implementiert werden.
+The RIS stores a lot of state for the users, although it is not entirely clear how this works exactly.
+One of the main implications of this management is that the RIS increments an “ID” per session under which
+the state can be accessed at a specific point in time.
+In the vast majority of cases, the RIS therefore responds with HTTP 302 and specifies the link with the new
+ID to the state that has just been changed as the location. As a rule, either “Follow-Redirects” must be set to TRUE,
+or manual following must be implemented.
 
-## "Seiteninterne" IDs
+## “Internal page” IDs
 
-Neben der ID für den State gibt es auch auf den einzelnen Seiten weitere IDs, die hochgezählt werden und die Verwendung beeinflussen.
-Für die Anpaasung der Ergebnisse pro Seite gibt es bspw. diesen Link: <https://risi.muenchen.de/risi/sitzung/uebersicht?37-5.0-list_container-list-card-cardheader-itemsperpage_dropdown_top>
-Die 37 ist hierbei die "State-ID" und die 5 eine Seitenspezifische ID. Die genauen Regeln wann diese zweite hochgezählt wird haben wir nicht ermitteln können.
-Erfahrungsgemäß wird diese mit jedem State verändernden Request ebenfalls um 1 hochgezählt, das ist aber nicht sicher belegt.
-Wir wissen jedoch, dass sich die entsprechenden Links im HTML der Seite finden lassen. Über diesen Weg kann also die aktuell gültige und funktionierende URL ermittelt werden.
+In addition to the ID for the state, there are also other IDs on the individual pages that are incremented and influence usage.
+For example, this link can be used to adjust the results per page: <https://risi.muenchen.de/risi/sitzung/uebersicht?37-5.0-list_container-list-card-cardheader-itemsperpage_dropdown_top>
+The 37 is the “state ID” and the 5 is a page-specific ID. We have not been able to determine the exact rules for when this second ID is incremented.
+Experience has shown that it is also incremented by 1 with every state-changing request, but this has not been confirmed.
+However, we do know that the corresponding links can be found in the HTML of the page. This method can therefore be used to determine the currently valid and functioning URL.
 
 ```javascript
 Wicket.Event.add(window, "domready", function(event) { 
@@ -59,24 +59,24 @@ Wicket.Ajax.ajax({"u":"./uebersicht?9-2.0-list_container-list-card-cardfooter-it
 Wicket.Event.publish(Wicket.Event.Topic.AJAX_HANDLERS_BOUND);
 ```
 
-## Filterung der Sitzungsliste
+## Filtering the session list
 
-Um die Sitzungsliste zu filtern gibt es in der WebUI ein Formular über das Start, Ende, Status und Art der Sitzung gesetzt werden können.
-Diese Formular löst einen POST-Request aus. Diesen POST-Request kann man auch programmatisch abschicken und erhält einen Redirect zu der Seite mit den
-entsprechend gesetzten Filtern.
-Im Code müssen wir den Filter Request doppelt ausführen, damit wir die korrekte Redirect URL erhalten.
-Über Postman/Bruno war nur ein Filter Request notwendig. Woher diese Diskrepanz kommt ist nicht klar.
-Wenn man nun einen GET Request auf die Rediret URL ausführt erhält man die Seite mit der entsprechenden aktiven Filterung.
+To filter the session list, there is a form in the WebUI where you can set the start, end, status, and type of the session.
+This form triggers a POST request. You can also send this POST request programmatically and receive a redirect to the page with the
+corresponding filters set.
+In the code, we have to execute the filter request twice to get the correct redirect URL.
+Only one filter request was necessary via Postman/Bruno. It is not clear where this discrepancy comes from.
+If you now execute a GET request on the redirect URL, you will get the page with the corresponding active filtering.
 
-Edit 26.06.2025: Bei weiteren Tests wurde ermittelt, dass der initiale Request im Code nicht richtig beim RIS ankam. Die Antwort war HTTP 503. Dadurch wurde
-erst mit dem Filterrequest der erste valide Request an das RIS geschickt und somit war auch dir Redirect URL an dieser Stelle die mit der Session ID. Nach Anpassung des Codes wird ein korrekter Initialer Request geschickt und es ist nur noch ein Filter Request notwendig.
+Edit 06/26/2025: Further testing determined that the initial request in the code did not arrive correctly at the RIS. The response was HTTP 503. As a result,
+the first valid request was only sent to the RIS with the filter request, and thus the redirect URL at this point was also the one with the session ID. After adjusting the code, a correct initial request is sent and only one filter request is necessary.
 
-## AJAX Nachladen
+## AJAX reloading
 
-Das RIS lädt Inhalte häufiger über AJAX nach, insbesondere in der Sitzungsliste. Hierbei werden die Daten jedoch direkt als HTML Fragment geladen, welches dann in die Seite eingebunden wird.
-Es handelt sich damit also weder um Rohdaten noch um korrektes HTML. Die Daten liegen in einer XML-Struktur vor und das "neue" HTML ist ein Value in dieser Struktur.
-Um das Nachladen der Daten nachzustellen ist es wichtig, dass die korrekten Header gesetzt werden, da das RIS sonst einfach die erste Seite ausliefert.
-Nach unserer Erfahrung muss der Header "Wicket-Ajax:true" gesetzt werden. Wir haben außerdem folgende Header gesetzt, weil diese auch im Browser gesetzt waren:
+The RIS reloads content more frequently via AJAX, especially in the session list. However, the data is loaded directly as an HTML fragment, which is then integrated into the page.
+This means that it is neither raw data nor correct HTML. The data is available in an XML structure and the “new” HTML is a value in this structure.
+To simulate the reloading of data, it is important that the correct headers are set, otherwise the RIS will simply deliver the first page.
+In our experience, the header “Wicket-Ajax:true” must be set. We have also set the following headers because they were also set in the browser
 
 ```text
 Wicket-Ajax-BaseURL:sitzung/uebersicht?4
@@ -85,9 +85,9 @@ X-Requested-With:XMLHttpRequest
 Priority:u=0
 ```
 
-## Persistenz des States
+## Persistence of the state
 
-Wir hatten das Problem, dass unser State teilweise nicht dauerhaft mitgenommen wurde. Wenn wir also zum Beispiel die Anzahl der Ergebnisse pro Seite
-auf 100 gesetzt haben und danach die Sitzungsliste gefiltert haben wurde diese Einstellung wieder auf 10 resettet. Wenn erst gefiltert und dann auf 100 erhöht wurde hat das geklappt,
-daher muss man ggf. etwas experimentieren.
-Für diese ganzen Tests war Bruno recht hilfreich.
+We had the problem that our state was sometimes not permanently retained. For example, if we set the number of results per page
+to 100 and then filtered the session list, this setting was reset to 10. If we filtered first and then increased it to 100, it worked,
+so you may need to experiment a little.
+Bruno was quite helpful with all these tests.

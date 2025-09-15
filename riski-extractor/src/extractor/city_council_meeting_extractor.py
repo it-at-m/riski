@@ -4,12 +4,12 @@ from config.config import Config, get_config
 
 from src.data_models import Meeting
 from src.extractor.base_extractor import BaseExtractor
-from src.parser.stadtratssitzungen_parser import StadtratssitzungenParser
+from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
 
 config: Config = get_config()
 
 
-class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
+class CityCouncilMeetingExtractor(BaseExtractor[Meeting]):
     """
     Extractor for Meetings on the RIS website
     """
@@ -18,7 +18,7 @@ class StadtratssitzungenExtractor(BaseExtractor[Meeting]):
         super().__init__(
             str(config.base_url) + "/sitzung",
             "/uebersicht",
-            StadtratssitzungenParser(),
+            CityCouncilMeetingParser(),
             "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top",
             "list_container:list:card:cardheader:itemsperpage_dropdown_top",
         )

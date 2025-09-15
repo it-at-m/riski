@@ -1,27 +1,27 @@
 import locale
 import platform
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from src.data_models import File, Location, Meeting
+from src.data_models import File, Meeting
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
-class StadtratssitzungenParser(BaseParser[Meeting]):
+class CityCouncilMeetingParser(BaseParser[Meeting]):
     """
-    Parser für Stadtratssitzungen
+    Parser for CityCouncilMeetings
     """
 
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("StadtratssitzungenParser initialized.")
+        self.logger.info("CityCouncilMeetingParser initialized.")
 
         if platform.system() == "Windows":
             # For Windows, use the specific code page that works
@@ -81,22 +81,6 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
-        # TODO: load if already exists (find by name?)
-
-        # --- Location Object ---
-        location = Location(
-            id=None,
-            type="place",
-            description="Ort der Stadtratssitzung",
-            room=data_dict.get("Sitzungsort:", ""),
-            locality="München",
-            created=datetime.now(timezone.utc),  # TODO: check if already exists
-            modified=datetime.now(timezone.utc),
-            web=url,
-            deleted=False,
-        )
-        self.logger.debug("Location object created.")
-
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
         organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
@@ -124,25 +108,20 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now(timezone.utc)  # TODO: check if already exists?
-        modified = datetime.now(timezone.utc)
-        web = url
+        created = datetime.now()
+        modified = datetime.now()
         deleted = False
 
         # --- Assemble Meeting ---
         meeting = Meeting(
-            id=None,
+            id=url,
             type=type,
             name=name,
             cancelled=cancelled,
             start=start,
-            location=location,
-            organization=organization,
-            participant=participants,
-            auxiliaryFile=auxiliaryFile,
             created=created,
             modified=modified,
-            web=web,
+            web=url,
             deleted=deleted,
             meetingState=meetingState,
         )
