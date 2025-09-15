@@ -1,39 +1,34 @@
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
 from src.data_models import Person
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
-class HeadOfDepartmentParser(BaseParser[Person]):
-    """
-    Parser for Heads of Departments
-    """
-
+class PersonParser(BaseParser[Person]):
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("Head of Department Parser initialized.")
-
-    """
-    Method for extracting the academic title of a person from their name.
-    A list of potential titles is passed to the method.
-    This list is best obtained by splitting the name at all spaces. 
-    Then all substrings with special characters that are not '-' are determined and transferred.
-
-    With these strings, it is possible that a title such as Dr.(Univ. Florence) is split into ['Dr.(Univ.','Florence)']
-    These must be put together again to form a title.
-    All strings are run through in sequence and if a '(' without ')' is found, a temporary
-    string is created and the existing parts are joined together to form a string until a ')' is found.  
-    """
+        self.logger.info("Person Parser initialized.")
 
     def _get_titles(self, titles: list[str]) -> list[str]:
+        """
+        Method for extracting the academic title of a person from their name.
+        A list of potential titles is passed to the method.
+        This list is best obtained by splitting the name at all spaces.
+        Then all substrings with special characters that are not '-' are determined and transferred.
+
+        With these strings, it is possible that a title such as Dr.(Univ. Florence) is split into ['Dr.(Univ.','Florence)']
+        These must be put together again to form a title.
+        All strings are run through in sequence and if a '(' without ')' is found, a temporary
+        string is created and the existing parts are joined together to form a string until a ')' is found.
+        """
+
         title_array = []
         current_academic_title = ""
         in_title = False
@@ -59,14 +54,14 @@ class HeadOfDepartmentParser(BaseParser[Person]):
         return re.search(special_char_regex, name) is not None
 
     def _is_form_of_address(self, name: str) -> bool:
-        form_of_address_regex = r"(Frau|Herr)"
+        form_of_address_regex = r"^(Frau|Herr)$"
         return re.search(form_of_address_regex, name) is not None
 
     def parse(self, url: str, html: str) -> Person:
-        self.logger.debug(f"Parsing Head of Department: {url}")
+        self.logger.debug(f"Parsing person: {url}")
         soup = BeautifulSoup(html, "html.parser")
 
-        create_date = datetime.now()
+        create_date = datetime.now(timezone.utc)
 
         title_wrapper = soup.find("h1", class_="page-title")
         title_element = title_wrapper.find("span", class_="d-inline-block") if title_wrapper else None
@@ -74,14 +69,11 @@ class HeadOfDepartmentParser(BaseParser[Person]):
         name = name.strip()
 
         status_element = soup.find("span", class_="d-inline-block page-additionaltitle")
-        status: str | None = None
+        status = []
         if status_element:
-            text = status_element.get_text(strip=True)
-            # Remove surrounding parentheses if present, then trim
-            if len(text) >= 2 and text[0] == "(" and text[-1] == ")":
-                status = text[1:-1].strip()
-            else:
-                status = text
+            status_text = status_element.get_text()
+            status = [status_text[1 : len(status_text) - 1]]
+        self.logger.debug(status)
 
         # The code for determining the names is still based on the old naming law before 2024.
         # Since 2024, spouses can also have a double name without a "-" as a married name; this was not possible before.
@@ -90,12 +82,14 @@ class HeadOfDepartmentParser(BaseParser[Person]):
         # this assumption is still made in the code. If this leads to problems, the data would have to be corrected manually
         # or the code would have to be adapted or removed. (Status: 2025-07-03)
         parts_of_name = name.split(" ")
+        self.logger.debug(parts_of_name)
         given_name = []
         last_name = parts_of_name[-1]
+        self.logger.debug(last_name)
 
         potential_titles = []
+        form_of_address = None
 
-        form_of_address: str | None = None
         for i in range(2, len(parts_of_name) + 1):
             if self._is_form_of_address(parts_of_name[-i]):
                 form_of_address = parts_of_name[-i]
@@ -110,15 +104,23 @@ class HeadOfDepartmentParser(BaseParser[Person]):
 
         # --- Key-Value Data Extraction ---
         # Relevant for CV
-        key_value_rows = soup.find_all("div", class_="keyvalue-row")
+        person_info = soup.find("section", attrs={"aria-labelledby": "sectionheader-personinfo"})
         data_dict = {}
-        for row in key_value_rows:
-            key_el = row.find("div", class_="keyvalue-key")
-            val_el = row.find("div", class_="keyvalue-value")
-            if key_el and val_el:
-                key = key_el.get_text(strip=True)
-                value = val_el.get_text(strip=True)
-                data_dict[key] = value
+
+        if person_info:
+            card_content = person_info.find("div", class_="card-body")
+
+            key_value_rows = []
+            if card_content:
+                key_value_rows = card_content.find_all("div", class_="keyvalue-row")
+
+            for row in key_value_rows:
+                key_el = row.find("div", class_="keyvalue-key")
+                val_el = row.find("div", class_="keyvalue-value")
+                if key_el and val_el:
+                    key = key_el.get_text(strip=True)
+                    value = val_el.get_text(strip=True)
+                    data_dict[key] = value
 
         # --- Assemble Person ---
         person = Person(
@@ -132,11 +134,11 @@ class HeadOfDepartmentParser(BaseParser[Person]):
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
             modified=create_date,
-            status=[status] if status else None,
+            status=status,
             title=self._get_titles(potential_titles),
-            web=HttpUrl(url),
+            web=url,
             deleted=False,
         )
 
-        self.logger.debug(f"Person object created: {person.givenName} {person.familyName}")
+        self.logger.debug(f"Person - object created: {person.givenName} {person.familyName}")
         return person

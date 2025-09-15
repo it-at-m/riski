@@ -1,5 +1,5 @@
 import re
-from abc import ABC, abstractmethod
+from abc import ABC
 from logging import Logger
 from typing import Generic, TypeVar
 
@@ -26,7 +26,9 @@ class BaseExtractor(ABC, Generic[T]):
 
     logger: Logger
 
-    def __init__(self, base_url: str, base_path: str, parser: BaseParser[T]):
+    def __init__(
+        self, base_url: str, base_path: str, parser: BaseParser[T], results_filter_identifier_url: str, results_filter_identifier_key: str
+    ) -> None:
         # NOTE: Do not set follow_redirects=True at client level.
         # Some flows inspect 3xx responses/Location; we decide per request.
         if config.https_proxy or config.http_proxy:
@@ -38,18 +40,21 @@ class BaseExtractor(ABC, Generic[T]):
         self.base_url = base_url
         self.base_path = base_path
         self.parser = parser
+        self.results_filter_identifier_url = results_filter_identifier_url
+        self.results_filter_identifier_key = results_filter_identifier_key
 
-    @abstractmethod
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str) -> str:
         """
         Method for determining how many results should be included in responses.
-        More results lead to fewer requests and less overhead.
-        The necessary request differs between pages in the RIS; hence,
-        each extractor must implement its own specific version.
-
-        Must return a redirect URL from the HTTP-Header "Location"
         """
-        pass
+        url = f"{self._get_sanitized_url(path)}{self.results_filter_identifier_url}"
+        self.logger.info(url)
+        data = {self.results_filter_identifier_key: "3"}
+        response = self.client.post(url=url, data=data)
+
+        assert response.is_redirect
+        return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_object_html(self, link: str) -> str:
@@ -135,7 +140,7 @@ class BaseExtractor(ABC, Generic[T]):
         return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _initial_request(self):
+    def _initial_request(self) -> None:
         # make request
         response = self.client.get(url=self.base_url + self.base_path, follow_redirects=True)
         response.raise_for_status()
@@ -174,7 +179,7 @@ class BaseExtractor(ABC, Generic[T]):
         return response.text
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _get_next_page(self, path: str, next_page_link):
+    def _get_next_page(self, path: str, next_page_link: str) -> None:
         headers = {
             "User-Agent": config.user_agent,
             "Referer": self._get_sanitized_url(path),
