@@ -1,33 +1,38 @@
-# Erkenntnisse bei der Evaluation von Docling
+# Findings from the evaluation of Docling
 
 ## Performance
 
-- Die Verarbeitung dauert initial **10–40 Sekunden pro Dokument** abhängig von der Größe des Dokumnets
-- Empfehlung: Einmaliges vollständiges Scrapen und Verarbeiten aller Dokumente.
-- Danach nur noch **iterative Verarbeitung**, wenn sich Dokumente ändern, um Zeit zu sparen.
+- Processing initially takes **10–40 seconds per document**, depending on the size of the document.
+- Recommendation: Scrape and process all documents completely once.
+- After that, only perform **iterative processing** when documents change to save time.
 
-## Herausforderungen
+## Challenges
 
-### 1. Tabellen im Querformat
-- Probleme bei der Erkennung und Verarbeitung von Tabellen, die im Querformat (landscape) vorliegen.
-- Besonders kritisch, wenn diese nur als **Bild** eingebunden sind (z. B. Lagepläne).
+### 1. Tables in landscape format
 
-### 2. Texterkennung (OCR)
-- **Vertauschte Buchstaben** bei der OCR:
-  - `I` wird als `l` erkannt
-  - `i` wird ebenfalls als `l` erkannt
-- Dies führt zu **Ungenauigkeiten bei der Texterfassung**, speziell bei Eigennamen oder technischen Begriffen.
+- Problems with recognizing and processing tables that are in landscape format.
+- This is particularly critical if they are only included as **images** (e.g., site plans).
 
-### 3. Handschriftliche Einträge
-- Probleme bei der Erkennung von **handschriftlichen Inhalten**, insbesondere:
-  - Wenn mehrere **Ankreuzfelder nebeneinander** stehen (z. B. in BV-Anträgen)
-  - Erkennung, ob Felder aktiviert oder leer sind, ist oft fehleranfällig
+### 2. Text recognition (OCR)
 
-### 4. Struktur- und Layout-Erkennung
-- Schwierigkeiten bei der **korrekten Gliederung von Dokumenten**:
-  - Überschriften, Absätze oder Spalten nicht korrekt erkannt
-  - Layoutabhängige Informationen (z. B. Fußnoten, Randtexte) gehen verloren
+- **Transposed letters** in OCR:
+  - `I` is recognized as `l`
+  - `i` is also recognized as `l`
+- This leads to **inaccuracies in text recognition**, especially with proper names or technical terms.
 
-### 7. Bilder ohne eingebetteten Text
-- Lagepläne, Karten oder schematische Darstellungen bestehen meist nur aus Pixelbildern
-- Keine Texterkennung möglich ohne zusätzliche manuelle Annotation
+### 3. Handwritten entries
+
+- Problems with recognizing **handwritten content**, in particular:
+  - When several **checkboxes are next to each other** (e.g., in BV applications)
+  - Recognizing whether fields are activated or empty is often prone to errors
+
+### 4. Structure and layout recognition
+
+- Difficulties with **correct document structuring**:
+  - Headings, paragraphs, or columns are not recognized correctly
+  - Layout-dependent information (e.g., footnotes, margin notes) is lost
+
+### 5. Images without embedded text
+
+- Site plans, maps, or schematic representations usually consist only of pixel images
+- No text recognition possible without additional manual annotation
