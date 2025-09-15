@@ -298,12 +298,6 @@ class Organization(SQLModel, table=True):
     meetings: list["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
 
 
-class Title(SQLModel, table=True):
-    __tablename__ = "title"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    title: str = Field()
-
-
 class PersonMembershipLink(SQLModel, table=True):
     __tablename__ = "person_membership"
     person_id: uuid.UUID = Field(foreign_key="person.db_id", primary_key=True)
@@ -346,7 +340,7 @@ class Person(SQLModel, table=True):
     web: str | None = Field(None, description="HTML view of the person")
     deleted: bool = Field(default=False, description="Marked as deleted")
 
-    title: uuid.UUID | None = Field(default=None, foreign_key="title.db_id")
+    title: str | None = Field(default=None)
     phone: list[str] = Field(sa_column=Column(JSON), default_factory=list)
     email: list[str] = Field(sa_column=Column(JSON), default_factory=list)
 
@@ -360,7 +354,6 @@ class Person(SQLModel, table=True):
     membership: list["Membership"] = Relationship(back_populates="person", link_model=PersonMembershipLink)
     papers: list["Paper"] = Relationship(back_populates="originator_persons", link_model=PaperOriginatorPersonLink)
     meetings: list["Meeting"] = Relationship(back_populates="participants", link_model=MeetingParticipantLink)
-    title_obj: Optional["Title"] = Relationship()
 
 
 class MembershipKeyword(SQLModel, table=True):
@@ -704,8 +697,6 @@ class Meeting(SQLModel, table=True):
         None,
         description="End point of the meeting as date/time. For a future meeting, this is the planned time; for a past meeting, it can be the actual end time.",
     )
-    location: uuid.UUID | None = Field(None, description="Meeting location.", foreign_key="location.db_id")
-
     invitation: uuid.UUID | None = Field(None, description="Invitation document for the meeting.", foreign_key="file.db_id")
     resultsProtocol: uuid.UUID | None = Field(
         None,
