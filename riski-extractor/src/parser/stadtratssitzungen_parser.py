@@ -1,12 +1,11 @@
 import locale
 import platform
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
 from src.data_models import File, Location, Meeting
 from src.logtools import getLogger
@@ -82,6 +81,8 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
+        # TODO: load if already exists (find by name?)
+
         # --- Location Object ---
         location = Location(
             id=None,
@@ -89,16 +90,16 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
             description="Ort der Stadtratssitzung",
             room=data_dict.get("Sitzungsort:", ""),
             locality="München",
-            created=datetime.now(),
-            modified=datetime.now(),
-            web=HttpUrl(url),
+            created=datetime.now(timezone.utc),  # TODO: check if already exists
+            modified=datetime.now(timezone.utc),
+            web=url,
             deleted=False,
         )
         self.logger.debug("Location object created.")
 
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [HttpUrl(urljoin(url, a.get("href"))) for a in organization_links if a.get("href")]
+        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
         organization = organization if len(organization) > 0 else None
         self.logger.debug(f"Organizations: {organization}")
 
@@ -107,7 +108,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
             link = li.get("href")
             if link:
-                full_url = HttpUrl(urljoin(url, link))
+                full_url = urljoin(url, link)
                 participants.append(full_url)
         participants = participants if len(participants) > 0 else None
         self.logger.debug(f"Participants: {participants}")
@@ -115,7 +116,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = HttpUrl(urljoin(url, doc_link["href"]))
+            doc_url = urljoin(url, doc_link["href"])
             doc_title = doc_link.get_text(strip=True)
             if doc_url:
                 auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
@@ -123,9 +124,9 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now()
-        modified = datetime.now()
-        web = HttpUrl(url)
+        created = datetime.now(timezone.utc)  # TODO: check if already exists?
+        modified = datetime.now(timezone.utc)
+        web = url
         deleted = False
 
         # --- Assemble Meeting ---
