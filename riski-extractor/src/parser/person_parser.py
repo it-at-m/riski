@@ -88,11 +88,11 @@ class PersonParser(BaseParser[Person]):
         self.logger.debug(last_name)
 
         potential_titles = []
-        form_of_adress = None
+        form_of_address = None
 
         for i in range(2, len(parts_of_name) + 1):
             if self._is_form_of_address(parts_of_name[-i]):
-                form_of_adress = parts_of_name[-i]
+                form_of_address = parts_of_name[-i]
             elif self._is_no_name(parts_of_name[-i]):
                 potential_titles.append(parts_of_name[-i])
                 continue
@@ -130,7 +130,7 @@ class PersonParser(BaseParser[Person]):
             givenName=" ".join(given_name),
             name=name,
             created=create_date,
-            formOfAddress=form_of_adress,
+            formOfAddress=form_of_address,
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
             modified=create_date,
