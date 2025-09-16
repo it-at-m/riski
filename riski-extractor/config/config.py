@@ -52,7 +52,7 @@ class Config(BaseSettings):
         description="Start date for scraping (ISO format YYYY-MM-DD)",
     )
     end_date: str = Field(
-        default=datetime.date.today().isoformat(),
+        default=None,
         description="End date for scraping (ISO format YYYY-MM-DD)",
     )
 
