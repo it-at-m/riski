@@ -51,7 +51,7 @@ class Config(BaseSettings):
         default=datetime.date.today().isoformat(),
         description="Start date for scraping (ISO format YYYY-MM-DD)",
     )
-    end_date: str = Field(
+    end_date: str | None = Field(
         default=None,
         description="End date for scraping (ISO format YYYY-MM-DD)",
     )
@@ -208,6 +208,8 @@ class Config(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_date_range(self):
+        if not self.end_date:
+            return self
         start = datetime.date.fromisoformat(self.start_date)
         end = datetime.date.fromisoformat(self.end_date)
         if end < start:
