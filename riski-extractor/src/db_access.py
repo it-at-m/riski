@@ -12,9 +12,13 @@ def create_tables():
 
 
 def request_person_by_risid(risid: str, session=None):
+    """
+    Load a Person Object from the DB based on the risId.
+    This is used to create the correct relations in the Database.
+    """
     statement = select(Person).where(Person.id == risid)
 
-    person = (_session if not session else session).exec(statement).first()
+    person = (_session if not session else session).exec(statement).one()
     return person
 
 
