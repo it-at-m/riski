@@ -1,4 +1,4 @@
-from config import get_config
+from config.config import get_config
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from src.data_models import Person
@@ -11,9 +11,10 @@ def create_tables():
     SQLModel.metadata.create_all(_engine)
 
 
-def request_person_by_risid(risid: str):
+def request_person_by_risid(risid: str, session=None):
     statement = select(Person).where(Person.id == risid)
-    person = _session.exec(statement).first()
+
+    person = (_session if not session else session).exec(statement).first()
     return person
 
 
