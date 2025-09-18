@@ -3,7 +3,7 @@ from sqlmodel import Session, SQLModel, create_engine, select
 
 from src.data_models import Person
 
-_engine = create_engine(str(get_config().database_url), echo=True)
+_engine = create_engine(str(get_config().database_url), echo=False)
 _session = Session(_engine)
 
 
