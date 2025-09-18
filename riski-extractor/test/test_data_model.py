@@ -46,7 +46,6 @@ from src.data_models import (
     PersonMembershipLink,
     Post,
     System,
-    Title,
 )
 
 
@@ -555,15 +554,6 @@ def test_paper_subtype_create(session, papersubtype):
     assert db_subtype.id == papersubtype.id
     assert db_subtype.name == papersubtype.name
     assert db_subtype.paper_type_id == papersubtype.paper_type_id
-
-
-# ----------------------
-# Test Title
-# ----------------------
-def test_title_create(session, title):
-    db_title = session.exec(select(Title).where(Title.db_id == title.db_id)).one()
-    assert db_title.db_id == title.db_id
-    assert db_title.title == title.title
 
 
 # ----------------------

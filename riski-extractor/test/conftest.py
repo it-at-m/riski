@@ -21,7 +21,6 @@ from src.data_models import (
     Person,
     Post,
     System,
-    Title,
 )
 
 config: Config = get_config()
@@ -158,19 +157,11 @@ def papertype(session):
 
 
 @pytest.fixture(scope="function")
-def title(session):
-    obj = Title(title="MR.")
-    session.add(obj)
-    session.commit()
-    return obj
-
-
-@pytest.fixture(scope="function")
-def person(session, title):
+def person(session):
     obj = Person(
         id="https://example.org/person/1",
         name="Test Person",
-        title=title.db_id,
+        title="Dr.",
         created=datetime.now(),
         modified=datetime.now(),
     )
