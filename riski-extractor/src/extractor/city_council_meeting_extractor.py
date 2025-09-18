@@ -27,7 +27,7 @@ class CityCouncilMeetingExtractor(BaseExtractor[Meeting]):
     def _filter(self) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": "", "status": "", "containerBereichDropDown:bereich": "2"}
+        data = {"von": config.start_date, "bis": config.end_date, "status": "", "containerBereichDropDown:bereich": "2"}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results

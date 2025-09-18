@@ -4,7 +4,7 @@ from logging import Logger
 from os import getenv
 from pathlib import Path
 
-from pydantic import AliasChoices, Field, HttpUrl, PostgresDsn
+from pydantic import AliasChoices, Field, HttpUrl, PostgresDsn, model_validator
 from pydantic_settings import (
     BaseSettings,
     CliSettingsSource,
@@ -50,6 +50,10 @@ class Config(BaseSettings):
     start_date: str = Field(
         default=datetime.date.today().isoformat(),
         description="Start date for scraping (ISO format YYYY-MM-DD)",
+    )
+    end_date: str | None = Field(
+        default=None,
+        description="End date for scraping (ISO format YYYY-MM-DD)",
     )
 
     user_agent: str = Field(
@@ -201,6 +205,16 @@ class Config(BaseSettings):
                 }
             )
         )
+
+    @model_validator(mode="after")
+    def _validate_date_range(self):
+        if not self.end_date:
+            return self
+        start = datetime.date.fromisoformat(self.start_date)
+        end = datetime.date.fromisoformat(self.end_date)
+        if end < start:
+            raise ValueError("end_date must be on or after start_date")
+        return self
 
 
 @lru_cache

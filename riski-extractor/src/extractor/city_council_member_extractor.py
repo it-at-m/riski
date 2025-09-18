@@ -28,7 +28,7 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
     def _filter(self) -> str:
         filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": "", "fraktion": "", "nachname": ""}
+        data = {"von": config.start_date, "bis": config.end_date, "fraktion": "", "nachname": ""}
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         if response.is_redirect:

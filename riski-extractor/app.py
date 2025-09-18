@@ -19,8 +19,9 @@ def main():
     version = get_version()
 
     logger.info(f"RIS Indexer v{version} starting up")
+    logger.info(f"Extract data from {config.start_date}{f' until {config.end_date}' if config.end_date else ''}")
 
-    logger.info(f"Extracting meetings starting from {config.start_date}")
+    logger.info("Extracting meetings")
     sitzungen_extractor = CityCouncilMeetingExtractor()
     extracted_meeting_list = sitzungen_extractor.run()
     logger.info(f"Extracted {len(extracted_meeting_list)} meetings")
@@ -32,10 +33,10 @@ def main():
     logger.info(f"Extracted {len(extracted_head_of_department_list)} Heads of Departments")
     logger.debug([hod.name for hod in extracted_head_of_department_list])
 
-    logger.info(f"Extracting City Council Member starting from {config.start_date}")
+    logger.info("Extracting City Council Members")
     city_council_member_extractor = CityCouncilMemberExtractor()
     extracted_city_council_member_list = city_council_member_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Member")
+    logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Members")
     logger.debug([ccm.name for ccm in extracted_city_council_member_list])
 
     logger.info("Extraction process finished")
