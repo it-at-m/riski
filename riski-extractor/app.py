@@ -19,7 +19,7 @@ def main():
     version = get_version()
 
     logger.info(f"RIS Indexer v{version} starting up")
-    logger.info(f"Extract data from {config.start_date} until {config.end_date}")
+    logger.info(f"Extract data from {config.start_date}{f' until {config.end_date}' if config.end_date else ''}")
 
     logger.info("Extracting meetings")
     sitzungen_extractor = CityCouncilMeetingExtractor()
