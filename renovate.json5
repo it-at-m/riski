@@ -16,4 +16,23 @@
     enabled: true,
   },
   reviewers: ["freinold", "a-wittmann", "shteenft"],
-} 
+  packageRules: [
+    {
+      matchManagers: ["pep621"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "Python: non-major updates",
+      groupSlug: "python-non-major",
+      matchDepNames: ["!python"],
+    },
+    {
+      matchManagers: ["dockerfile"],
+      groupName: "Dockerfile base images",
+      groupSlug: "dockerfile-base-images",
+    },
+    {
+      matchManagers: ["github-actions"],
+      groupName: "GitHub Actions dependencies",
+      groupSlug: "github-actions",
+    },
+  ],
+}

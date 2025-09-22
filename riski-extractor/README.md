@@ -1,12 +1,12 @@
 # Template Python @ KICC / LHM
 
-Python-Template mit allen relevanten Technologien.
+Python-Template with relevant technologies.
 
 [[_TOC_]]
 
 ## Prerequisites
 
-- uv ist installiert: https://docs.astral.sh/uv/getting-started/installation/#standalone-installer
+- uv is installed: https://docs.astral.sh/uv/getting-started/installation/#standalone-installer
 
 ## Commands
 
@@ -14,35 +14,35 @@ Python-Template mit allen relevanten Technologien.
 
 ```bash
 uv sync
-# Pre-commit initalisieren
+# Initialize pre-commit
 uv run pre-commit install
 
-# Pre-commit manuell ausführen
+# Run pre-commit manually
 uv run pre-commit run
 
-# Pre-commit Hooks updaten
+# Update pre-commit hooks
 uv run pre-commit autoupdate
 ```
 
 ### Package Management
 
 ```bash
-# Environment syncen
+# Sync environment
 uv sync
 
-# Package adden
+# Add package
 uv add <package>
 
-# Package entfernen
+# Remove package
 uv remove <package>
 
-# Dev Package adden (remove gleich wie normal)
+# Add dev package (remove like above)
 uv add --dev <package>
 
-# Packages updaten
+# Update packages
 uv lock -U
 
-# Manuell requirements.txt generieren
+# Manually generate requirements.txt
 rm requirements.txt
 uv pip compile --universal pyproject.toml -o requirements.txt
 ```
@@ -50,17 +50,17 @@ uv pip compile --universal pyproject.toml -o requirements.txt
 ### Linting & Formatting
 
 ```bash
-# Linter manuell ausführen inkl. autofix
+# Run linter manually incl. autofix
 uv run ruff check --fix
 
-# Formatter manuell ausführen
+# Run formatter manually
 uv run ruff format
 ```
 
-### Applikation ausführen
+### Run application
 
 ```bash
-# Applikation starten
+# Run application
 uv run app.py -d
 ```
 
