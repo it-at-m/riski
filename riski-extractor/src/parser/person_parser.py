@@ -133,7 +133,6 @@ class PersonParser(BaseParser[Person]):
             formOfAddress=form_of_address,
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
-            modified=create_date,
             status=status,
             title=self._get_titles(potential_titles),
             web=url,
