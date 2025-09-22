@@ -16,24 +16,19 @@ class CityCouncilMotionExtractor(BaseExtractor[Paper]):
     """
 
     def __init__(self) -> None:
-        BaseExtractor.__init__(self, str(config.base_url) + "/antrag/str", "/uebersicht", CityCouncilMotionParser())
-
-    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _set_results_per_page(self, path: str) -> str:
-        self.logger.info("Set results per page to 100")
-        url = self._get_sanitized_url(path) + "-2.0-color_container-list-card-cardheader-itemsperpage_dropdown_top"
-        data = {
-            "color_container:list:card:cardheader:itemsperpage_dropdown_top": "3"
-        }  # 3 is the third entry in a dropdown menu representing the count 100
-        response = self.client.post(url=url, data=data)
-        assert response.is_redirect  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
-        return response.headers.get("Location")
+        super().__init__(
+            str(config.base_url) + "/antrag/str",
+            "/uebersicht",
+            CityCouncilMotionParser(),
+            "-2.0-color_container-list-card-cardheader-itemsperpage_dropdown_top",
+            "color_container:list:card:cardheader:itemsperpage_dropdown_top",
+        )
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _filter(self) -> str:
         filter_url = self.base_url + "/uebersicht?0-1.-filtersection_container-form"
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": ""}
+        data = {"von": config.start_date, "bis": config.end_date}
         response = self.client.post(url=filter_url, headers=headers, data=data)
         if not response.is_redirect:  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
             raise httpx.HTTPStatusError(
