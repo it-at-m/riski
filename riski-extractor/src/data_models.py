@@ -789,6 +789,7 @@ class PaperTypeEnum(str, Enum):
     MEETING_TEMPLATE = "Sitzungsvorlage"
     CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
     CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
+    SUPPLEMENTARY_PROPOSAL = "Ergänzungsantrag"
 
 
 class PaperSubtypeEnum(str, Enum):
