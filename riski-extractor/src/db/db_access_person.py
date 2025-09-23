@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from sqlmodel import select
 from src.data_models import Person
-from src.db.db import _session
+from src.db.db import get_session
 
 
 def request_person_by_risid(risid: str, session=None):
@@ -11,8 +11,8 @@ def request_person_by_risid(risid: str, session=None):
     This is used to create the correct relations in the Database.
     """
     statement = select(Person).where(Person.id == risid)
-
-    person = (_session if not session else session).exec(statement).first()
+    global_session = get_session()
+    person = (global_session if not session else session).exec(statement).first()
     return person
 
 
@@ -50,9 +50,9 @@ def update_person(person: Person, person_db: Person):
     person_db.web = person.web
     person_db.modified = datetime.now(timezone.utc)
 
-    _session.commit()
+    get_session().commit()
 
 
 def insert_person_to_database(object):
-    _session.add(object)
-    _session.commit()
+    get_session().add(object)
+    get_session().commit()

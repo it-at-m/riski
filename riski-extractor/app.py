@@ -2,7 +2,7 @@ import sys
 from logging import Logger
 
 from config.config import Config, get_config
-from src.db.db import create_tables
+from src.db.db import create_db_and_tables
 from src.db.db_access import update_or_insert_objects_to_database
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
@@ -20,7 +20,7 @@ def main():
     logger = getLogger()
     version = get_version()
 
-    create_tables()
+    create_db_and_tables()
 
     logger.info(f"RIS Indexer v{version} starting up")
 
