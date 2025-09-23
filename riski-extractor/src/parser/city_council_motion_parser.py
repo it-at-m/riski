@@ -1,11 +1,13 @@
 import re
 from datetime import datetime
 from logging import Logger
+from typing import List
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from sqlmodel import Session, select
 
-from src.data_models import File, Paper
+from src.data_models import File, Organization, Paper, Person
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
@@ -15,8 +17,8 @@ KILOBYTE = 1024
 
 class CityCouncilMotionParser(BaseParser[Paper]):
     """
-    Parser for City Council Motions and Requests.
-    Extracts metadata, documents, and relevant information from council pages.
+    Parser for council motions and requests.
+    Extracts metadata, documents, and references from council information system pages.
     """
 
     logger: Logger
@@ -44,8 +46,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
 
     def _extract_str_code(self, text: str) -> str | None:
         """
-        Extract the council code part like '20-26 / A 05870' or '20-26 / F 01283'
-        from strings that start with 'StR-Antrag' or 'StR-Anfrage'.
+        Extracts the official reference code from strings starting with 'StR-Antrag' or 'StR-Anfrage'.
         """
         match = re.search(r"StR-(?:Antrag|Anfrage)\s+([\d\-]+ / [A-Z] \d+)", text)
         if match:
@@ -53,7 +54,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         return None
 
     def _extract_files(self, url: str, soup: BeautifulSoup) -> tuple[File | None, list[File]]:
-        """Extract all file objects (first is main file, rest are auxiliary)."""
+        """Extract all file objects. First one is the main file, the rest are auxiliary."""
         main_file: File | None = None
         auxiliary_files: list[File] = []
 
@@ -94,9 +95,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         return None
 
     def _extract_description(self, soup: BeautifulSoup) -> str | None:
-        """
-        Extracts the description text from the 'Betreff' section.
-        """
+        """Extracts the description text from the 'Subject' section."""
         section = soup.select_one('section.card[aria-labelledby="sectionheader-betreff"] div.card-body p')
         if section:
             return section.get_text(" ", strip=True)
@@ -111,6 +110,69 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                 return value.get_text(" ", strip=True)
         return None
 
+    def _extract_common_metadata(self, soup: BeautifulSoup) -> dict:
+        """
+        Collects common metadata (date, submitter, responsible office, type).
+        """
+        submitted_date = self._extract_date_from_table(soup, "Eingereicht am") or self._parse_date(self._kv_value("Gestellt am:", soup))
+        originators = self._kv_value("Gestellt von:", soup)
+        initiative = self._kv_value("Initiative von:", soup)
+        if initiative:
+            # Combine both fields if initiative is present
+            originators = f"{originators}, {initiative}"
+        return {
+            "submitted_date": submitted_date,
+            "originators": originators,
+            "under_direction_of": self._kv_value("Zuständiges Referat:", soup),
+            "paper_type": self._kv_value("Typ:", soup),
+        }
+
+    def _resolve_persons(self, names_string: str | None, session: Session) -> List[Person]:
+        """
+        Convert a raw person string into Person objects.
+        """
+        if not names_string:
+            return []
+
+        persons: List[Person] = []
+        for raw in names_string.split(","):
+            name = raw.strip()
+            if not name:
+                continue
+            # Remove honorifics and council titles
+            clean_name = re.sub(r"^(Herr|Frau)?\s*StR(in)?\s*", "", name).strip()
+            stmt = select(Person).where(Person.name == clean_name)
+            person = session.exec(stmt).first()
+            if not person:
+                person = Person(name=clean_name)
+                session.add(person)
+                session.commit()
+                session.refresh(person)
+            persons.append(person)
+        return persons
+
+    def _resolve_orgs(self, orgs_string: str | None, session: Session) -> List[Organization]:
+        """
+        Convert a raw organization string into Organization objects.
+        """
+        if not orgs_string:
+            return []
+
+        organizations: List[Organization] = []
+        for raw in re.split(r"[,/]", orgs_string):
+            name = raw.strip()
+            if not name:
+                continue
+            stmt = select(Organization).where(Organization.name == name)
+            org = session.exec(stmt).first()
+            if not org:
+                org = Organization(name=name)
+                session.add(org)
+                session.commit()
+                session.refresh(org)
+            organizations.append(org)
+        return organizations
+
     def _build_paper(
         self,
         url: str,
@@ -121,8 +183,11 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         main_file: File | None,
         auxiliary_files: list[File],
         description: str | None,
+        originator_persons: list[Person],
+        originator_orgs: list[Organization],
+        under_direction_of: list[Organization],
     ) -> Paper:
-        """Central builder for Paper objects to avoid duplication."""
+        """Central builder for Paper objects."""
         created = datetime.now()
         modified = datetime.now()
 
@@ -136,18 +201,19 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             reference=reference,
             date=date,
             mainFile=main_file,
-            auxiliaryFile=auxiliary_files,
+            auxiliary_files=auxiliary_files,
             created=created,
             modified=modified,
             deleted=False,
             description=description,
+            originator_persons=originator_persons,
+            originator_orgs=originator_orgs,
+            under_direction_of=under_direction_of,
         )
 
-    def parse(self, url: str, html: str) -> Paper | None:
-        """Main parser entry point. Determines whether the page is a motion or a request."""
+    def parse(self, url: str, html: str, session: Session) -> Paper | None:
         soup = BeautifulSoup(html, "html.parser")
 
-        # Extract page title and subject
         heading = soup.select_one("h1.page-title")
         document_name = None
         reference = None
@@ -158,53 +224,31 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             title = subject_tag.get_text(" ", strip=True) if subject_tag else None
             reference = self._extract_str_code(title) if title else None
 
-        # Extract filename from download link
         link_tag = soup.find("a", class_="downloadlink text-nohyphens")
         if link_tag and link_tag.text:
             document_name = link_tag.text.strip()
         self.logger.debug(document_name)
 
-        # Dispatch to specific parsers
-        if title:
-            if "StR-Antrag" in title:
-                return self._parse_motion(reference, title, url, soup)
-            elif "StR-Anfrage" in title:
-                return self._parse_request(reference, title, url, soup)
+        if not title:
+            self.logger.warning("Unknown paper type (no title found).")
+            return None
 
-        # Fallback if no type is recognized
-        self.logger.warning("Unknown paper type")
-        return None
-
-    def _parse_motion(self, reference: str | None, document_name: str | None, url: str, soup: BeautifulSoup) -> Paper:
-        submitted_date = self._extract_date_from_table(soup, "Eingereicht am")
+        meta = self._extract_common_metadata(soup)
         main_file, auxiliary_files = self._extract_files(url, soup)
+        originator_persons = self._resolve_persons(meta["originators"], session)
+        originator_orgs = self._resolve_orgs(meta["originators"], session)
+        under_direction_of = self._resolve_orgs(meta["under_direction_of"], session)
+        # TODO: parse results and link them --> Sitzungsvorlagen need to be parsed
         return self._build_paper(
             url=url,
             document_name=document_name,
             reference=reference,
-            paper_type="Antrag",
-            date=submitted_date,
+            paper_type=meta["paper_type"],
+            date=meta["submitted_date"],
             main_file=main_file,
             auxiliary_files=auxiliary_files,
             description=self._extract_description(soup),
-        )
-
-    def _parse_request(self, reference: str | None, document_name: str | None, url: str, soup: BeautifulSoup) -> Paper:
-        """Special handling for 'StR-Anfrage' (requests)."""
-        self.logger.debug(f"Parsing Anfrage: {reference}")
-
-        submitted_on_text = self._kv_value("Gestellt am:", soup)
-        submitted_on = self._parse_date(submitted_on_text)
-        paper_type = self._kv_value("Typ:", soup)
-        main_file, auxiliary_files = self._extract_files(url, soup)
-
-        return self._build_paper(
-            url=url,
-            document_name=document_name,
-            reference=reference,
-            paper_type=paper_type,
-            date=submitted_on,
-            main_file=main_file,
-            auxiliary_files=auxiliary_files,
-            description=self._extract_description(soup),
+            originator_persons=originator_persons,
+            originator_orgs=originator_orgs,
+            under_direction_of=under_direction_of,
         )
