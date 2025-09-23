@@ -11,8 +11,8 @@ def request_person_by_risid(risid: str, session=None):
     This is used to create the correct relations in the Database.
     """
     statement = select(Person).where(Person.id == risid)
-    global_session = get_session()
-    person = (global_session if not session else session).exec(statement).first()
+    sess = session or get_session()
+    person = sess.exec(statement).first()
     return person
 
 
