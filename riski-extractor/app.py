@@ -4,6 +4,7 @@ from logging import Logger
 from config.config import Config, get_config
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
+from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.logtools import getLogger
 from src.version import get_version
@@ -38,6 +39,13 @@ def main():
     extracted_city_council_member_list = city_council_member_extractor.run()
     logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Members")
     logger.debug([ccm.name for ccm in extracted_city_council_member_list])
+    logger.info([obj.familyName for obj in extracted_head_of_department_list])
+
+    logger.info("Extracting City Council Motion")
+    city_council_motion_extractor = CityCouncilMotionExtractor()
+    extracted_city_council_motion_list = city_council_motion_extractor.run()
+    logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motion")
+    logger.debug([obj.name for obj in extracted_city_council_motion_list])
 
     logger.info("Extraction process finished")
     # TODO: Transform
