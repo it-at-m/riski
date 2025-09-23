@@ -29,7 +29,6 @@ def main():
     extracted_meeting_list = sitzungen_extractor.run()
     logger.info(f"Extracted {len(extracted_meeting_list)} meetings")
     logger.debug([obj.name for obj in extracted_meeting_list])
-    update_or_insert_objects_to_database(extracted_meeting_list)
 
     logger.info("Extracting Heads of Departments")
     head_of_department_extractor = HeadOfDepartmentExtractor()
