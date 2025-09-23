@@ -134,7 +134,7 @@ class PersonParser(BaseParser[Person]):
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
             status=status,
-            title=self._get_titles(potential_titles),
+            title=" ".join(self._get_titles(potential_titles)),
             web=url,
             deleted=False,
         )
