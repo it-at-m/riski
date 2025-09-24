@@ -16,16 +16,17 @@ def request_person_by_risid(risid: str, session=None):
     return person
 
 
-def update_or_insert_person(person: Person):
+def update_or_insert_person(person: Person, session=None):
     person_db = request_person_by_risid(person.id)
     if person_db:
-        update_person(person, person_db)
+        update_person(person, person_db, session)
     else:
         person.modified = person.created
-        insert_person_to_database(person)
+        insert_person_to_database(person, session)
 
 
-def update_person(person: Person, person_db: Person):
+def update_person(person: Person, person_db: Person, session=None):
+    sess = session or get_session()
     person_db.affix = person.affix
     person_db.name = person.name
     person_db.body = person.body
@@ -50,9 +51,10 @@ def update_person(person: Person, person_db: Person):
     person_db.web = person.web
     person_db.modified = datetime.now(timezone.utc)
 
-    get_session().commit()
+    sess.commit()
 
 
-def insert_person_to_database(object):
-    get_session().add(object)
-    get_session().commit()
+def insert_person_to_database(object, session=None):
+    sess = session or get_session()
+    sess.add(object)
+    sess.commit()
