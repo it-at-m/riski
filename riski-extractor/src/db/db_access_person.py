@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from sqlmodel import select
 from src.data_models import Person
 from src.db.db import get_session
@@ -27,6 +25,7 @@ def update_or_insert_person(person: Person, session=None):
 
 def update_person(person: Person, person_db: Person, session=None):
     sess = session or get_session()
+
     person_db.affix = person.affix
     person_db.name = person.name
     person_db.body = person.body
@@ -49,8 +48,8 @@ def update_person(person: Person, person_db: Person, session=None):
     person_db.title = person.title
     person_db.type = person.type
     person_db.web = person.web
-    person_db.modified = datetime.now(timezone.utc)
 
+    sess.add(person_db)
     sess.commit()
 
 

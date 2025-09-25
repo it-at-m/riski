@@ -20,7 +20,7 @@ def get_engine():
 
 
 def get_session():
-    """Lazy initialization of database engine."""
+    """Lazy initialization of database session."""
     global _session
     if _session is None:
         _session = Session(get_engine())

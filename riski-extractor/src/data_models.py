@@ -104,8 +104,10 @@ class System(SQLModel, table=True):
     website: str | None = Field(None, description="URL of the parliamentary information system's website")
     vendor: str | None = Field(None, description="URL of the software vendor's website")
     product: str | None = Field(None, description="URL for information about the used OParl server software")
-    created: datetime | None = Field(None, description="Time of creation of this object.")
-    modified: datetime | None = Field(None, description="Time of the last modification of this object.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="URL for the HTML view of this object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     other_oparl_versions: list["System"] = Relationship(
@@ -174,8 +176,10 @@ class Location(SQLModel, table=True):
     )
     locality: str | None = Field(None, description="Locality specification of the address.")
     license: str | None = Field(None, description="License for the provided information.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     # Relationships
@@ -205,8 +209,10 @@ class LegislativeTerm(SQLModel, table=True):
     startDate: datetime | None = Field(None, description="Start date of the legislative term.")
     endDate: datetime | None = Field(None, description="End date of the legislative term.")
     license: str | None = Field(None, description="License for the provided information.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     keywords: list["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
@@ -276,8 +282,10 @@ class Organization(SQLModel, table=True):
     location: uuid.UUID | None = Field(None, description="Location where the organization is based.", foreign_key="location.db_id")
     externalBody: str | None = Field(None, description="Reference to an external body (only for imports).")
     license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the organization.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
@@ -332,8 +340,10 @@ class Person(SQLModel, table=True):
     life: str | None = Field(None, description="Life dates")
     lifeSource: str | None = Field(None, description="Source of life dates")
     license: str | None = Field(None, description="License")
-    created: datetime | None = Field(None, description="Time of creation")
-    modified: datetime | None = Field(None, description="Last modification")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the person")
     deleted: bool = Field(default=False, description="Marked as deleted")
 
@@ -379,8 +389,10 @@ class Membership(SQLModel, table=True):
         description="The grouping for which the person sits in the organization specified under organization. Example: Membership as a representative of a parliamentary faction, grouping, or external organization.",
     )
     license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     keywords: list["Keyword"] = Relationship(back_populates="memberships", link_model=MembershipKeyword)
@@ -449,8 +461,10 @@ class File(SQLModel, table=True):
     )
     license: str | None = Field(None, description="License for the published data.")
 
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     derivative_files: list["File"] = Relationship(
@@ -514,8 +528,10 @@ class AgendaItem(SQLModel, table=True):
     start: datetime | None = Field(None, description="Date and time of the start point of the agenda item.")
     end: datetime | None = Field(None, description="End point of the agenda item as date/time.")
     license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     auxiliaryFile: list["File"] = Relationship(back_populates="agendaItem", link_model=FileAgendaItemLink)
@@ -542,8 +558,10 @@ class Paper(SQLModel, table=True):
         foreign_key="file.db_id",
     )
     license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
 
@@ -639,8 +657,10 @@ class Body(SQLModel, table=True):
     membership: str = Field(description="list of memberships in the body.")
     classification: str | None = Field(None, description="Type of the body, e.g., 'City' or 'District'.")
     location: str | None = Field(None, description="Location of the administration of this body.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the body.")
     deleted: bool | None = Field(False, description="Marks this object as deleted.")
     equivalents: list["Body"] = Relationship(
@@ -706,8 +726,10 @@ class Meeting(SQLModel, table=True):
         foreign_key="file.db_id",
     )
     license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the meeting.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     organizations: list["Organization"] = Relationship(back_populates="meetings", link_model=MeetingOrganizationLink)
@@ -733,8 +755,10 @@ class Consultation(SQLModel, table=True):
     authoritative: bool = Field(default=False, description="Was a resolution made?")
     role: str | None = Field(default=None, description="Function of the consultation (e.g., hearing, preliminary consultation)")
     license: str | None = Field(default=None, description="License of the data")
-    created: datetime | None = Field(default=None, description="Time of creation.")
-    modified: datetime | None = Field(default=None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(default=None, description="HTML view of the meeting.")
     keywords: list["Keyword"] = Relationship(back_populates="consultations", link_model=ConsultationKeywordLink)
 
