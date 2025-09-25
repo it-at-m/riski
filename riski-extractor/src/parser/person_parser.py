@@ -1,5 +1,4 @@
 import re
-from datetime import datetime, timezone
 from logging import Logger
 
 from bs4 import BeautifulSoup
@@ -60,8 +59,6 @@ class PersonParser(BaseParser[Person]):
     def parse(self, url: str, html: str) -> Person:
         self.logger.debug(f"Parsing person: {url}")
         soup = BeautifulSoup(html, "html.parser")
-
-        create_date = datetime.now(timezone.utc)
 
         title_wrapper = soup.find("h1", class_="page-title")
         title_element = title_wrapper.find("span", class_="d-inline-block") if title_wrapper else None
@@ -129,7 +126,6 @@ class PersonParser(BaseParser[Person]):
             familyName=last_name,
             givenName=" ".join(given_name),
             name=name,
-            created=create_date,
             formOfAddress=form_of_address,
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,

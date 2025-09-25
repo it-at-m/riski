@@ -26,28 +26,9 @@ def update_or_insert_person(person: Person, session=None):
 def update_person(person: Person, person_db: Person, session=None):
     sess = session or get_session()
 
-    person_db.affix = person.affix
-    person_db.name = person.name
-    person_db.body = person.body
-    person_db.deleted = person.deleted
-    person_db.email = person.email
-    person_db.familyName = person.familyName
-    person_db.formOfAddress = person.formOfAddress
-    person_db.gender = person.gender
-    person_db.givenName = person.givenName
-    person_db.keywords = person.keywords
-    person_db.license = person.license
-    person_db.life = person.life
-    person_db.lifeSource = person.lifeSource
-    person_db.location = person.location
-    person_db.meetings = person.meetings
-    person_db.membership = person.membership
-    person_db.papers = person.papers
-    person_db.phone = person.phone
-    person_db.status = person.status
-    person_db.title = person.title
-    person_db.type = person.type
-    person_db.web = person.web
+    for field, value in person.__dict__.items():
+        if field not in ("db_id", "created", "modified") and not field.startswith("_"):
+            setattr(person_db, field, value)
 
     sess.add(person_db)
     sess.commit()

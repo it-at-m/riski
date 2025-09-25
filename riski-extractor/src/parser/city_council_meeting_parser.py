@@ -108,8 +108,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now()
-        modified = datetime.now()
         deleted = False
 
         # --- Assemble Meeting ---
@@ -119,8 +117,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             name=name,
             cancelled=cancelled,
             start=start,
-            created=created,
-            modified=modified,
             web=url,
             deleted=deleted,
             meetingState=meetingState,
