@@ -266,7 +266,9 @@ class Organization(SQLModel, table=True):
     __tablename__ = "organization"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the organization.")
-    type: str | None = Field(None, description="Type of the object: 'https://schema.oparl.org/1.1/Organization'.")
+    type: str | None = Field(
+        "https://schema.oparl.org/1.1/Organization", description="Type of the object: 'https://schema.oparl.org/1.1/Organization'."
+    )
     body: str | None = Field(None, description="Reference to the body to which the organization belongs.")
     name: str | None = Field(None, description="Designation of the organization.")
     meeting_id: uuid.UUID | None = Field(None, description="list of meetings of this organization.", foreign_key="meeting.db_id")
@@ -279,9 +281,12 @@ class Organization(SQLModel, table=True):
     location: uuid.UUID | None = Field(None, description="Location where the organization is based.", foreign_key="location.db_id")
     externalBody: str | None = Field(None, description="Reference to an external body (only for imports).")
     license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(None, description="Time of creation.")
-    modified: datetime | None = Field(None, description="Last modification.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
     web: str | None = Field(None, description="HTML view of the organization.")
+    inactive: bool | None = Field(False, description="Marks this organization as inactive.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
     post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
