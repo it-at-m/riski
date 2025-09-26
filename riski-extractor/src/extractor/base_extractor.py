@@ -47,7 +47,6 @@ class BaseExtractor(ABC, Generic[T]):
     def _set_results_per_page(self, path: str) -> str:
         """
         Method for determining how many results should be included in responses.
-
         """
         url = f"{self._get_sanitized_url(path)}{self.results_filter_identifier_url}"
         self.logger.info(url)

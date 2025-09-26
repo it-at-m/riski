@@ -2,8 +2,8 @@ from sqlmodel import select
 from src.db.db import get_session
 
 
-def request_object_by_risid(risid: str, type: type, session=None):
-    statement = select(type).where(type.id == risid)
+def request_object_by_risid(risid: str, t: type, session=None):
+    statement = select(t).where(t.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
@@ -14,9 +14,9 @@ def update_or_insert_objects_to_database(objects: list[object], session=None):
     for obj in objects:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)
         if obj_db:
-            update_object(obj, obj_db, session)
+            update_object(obj, obj_db, sess)
         else:
-            insert_object_to_database(obj, session)
+            insert_object_to_database(obj, sess)
 
 
 def update_object(obj: object, obj_db: object, session=None):
@@ -30,7 +30,7 @@ def update_object(obj: object, obj_db: object, session=None):
     sess.commit()
 
 
-def insert_object_to_database(object, session=None):
+def insert_object_to_database(obj: object, session=None):
     sess = session or get_session()
-    sess.add(object)
+    sess.add(obj)
     sess.commit()
