@@ -81,18 +81,10 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         name = title
 
         # --- Organization (as URLs) ---
-        organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization_urls = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
-
-        # --- Additional organization from "Gremium:" ---
-        gremium_links = soup.select("div.keyvalue-key:-soup-contains('Gremium:') + div a")
-        gremium_urls = [urljoin(url, a.get("href")) for a in gremium_links if a.get("href")]
-
-        # Combine both lists
-        organization_urls.extend(gremium_urls)
-
-        # Set to None if empty
-        organization_urls = organization_urls if len(organization_urls) > 0 else None
+        organization_link_elements = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a") + soup.select(
+            "div.keyvalue-key:-soup-contains('Gremium:') + div a"
+        )
+        organization_urls = list(dict.fromkeys(urljoin(url, a.get("href")) for a in organization_link_elements if a.get("href"))) or None
 
         self.logger.debug(f"Organizations: {organization_urls}")
 
