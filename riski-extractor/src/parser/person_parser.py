@@ -125,7 +125,6 @@ class PersonParser(BaseParser[Person]):
         # --- Assemble Person ---
         person = Person(
             id=url,
-            type="https://schema.oparl.org/1.1/Person",
             familyName=last_name,
             givenName=" ".join(given_name),
             name=name,
