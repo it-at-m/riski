@@ -78,14 +78,23 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
                 data_dict[key] = value
                 self.logger.debug(f"Extracted field: {key} = {value}")
 
-        type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
         # --- Organization (as URLs) ---
         organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
-        organization = organization if len(organization) > 0 else None
-        self.logger.debug(f"Organizations: {organization}")
+        organization_urls = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
+
+        # --- Additional organization from "Gremium:" ---
+        gremium_links = soup.select("div.keyvalue-key:-soup-contains('Gremium:') + div a")
+        gremium_urls = [urljoin(url, a.get("href")) for a in gremium_links if a.get("href")]
+
+        # Combine both lists
+        organization_urls.extend(gremium_urls)
+
+        # Set to None if empty
+        organization_urls = organization_urls if len(organization_urls) > 0 else None
+
+        self.logger.debug(f"Organizations: {organization_urls}")
 
         # --- Participants (as URLs) ---
         participants = []
@@ -115,7 +124,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         # --- Assemble Meeting ---
         meeting = Meeting(
             id=url,
-            type=type,
             name=name,
             cancelled=cancelled,
             start=start,
