@@ -4,7 +4,7 @@ from logging import Logger
 from os import getenv
 from pathlib import Path
 
-from pydantic import AliasChoices, Field, HttpUrl, PostgresDsn
+from pydantic import AliasChoices, Field, HttpUrl, PostgresDsn, model_validator
 from pydantic_settings import (
     BaseSettings,
     CliSettingsSource,
@@ -50,6 +50,10 @@ class Config(BaseSettings):
     start_date: str = Field(
         default=datetime.date.today().isoformat(),
         description="Start date for scraping (ISO format YYYY-MM-DD)",
+    )
+    end_date: str | None = Field(
+        default=None,
+        description="End date for scraping (ISO format YYYY-MM-DD)",
     )
 
     json_export: bool = Field(
@@ -130,11 +134,30 @@ class Config(BaseSettings):
         validation_alias="RISKI_DB_PASSWORD",
         description="Postgres password",
     )
-    database_url: PostgresDsn | None = Field(
-        default=None,
-        validation_alias="DATABASE_URL",
-        description="Full Postgres connection URL",
+    riski_db_hostname: str = Field(
+        validation_alias="RISKI_DB_HOSTNAME",
+        description="Postgres host",
     )
+    riski_db_port: int = Field(
+        default=5432,
+        validation_alias="RISKI_DB_PORT",
+        description="Postgres port",
+    )
+
+    @property
+    def database_url(self) -> PostgresDsn:
+        """
+        Full Postgres connection URL
+        """
+        return PostgresDsn.build(
+            # use psycopg version 3
+            scheme="postgresql+psycopg",
+            username=self.riski_db_user,
+            password=self.riski_db_password,
+            host=self.riski_db_hostname,
+            port=self.riski_db_port,
+            path=self.riski_db_name,
+        )
 
     # === Test Database (Optional) ===
     test_riski_db_name: str | None = Field(
@@ -206,6 +229,16 @@ class Config(BaseSettings):
                 }
             )
         )
+
+    @model_validator(mode="after")
+    def _validate_date_range(self):
+        if not self.end_date:
+            return self
+        start = datetime.date.fromisoformat(self.start_date)
+        end = datetime.date.fromisoformat(self.end_date)
+        if end < start:
+            raise ValueError("end_date must be on or after start_date")
+        return self
 
 
 @lru_cache

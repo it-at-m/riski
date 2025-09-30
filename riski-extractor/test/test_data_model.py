@@ -46,17 +46,16 @@ from src.data_models import (
     PersonMembershipLink,
     Post,
     System,
-    Title,
 )
 
 
 # Test for the System class
 def test_system_create(session, system):
-    # Hole System aus der DB per Query
+    # Fetch system from DB with query
     statement = select(System).where(System.id == system.id)
     db_system = session.exec(statement).one()
 
-    # Prüfe, dass das gleiche Objekt in der DB liegt
+    # Check for equality
     assert db_system.id == system.id
     assert db_system.name == system.name
     assert db_system.oparlVersion == system.oparlVersion
@@ -555,15 +554,6 @@ def test_paper_subtype_create(session, papersubtype):
     assert db_subtype.id == papersubtype.id
     assert db_subtype.name == papersubtype.name
     assert db_subtype.paper_type_id == papersubtype.paper_type_id
-
-
-# ----------------------
-# Test Title
-# ----------------------
-def test_title_create(session, title):
-    db_title = session.exec(select(Title).where(Title.db_id == title.db_id)).one()
-    assert db_title.db_id == title.db_id
-    assert db_title.title == title.title
 
 
 # ----------------------

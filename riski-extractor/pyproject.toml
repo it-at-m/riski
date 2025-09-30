@@ -9,6 +9,7 @@ authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
     { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
     { name = "Annalena Wittmann", email = "annalena.wittmann@muenchen.de" },
+    { name = "Tim-Luca Pfeifer", email = "tim-luca.pfeifer@muenchen.de" },
 ]
 dependencies = [
     "pydantic-settings>=2.10.1",

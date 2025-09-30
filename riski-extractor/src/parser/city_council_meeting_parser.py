@@ -6,23 +6,22 @@ from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from pydantic import HttpUrl
 
-from src.data_models import File, Location, Meeting
+from src.data_models import File, Meeting
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
-class StadtratssitzungenParser(BaseParser[Meeting]):
+class CityCouncilMeetingParser(BaseParser[Meeting]):
     """
-    Parser für Stadtratssitzungen
+    Parser for CityCouncilMeetings
     """
 
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        self.logger.info("StadtratssitzungenParser initialized.")
+        self.logger.info("CityCouncilMeetingParser initialized.")
 
         if platform.system() == "Windows":
             # For Windows, use the specific code page that works
@@ -79,35 +78,22 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
                 data_dict[key] = value
                 self.logger.debug(f"Extracted field: {key} = {value}")
 
-        type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
-        # --- Location Object ---
-        location = Location(
-            id=None,
-            type="place",
-            description="Ort der Stadtratssitzung",
-            room=data_dict.get("Sitzungsort:", ""),
-            locality="München",
-            created=datetime.now(),
-            modified=datetime.now(),
-            web=HttpUrl(url),
-            deleted=False,
-        )
-        self.logger.debug("Location object created.")
-
         # --- Organization (as URLs) ---
-        organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [HttpUrl(urljoin(url, a.get("href"))) for a in organization_links if a.get("href")]
-        organization = organization if len(organization) > 0 else None
-        self.logger.debug(f"Organizations: {organization}")
+        organization_link_elements = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a") + soup.select(
+            "div.keyvalue-key:-soup-contains('Gremium:') + div a"
+        )
+        organization_urls = list(dict.fromkeys(urljoin(url, a.get("href")) for a in organization_link_elements if a.get("href"))) or None
+
+        self.logger.debug(f"Organizations: {organization_urls}")
 
         # --- Participants (as URLs) ---
         participants = []
         for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
             link = li.get("href")
             if link:
-                full_url = HttpUrl(urljoin(url, link))
+                full_url = urljoin(url, link)
                 participants.append(full_url)
         participants = participants if len(participants) > 0 else None
         self.logger.debug(f"Participants: {participants}")
@@ -115,7 +101,7 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = HttpUrl(urljoin(url, doc_link["href"]))
+            doc_url = urljoin(url, doc_link["href"])
             doc_title = doc_link.get_text(strip=True)
             if doc_url:
                 auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
@@ -123,25 +109,15 @@ class StadtratssitzungenParser(BaseParser[Meeting]):
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
         # --- Remaining Fields ---
-        created = datetime.now()
-        modified = datetime.now()
-        web = HttpUrl(url)
         deleted = False
 
         # --- Assemble Meeting ---
         meeting = Meeting(
-            id=None,
-            type=type,
+            id=url,
             name=name,
             cancelled=cancelled,
             start=start,
-            location=location,
-            organization=organization,
-            participant=participants,
-            auxiliaryFile=auxiliaryFile,
-            created=created,
-            modified=modified,
-            web=web,
+            web=url,
             deleted=deleted,
             meetingState=meetingState,
         )
