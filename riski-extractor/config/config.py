@@ -125,6 +125,15 @@ class Config(BaseSettings):
         validation_alias="RISKI_DB_PASSWORD",
         description="Postgres password",
     )
+    riski_db_hostname: str = Field(
+        validation_alias="RISKI_DB_HOSTNAME",
+        description="Postgres host",
+    )
+    riski_db_port: int = Field(
+        default=5432,
+        validation_alias="RISKI_DB_PORT",
+        description="Postgres port",
+    )
 
     @property
     def database_url(self) -> PostgresDsn:
@@ -136,8 +145,8 @@ class Config(BaseSettings):
             scheme="postgresql+psycopg",
             username=self.riski_db_user,
             password=self.riski_db_password,
-            host="localhost",
-            port=5432,
+            host=self.riski_db_hostname,
+            port=self.riski_db_port,
             path=self.riski_db_name,
         )
 
