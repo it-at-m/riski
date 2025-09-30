@@ -85,7 +85,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         organization_link_elements = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a") + soup.select(
             "div.keyvalue-key:-soup-contains('Gremium:') + div a"
         )
-        organization_urls = list(dict.fromkeys(urljoin(url, a.get("href")) for a in organization_link_elements if a.get("href"))) or None
+        organization_urls = list(dict.fromkeys(urljoin(url, a.get("href")) for a in organization_link_elements if a.get("href"))) or []
 
         self.logger.debug(f"Organizations: {organization_urls}")
 
@@ -96,7 +96,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             if link:
                 full_url = urljoin(url, link)
                 participants.append(full_url)
-        participants = participants if len(participants) > 0 else None
+        participants = participants if len(participants) > 0 else []
         self.logger.debug(f"Participants: {participants}")
 
         # --- Documents ---
@@ -110,7 +110,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
                 auxiliaryFile.append(temp_file)
 
             self.logger.debug(f"Document found: {doc_title} ({doc_url})")
-        auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
+        auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else []
 
         # --- Remaining Fields ---
         deleted = False
