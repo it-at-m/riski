@@ -2,8 +2,8 @@ from sqlmodel import select
 from src.db.db import get_session
 
 
-def request_object_by_risid(risid: str, t: type, session=None):
-    statement = select(t).where(t.id == risid)
+def request_object_by_risid(risid: str, object_type: type, session=None):
+    statement = select(object_type).where(object_type.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
