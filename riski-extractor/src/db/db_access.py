@@ -1,5 +1,5 @@
 from sqlmodel import select
-from src.data_models import Keyword
+from src.data_models import Keyword, PaperType
 from src.db.db import get_session
 
 
@@ -54,8 +54,8 @@ def insert_and_return_object(obj: object, session=None):
 
 def get_or_insert_object_to_database(obj: object, session=None):
     sess = session or get_session()
-    if isinstance(obj, Keyword):
-        obj_db = request_object_by_name(obj.name, Keyword, sess)
+    if isinstance(obj, Keyword) or isinstance(obj, PaperType):
+        obj_db = request_object_by_name(obj.name, type(obj), sess)
     else:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)
     if not obj_db:

@@ -11,7 +11,7 @@ config: Config = get_config()
 
 class CityCouncilMeetingTemplateExtractor(BaseExtractor[Paper]):
     """
-    Extractor for the City Council Motion on the RIS website
+    Extractor for the City Council Meeting Templates on the RIS website
     """
 
     def __init__(self) -> None:
