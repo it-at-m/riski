@@ -1,9 +1,17 @@
 from sqlmodel import select
+from src.data_models import Keyword
 from src.db.db import get_session
 
 
 def request_object_by_risid(risid: str, object_type: type, session=None):
     statement = select(object_type).where(object_type.id == risid)
+    sess = session or get_session()
+    obj = sess.exec(statement).first()
+    return obj
+
+
+def request_object_by_name(name: str, object_type: type, session=None):
+    statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
@@ -34,3 +42,22 @@ def insert_object_to_database(obj: object, session=None):
     sess = session or get_session()
     sess.add(obj)
     sess.commit()
+
+
+def insert_and_return_object(obj: object, session=None):
+    sess = session or get_session()
+    sess.add(obj)
+    sess.commit()
+    sess.refresh(obj)
+    return obj
+
+
+def get_or_insert_object_to_database(obj: object, session=None):
+    sess = session or get_session()
+    if isinstance(obj, Keyword):
+        obj_db = request_object_by_name(obj.name, Keyword, sess)
+    else:
+        obj_db = request_object_by_risid(obj.id, type(obj), sess)
+    if not obj_db:
+        obj_db = insert_and_return_object(obj, sess)
+    return obj_db
