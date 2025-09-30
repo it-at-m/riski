@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 from src.data_models import File, Meeting
+from src.db.db_access import get_or_insert_object_to_database
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
@@ -104,7 +105,10 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             doc_url = urljoin(url, doc_link["href"])
             doc_title = doc_link.get_text(strip=True)
             if doc_url:
-                auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
+                temp_file = File(id=doc_url, name=doc_title, accessUrl=doc_url)
+                temp_file = get_or_insert_object_to_database(temp_file)
+                auxiliaryFile.append(temp_file)
+
             self.logger.debug(f"Document found: {doc_title} ({doc_url})")
         auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
 
@@ -120,6 +124,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             web=url,
             deleted=deleted,
             meetingState=meetingState,
+            auxiliary_files=auxiliaryFile,
         )
 
         self.logger.debug(f"Meeting object created: {meeting.name}")
