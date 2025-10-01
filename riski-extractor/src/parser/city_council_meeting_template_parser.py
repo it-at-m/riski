@@ -36,16 +36,22 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
 
         # --- title and reference ---
         title_text = self._get_title(soup, self.logger)
-        reference = self._extract_reference(title_text)
+        reference = self._extract_reference(title_text) if title_text else None
 
         # --- description / subject (Betreff) ---
+        description = None
         description_section = soup.find("section", {"aria-labelledby": "sectionheader-betreff"})
         if description_section:
-            description = description_section.find("p").get_text(strip=True)
+            description_paragraph = description_section.find("p")
+            if description_paragraph:
+                description = description_paragraph.get_text(strip=True)
 
+        short_information = None
         short_info_section = soup.find("section", {"aria-labelledby": "sectionheader-kurzinfo"})
         if short_info_section:
-            short_information = short_info_section.find("div", class_="collapsable-content").get_text(strip=True)
+            short_info_content = short_info_section.find("div", class_="collapsable-content")
+            if short_info_content:
+                short_information = short_info_content.get_text(strip=True)
 
         date_str = self._kv_value("Freigabe:", soup)
         date = datetime.strptime(date_str, "%d.%m.%Y") if date_str else None
@@ -56,7 +62,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         # direction_tag = self._kv_value("Zuständiges Referat:", soup)
 
         name = self._kv_value("Referent*in:", soup)
-        familyName = self._extract_lastname(name)
+        familyName = self._extract_lastname(name) if name else None
         if familyName:
             originators = [request_person_by_familyName(familyName)]
             if originators == [None]:
