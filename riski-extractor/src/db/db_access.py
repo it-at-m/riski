@@ -19,10 +19,14 @@ def request_object_by_name(name: str, object_type: type, session=None):
 
 def insert_and_return_object(obj: object, session=None):
     sess = session or get_session()
-    sess.add(obj)
-    sess.commit()
-    sess.refresh(obj)
-    return obj
+    try:
+        sess.add(obj)
+        sess.commit()
+        sess.refresh(obj)
+        return obj
+    except Exception:
+        sess.rollback()
+        raise
 
 
 def get_or_insert_object_to_database(obj: object, session=None):
