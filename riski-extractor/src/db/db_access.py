@@ -1,5 +1,5 @@
 from sqlmodel import select
-from src.data_models import Keyword, PaperType
+from src.data_models import Keyword, PaperType, Person
 from src.db.db import get_session
 
 
@@ -12,6 +12,13 @@ def request_object_by_risid(risid: str, object_type: type, session=None):
 
 def request_object_by_name(name: str, object_type: type, session=None):
     statement = select(object_type).where(object_type.name == name)
+    sess = session or get_session()
+    obj = sess.exec(statement).first()
+    return obj
+
+
+def request_person_by_familyName(familyName: str, session=None):
+    statement = select(Person).where(Person.familyName == familyName)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj

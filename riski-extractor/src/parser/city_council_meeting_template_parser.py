@@ -1,11 +1,12 @@
+import re
 from datetime import datetime
 from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from src.data_models import File, Keyword, Paper, PaperType
-from src.db.db_access import get_or_insert_object_to_database
+from src.data_models import File, Keyword, Paper, PaperType, Person
+from src.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
@@ -17,16 +18,34 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         self.logger = getLogger()
         self.logger.info("City Council Meeting Template Parser initialized.")
 
+    def _extract_lastname(self, text: str) -> str | None:
+        words = text.strip().split()
+        ignore = {"Dr.", "Dr", "i.V.", "i.V", "Berufsm.", "Berufsm", "StRin", "Stadtschulrat"}
+        filtered = [w for w in words if w not in ignore]
+        if not filtered:
+            return None
+        return filtered[-1]
+
+    def _extract_reference(self, text: str) -> str | None:
+        # Regex: digits-digits / V digits
+        match = re.search(r"\d+-\d+\s*/\s*V\s*\d+", text)
+        return match.group(0) if match else None
+
     def parse(self, url: str, html: str) -> Paper | None:
         soup = BeautifulSoup(html, "html.parser")
 
         # --- title and reference ---
         title_text = self._get_title(soup, self.logger)
-        reference = title_text.split(" ", 1)[-1] if " " in title_text else title_text
+        reference = self._extract_reference(title_text)
 
         # --- description / subject (Betreff) ---
-        desc_tag = soup.select_one("#sectionheader-betreff + .card-body p")
-        description = desc_tag.get_text(" ", strip=True) if desc_tag else None
+        description_section = soup.find("section", {"aria-labelledby": "sectionheader-betreff"})
+        if description_section:
+            description = description_section.find("p").get_text(strip=True)
+
+        short_info_section = soup.find("section", {"aria-labelledby": "sectionheader-kurzinfo"})
+        if short_info_section:
+            short_information = short_info_section.find("div", class_="collapsable-content").get_text(strip=True)
 
         date_str = self._kv_value("Freigabe:", soup)
         date = datetime.strptime(date_str, "%d.%m.%Y") if date_str else None
@@ -36,8 +55,15 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
 
         # direction_tag = self._kv_value("Zuständiges Referat:", soup)
 
-        # referent = self._kv_value("Referent*in:", soup)
-        # originators = [Person(name=referent)] if referent else []
+        name = self._kv_value("Referent*in:", soup)
+        familyName = self._extract_lastname(name)
+        if familyName:
+            originators = [request_person_by_familyName(familyName)]
+            if originators == [None]:
+                self.logger.warning(f"{url}: Person not found: {familyName}")
+                originators = [insert_and_return_object(Person(id="", familyName=familyName))]
+        else:
+            originators = []
 
         # --- locations (Stadtbezirk/e) as keywords ---
         loc_tag = self._kv_value("Stadtbezirk/e:", soup)
@@ -57,11 +83,15 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         self.logger.debug(f"Parsed paper {reference} from {url}")
         paper = Paper(
             id=url,
-            main_file=main_file,
+            name=title_text,
+            mainFile=main_file,
             auxiliary_files=auxiliary_files,
             keywords=keyword,
-            description=description,
+            subject=description,
             paper_type=paper_type_fk,
             date=date,
+            originator_persons=originators,
+            short_information=short_information,
+            reference=reference,
         )
         return paper

@@ -47,10 +47,11 @@ def main():
     update_or_insert_objects_to_database(extracted_city_council_member_list)
 
     logger.info("Extracting City Council Meeting Templates")
-    city_council_meeeting_template_extractor = CityCouncilMeetingTemplateExtractor()
-    extracted_city_council_meeting_template_list = city_council_meeeting_template_extractor.run()
+    city_council_meeting_template_extractor = CityCouncilMeetingTemplateExtractor()
+    extracted_city_council_meeting_template_list = city_council_meeting_template_extractor.run()
+    logger.info(f"Extracted {len(extracted_city_council_meeting_template_list)} City Council Meeting Templates")
+    logger.debug([template.name for template in extracted_city_council_meeting_template_list])
     update_or_insert_objects_to_database(extracted_city_council_meeting_template_list)
-    logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Meeting Templates")
 
     logger.info("Extraction process finished")
     # TODO: Transform
