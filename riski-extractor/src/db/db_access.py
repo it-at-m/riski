@@ -17,11 +17,13 @@ def request_object_by_name(name: str, object_type: type, session=None):
     return obj
 
 
-def request_person_by_familyName(familyName: str, session=None):
+def request_person_by_familyName(familyName: str, logger, session=None):
     statement = select(Person).where(Person.familyName == familyName)
     sess = session or get_session()
-    obj = sess.exec(statement).first()
-    return obj
+    results = sess.exec(statement).all()
+    if len(results) > 1:
+        logger.warning(f"Multiple Person records found for familyName '{familyName}'. Returning first match.")
+    return results[0] if results else None
 
 
 def update_or_insert_objects_to_database(objects: list[object], session=None):

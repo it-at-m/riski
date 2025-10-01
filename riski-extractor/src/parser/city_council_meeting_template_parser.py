@@ -64,7 +64,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
         if familyName:
-            originators = [request_person_by_familyName(familyName)]
+            originators = [request_person_by_familyName(familyName, self.logger)]
             if originators == [None]:
                 self.logger.warning(f"{url}: Person not found: {familyName}")
                 originators = [insert_and_return_object(Person(id="", familyName=familyName))]
