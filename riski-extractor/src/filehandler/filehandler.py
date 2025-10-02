@@ -1,18 +1,35 @@
-from typing import List
+from logging import Logger
 
+from config.config import Config, get_config
+from httpx import Client
 from src.data_models import File
+from src.db.db_access import request_all, update_or_insert_objects_to_database
+from src.logtools import getLogger
+
+config: Config = get_config()
 
 
-def download_and_persist_files(files: List[File]):
-    for file in files:
-        if not file.content:  # or checksum does not macthc:
-            # get content als blob
-            # add blob to file
-            # add size to file
-            # add checksum to file
-            # save file to database
-            pass
+class Filehandler:
+    logger: Logger
 
+    def __init__(self) -> None:
+        self.logger = getLogger()
+        if config.https_proxy or config.http_proxy:
+            self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
+        else:
+            self.client = Client(timeout=config.request_timeout)
 
-def _blob_checksum():
-    pass
+    def download_and_persist_files(self):
+        self.logger.info("Persisting content of all scraped files to database.")
+        files: list[File] = request_all(File)
+        for file in files:
+            self.logger.debug(f"Checking neccesity of inserting/updating file {file.name} to database.")
+            self.download_and_persist_file(file=file)
+
+    def download_and_persist_file(self, file: File):
+        content = self.client.get(url=file.id).content
+        if not bytes(content) == file.content:
+            file.content = bytes(content)
+            file.size = len(content)
+            self.logger.debug(f"Saving content of file {file.name} to database.")
+            update_or_insert_objects_to_database([file])

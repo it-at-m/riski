@@ -7,6 +7,7 @@ from src.db.db_access import update_or_insert_objects_to_database
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
+from src.filehandler.filehandler import Filehandler
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -45,6 +46,9 @@ def main():
     logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Members")
     logger.debug([ccm.name for ccm in extracted_city_council_member_list])
     update_or_insert_objects_to_database(extracted_city_council_member_list)
+
+    filehandler = Filehandler()
+    filehandler.download_and_persist_files()
 
     logger.info("Extraction process finished")
     # TODO: Transform
