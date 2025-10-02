@@ -31,7 +31,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         match = re.search(r"\d+-\d+\s*/\s*V\s*\d+", text)
         return match.group(0) if match else None
 
-    def parse(self, url: str, html: str) -> Paper | None:
+    def parse(self, url: str, html: str) -> Paper:
         soup = BeautifulSoup(html, "html.parser")
 
         # --- title and reference ---
@@ -54,8 +54,12 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
                 short_information = short_info_content.get_text(strip=True)
 
         date_str = self._kv_value("Freigabe:", soup)
-        date = datetime.strptime(date_str, "%d.%m.%Y") if date_str else None
-
+        date = None
+        if date_str:
+            try:
+                date = datetime.strptime(date_str, "%d.%m.%Y")
+            except ValueError:
+                self.logger.warning(f"{url}: Unparseable Freigabe date: {date_str!r}")
         paper_type_string = self._kv_value("Typ:", soup)
         paper_type_fk = get_or_insert_object_to_database(PaperType(name=paper_type_string)).id if paper_type_string else None
 
@@ -79,10 +83,12 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         auxiliary_files = []
         doc_links = soup.select("ul.list-group a.downloadlink")
         for a in doc_links:
+            href = a.get("href")
+            if not href:
+                continue
             fname = a.get_text(strip=True)
-            link = a["href"]
-            full_url = urljoin(url, link)
-            file = get_or_insert_object_to_database(File(id=full_url, name=fname, accessUrl=full_url))
+            full_url = urljoin(url, href)
+            file = get_or_insert_object_to_database(File(id=full_url, name=fname, accessUrl=full_url, downloadUrl=full_url))
             auxiliary_files.append(file)
 
         main_file = auxiliary_files[0].db_id if auxiliary_files else None

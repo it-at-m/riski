@@ -62,6 +62,17 @@ def insert_and_return_object(obj: object, session=None):
 
 
 def get_or_insert_object_to_database(obj: object, session=None):
+    """
+    Retrieves or inserts an object into the database.
+
+    Args:
+        obj (object): The object to retrieve or insert, identified by 'name' (for Keyword/PaperType)
+                      or 'id' (for others).
+        session (Session, optional): Optional SQLAlchemy session.
+
+    Returns:
+        object: The retrieved or inserted object.
+    """
     sess = session or get_session()
     if isinstance(obj, Keyword) or isinstance(obj, PaperType):
         obj_db = request_object_by_name(obj.name, type(obj), sess)
