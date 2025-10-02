@@ -21,5 +21,3 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
             "list_container:list:card:cardheader:itemsperpage_dropdown_top",
         )
         self.filter_url = "?0-1.-form"
-        # TODO: unused!?
-        self.detail_path = "/detail"

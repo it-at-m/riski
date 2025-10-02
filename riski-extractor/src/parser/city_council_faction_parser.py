@@ -5,7 +5,7 @@ from logging import Logger
 
 from bs4 import BeautifulSoup
 
-from src.data_models import Organization, OrganizationType
+from src.data_models import Organization, OrganizationClassificationEnum, OrganizationType
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
@@ -58,13 +58,14 @@ class CityCouncilFactionParser(BaseParser[Organization]):
 
         # --- Remaining Fields ---
         deleted = False
-        organizationType = OrganizationType(name="Fraktion")
+        organizationType = OrganizationType.FACTION
+        classification = OrganizationClassificationEnum.FACTION
 
         # --- Assemble Faction ---
         faction = Organization(
             id=url,
             name=name,
-            classification="Fraktion",
+            classification=classification,
             inactive=inactive,
             deleted=deleted,
             organizationType=organizationType,
