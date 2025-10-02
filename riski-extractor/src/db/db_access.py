@@ -1,4 +1,5 @@
 from sqlmodel import select
+from src.data_models import Keyword, PaperSubtype, PaperType, Person
 from src.db.db import get_session
 
 
@@ -7,6 +8,22 @@ def request_object_by_risid(risid: str, object_type: type, session=None):
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
+
+
+def request_object_by_name(name: str, object_type: type, session=None):
+    statement = select(object_type).where(object_type.name == name)
+    sess = session or get_session()
+    obj = sess.exec(statement).first()
+    return obj
+
+
+def request_person_by_familyName(familyName: str, logger, session=None):
+    statement = select(Person).where(Person.familyName == familyName)
+    sess = session or get_session()
+    results = sess.exec(statement).all()
+    if len(results) > 1:
+        logger.warning(f"Multiple Person records found for familyName '{familyName}'. Returning first match.")
+    return results[0] if results else None
 
 
 def update_or_insert_objects_to_database(objects: list[object], session=None):
@@ -34,3 +51,33 @@ def insert_object_to_database(obj: object, session=None):
     sess = session or get_session()
     sess.add(obj)
     sess.commit()
+
+
+def insert_and_return_object(obj: object, session=None):
+    sess = session or get_session()
+    sess.add(obj)
+    sess.commit()
+    sess.refresh(obj)
+    return obj
+
+
+def get_or_insert_object_to_database(obj: object, session=None):
+    """
+    Retrieves or inserts an object into the database.
+
+    Args:
+        obj (object): The object to retrieve or insert, identified by 'name' (for Keyword/PaperType)
+                      or 'id' (for others).
+        session (Session, optional): Optional SQLAlchemy session.
+
+    Returns:
+        object: The retrieved or inserted object.
+    """
+    sess = session or get_session()
+    if isinstance(obj, Keyword) or isinstance(obj, PaperType) or isinstance(obj, PaperSubtype):
+        obj_db = request_object_by_name(obj.name, type(obj), sess)
+    else:
+        obj_db = request_object_by_risid(obj.id, type(obj), sess)
+    if not obj_db:
+        obj_db = insert_and_return_object(obj, sess)
+    return obj_db
