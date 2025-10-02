@@ -10,7 +10,7 @@ def request_object_by_risid(risid: str, object_type: type, session=None):
     return obj
 
 
-def request_all(object_type: type, session=None) -> []:
+def request_all(object_type: type, session=None) -> list[object]:
     statement = select(object_type)
     sess = session or get_session()
     objects = sess.exec(statement).all()

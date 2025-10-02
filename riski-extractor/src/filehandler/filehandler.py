@@ -1,5 +1,7 @@
 from logging import Logger
 
+import httpx
+import stamina
 from config.config import Config, get_config
 from httpx import Client
 from src.data_models import File
@@ -23,9 +25,10 @@ class Filehandler:
         self.logger.info("Persisting content of all scraped files to database.")
         files: list[File] = request_all(File)
         for file in files:
-            self.logger.debug(f"Checking neccesity of inserting/updating file {file.name} to database.")
+            self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
             self.download_and_persist_file(file=file)
 
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):
         content = self.client.get(url=file.id).content
         if not bytes(content) == file.content:
