@@ -74,6 +74,7 @@ class PersonParser(BaseParser[Person]):
 
     def parse(self, url: str, html: str) -> Person:
         self.logger.debug(f"Parsing person: {url}")
+        url = re.split(r"[\?\&]", url)[0]
         soup = BeautifulSoup(html, "html.parser")
 
         title_wrapper = soup.find("h1", class_="page-title")

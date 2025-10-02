@@ -42,18 +42,24 @@ class BaseExtractor(ABC, Generic[T]):
         self.parser = parser
         self.results_filter_identifier_url = results_filter_identifier_url
         self.results_filter_identifier_key = results_filter_identifier_key
+        self.filter_url = None
+        # can be used for supplementary data to filter by in addition to date
+        self.extend_filter_data = {}
+        # can be used to filter links for parsing in html result page
+        self.additional_link_filter = None
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _set_results_per_page(self, path: str) -> str:
         """
         Method for determining how many results should be included in responses.
         """
-        url = f"{self._get_sanitized_url(path)}{self.results_filter_identifier_url}"
+        url = f"{self._get_sanitized_url(path).split('&')[0]}{self.results_filter_identifier_url}"
         self.logger.info(url)
         data = {self.results_filter_identifier_key: "3"}
         response = self.client.post(url=url, data=data)
 
         assert response.is_redirect
+        # redirect url needs to be used by following request
         return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
@@ -123,9 +129,9 @@ class BaseExtractor(ABC, Generic[T]):
         you need to return the redirect-Url, that is found as HTTP-Header "Location".
         This should be a relative path.
         """
-        filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
+        filter_url = self._get_sanitized_url(self.base_path) + self.filter_url
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": config.end_date}
+        data = {"von": config.start_date, "bis": config.end_date} | self.extend_filter_data
         response = self.client.post(url=filter_url, headers=headers, data=data)
 
         # When sending a filter request the RIS always returns a redirect to the url with the filtered results
@@ -137,6 +143,7 @@ class BaseExtractor(ABC, Generic[T]):
                 response=response,
             )
 
+        # redirect url needs to be called with GET in order to get the filtered results or be used for a following POST
         return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
@@ -147,8 +154,12 @@ class BaseExtractor(ABC, Generic[T]):
 
     def _extract_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
-        links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("./detail/")]
+        elements = [a for a in soup.select("a.headline-link[href]") if "/detail/" in a["href"]]
 
+        if self.additional_link_filter:
+            elements = [a for a in elements if self.additional_link_filter(a)]
+
+        links = [self._get_sanitized_url(a["href"]) for a in elements]
         self.logger.info(f"Extracted {len(links)} links to parsable objects from page.")
         return links
 
