@@ -42,7 +42,10 @@ class CityCouncilFactionParser(BaseParser[Organization]):
 
         # --- Title and State ---
         # identify and mark inactive factions
-        inactive = "nicht mehr aktiv" in soup.find(class_="titlearea").get_text(strip=True)
+        inactive = False
+        titlearea = soup.find(class_="titlearea")
+        if titlearea:
+            inactive = "nicht mehr aktiv" in titlearea.get_text(strip=True)
         # find title extra info and remove from tree
         title_addon = soup.find("span", class_="page-additionaltitle")
         if title_addon:
