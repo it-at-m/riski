@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from src.data_models import File, Keyword, Paper, PaperType, Person
+from src.data_models import File, Keyword, Paper, PaperSubtype, PaperType, Person
 from src.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
 from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
@@ -60,9 +60,13 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
                 date = datetime.strptime(date_str, "%d.%m.%Y")
             except ValueError:
                 self.logger.warning(f"{url}: Unparseable Freigabe date: {date_str!r}")
-        paper_type_string = self._kv_value("Typ:", soup)
-        paper_type_fk = get_or_insert_object_to_database(PaperType(name=paper_type_string)).id if paper_type_string else None
-
+        paper_subtype_string = self._kv_value("Typ:", soup)
+        paper_type_fk = get_or_insert_object_to_database(PaperType(name="Sitzungsvorlage")).id
+        paper_subtype_fk = (
+            get_or_insert_object_to_database(PaperSubtype(name=paper_subtype_string, paper_type_id=paper_type_fk)).id
+            if paper_subtype_string
+            else None
+        )
         # direction_tag = self._kv_value("Zuständiges Referat:", soup)
 
         name = self._kv_value("Referent*in:", soup)
@@ -81,7 +85,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
 
         # --- documents ---
         auxiliary_files = []
-        doc_links = soup.select("ul.list-group a.downloadlink")
+        doc_links = soup.find_all("a", class_="downloadlink")
         for a in doc_links:
             href = a.get("href")
             if not href:
@@ -101,6 +105,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             keywords=keyword,
             subject=description,
             paper_type=paper_type_fk,
+            paper_subtype=paper_subtype_fk,
             date=date,
             originator_persons=originators,
             short_information=short_information,
