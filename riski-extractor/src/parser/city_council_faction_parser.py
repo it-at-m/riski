@@ -62,7 +62,6 @@ class CityCouncilFactionParser(BaseParser[Organization]):
             id=url,
             name=name,
             classification="Fraktion",
-            web=url,
             inactive=inactive,
             deleted=deleted,
             organizationType=organizationType,

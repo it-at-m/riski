@@ -129,11 +129,30 @@ class Config(BaseSettings):
         validation_alias="RISKI_DB_PASSWORD",
         description="Postgres password",
     )
-    database_url: PostgresDsn | None = Field(
-        default=None,
-        validation_alias="DATABASE_URL",
-        description="Full Postgres connection URL",
+    riski_db_hostname: str = Field(
+        validation_alias="RISKI_DB_HOSTNAME",
+        description="Postgres host",
     )
+    riski_db_port: int = Field(
+        default=5432,
+        validation_alias="RISKI_DB_PORT",
+        description="Postgres port",
+    )
+
+    @property
+    def database_url(self) -> PostgresDsn:
+        """
+        Full Postgres connection URL
+        """
+        return PostgresDsn.build(
+            # use psycopg version 3
+            scheme="postgresql+psycopg",
+            username=self.riski_db_user,
+            password=self.riski_db_password,
+            host=self.riski_db_hostname,
+            port=self.riski_db_port,
+            path=self.riski_db_name,
+        )
 
     # === Test Database (Optional) ===
     test_riski_db_name: str | None = Field(
