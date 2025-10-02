@@ -1,7 +1,9 @@
+import os
 import sys
 from logging import Logger
 
 from config.config import Config, get_config
+from src.data_models import ExtractArtifact
 from src.db.db import create_db_and_tables
 from src.db.db_access import update_or_insert_objects_to_database
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
@@ -49,6 +51,17 @@ def main():
 
     filehandler = Filehandler()
     filehandler.download_and_persist_files()
+
+    if config.json_export:
+        logger.info("Dumping extraction artifact to 'artifacts/extract.json'")
+        extraction_artifact = ExtractArtifact(
+            meetings=extracted_meeting_list,
+            heads_of_departments=extracted_head_of_department_list,
+            city_council_members=extracted_city_council_member_list,
+        )
+        os.makedirs("artifacts", exist_ok=True)
+        with open("artifacts/extract.json", "w", encoding="utf-8") as file:
+            file.write(extraction_artifact.model_dump_json(indent=4))
 
     logger.info("Extraction process finished")
     # TODO: Transform
