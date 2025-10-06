@@ -29,15 +29,15 @@ class Filehandler:
             try:
                 self.download_and_persist_file(file=file)
             except Exception as e:
-                self.logger.exception(f"Could nto download file '{file.id}'", e)
+                self.logger.exception(f"Could not download file '{file.id}'", e)
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):
         response = self.client.get(url=file.id)
         response.raise_for_status()
         content = response.content
-        if not bytes(content) == file.content:
-            file.content = bytes(content)
+        if file.content is None or content != file.content:
+            file.content = content
             file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
