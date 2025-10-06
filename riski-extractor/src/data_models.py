@@ -376,7 +376,6 @@ class System(SQLModel, table=True):
         description="The fixed type of the object: 'https://schema.oparl.org/1.1/System'.",
     )
     oparlVersion: str = Field(description="The OParl version supported by the system (e.g., 'https://schema.oparl.org/1.1/').")
-    otherOparlVersions: str | None = Field(None, description="Used to specify system objects with other OParl versions.")
     license: str | None = Field(
         None,
         description="License under which the data retrievable through this API is provided, unless otherwise stated for individual objects.",
@@ -853,3 +852,4 @@ class ExtractArtifact(BaseModel):
     meetings: list[Meeting]
     heads_of_departments: list[Person]
     city_council_members: list[Person]
+    factions: list[Organization]

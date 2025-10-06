@@ -57,7 +57,6 @@ class CityCouncilFactionParser(BaseParser[Organization]):
         name = title
 
         # --- Remaining Fields ---
-        deleted = False
         organizationType = OrganizationTypeEnum.FACTION
         classification = OrganizationClassificationEnum.FACTION
 
@@ -67,7 +66,6 @@ class CityCouncilFactionParser(BaseParser[Organization]):
             name=name,
             classification=classification,
             inactive=inactive,
-            deleted=deleted,
             organizationType=organizationType,
         )
 

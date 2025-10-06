@@ -62,6 +62,7 @@ def main():
             meetings=extracted_meeting_list,
             heads_of_departments=extracted_head_of_department_list,
             city_council_members=extracted_city_council_member_list,
+            factions=extracted_faction_list,
         )
         os.makedirs("artifacts", exist_ok=True)
         with open("artifacts/extract.json", "w", encoding="utf-8") as file:
