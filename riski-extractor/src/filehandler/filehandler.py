@@ -33,7 +33,9 @@ class Filehandler:
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):
-        content = self.client.get(url=file.id).content
+        response = self.client.get(url=file.id)
+        response.raise_for_status()
+        content = response.content
         if not bytes(content) == file.content:
             file.content = bytes(content)
             file.size = len(content)
