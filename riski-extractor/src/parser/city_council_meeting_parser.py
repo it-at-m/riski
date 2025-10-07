@@ -1,14 +1,10 @@
-import locale
-import platform
 import re
 from datetime import datetime
-from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
 from src.data_models import File, Meeting
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
@@ -17,25 +13,9 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
     Parser for CityCouncilMeetings
     """
 
-    logger: Logger
-
     def __init__(self) -> None:
-        self.logger = getLogger()
+        super().__init__()
         self.logger.info("CityCouncilMeetingParser initialized.")
-
-        if platform.system() == "Windows":
-            # For Windows, use the specific code page that works
-            locale.setlocale(locale.LC_TIME, "German_Germany.1252")
-        else:
-            try:
-                locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
-                self.logger.info("German locale 'de_DE.utf8' applied.")
-            except locale.Error:
-                try:
-                    locale.setlocale(locale.LC_TIME, "de_DE")
-                    self.logger.info("German locale 'de_DE' fallback applied.")
-                except locale.Error:
-                    self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
 
     def parse(self, url: str, html: str) -> Meeting:
         self.logger.debug(f"Parsing meeting page: {url}")

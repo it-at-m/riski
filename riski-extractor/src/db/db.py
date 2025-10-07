@@ -1,6 +1,6 @@
 from config.config import Config, get_config
 from sqlmodel import Session, SQLModel, create_engine, select
-from src.data_models import OrganizationType, OrganizationTypeEnum, PaperSubtype, PaperSubtypeEnum, PaperType, PaperTypeEnum
+from src.data_models import PaperSubtype, PaperSubtypeEnum, PaperType, PaperTypeEnum
 
 config: Config = get_config()
 
@@ -41,17 +41,6 @@ def check_tables_exist():
         schema = "public" if engine.url.get_backend_name() == "postgresql" else None
         tables = inspector.get_table_names(schema=schema)
         print("Existing tables:", tables)
-
-
-def seed_organization_types(session: Session):
-    existing = session.exec(select(OrganizationType)).all()
-    if existing:
-        return  # Table already populated
-
-    for enum_value in OrganizationTypeEnum:
-        org_type = OrganizationType(name=enum_value.value)
-        session.add(org_type)
-    session.commit()
 
 
 def seed_paper_types(session: Session):
@@ -112,7 +101,6 @@ def seed_paper_subtypes(session: Session):
 
 
 def seed_all_enums(session: Session):
-    seed_organization_types(session)
     seed_paper_types(session)
     seed_paper_subtypes(session)
 
