@@ -1,10 +1,8 @@
 import re
-from logging import Logger
 
 from bs4 import BeautifulSoup
 
 from src.data_models import Organization, OrganizationClassificationEnum, OrganizationTypeEnum
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
@@ -13,11 +11,8 @@ class CityCouncilFactionParser(BaseParser[Organization]):
     Parser for CityCouncilFactions
     """
 
-    logger: Logger
-
     def __init__(self) -> None:
         super().__init__()
-        self.logger = getLogger()
         self.logger.info("CityCouncilFactionParser initialized.")
 
     def parse(self, url: str, html: str) -> Organization:

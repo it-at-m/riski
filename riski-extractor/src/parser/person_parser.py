@@ -1,19 +1,14 @@
 import re
-from logging import Logger
 
 from bs4 import BeautifulSoup
 
 from src.data_models import Person
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
 class PersonParser(BaseParser[Person]):
-    logger: Logger
-
     def __init__(self) -> None:
         super().__init__()
-        self.logger = getLogger()
         self.logger.info("Person Parser initialized.")
 
     def _get_titles(self, titles: list[str]) -> list[str]:

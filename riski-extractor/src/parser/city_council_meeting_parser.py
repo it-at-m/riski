@@ -1,12 +1,10 @@
 import re
 from datetime import datetime
-from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
 from src.data_models import File, Meeting
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
@@ -15,11 +13,8 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
     Parser for CityCouncilMeetings
     """
 
-    logger: Logger
-
     def __init__(self) -> None:
         super().__init__()
-        self.logger = getLogger()
         self.logger.info("CityCouncilMeetingParser initialized.")
 
     def parse(self, url: str, html: str) -> Meeting:
