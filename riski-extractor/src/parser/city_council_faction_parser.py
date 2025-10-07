@@ -16,7 +16,7 @@ class CityCouncilFactionParser(BaseParser[Organization]):
         self.logger.info("CityCouncilFactionParser initialized.")
 
     def parse(self, url: str, html: str) -> Organization:
-        self.logger.debug(f"Parsing meeting page: {url}")
+        self.logger.debug(f"Parsing faction page: {url}")
         url = re.split(r"[\?\&]", url)[0]
         soup = BeautifulSoup(html, "html.parser")
 
@@ -49,5 +49,5 @@ class CityCouncilFactionParser(BaseParser[Organization]):
             organizationType=organizationType,
         )
 
-        self.logger.debug(f"Meeting object created: {faction.name}")
+        self.logger.debug(f"Faction object created: {faction.name}")
         return faction
