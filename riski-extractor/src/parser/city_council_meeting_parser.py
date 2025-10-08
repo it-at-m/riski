@@ -74,13 +74,18 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         for doc_link in soup.select("a.downloadlink"):
             doc_url = urljoin(url, doc_link["href"])
             doc_title = doc_link.get_text(strip=True)
-            if doc_url:
-                temp_file = File(id=doc_url, name=doc_title, accessUrl=doc_url)
-                temp_file = get_or_insert_object_to_database(temp_file)
-                auxiliaryFile.append(temp_file)
 
-            self.logger.debug(f"Document found: {doc_title} ({doc_url})")
-        auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else []
+            if doc_url:
+                self.logger.debug(f"Document found: {doc_title} ({doc_url})")
+                temp_file = File(id=doc_url, name=doc_title, accessUrl=doc_url)
+                try:
+                    temp_file = get_or_insert_object_to_database(temp_file)
+                    auxiliaryFile.append(temp_file)
+                    self.logger.debug(f"Saved Document to DB: {doc_title} ({doc_url})")
+                except Exception:
+                    self.logger.exception(f"Could not save File: {temp_file.id}")
+
+        auxiliaryFile = auxiliaryFile or []
 
         # --- Remaining Fields ---
         deleted = False
