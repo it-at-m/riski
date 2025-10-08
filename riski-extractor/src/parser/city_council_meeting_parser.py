@@ -69,16 +69,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
 
         self.logger.debug(f"Organizations: {organization_urls}")
 
-        # --- Participants (as URLs) ---
-        participants = []
-        for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
-            link = li.get("href")
-            if link:
-                full_url = urljoin(url, link)
-                participants.append(full_url)
-        participants = participants if len(participants) > 0 else []
-        self.logger.debug(f"Participants: {participants}")
-
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
@@ -101,7 +91,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             name=name,
             cancelled=cancelled,
             start=start,
-            web=url,
             deleted=deleted,
             meetingState=meetingState,
             auxiliary_files=auxiliaryFile,
