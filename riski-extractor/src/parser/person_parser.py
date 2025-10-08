@@ -1,35 +1,15 @@
-import locale
-import platform
 import re
-from logging import Logger
 
 from bs4 import BeautifulSoup
 
 from src.data_models import Person
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
 class PersonParser(BaseParser[Person]):
-    logger: Logger
-
     def __init__(self) -> None:
-        self.logger = getLogger()
+        super().__init__()
         self.logger.info("Person Parser initialized.")
-
-        if platform.system() == "Windows":
-            # For Windows, use the specific code page that works
-            locale.setlocale(locale.LC_TIME, "German_Germany.1252")
-        else:
-            try:
-                locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
-                self.logger.info("German locale 'de_DE.utf8' applied.")
-            except locale.Error:
-                try:
-                    locale.setlocale(locale.LC_TIME, "de_DE")
-                    self.logger.info("German locale 'de_DE' fallback applied.")
-                except locale.Error:
-                    self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
 
     def _get_titles(self, titles: list[str]) -> list[str]:
         """
@@ -74,6 +54,7 @@ class PersonParser(BaseParser[Person]):
 
     def parse(self, url: str, html: str) -> Person:
         self.logger.debug(f"Parsing person: {url}")
+        url = re.split(r"[\?\&]", url)[0]
         soup = BeautifulSoup(html, "html.parser")
 
         title_wrapper = soup.find("h1", class_="page-title")
