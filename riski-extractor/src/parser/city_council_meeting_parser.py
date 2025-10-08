@@ -74,7 +74,6 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         for doc_link in soup.select("a.downloadlink"):
             doc_url = urljoin(url, doc_link.get("href", ""))
             doc_title = doc_link.get_text(strip=True)
-
             if doc_url:
                 self.logger.debug(f"Document found: {doc_title} ({doc_url})")
                 temp_file = File(id=doc_url, name=doc_title, accessUrl=doc_url)
