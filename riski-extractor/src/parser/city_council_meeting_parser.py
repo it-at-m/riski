@@ -72,7 +72,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = urljoin(url, doc_link["href"])
+            doc_url = urljoin(url, doc_link.get("href", ""))
             doc_title = doc_link.get_text(strip=True)
 
             if doc_url:
