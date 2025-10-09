@@ -571,6 +571,7 @@ class File(SQLModel, table=True):
     text: str | None = Field(None, description="Plain text representation of the file content, if it can be represented in text form.")
     accessUrl: str = Field(description="Mandatory URL for public access to the file.")
     downloadUrl: str | None = Field(None, description="URL for downloading the file.")
+    content: bytes | None = Field(None, description="Byte Content of the document.")
     externalServiceUrl: str | None = Field(
         None, description="External URL that provides additional access options (e.g., a YouTube video)."
     )

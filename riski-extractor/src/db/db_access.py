@@ -10,6 +10,13 @@ def request_object_by_risid(risid: str, object_type: type, session=None):
     return obj
 
 
+def request_all(object_type: type, session=None) -> list[object]:
+    statement = select(object_type)
+    sess = session or get_session()
+    objects = sess.exec(statement).all()
+    return objects
+
+
 def request_object_by_name(name: str, object_type: type, session=None):
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
