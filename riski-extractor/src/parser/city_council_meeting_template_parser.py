@@ -19,6 +19,9 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
         self.logger.info("City Council Meeting Template Parser initialized.")
 
     def _extract_lastname(self, text: str) -> str | None:
+        # In the RIS system, this field appears to be a free-text field.
+        # Normally, it contains "Title/Function Lastname", but in some cases "Lastname Function".
+        # To handle these exceptional cases, known titles and functions are filtered out.
         words = text.strip().split()
         ignore = {"Dr.", "Dr", "i.V.", "i.V", "Berufsm.", "Berufsm", "StRin", "Stadtschulrat"}
         filtered = [w for w in words if w not in ignore]
@@ -67,7 +70,6 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             if paper_subtype_string
             else None
         )
-        # direction_tag = self._kv_value("Zuständiges Referat:", soup)
 
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
