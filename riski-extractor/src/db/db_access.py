@@ -10,11 +10,30 @@ def request_object_by_risid(risid: str, object_type: type, session=None):
     return obj
 
 
+def request_all(object_type: type, session=None) -> list[object]:
+    statement = select(object_type)
+    sess = session or get_session()
+    objects = sess.exec(statement).all()
+    return objects
+
+
 def request_object_by_name(name: str, object_type: type, session=None):
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
+
+
+def insert_and_return_object(obj: object, session=None):
+    sess = session or get_session()
+    try:
+        sess.add(obj)
+        sess.commit()
+        sess.refresh(obj)
+        return obj
+    except Exception:
+        sess.rollback()
+        raise
 
 
 def request_person_by_familyName(familyName: str, logger, session=None):
@@ -51,14 +70,6 @@ def insert_object_to_database(obj: object, session=None):
     sess = session or get_session()
     sess.add(obj)
     sess.commit()
-
-
-def insert_and_return_object(obj: object, session=None):
-    sess = session or get_session()
-    sess.add(obj)
-    sess.commit()
-    sess.refresh(obj)
-    return obj
 
 
 def get_or_insert_object_to_database(obj: object, session=None):
