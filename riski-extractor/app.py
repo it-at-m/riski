@@ -8,6 +8,7 @@ from src.db.db import create_db_and_tables
 from src.db.db_access import update_or_insert_objects_to_database
 from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
+from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.filehandler.filehandler import Filehandler
@@ -58,6 +59,13 @@ def main():
     logger.debug([ccm.name for ccm in extracted_city_council_member_list])
     update_or_insert_objects_to_database(extracted_city_council_member_list)
 
+    logger.info("Extracting City Council Meeting Templates")
+    city_council_meeting_template_extractor = CityCouncilMeetingTemplateExtractor()
+    extracted_city_council_meeting_template_list = city_council_meeting_template_extractor.run()
+    logger.info(f"Extracted {len(extracted_city_council_meeting_template_list)} City Council Meeting Templates")
+    logger.debug([template.name for template in extracted_city_council_meeting_template_list])
+    update_or_insert_objects_to_database(extracted_city_council_meeting_template_list)
+
     filehandler = Filehandler()
     filehandler.download_and_persist_files()
 
@@ -67,6 +75,7 @@ def main():
             meetings=extracted_meeting_list,
             heads_of_departments=extracted_head_of_department_list,
             city_council_members=extracted_city_council_member_list,
+            city_council_meeting_template=extracted_city_council_meeting_template_list,
             factions=extracted_faction_list,
         )
         os.makedirs("artifacts", exist_ok=True)
