@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 
 from src.data_models import File, Keyword, Paper, PaperSubtype, PaperType, Person
 from src.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
@@ -15,7 +14,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
     logger: Logger
 
     def __init__(self) -> None:
-        self.logger = getLogger()
+        super().__init__()
         self.logger.info("City Council Meeting Template Parser initialized.")
 
     def _extract_lastname(self, text: str) -> str | None:
