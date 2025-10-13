@@ -657,6 +657,8 @@ class Paper(SQLModel, table=True):
         None,
         description="Identifier or file number of the paper, which can be uniquely referenced in parliamentary work.",
     )
+    short_information: str | None = Field(None, description="Short Information of Paper")
+    subject: str | None = Field(None, description="Description of Paper")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
     paperType: str | None = Field(None, description="Type of the document, e.g., response to a query.")
     mainFile: uuid.UUID | None = Field(
@@ -854,3 +856,4 @@ class ExtractArtifact(BaseModel):
     heads_of_departments: list[Person]
     city_council_members: list[Person]
     factions: list[Organization]
+    city_council_meeting_template: list[Paper]
