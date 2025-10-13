@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from logging import Logger
 from typing import List
 from urllib.parse import urljoin
 
@@ -8,7 +7,6 @@ from bs4 import BeautifulSoup
 from sqlmodel import Session, select
 
 from src.data_models import File, Organization, Paper, Person
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 DATE_FORMAT = "%d.%m.%Y"
@@ -21,10 +19,8 @@ class CityCouncilMotionParser(BaseParser[Paper]):
     Extracts metadata, documents, and references from council information system pages.
     """
 
-    logger: Logger
-
     def __init__(self) -> None:
-        self.logger = getLogger()
+        super().__init__()
         self.logger.info("City Council Motions Parser initialized.")
 
     def _parse_date(self, text: str) -> datetime | None:
@@ -36,13 +32,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             return datetime.strptime(text, DATE_FORMAT)
         except ValueError:
             return None
-
-    def _parse_size_kb(self, fragment: str) -> int | None:
-        """Extract file size in KB and convert to bytes."""
-        match = re.search(r"(\d+)\s*KB", fragment, flags=re.I)
-        if match:
-            return int(match.group(1)) * KILOBYTE
-        return None
 
     def _extract_str_code(self, text: str) -> str | None:
         """
@@ -65,16 +54,11 @@ class CityCouncilMotionParser(BaseParser[Paper]):
 
             href = urljoin(url, link.get("href"))
             filename = link.get_text(" ", strip=True)
-            size_text = item.get_text(" ", strip=True)
-            size_bytes = self._parse_size_kb(size_text)
 
             file_object = File(
                 id=href,
                 web=href,
                 name=filename,
-                size=size_bytes,
-                mimeType="application/pdf" if filename.lower().endswith(".pdf") else None,
-                type="https://schema.oparl.org/1.1/File",
                 accessUrl=href,
             )
 
@@ -99,15 +83,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         section = soup.select_one('section.card[aria-labelledby="sectionheader-betreff"] div.card-body p')
         if section:
             return section.get_text(" ", strip=True)
-        return None
-
-    def _kv_value(self, key_label: str, soup: BeautifulSoup) -> str | None:
-        """Extracts values from key-value container rows by label."""
-        for row in soup.select(".keyvalue-container .keyvalue-row"):
-            key = row.select_one(".keyvalue-key")
-            value = row.select_one(".keyvalue-value")
-            if key and value and key.get_text(strip=True).rstrip(":") == key_label.rstrip(":"):
-                return value.get_text(" ", strip=True)
         return None
 
     def _extract_common_metadata(self, soup: BeautifulSoup) -> dict:
@@ -151,28 +126,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             persons.append(person)
         return persons
 
-    def _resolve_orgs(self, orgs_string: str | None, session: Session) -> List[Organization]:
-        """
-        Convert a raw organization string into Organization objects.
-        """
-        if not orgs_string:
-            return []
-
-        organizations: List[Organization] = []
-        for raw in re.split(r"[,/]", orgs_string):
-            name = raw.strip()
-            if not name:
-                continue
-            stmt = select(Organization).where(Organization.name == name)
-            org = session.exec(stmt).first()
-            if not org:
-                org = Organization(name=name)
-                session.add(org)
-                session.commit()
-                session.refresh(org)
-            organizations.append(org)
-        return organizations
-
     def _build_paper(
         self,
         url: str,
@@ -195,7 +148,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             id=url,
             web=url,
             body=url,
-            type="https://schema.oparl.org/1.1/Paper",
             paperType=paper_type,
             name=document_name,
             reference=reference,
@@ -207,8 +159,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             deleted=False,
             description=description,
             originator_persons=originator_persons,
-            originator_orgs=originator_orgs,
-            under_direction_of=under_direction_of,
         )
 
     def parse(self, url: str, html: str, session: Session) -> Paper | None:

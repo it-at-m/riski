@@ -1,5 +1,3 @@
-import httpx
-import stamina
 from bs4 import BeautifulSoup
 from config.config import Config, get_config
 
@@ -23,20 +21,7 @@ class CityCouncilMotionExtractor(BaseExtractor[Paper]):
             "-2.0-color_container-list-card-cardheader-itemsperpage_dropdown_top",
             "color_container:list:card:cardheader:itemsperpage_dropdown_top",
         )
-
-    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _filter(self) -> str:
-        filter_url = self.base_url + "/uebersicht?0-1.-filtersection_container-form"
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": config.end_date}
-        response = self.client.post(url=filter_url, headers=headers, data=data)
-        if not response.is_redirect:  # When sending a filter request the RIS always returns a redirect to the url with the filtered results
-            raise httpx.HTTPStatusError(
-                "Expected redirect from filter request",
-                request=response.request,
-                response=response,
-            )
-        return response.headers.get("Location")
+        self.filter_url = "/uebersicht?0-1.-filtersection_container-form"
 
     def _extract_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
