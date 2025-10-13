@@ -1,5 +1,3 @@
-import httpx
-import stamina
 from config.config import Config, get_config
 
 from src.data_models import Person
@@ -22,18 +20,4 @@ class CityCouncilMemberExtractor(BaseExtractor[Person]):
             "-2.0-list_container-list-card-cardheader-itemsperpage_dropdown_top",
             "list_container:list:card:cardheader:itemsperpage_dropdown_top",
         )
-        self.detail_path = "/detail"
-
-    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def _filter(self) -> str:
-        filter_url = self._get_sanitized_url(self.base_path) + "?0-1.-form"
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {"von": config.start_date, "bis": config.end_date, "fraktion": "", "nachname": ""}
-        response = self.client.post(url=filter_url, headers=headers, data=data)
-
-        if response.is_redirect:
-            redirect_url = response.headers.get("Location")
-            self.logger.debug(f"Filter Redirect URL: {redirect_url}")
-            return redirect_url
-        else:
-            response.raise_for_status()
+        self.filter_url = "?0-1.-form"

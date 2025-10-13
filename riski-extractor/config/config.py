@@ -56,6 +56,11 @@ class Config(BaseSettings):
         description="End date for scraping (ISO format YYYY-MM-DD)",
     )
 
+    json_export: bool = Field(
+        default=False,
+        description="Export the extraction result as JSON to artifacts/extract.json",
+    )
+
     user_agent: str = Field(
         default="Mozilla/5.0 (compatible; ScraperBot/1.0)",
         description="User-Agent header for requests",
@@ -129,11 +134,30 @@ class Config(BaseSettings):
         validation_alias="RISKI_DB_PASSWORD",
         description="Postgres password",
     )
-    database_url: PostgresDsn | None = Field(
-        default=None,
-        validation_alias="DATABASE_URL",
-        description="Full Postgres connection URL",
+    riski_db_hostname: str = Field(
+        validation_alias="RISKI_DB_HOSTNAME",
+        description="Postgres host",
     )
+    riski_db_port: int = Field(
+        default=5432,
+        validation_alias="RISKI_DB_PORT",
+        description="Postgres port",
+    )
+
+    @property
+    def database_url(self) -> PostgresDsn:
+        """
+        Full Postgres connection URL
+        """
+        return PostgresDsn.build(
+            # use psycopg version 3
+            scheme="postgresql+psycopg",
+            username=self.riski_db_user,
+            password=self.riski_db_password,
+            host=self.riski_db_hostname,
+            port=self.riski_db_port,
+            path=self.riski_db_name,
+        )
 
     # === Test Database (Optional) ===
     test_riski_db_name: str | None = Field(
@@ -159,13 +183,13 @@ class Config(BaseSettings):
 
     # === Settings Behavior ===
     model_config = SettingsConfigDict(
-        env_prefix="RISKI_EXTRAKTOR_",  # only applies to extractor-related fields
+        env_prefix="RISKI_EXTRACTOR_",  # only applies to extractor-related fields
         env_file=str((Path(__file__).resolve().parents[2] / ".env")),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         env_nested_delimiter="__",
         nested_model_default_partial_update=True,
-        yaml_file=getenv("RISKI_EXTRAKTOR_CONFIG", "config.yaml"),
+        yaml_file=getenv("RISKI_EXTRACTOR_CONFIG", "config.yaml"),
         yaml_file_encoding="utf-8",
         cli_parse_args=True,
     )

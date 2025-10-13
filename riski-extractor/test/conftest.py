@@ -14,14 +14,14 @@ from src.data_models import (
     Meeting,
     Membership,
     Organization,
-    OrganizationType,
+    OrganizationClassificationEnum,
+    OrganizationTypeEnum,
     Paper,
     PaperSubtype,
     PaperType,
     Person,
     Post,
     System,
-    Title,
 )
 
 config: Config = get_config()
@@ -94,6 +94,8 @@ def organization(session):
     obj = Organization(
         id="https://example.org/organization/1",
         name="Test Organization",
+        organizationType=OrganizationTypeEnum.FACTION,
+        classification=OrganizationClassificationEnum.FACTION,
         created=datetime.now(),
         modified=datetime.now(),
     )
@@ -158,19 +160,11 @@ def papertype(session):
 
 
 @pytest.fixture(scope="function")
-def title(session):
-    obj = Title(title="MR.")
-    session.add(obj)
-    session.commit()
-    return obj
-
-
-@pytest.fixture(scope="function")
-def person(session, title):
+def person(session):
     obj = Person(
         id="https://example.org/person/1",
         name="Test Person",
-        title=title.db_id,
+        title="Dr.",
         created=datetime.now(),
         modified=datetime.now(),
     )
@@ -227,14 +221,6 @@ def legislative_term(session):
         created=datetime.now(),
         modified=datetime.now(),
     )
-    session.add(obj)
-    session.commit()
-    return obj
-
-
-@pytest.fixture(scope="function")
-def organization_type(session):
-    obj = OrganizationType(name="Test Organization Type")
     session.add(obj)
     session.commit()
     return obj

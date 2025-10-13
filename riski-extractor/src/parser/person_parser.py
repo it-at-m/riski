@@ -1,19 +1,14 @@
 import re
-from datetime import datetime, timezone
-from logging import Logger
 
 from bs4 import BeautifulSoup
 
 from src.data_models import Person
-from src.logtools import getLogger
 from src.parser.base_parser import BaseParser
 
 
 class PersonParser(BaseParser[Person]):
-    logger: Logger
-
     def __init__(self) -> None:
-        self.logger = getLogger()
+        super().__init__()
         self.logger.info("Person Parser initialized.")
 
     def _get_titles(self, titles: list[str]) -> list[str]:
@@ -59,9 +54,8 @@ class PersonParser(BaseParser[Person]):
 
     def parse(self, url: str, html: str) -> Person:
         self.logger.debug(f"Parsing person: {url}")
+        url = re.split(r"[\?\&]", url)[0]
         soup = BeautifulSoup(html, "html.parser")
-
-        create_date = datetime.now(timezone.utc)
 
         title_wrapper = soup.find("h1", class_="page-title")
         title_element = title_wrapper.find("span", class_="d-inline-block") if title_wrapper else None
@@ -125,17 +119,14 @@ class PersonParser(BaseParser[Person]):
         # --- Assemble Person ---
         person = Person(
             id=url,
-            type="https://schema.oparl.org/1.1/Person",
             familyName=last_name,
             givenName=" ".join(given_name),
             name=name,
-            created=create_date,
             formOfAddress=form_of_address,
             life=data_dict.get("Lebenslauf:"),
             lifeSource=url,
-            modified=create_date,
             status=status,
-            title=self._get_titles(potential_titles),
+            title=(" ".join(self._get_titles(potential_titles)).strip() or None),
             web=url,
             deleted=False,
         )

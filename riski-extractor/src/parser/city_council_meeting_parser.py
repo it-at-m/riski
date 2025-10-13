@@ -1,14 +1,11 @@
-import locale
-import platform
 import re
 from datetime import datetime
-from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
 from src.data_models import File, Meeting
-from src.logtools import getLogger
+from src.db.db_access import get_or_insert_object_to_database
 from src.parser.base_parser import BaseParser
 
 
@@ -17,25 +14,9 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
     Parser for CityCouncilMeetings
     """
 
-    logger: Logger
-
     def __init__(self) -> None:
-        self.logger = getLogger()
+        super().__init__()
         self.logger.info("CityCouncilMeetingParser initialized.")
-
-        if platform.system() == "Windows":
-            # For Windows, use the specific code page that works
-            locale.setlocale(locale.LC_TIME, "German_Germany.1252")
-        else:
-            try:
-                locale.setlocale(locale.LC_TIME, "de_DE.UTF-8")
-                self.logger.info("German locale 'de_DE.utf8' applied.")
-            except locale.Error:
-                try:
-                    locale.setlocale(locale.LC_TIME, "de_DE")
-                    self.logger.info("German locale 'de_DE' fallback applied.")
-                except locale.Error:
-                    self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
 
     def parse(self, url: str, html: str) -> Meeting:
         self.logger.debug(f"Parsing meeting page: {url}")
@@ -78,52 +59,43 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
                 data_dict[key] = value
                 self.logger.debug(f"Extracted field: {key} = {value}")
 
-        type = data_dict.get("Gremium:", "Unbekannt")
         name = title
 
         # --- Organization (as URLs) ---
-        organization_links = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a")
-        organization = [urljoin(url, a.get("href")) for a in organization_links if a.get("href")]
-        organization = organization if len(organization) > 0 else None
-        self.logger.debug(f"Organizations: {organization}")
+        organization_link_elements = soup.select("div.keyvalue-key:-soup-contains('Zuständiges Referat:') + div a") + soup.select(
+            "div.keyvalue-key:-soup-contains('Gremium:') + div a"
+        )
+        organization_urls = list(dict.fromkeys(urljoin(url, a.get("href")) for a in organization_link_elements if a.get("href"))) or []
 
-        # --- Participants (as URLs) ---
-        participants = []
-        for li in soup.select("div.keyvalue-key:-soup-contains('Vorsitz:') + div ul li a"):
-            link = li.get("href")
-            if link:
-                full_url = urljoin(url, link)
-                participants.append(full_url)
-        participants = participants if len(participants) > 0 else None
-        self.logger.debug(f"Participants: {participants}")
+        self.logger.debug(f"Organizations: {organization_urls}")
 
         # --- Documents ---
         auxiliaryFile = []
         for doc_link in soup.select("a.downloadlink"):
-            doc_url = urljoin(url, doc_link["href"])
+            doc_url = urljoin(url, doc_link.get("href", ""))
             doc_title = doc_link.get_text(strip=True)
             if doc_url:
-                auxiliaryFile.append(File(id=doc_url, name=doc_title, accessUrl=doc_url))
-            self.logger.debug(f"Document found: {doc_title} ({doc_url})")
-        auxiliaryFile = auxiliaryFile if len(auxiliaryFile) > 0 else None
+                self.logger.debug(f"Document found: {doc_title} ({doc_url})")
+                temp_file = File(id=doc_url, name=doc_title, accessUrl=doc_url)
+                try:
+                    temp_file = get_or_insert_object_to_database(temp_file)
+                    auxiliaryFile.append(temp_file)
+                    self.logger.debug(f"Saved Document to DB: {doc_title} ({doc_url})")
+                except Exception:
+                    self.logger.exception(f"Could not save File: {doc_url}")
 
         # --- Remaining Fields ---
-        created = datetime.now()
-        modified = datetime.now()
         deleted = False
 
         # --- Assemble Meeting ---
         meeting = Meeting(
             id=url,
-            type=type,
             name=name,
             cancelled=cancelled,
             start=start,
-            created=created,
-            modified=modified,
-            web=url,
             deleted=deleted,
             meetingState=meetingState,
+            auxiliary_files=auxiliaryFile,
         )
 
         self.logger.debug(f"Meeting object created: {meeting.name}")

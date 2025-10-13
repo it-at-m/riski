@@ -30,7 +30,6 @@ from src.data_models import (
     OrganizationMembership,
     OrganizationPost,
     OrganizationSubOrganization,
-    OrganizationType,
     Paper,
     PaperDirectionLink,
     PaperFileLink,
@@ -46,7 +45,6 @@ from src.data_models import (
     PersonMembershipLink,
     Post,
     System,
-    Title,
 )
 
 
@@ -506,6 +504,8 @@ def test_organization_create(session, organization):
     assert db_org.db_id == organization.db_id
     assert db_org.id == organization.id
     assert db_org.name == organization.name
+    assert db_org.organizationType == organization.organizationType
+    assert db_org.classification == organization.classification
     assert db_org.created == organization.created
     assert db_org.modified == organization.modified
 
@@ -555,15 +555,6 @@ def test_paper_subtype_create(session, papersubtype):
     assert db_subtype.id == papersubtype.id
     assert db_subtype.name == papersubtype.name
     assert db_subtype.paper_type_id == papersubtype.paper_type_id
-
-
-# ----------------------
-# Test Title
-# ----------------------
-def test_title_create(session, title):
-    db_title = session.exec(select(Title).where(Title.db_id == title.db_id)).one()
-    assert db_title.db_id == title.db_id
-    assert db_title.title == title.title
 
 
 # ----------------------
@@ -650,15 +641,6 @@ def test_legislative_term_create(session, legislative_term):
     assert db_term.name == legislative_term.name
     assert db_term.created == legislative_term.created
     assert db_term.modified == legislative_term.modified
-
-
-# ----------------------
-# Test OrganizationType
-# ----------------------
-def test_organization_type_create(session, organization_type):
-    db_type = session.exec(select(OrganizationType).where(OrganizationType.db_id == organization_type.db_id)).one()
-    assert db_type.db_id == organization_type.db_id
-    assert db_type.name == organization_type.name
 
 
 # ----------------------
