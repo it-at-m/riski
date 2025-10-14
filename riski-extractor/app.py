@@ -67,10 +67,10 @@ def main():
     logger.debug([template.name for template in extracted_city_council_meeting_template_list])
     update_or_insert_objects_to_database(extracted_city_council_meeting_template_list)
 
-    logger.info("Extracting City Council Motion")
+    logger.info("Extracting City Council Motions")
     city_council_motion_extractor = CityCouncilMotionExtractor()
     extracted_city_council_motion_list = city_council_motion_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motion")
+    logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motions")
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 

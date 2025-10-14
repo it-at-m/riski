@@ -191,7 +191,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             paper_subtype=paper_subtype_fk,
             date=date,
             originator_persons=originator_persons,
-            originator_organizations=originator_orgs,
+            originator_orgs=originator_orgs,
             reference=reference,
             paperType=paper_type_str,
         )
