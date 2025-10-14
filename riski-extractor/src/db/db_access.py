@@ -92,3 +92,14 @@ def get_or_insert_object_to_database(obj: object, session=None):
     if not obj_db:
         obj_db = insert_and_return_object(obj, sess)
     return obj_db
+
+
+def request_person_by_full_name(familyName: str, givenName: str, logger, session=None) -> Person | None:
+    session = session or get_session()
+    stmt = select(Person).where(Person.familyName == familyName, Person.givenName == givenName)
+    result = session.exec(stmt).first()
+    if result:
+        logger.debug(f"Found person {givenName} {familyName} in DB")
+    else:
+        logger.warning(f"No person found for {givenName} {familyName}")
+    return result

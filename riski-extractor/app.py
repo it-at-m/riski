@@ -72,6 +72,7 @@ def main():
     extracted_city_council_motion_list = city_council_motion_extractor.run()
     logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motion")
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
+    update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
     filehandler = Filehandler()
     filehandler.download_and_persist_files()
