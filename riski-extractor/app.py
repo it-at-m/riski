@@ -90,7 +90,6 @@ def main():
         os.makedirs("artifacts", exist_ok=True)
         with open("artifacts/extract.json", "w", encoding="utf-8") as file:
             file.write(extraction_artifact.model_dump_json(indent=4))
-    logger.info([obj.familyName for obj in extracted_head_of_department_list])
 
     logger.info("Extraction process finished")
     # TODO: Transform
