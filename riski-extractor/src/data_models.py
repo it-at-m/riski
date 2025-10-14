@@ -858,3 +858,4 @@ class ExtractArtifact(BaseModel):
     city_council_members: list[Person]
     factions: list[Organization]
     city_council_meeting_template: list[Paper]
+    city_council_motions: list[Paper]

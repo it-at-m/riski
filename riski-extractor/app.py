@@ -85,6 +85,7 @@ def main():
             city_council_members=extracted_city_council_member_list,
             city_council_meeting_template=extracted_city_council_meeting_template_list,
             factions=extracted_faction_list,
+            city_council_motions=extracted_city_council_motion_list,
         )
         os.makedirs("artifacts", exist_ok=True)
         with open("artifacts/extract.json", "w", encoding="utf-8") as file:

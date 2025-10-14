@@ -150,15 +150,14 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         originator_persons, originator_orgs = self._resolve_originators(originator_text)
         initiative_text = self._kv_value("Initiative:", soup)
         if initiative_text:
-            initative_persons, initiaive_orgs = self._resolve_originators(initiative_text)
+            initiative_persons, initiative_orgs = self._resolve_originators(initiative_text)
             unique_persons = {p.id: p for p in originator_persons}  # dict: id → Objekt
-            for p in initative_persons:
+            for p in initiative_persons:
                 unique_persons.setdefault(p.id, p)
             originator_persons = list(unique_persons.values())
 
-            # Für Organisationen ähnlich
             unique_orgs = {o.id: o for o in originator_orgs}
-            for o in initiaive_orgs:
+            for o in initiative_orgs:
                 unique_orgs.setdefault(o.id, o)
             originator_orgs = list(unique_orgs.values())
 

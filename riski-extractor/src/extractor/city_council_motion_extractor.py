@@ -25,8 +25,11 @@ class CityCouncilMotionExtractor(BaseExtractor[Paper]):
 
     def _extract_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
-        self.base_url = self.base_url.removesuffix("/str")
-        links = [self._get_sanitized_url(a["href"]) for a in soup.select("a.headline-link[href]") if a["href"].startswith("../detail/")]
+        base_url_without_suffix = self.base_url.removesuffix("/str")
+        links = [
+            f"{base_url_without_suffix}/{a['href'].lstrip('../')}"
+            for a in soup.select("a.headline-link[href]")
+            if a["href"].startswith("../detail/")
+        ]
         self.logger.info(f"Extracted {len(links)} links to parsable objects from page.")
-        self.base_url = self.base_url + "/str"
         return links
