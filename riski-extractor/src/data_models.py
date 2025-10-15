@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Union
 
 from pydantic import BaseModel
 from sqlalchemy import JSON, String
@@ -468,7 +469,7 @@ class Organization(SQLModel, table=True):
     membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
     post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
     # Relationships
-    parentOrganization: "Organization" = Relationship(
+    parentOrganization: Union["Organization", None] = Relationship(
         back_populates="subOrganizations", sa_relationship_kwargs={"remote_side": "Organization.db_id"}
     )
     subOrganizations: list["Organization"] = Relationship(back_populates="parentOrganization")
