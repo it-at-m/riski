@@ -76,7 +76,7 @@ class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True):
 class PaperType(SQLModel, table=True):
     __tablename__ = "paper_type"
 
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Designation of the paper type")
 
     # Relationship to subtypes
@@ -86,7 +86,7 @@ class PaperType(SQLModel, table=True):
 class PaperSubtype(SQLModel, table=True):
     __tablename__ = "paper_subtype"
 
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Designation of the paper subtype")
 
     # FK to PaperTypeEnum
@@ -188,7 +188,7 @@ class LegislativeTermKeyword(SQLModel, table=True):
 
 class LegislativeTerm(SQLModel, table=True):
     __tablename__ = "legislative_term"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the legislative term.")
     type: str = Field(
         default="https://schema.oparl.org/1.1/LegislativeTerm",
@@ -235,9 +235,9 @@ class OrganizationKeyword(SQLModel, table=True):
 class Post(SQLModel, table=True):
     __tablename__ = "post"
 
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Unique URL of the post.")
-    organization_id: Optional[uuid.UUID] = Field(default=None, foreign_key="organization.db_id")
+    organization_id: uuid.UUID = Field(default=None, foreign_key="organization.db_id")
     organizations: list["Organization"] = Relationship(back_populates="post", link_model=OrganizationPost)
 
 
@@ -346,7 +346,7 @@ class ConsultationKeywordLink(SQLModel, table=True):
 
 class Keyword(SQLModel, table=True):
     __tablename__ = "keyword"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     locations: list["Location"] = Relationship(back_populates="keywords", link_model=LocationKeyword)
     legislative_term: list["LegislativeTerm"] = Relationship(back_populates="keywords", link_model=LegislativeTermKeyword)
@@ -369,7 +369,7 @@ class Keyword(SQLModel, table=True):
 class System(SQLModel, table=True):
     __tablename__ = "system"
 
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="The unique URL of this object.")
     type: str = Field(
         default="https://schema.oparl.org/1.1/System",
@@ -405,7 +405,7 @@ class System(SQLModel, table=True):
 
 class Location(SQLModel, table=True):
     __tablename__ = "location"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="The unique URL of the location.")
     type: str = Field(default="https://schema.oparl.org/1.1/Location", description="Type of the location")
     description: str | None = Field(None, description="Textual description of a location, e.g., in the form of an address.")
@@ -439,7 +439,7 @@ class Location(SQLModel, table=True):
 
 class Organization(SQLModel, table=True):
     __tablename__ = "organization"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the organization.")
     type: str = Field(
         default="https://schema.oparl.org/1.1/Organization", description="Type of the object: 'https://schema.oparl.org/1.1/Organization'."
@@ -482,7 +482,7 @@ class Organization(SQLModel, table=True):
 class Person(SQLModel, table=True):
     __tablename__ = "person"
 
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the person.")
     type: str = Field(default="https://schema.oparl.org/1.1/Person", description="Type of the object")
     body: str | None = Field(None, description="Body")
@@ -521,7 +521,7 @@ class Person(SQLModel, table=True):
 
 class Membership(SQLModel, table=True):
     __tablename__ = "membership"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the membership.")
     type: str = Field(default="https://schema.oparl.org/1.1/Membership", description="Type of the membership")
     organization: uuid.UUID | None = Field(
@@ -552,7 +552,7 @@ class Membership(SQLModel, table=True):
 
 class File(SQLModel, table=True):
     __tablename__ = "file"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the document.")
     type: str = Field(default="https://schema.oparl.org/1.1/File", description="Type of the file")
     name: str | None = Field(None, description="User-friendly name for the object. Should not contain file extensions like '.pdf'.")
@@ -604,7 +604,7 @@ class File(SQLModel, table=True):
 
 class AgendaItem(SQLModel, table=True):
     __tablename__ = "agenda_item"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the agenda item.")
     type: str = Field(default="https://schema.oparl.org/1.1/AgendaItem", description="Type of the agenda item")
     meeting: uuid.UUID | None = Field(
@@ -648,7 +648,7 @@ class AgendaItem(SQLModel, table=True):
 
 class Paper(SQLModel, table=True):
     __tablename__ = "paper"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the paper.")
     type: str = Field(default="https://schema.oparl.org/1.1/Paper", description="Type of the paper")
     body: str | None = Field(None, description="Body to which the paper belongs.")
@@ -726,7 +726,7 @@ class Paper(SQLModel, table=True):
 
 class Body(SQLModel, table=True):
     __tablename__ = "body"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the body.")
     type: str = Field(default="https://schema.oparl.org/1.1/Body", description="Type indication: 'https://schema.oparl.org/1.1/Body'.")
     name: str = Field(description="Name of the body.")
@@ -778,13 +778,13 @@ class Body(SQLModel, table=True):
         },
     )
     keywords: list["Keyword"] = Relationship(back_populates="body", link_model=BodyKeywordLink)
-    system_id: Optional[uuid.UUID] = Field(default=None, foreign_key="system.db_id")
+    system_id: uuid.UUID = Field(default=None, foreign_key="system.db_id")
     system_link: Optional["System"] = Relationship(back_populates="bodies")
 
 
 class Meeting(SQLModel, table=True):
     __tablename__ = "meeting"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="Unique URL of the meeting.")
     type: str = Field(default="https://schema.oparl.org/1.1/Meeting", description="Type of the meeting")
     name: str | None = Field(None, description="Name of the meeting.")
@@ -828,7 +828,7 @@ class Meeting(SQLModel, table=True):
 
 class Consultation(SQLModel, table=True):
     __tablename__ = "consultation"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     type: str = Field(default="https://schema.oparl.org/1.1/Consultation", description="Type of the Consultation")
     id: str | None = Field(default=None)
     url: str | None = Field(default=None, description="URL of this Consultation object")
