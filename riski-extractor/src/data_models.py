@@ -777,7 +777,7 @@ class Body(SQLModel, table=True):
         },
     )
     keywords: list["Keyword"] = Relationship(back_populates="body", link_model=BodyKeywordLink)
-    system_id: uuid.UUID = Field(default=None, foreign_key="system.db_id")
+    system_id: uuid.UUID | None = Field(default=None, foreign_key="system.db_id")
     system_link: System | None = Relationship(back_populates="bodies")
 
 
