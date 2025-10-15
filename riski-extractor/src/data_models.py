@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel
 from sqlalchemy import JSON, String
@@ -237,7 +236,7 @@ class Post(SQLModel, table=True):
 
     db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str = Field(description="Unique URL of the post.")
-    organization_id: uuid.UUID = Field(default=None, foreign_key="organization.db_id")
+    organization_id: uuid.UUID | None = Field(default=None, foreign_key="organization.db_id")
     organizations: list["Organization"] = Relationship(back_populates="post", link_model=OrganizationPost)
 
 
@@ -469,7 +468,7 @@ class Organization(SQLModel, table=True):
     membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
     post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
     # Relationships
-    parentOrganization: Optional["Organization"] = Relationship(
+    parentOrganization: "Organization" = Relationship(
         back_populates="subOrganizations", sa_relationship_kwargs={"remote_side": "Organization.db_id"}
     )
     subOrganizations: list["Organization"] = Relationship(back_populates="parentOrganization")
