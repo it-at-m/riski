@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from src.data_models import File, Keyword, Paper, PaperSubtype, PaperType, Person
+from src.data_models import File, Keyword, Paper, PaperTypeEnum, Person
 from src.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
 from src.parser.base_parser import BaseParser
 
@@ -63,12 +63,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             except ValueError:
                 self.logger.warning(f"{url}: Unparseable Freigabe date: {date_str!r}")
         paper_subtype_string = self._kv_value("Typ:", soup)
-        paper_type_fk = get_or_insert_object_to_database(PaperType(name="Sitzungsvorlage")).id
-        paper_subtype_fk = (
-            get_or_insert_object_to_database(PaperSubtype(name=paper_subtype_string, paper_type_id=paper_type_fk)).id
-            if paper_subtype_string
-            else None
-        )
+        paper_subtype = self._get_paper_subtype_enum(paper_subtype_string)
 
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
@@ -105,8 +100,8 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             auxiliary_files=auxiliary_files,
             keywords=keyword,
             subject=description,
-            paper_type=paper_type_fk,
-            paper_subtype=paper_subtype_fk,
+            paper_type=PaperTypeEnum.MEETING_TEMPLATE,
+            paper_subtype=paper_subtype,
             date=date,
             originator_persons=originators,
             short_information=short_information,

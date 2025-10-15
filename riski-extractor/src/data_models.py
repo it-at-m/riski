@@ -60,8 +60,29 @@ class PaperSubtypeEnum(str, Enum):
     ANNOUNCEMENT = "Bekanntgabe"
     DIRECT = "Direkt"
     MEETING_TEMPLATE_DISTRICT_COMMITTEE = "Sitzungsvorlage für den Bezirksausschuss"
+    MEETING_TEMPLATE_URGENT_PROPOSAL = "Sitzungsvorlage zur DA"
 
 
+subtype_mapping = {
+    # Council Proposal
+    PaperSubtypeEnum.URGENT_PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
+    PaperSubtypeEnum.PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
+    PaperSubtypeEnum.REQUEST: PaperTypeEnum.COUNCIL_PROPOSAL,
+    PaperSubtypeEnum.AMENDMENT_PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
+    # District Committee Proposal
+    PaperSubtypeEnum.DISTRICT_COMMITTEE_PROPOSAL: PaperTypeEnum.DISTRICT_COMMITTEE_PROPOSAL,
+    # Citizens' Assembly Recommendation
+    PaperSubtypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION: PaperTypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION,
+    # Citizens' Assembly Request
+    PaperSubtypeEnum.CITIZENS_ASSEMBLY_REQUEST: PaperTypeEnum.CITIZENS_ASSEMBLY_REQUEST,
+    # Meeting Templates
+    PaperSubtypeEnum.RESOLUTION_TEMPLATE_VB: PaperTypeEnum.MEETING_TEMPLATE,
+    PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB: PaperTypeEnum.MEETING_TEMPLATE,
+    PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB_VB: PaperTypeEnum.MEETING_TEMPLATE,
+    PaperSubtypeEnum.ANNOUNCEMENT: PaperTypeEnum.MEETING_TEMPLATE,
+    PaperSubtypeEnum.DIRECT: PaperTypeEnum.MEETING_TEMPLATE,
+    PaperSubtypeEnum.MEETING_TEMPLATE_DISTRICT_COMMITTEE: PaperTypeEnum.MEETING_TEMPLATE,
+}
 ##############################################
 ################ Link types and other ########
 ##############################################
@@ -71,27 +92,6 @@ class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True):
     __tablename__ = "system_other_oparl_version"
     system_id: uuid.UUID = Field(foreign_key="system.db_id", primary_key=True)
     other_version_id: uuid.UUID = Field(foreign_key="system.db_id", primary_key=True)
-
-
-class PaperType(SQLModel, table=True):
-    __tablename__ = "paper_type"
-
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(description="Designation of the paper type")
-
-    # Relationship to subtypes
-    subtypes: list["PaperSubtype"] = Relationship(back_populates="parent_type")
-
-
-class PaperSubtype(SQLModel, table=True):
-    __tablename__ = "paper_subtype"
-
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(description="Designation of the paper subtype")
-
-    # FK to PaperTypeEnum
-    paper_type_id: uuid.UUID = Field(foreign_key="paper_type.id", description="Reference to the parent paper type")
-    parent_type: PaperType = Relationship(back_populates="subtypes")
 
 
 class PaperRelatedPaper(SQLModel, table=True):
@@ -719,9 +719,9 @@ class Paper(SQLModel, table=True):
     under_direction_of: list["Organization"] = Relationship(back_populates="directed_papers", link_model=PaperDirectionLink)
     keywords: list["Keyword"] = Relationship(back_populates="paper", link_model=PaperKeywordLink)
 
-    paper_type: uuid.UUID | None = Field(default=None, foreign_key="paper_type.id", description="Type of the document")
+    paper_type: PaperTypeEnum | None = Field(default=None, sa_column=Column(String(length=50)), description="Type of the document")
 
-    paper_subtype: uuid.UUID | None = Field(default=None, foreign_key="paper_subtype.id", description="Subtype of the document")
+    paper_subtype: PaperSubtypeEnum | None = Field(default=None, sa_column=Column(String(length=50)), description="Subtype of the document")
 
 
 class Body(SQLModel, table=True):

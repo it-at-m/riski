@@ -5,6 +5,7 @@ from typing import Generic, TypeVar
 
 from bs4 import BeautifulSoup
 
+from src.data_models import PaperSubtypeEnum
 from src.logtools import getLogger
 
 T = TypeVar("T")
@@ -50,3 +51,15 @@ class BaseParser(ABC, Generic[T]):
 
         title_text = title_tag.get_text(strip=True, separator=" ")
         return title_text
+
+    def _get_paper_subtype_enum(self, paper_subtype_string: str) -> PaperSubtypeEnum | None:
+        if "SB" in paper_subtype_string and "VB" in paper_subtype_string and "Beschlussvorlage" in paper_subtype_string:
+            return PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB_VB
+        if "SB" in paper_subtype_string and "Beschlussvorlage" in paper_subtype_string:
+            return PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB
+        if "VB" in paper_subtype_string and "Beschlussvorlage" in paper_subtype_string:
+            return PaperSubtypeEnum.RESOLUTION_TEMPLATE_VB
+        for subtype in PaperSubtypeEnum:
+            if subtype.value == paper_subtype_string:
+                return subtype
+        return None
