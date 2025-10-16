@@ -4,8 +4,67 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
-from sqlalchemy import JSON
+from sqlalchemy import JSON, String
 from sqlmodel import Column, Field, Relationship, SQLModel
+
+##############################################
+################ Enums #######################
+##############################################
+
+
+class OrganizationTypeEnum(str, Enum):
+    FACTION = "Fraktion"
+    PARTY = "Partei"
+    COMMITTEE = "Ausschuss"
+    COUNCIL = "Stadtrat"
+
+
+class OrganizationClassificationEnum(str, Enum):
+    PARLIAMENT = "Parlament"
+    FACTION = "Fraktion"
+    PARTY = "Partei"
+    COMMITTEE = "Ausschuss"
+    DISTRICT_COMMITTEE = "Bezirksausschuss"
+    CITIZENS_ASSEMBLY = "Bürgerversammlung"
+    OTHER = "Andere"
+
+
+class PaperTypeEnum(str, Enum):
+    COUNCIL_PROPOSAL = "Stadtratsantrag"
+    DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"
+    MEETING_TEMPLATE = "Sitzungsvorlage"
+    CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
+    CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
+
+
+class PaperSubtypeEnum(str, Enum):
+    # Subtypes for Council Proposal
+    URGENT_PROPOSAL = "Dringlichkeitsantrag"
+    PROPOSAL = "Antrag"
+    REQUEST = "Anfrage"
+    AMENDMENT_PROPOSAL = "Änderungsantrag"
+
+    # Subtypes for District Committee Proposal
+    DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"
+
+    # Subtypes for Citizens' Assembly Recommendation
+    CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
+
+    # Subtypes for Citizens' Assembly Request
+    CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
+
+    # Subtypes for Meeting Template
+    RESOLUTION_TEMPLATE_VB = "Beschlussvorlage Verwaltungsbeirat"
+    RESOLUTION_TEMPLATE_SB = "Beschlussvorlage Senatsbeirat"
+    RESOLUTION_TEMPLATE_SB_VB = "Beschlussvorlage Senatsbeirat Verwaltungsbeirat"
+    ANNOUNCEMENT = "Bekanntgabe"
+    DIRECT = "Direkt"
+    MEETING_TEMPLATE_DISTRICT_COMMITTEE = "Sitzungsvorlage für den Bezirksausschuss"
+
+
+##############################################
+################ Link types and other ########
+##############################################
 
 
 class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True):
@@ -83,44 +142,6 @@ class PaperKeywordLink(SQLModel, table=True):
     keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
-class System(SQLModel, table=True):
-    __tablename__ = "system"
-
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="The unique URL of this object.")
-    type: str = Field(
-        default="https://schema.oparl.org/1.1/System",
-        description="The fixed type of the object: 'https://schema.oparl.org/1.1/System'.",
-    )
-    oparlVersion: str = Field(description="The OParl version supported by the system (e.g., 'https://schema.oparl.org/1.1/').")
-    otherOparlVersions: str | None = Field(None, description="Used to specify system objects with other OParl versions.")
-    license: str | None = Field(
-        None,
-        description="License under which the data retrievable through this API is provided, unless otherwise stated for individual objects.",
-    )
-    name: str | None = Field(None, description="User-friendly name for the system.")
-    contactEmail: str | None = Field(None, description="Email address for inquiries about the OParl API.")
-    contactName: str | None = Field(None, description="Name of the contact person.")
-    website: str | None = Field(None, description="URL of the parliamentary information system's website")
-    vendor: str | None = Field(None, description="URL of the software vendor's website")
-    product: str | None = Field(None, description="URL for information about the used OParl server software")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="URL for the HTML view of this object.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    other_oparl_versions: list["System"] = Relationship(
-        link_model=SYSTEM_OTHER_OPARL_VERSION,
-        sa_relationship_kwargs={
-            "primaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.system_id",
-            "secondaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.other_version_id",
-            "foreign_keys": [SYSTEM_OTHER_OPARL_VERSION.system_id, SYSTEM_OTHER_OPARL_VERSION.other_version_id],
-        },
-    )
-    bodies: list["Body"] = Relationship(back_populates="system_link")
-
-
 class LocationBodies(SQLModel, table=True):
     __tablename__ = "location_bodies"
     location_id: uuid.UUID = Field(foreign_key="location.db_id", primary_key=True)
@@ -157,40 +178,6 @@ class LocationKeyword(SQLModel, table=True):
     keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
 
 
-class Location(SQLModel, table=True):
-    __tablename__ = "location"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="The unique URL of the location.")
-    type: str = Field(default="https://schema.oparl.org/1.1/Location", description="Type of the location")
-    description: str | None = Field(None, description="Textual description of a location, e.g., in the form of an address.")
-    geojson: dict | None = Field(
-        default=None,
-        sa_column=Column(JSON),
-        description="Geodata representation of the location as a GeoJSON feature object.",
-    )
-    streetAddress: str | None = Field(None, description="Street and house number of the address.")
-    room: str | None = Field(None, description="Room specification of the address.")
-    postalCode: str | None = Field(None, description="Postal code of the address.")
-    subLocality: str | None = Field(
-        None, description="Subordinate locality specification of the address, e.g., district, locality, or village."
-    )
-    locality: str | None = Field(None, description="Locality specification of the address.")
-    license: str | None = Field(None, description="License for the provided information.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the object.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    # Relationships
-    bodies: list["Body"] = Relationship(link_model=LocationBodies)
-    organizations: list["Organization"] = Relationship(link_model=LocationOrganizations)
-    persons: list["Person"] = Relationship(link_model=LocationPersons)
-    meetings: list["Meeting"] = Relationship(link_model=LocationMeetings)
-    papers: list["Paper"] = Relationship(back_populates="locations", link_model=PaperLocationLink)
-    keywords: list["Keyword"] = Relationship(back_populates="locations", link_model=LocationKeyword)
-
-
 class LegislativeTermKeyword(SQLModel, table=True):
     __tablename__ = "legislative_term_keyword"
     legislative_term_id: uuid.UUID = Field(
@@ -219,14 +206,6 @@ class LegislativeTerm(SQLModel, table=True):
     web: str | None = Field(None, description="HTML view of the object.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     keywords: list["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
-
-
-class OrganizationType(SQLModel, table=True):
-    __tablename__ = "organization_type"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(description="Name of the organization type")
-    description: str | None = Field(None, description="Description of the type")
-    organizations: list["Organization"] = Relationship(back_populates="organizationType")
 
 
 class OrganizationMembership(SQLModel, table=True):
@@ -268,46 +247,6 @@ class MeetingOrganizationLink(SQLModel, table=True):
     organization_id: uuid.UUID = Field(foreign_key="organization.db_id", primary_key=True)
 
 
-class Organization(SQLModel, table=True):
-    __tablename__ = "organization"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the organization.")
-    type: str = Field(
-        default="https://schema.oparl.org/1.1/Organization", description="Type of the object: 'https://schema.oparl.org/1.1/Organization'."
-    )
-    body: str | None = Field(None, description="Reference to the body to which the organization belongs.")
-    name: str | None = Field(None, description="Designation of the organization.")
-    meeting_id: uuid.UUID | None = Field(None, description="list of meetings of this organization.", foreign_key="meeting.db_id")
-    shortName: str | None = Field(None, description="Abbreviation of the organization.")
-    subOrganizationOf: uuid.UUID | None = Field(default=None, foreign_key="organization.db_id", description="FK to the parent organization")
-    classification: str | None = Field(None, description="Classification, e.g., statutory, voluntary.")
-    startDate: datetime | None = Field(None, description="Start date of the organization.")
-    endDate: datetime | None = Field(None, description="End date of the organization.")
-    website: str | None = Field(None, description="Website of the organization.")
-    location: uuid.UUID | None = Field(None, description="Location where the organization is based.", foreign_key="location.db_id")
-    externalBody: str | None = Field(None, description="Reference to an external body (only for imports).")
-    license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the organization.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
-    post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
-    # Relationships
-    parentOrganization: Optional["Organization"] = Relationship(
-        back_populates="subOrganizations", sa_relationship_kwargs={"remote_side": "Organization.db_id"}
-    )
-    subOrganizations: list["Organization"] = Relationship(back_populates="parentOrganization")
-    keywords: list["Keyword"] = Relationship(back_populates="organizations", link_model=OrganizationKeyword)
-    organization_type_id: Optional[uuid.UUID] = Field(foreign_key="organization_type.db_id")
-    organizationType: OrganizationType = Relationship(back_populates="organizations")
-    papers: list["Paper"] = Relationship(back_populates="originator_orgs", link_model=PaperOriginatorOrgLink)
-    directed_papers: list["Paper"] = Relationship(back_populates="under_direction_of", link_model=PaperDirectionLink)
-    meetings: list["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
-
-
 class PersonMembershipLink(SQLModel, table=True):
     __tablename__ = "person_membership"
     person_id: uuid.UUID = Field(foreign_key="person.db_id", primary_key=True)
@@ -326,6 +265,218 @@ class MeetingParticipantLink(SQLModel, table=True):
     __tablename__ = "meeting_participant"
     meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
     person_id: uuid.UUID = Field(foreign_key="person.db_id", description="Name or ID of the person", primary_key=True)
+
+
+class MembershipKeyword(SQLModel, table=True):
+    __tablename__ = "membership_keyword"
+    membership_id: uuid.UUID = Field(foreign_key="membership.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+
+
+class FileDerivativeLink(SQLModel, table=True):
+    __tablename__ = "file_derivative_link"
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    derivative_file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+
+
+class FileMeetingLink(SQLModel, table=True):
+    __tablename__ = "file_meeting"
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+
+
+class FileAgendaItemLink(SQLModel, table=True):
+    __tablename__ = "file_agenda"
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    agendaItem: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
+
+
+class FileKeywordLink(SQLModel, table=True):
+    __tablename__ = "file_keyword"
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+
+
+class PaperFileLink(SQLModel, table=True):
+    __tablename__ = "paper_file"
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+
+
+class AgendaItemKeywordLink(SQLModel, table=True):
+    __tablename__ = "agendaitem_keyword"
+    agendaitem_id: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+
+
+class MeetingAgendaItemLink(SQLModel, table=True):
+    """Mapping Meeting <-> AgendaItems (Order is relevant)"""
+
+    __tablename__ = "meeting_agenda_item"
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    agenda_item_id: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
+
+
+class BodyEquivalentLink(SQLModel, table=True):
+    __tablename__ = "equivalent_bodies"
+    body_id_a: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
+    body_id_b: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
+
+
+class BodyKeywordLink(SQLModel, table=True):
+    """Mapping Body <-> Keywords"""
+
+    __tablename__ = "body_keyword"
+    body_id: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
+    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+
+
+class MeetingKeywordLink(SQLModel, table=True):
+    """Mapping Meeting <-> Keywords"""
+
+    __tablename__ = "meeting_keyword"
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+
+
+class ConsultationKeywordLink(SQLModel, table=True):
+    consultation_id: uuid.UUID = Field(foreign_key="consultation.db_id", primary_key=True)
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+
+
+class Keyword(SQLModel, table=True):
+    __tablename__ = "keyword"
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str
+    locations: list["Location"] = Relationship(back_populates="keywords", link_model=LocationKeyword)
+    legislative_term: list["LegislativeTerm"] = Relationship(back_populates="keywords", link_model=LegislativeTermKeyword)
+    agenda_items: list["AgendaItem"] = Relationship(back_populates="keywords", link_model=AgendaItemKeywordLink)
+    meetings: list["Meeting"] = Relationship(back_populates="keywords", link_model=MeetingKeywordLink)
+    persons: list["Person"] = Relationship(back_populates="keywords", link_model=PersonKeywordLink)
+    organizations: list["Organization"] = Relationship(back_populates="keywords", link_model=OrganizationKeyword)
+    files: list["File"] = Relationship(back_populates="keywords", link_model=FileKeywordLink)
+    paper: list["Paper"] = Relationship(back_populates="keywords", link_model=PaperKeywordLink)
+    memberships: list["Membership"] = Relationship(back_populates="keywords", link_model=MembershipKeyword)
+    body: list["Body"] = Relationship(back_populates="keywords", link_model=BodyKeywordLink)
+    consultations: list["Consultation"] = Relationship(back_populates="keywords", link_model=ConsultationKeywordLink)
+
+
+##############################################
+################ OParl types #################
+##############################################
+
+
+class System(SQLModel, table=True):
+    __tablename__ = "system"
+
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(description="The unique URL of this object.")
+    type: str = Field(
+        default="https://schema.oparl.org/1.1/System",
+        description="The fixed type of the object: 'https://schema.oparl.org/1.1/System'.",
+    )
+    oparlVersion: str = Field(description="The OParl version supported by the system (e.g., 'https://schema.oparl.org/1.1/').")
+    license: str | None = Field(
+        None,
+        description="License under which the data retrievable through this API is provided, unless otherwise stated for individual objects.",
+    )
+    name: str | None = Field(None, description="User-friendly name for the system.")
+    contactEmail: str | None = Field(None, description="Email address for inquiries about the OParl API.")
+    contactName: str | None = Field(None, description="Name of the contact person.")
+    website: str | None = Field(None, description="URL of the parliamentary information system's website")
+    vendor: str | None = Field(None, description="URL of the software vendor's website")
+    product: str | None = Field(None, description="URL for information about the used OParl server software")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
+    web: str | None = Field(None, description="URL for the HTML view of this object.")
+    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
+    other_oparl_versions: list["System"] = Relationship(
+        link_model=SYSTEM_OTHER_OPARL_VERSION,
+        sa_relationship_kwargs={
+            "primaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.system_id",
+            "secondaryjoin": "System.db_id==SYSTEM_OTHER_OPARL_VERSION.other_version_id",
+            "foreign_keys": [SYSTEM_OTHER_OPARL_VERSION.system_id, SYSTEM_OTHER_OPARL_VERSION.other_version_id],
+        },
+    )
+    bodies: list["Body"] = Relationship(back_populates="system_link")
+
+
+class Location(SQLModel, table=True):
+    __tablename__ = "location"
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(description="The unique URL of the location.")
+    type: str = Field(default="https://schema.oparl.org/1.1/Location", description="Type of the location")
+    description: str | None = Field(None, description="Textual description of a location, e.g., in the form of an address.")
+    geojson: dict | None = Field(
+        default=None,
+        sa_column=Column(JSON),
+        description="Geodata representation of the location as a GeoJSON feature object.",
+    )
+    streetAddress: str | None = Field(None, description="Street and house number of the address.")
+    room: str | None = Field(None, description="Room specification of the address.")
+    postalCode: str | None = Field(None, description="Postal code of the address.")
+    subLocality: str | None = Field(
+        None, description="Subordinate locality specification of the address, e.g., district, locality, or village."
+    )
+    locality: str | None = Field(None, description="Locality specification of the address.")
+    license: str | None = Field(None, description="License for the provided information.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
+    web: str | None = Field(None, description="HTML view of the object.")
+    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
+    # Relationships
+    bodies: list["Body"] = Relationship(link_model=LocationBodies)
+    organizations: list["Organization"] = Relationship(link_model=LocationOrganizations)
+    persons: list["Person"] = Relationship(link_model=LocationPersons)
+    meetings: list["Meeting"] = Relationship(link_model=LocationMeetings)
+    papers: list["Paper"] = Relationship(back_populates="locations", link_model=PaperLocationLink)
+    keywords: list["Keyword"] = Relationship(back_populates="locations", link_model=LocationKeyword)
+
+
+class Organization(SQLModel, table=True):
+    __tablename__ = "organization"
+    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    id: str = Field(description="Unique URL of the organization.")
+    type: str = Field(
+        default="https://schema.oparl.org/1.1/Organization", description="Type of the object: 'https://schema.oparl.org/1.1/Organization'."
+    )
+    body: str | None = Field(None, description="Reference to the body to which the organization belongs.")
+    name: str | None = Field(None, description="Designation of the organization.")
+    meeting_id: uuid.UUID | None = Field(None, description="list of meetings of this organization.", foreign_key="meeting.db_id")
+    shortName: str | None = Field(None, description="Abbreviation of the organization.")
+    subOrganizationOf: uuid.UUID | None = Field(default=None, foreign_key="organization.db_id", description="FK to the parent organization")
+    classification: OrganizationClassificationEnum | None = Field(
+        None, sa_column=Column(String(length=25)), description="Classification, e.g., statutory, voluntary."
+    )
+    organizationType: OrganizationTypeEnum | None = Field(None, sa_column=Column(String(length=25)), description="Type of the organization")
+    startDate: datetime | None = Field(None, description="Start date of the organization.")
+    endDate: datetime | None = Field(None, description="End date of the organization.")
+    website: str | None = Field(None, description="Website of the organization.")
+    location: uuid.UUID | None = Field(None, description="Location where the organization is based.", foreign_key="location.db_id")
+    externalBody: str | None = Field(None, description="Reference to an external body (only for imports).")
+    license: str | None = Field(None, description="License for the published data.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
+    web: str | None = Field(None, description="HTML view of the organization.")
+    inactive: bool | None = Field(False, description="Marks this organization as inactive.")
+    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
+    membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
+    post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
+    # Relationships
+    parentOrganization: Optional["Organization"] = Relationship(
+        back_populates="subOrganizations", sa_relationship_kwargs={"remote_side": "Organization.db_id"}
+    )
+    subOrganizations: list["Organization"] = Relationship(back_populates="parentOrganization")
+    keywords: list["Keyword"] = Relationship(back_populates="organizations", link_model=OrganizationKeyword)
+    papers: list["Paper"] = Relationship(back_populates="originator_orgs", link_model=PaperOriginatorOrgLink)
+    directed_papers: list["Paper"] = Relationship(back_populates="under_direction_of", link_model=PaperDirectionLink)
+    meetings: list["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
 
 
 class Person(SQLModel, table=True):
@@ -368,12 +519,6 @@ class Person(SQLModel, table=True):
     meetings: list["Meeting"] = Relationship(back_populates="participants", link_model=MeetingParticipantLink)
 
 
-class MembershipKeyword(SQLModel, table=True):
-    __tablename__ = "membership_keyword"
-    membership_id: uuid.UUID = Field(foreign_key="membership.db_id", primary_key=True)
-    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
-
-
 class Membership(SQLModel, table=True):
     __tablename__ = "membership"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -403,36 +548,6 @@ class Membership(SQLModel, table=True):
     keywords: list["Keyword"] = Relationship(back_populates="memberships", link_model=MembershipKeyword)
     organizations: list["Organization"] = Relationship(link_model=OrganizationMembership)
     person: list["Person"] = Relationship(back_populates="membership", link_model=PersonMembershipLink)
-
-
-class FileDerivativeLink(SQLModel, table=True):
-    __tablename__ = "file_derivative_link"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    derivative_file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-
-
-class FileMeetingLink(SQLModel, table=True):
-    __tablename__ = "file_meeting"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
-
-
-class FileAgendaItemLink(SQLModel, table=True):
-    __tablename__ = "file_agenda"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    agendaItem: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
-
-
-class FileKeywordLink(SQLModel, table=True):
-    __tablename__ = "file_keyword"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
-
-
-class PaperFileLink(SQLModel, table=True):
-    __tablename__ = "paper_file"
-    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
 
 
 class File(SQLModel, table=True):
@@ -485,20 +600,6 @@ class File(SQLModel, table=True):
     agendaItem: list["AgendaItem"] = Relationship(back_populates="auxiliaryFile", link_model=FileAgendaItemLink)
     keywords: list["Keyword"] = Relationship(back_populates="files", link_model=FileKeywordLink)
     papers: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=PaperFileLink)
-
-
-class AgendaItemKeywordLink(SQLModel, table=True):
-    __tablename__ = "agendaitem_keyword"
-    agendaitem_id: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
-
-
-class MeetingAgendaItemLink(SQLModel, table=True):
-    """Mapping Meeting <-> AgendaItems (Order is relevant)"""
-
-    __tablename__ = "meeting_agenda_item"
-    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
-    agenda_item_id: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
 
 
 class AgendaItem(SQLModel, table=True):
@@ -556,6 +657,8 @@ class Paper(SQLModel, table=True):
         None,
         description="Identifier or file number of the paper, which can be uniquely referenced in parliamentary work.",
     )
+    short_information: str | None = Field(None, description="Short Information of Paper")
+    subject: str | None = Field(None, description="Description of Paper")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
     paperType: str | None = Field(None, description="Type of the document, e.g., response to a query.")
     mainFile: uuid.UUID | None = Field(
@@ -621,20 +724,6 @@ class Paper(SQLModel, table=True):
     paper_subtype: uuid.UUID | None = Field(default=None, foreign_key="paper_subtype.id", description="Subtype of the document")
 
 
-class BodyEquivalentLink(SQLModel, table=True):
-    __tablename__ = "equivalent_bodies"
-    body_id_a: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
-    body_id_b: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
-
-
-class BodyKeywordLink(SQLModel, table=True):
-    """Mapping Body <-> Keywords"""
-
-    __tablename__ = "body_keyword"
-    body_id: uuid.UUID = Field(foreign_key="body.db_id", primary_key=True)
-    keyword: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
-
-
 class Body(SQLModel, table=True):
     __tablename__ = "body"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -693,14 +782,6 @@ class Body(SQLModel, table=True):
     system_link: Optional["System"] = Relationship(back_populates="bodies")
 
 
-class MeetingKeywordLink(SQLModel, table=True):
-    """Mapping Meeting <-> Keywords"""
-
-    __tablename__ = "meeting_keyword"
-    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
-    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
-
-
 class Meeting(SQLModel, table=True):
     __tablename__ = "meeting"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -745,11 +826,6 @@ class Meeting(SQLModel, table=True):
     keywords: list["Keyword"] = Relationship(back_populates="meetings", link_model=MeetingKeywordLink)
 
 
-class ConsultationKeywordLink(SQLModel, table=True):
-    consultation_id: uuid.UUID = Field(foreign_key="consultation.db_id", primary_key=True)
-    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
-
-
 class Consultation(SQLModel, table=True):
     __tablename__ = "consultation"
     db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -770,68 +846,14 @@ class Consultation(SQLModel, table=True):
     keywords: list["Keyword"] = Relationship(back_populates="consultations", link_model=ConsultationKeywordLink)
 
 
-class Keyword(SQLModel, table=True):
-    __tablename__ = "keyword"
-    db_id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str
-    locations: list["Location"] = Relationship(back_populates="keywords", link_model=LocationKeyword)
-    legislative_term: list["LegislativeTerm"] = Relationship(back_populates="keywords", link_model=LegislativeTermKeyword)
-    agenda_items: list["AgendaItem"] = Relationship(back_populates="keywords", link_model=AgendaItemKeywordLink)
-    meetings: list["Meeting"] = Relationship(back_populates="keywords", link_model=MeetingKeywordLink)
-    persons: list["Person"] = Relationship(back_populates="keywords", link_model=PersonKeywordLink)
-    organizations: list["Organization"] = Relationship(back_populates="keywords", link_model=OrganizationKeyword)
-    files: list["File"] = Relationship(back_populates="keywords", link_model=FileKeywordLink)
-    paper: list["Paper"] = Relationship(back_populates="keywords", link_model=PaperKeywordLink)
-    memberships: list["Membership"] = Relationship(back_populates="keywords", link_model=MembershipKeyword)
-    body: list["Body"] = Relationship(back_populates="keywords", link_model=BodyKeywordLink)
-    consultations: list["Consultation"] = Relationship(back_populates="keywords", link_model=ConsultationKeywordLink)
+##############################################
+################ Collection types ############
+##############################################
 
 
 class ExtractArtifact(BaseModel):
     meetings: list[Meeting]
     heads_of_departments: list[Person]
     city_council_members: list[Person]
-
-
-##############################################
-################ Enums #######################
-##############################################
-class OrganizationTypeEnum(str, Enum):
-    COUNCIL = "Stadtrat"
-    FACTION = "Fraktion"
-    CITIZENS_ASSEMBLY = "Bürgerversammlung"
-    DISTRICT_COMMITTEE = "Bezirksausschuss"
-    OTHER = "Andere"
-
-
-class PaperTypeEnum(str, Enum):
-    COUNCIL_PROPOSAL = "Stadtratsantrag"
-    DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"
-    MEETING_TEMPLATE = "Sitzungsvorlage"
-    CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
-    CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
-
-
-class PaperSubtypeEnum(str, Enum):
-    # Subtypes for Council Proposal
-    URGENT_PROPOSAL = "Dringlichkeitsantrag"
-    PROPOSAL = "Antrag"
-    REQUEST = "Anfrage"
-    AMENDMENT_PROPOSAL = "Änderungsantrag"
-
-    # Subtypes for District Committee Proposal
-    DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"
-
-    # Subtypes for Citizens' Assembly Recommendation
-    CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
-
-    # Subtypes for Citizens' Assembly Request
-    CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
-
-    # Subtypes for Meeting Template
-    RESOLUTION_TEMPLATE_VB = "Beschlussvorlage Verwaltungsbeirat"
-    RESOLUTION_TEMPLATE_SB = "Beschlussvorlage Senatsbeirat"
-    RESOLUTION_TEMPLATE_SB_VB = "Beschlussvorlage Senatsbeirat Verwaltungsbeirat"
-    ANNOUNCEMENT = "Bekanntgabe"
-    DIRECT = "Direkt"
-    MEETING_TEMPLATE_DISTRICT_COMMITTEE = "Sitzungsvorlage für den Bezirksausschuss"
+    factions: list[Organization]
+    city_council_meeting_template: list[Paper]
