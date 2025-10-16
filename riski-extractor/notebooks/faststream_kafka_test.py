@@ -1,17 +1,31 @@
 import asyncio
+import time
 
 from faststream import FastStream
 from faststream.kafka import KafkaBroker
+from pydantic import BaseModel
 
 broker = KafkaBroker("localhost:9092")
 
 app = FastStream(broker)
 
 
-# Consumer
-@broker.subscriber("my-topic")
-async def base_handler(body):
-    print(f"Message: {body}")
+class Message(BaseModel):
+    content: str
+    republished: bool = False
+
+
+# Consumer, getting all messages already in the topic, but only once for set group id
+@broker.subscriber("my-topic", auto_offset_reset="earliest", group_id="my-group")
+async def base_handler(msg: Message):
+    if msg.republished:
+        print("Republished Message:")
+    print(f"Message: {msg.content}")
+    time.sleep(2)
+    if msg.content == "error message" and not msg.republished:
+        print("Simulating error, republishing message...")
+        msg.republished = True
+        await broker.publish(msg, "my-topic")
 
 
 # # Producer (publishing messages)

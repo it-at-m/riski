@@ -42,7 +42,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-  # run topic creation with `podman compose --profile init up` or as single service when kafka was already started
+  # run topic creation with `podman compose --profile init up` or as single service when kafka was already started  
+  # creates example topic and managment topic for group tracking
   topic-init:
     image: apache/kafka:4.1.0
     profiles: ["init"]
@@ -51,5 +52,6 @@ services:
         condition: service_healthy
     entrypoint: >
       sh -c "
-        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic my-topic --partitions 1 --replication-factor 1 
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic my-topic --partitions 1 --replication-factor 1 || true &&
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic __consumer_offsets --partitions 50 --replication-factor 1 --config cleanup.policy=compact || true
       "
