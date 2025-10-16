@@ -38,7 +38,14 @@ pgvector = [
 ]
 
 [dependency-groups]
-dev = ["ipykernel>=6.30.0", "pre-commit>=4.2.0", "ruff>=0.12.5", "ty>=0.0.1a16", "pytest>=8.4.1"]
+dev = [
+    "ipykernel>=6.30.0",
+    "pre-commit>=4.2.0",
+    "ruff>=0.12.5",
+    "ty>=0.0.1a16",
+    "pytest>=8.4.1",
+    "faststream[kafka]>=0.5.48",
+]
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
