@@ -36,6 +36,7 @@ class PaperTypeEnum(str, Enum):
     CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
     CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
     SUPPLEMENTARY_PROPOSAL = "Ergänzungsantrag"
+    COUNCIL_REQUEST = "Stadtratsanfrage"
 
 
 class PaperSubtypeEnum(str, Enum):
@@ -661,7 +662,6 @@ class Paper(SQLModel, table=True):
     short_information: str | None = Field(None, description="Short Information of Paper")
     subject: str | None = Field(None, description="Description of Paper")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
-    paperType: str | None = Field(None, description="Type of the document, e.g., response to a query.")
     mainFile: uuid.UUID | None = Field(
         None,
         description="The main file for this paper. Example: The paper represents a resolution proposal and the main file contains the text of the resolution proposal. Should not be output if there is no unique main file.",

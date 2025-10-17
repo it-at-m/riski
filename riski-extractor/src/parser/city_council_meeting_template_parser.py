@@ -103,6 +103,5 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             originator_persons=originators,
             short_information=short_information,
             reference=reference,
-            paperType="Sitzungsvorlage",
         )
         return paper
