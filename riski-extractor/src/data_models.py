@@ -35,6 +35,7 @@ class PaperTypeEnum(str, Enum):
     MEETING_TEMPLATE = "Sitzungsvorlage"
     CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
     CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
+    SUPPLEMENTARY_PROPOSAL = "Ergänzungsantrag"
 
 
 class PaperSubtypeEnum(str, Enum):
@@ -673,7 +674,7 @@ class Paper(SQLModel, table=True):
     )
     web: str | None = Field(None, description="HTML view of the person.")
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-
+    description: str | None = Field(None, description="Short description von RIS page.")
     auxiliary_files: list["File"] = Relationship(back_populates="papers", link_model=PaperFileLink)
     related_papers: list["Paper"] = Relationship(
         back_populates="related_to",
@@ -857,3 +858,4 @@ class ExtractArtifact(BaseModel):
     city_council_members: list[Person]
     factions: list[Organization]
     city_council_meeting_template: list[Paper]
+    city_council_motions: list[Paper]

@@ -10,6 +10,7 @@ from src.extractor.city_council_faction_extractor import CityCouncilFactionExtra
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
+from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.filehandler.filehandler import Filehandler
 from src.logtools import getLogger
@@ -66,6 +67,13 @@ def main():
     logger.debug([template.name for template in extracted_city_council_meeting_template_list])
     update_or_insert_objects_to_database(extracted_city_council_meeting_template_list)
 
+    logger.info("Extracting City Council Motions")
+    city_council_motion_extractor = CityCouncilMotionExtractor()
+    extracted_city_council_motion_list = city_council_motion_extractor.run()
+    logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motions")
+    logger.debug([obj.name for obj in extracted_city_council_motion_list])
+    update_or_insert_objects_to_database(extracted_city_council_motion_list)
+
     filehandler = Filehandler()
     filehandler.download_and_persist_files()
 
@@ -77,6 +85,7 @@ def main():
             city_council_members=extracted_city_council_member_list,
             city_council_meeting_template=extracted_city_council_meeting_template_list,
             factions=extracted_faction_list,
+            city_council_motions=extracted_city_council_motion_list,
         )
         os.makedirs("artifacts", exist_ok=True)
         with open("artifacts/extract.json", "w", encoding="utf-8") as file:

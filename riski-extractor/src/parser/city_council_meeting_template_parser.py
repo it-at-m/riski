@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from logging import Logger
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -11,8 +10,6 @@ from src.parser.base_parser import BaseParser
 
 
 class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
-    logger: Logger
-
     def __init__(self) -> None:
         super().__init__()
         self.logger.info("City Council Meeting Template Parser initialized.")
