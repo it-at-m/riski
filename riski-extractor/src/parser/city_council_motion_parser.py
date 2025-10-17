@@ -46,7 +46,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         return match.group(1) if match else None
 
     def _detect_paper_type(self, text: str | None) -> str:
-        """Erkennt, ob es ein StR-Antrag oder StR-Anfrage ist."""
+        """Detects whether it is a city council motion or a city council inquiry."""
         if not text:
             return "StR-Antrag/Anfrage"
         text_lower = text.lower()
