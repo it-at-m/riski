@@ -37,12 +37,15 @@ const onProcessedCallback = (answer: RiskiAnswer) => {
 const onCompleteCallback = () => {
   loading.value = false;
 };
-
-const resetInitialState = () => {
+const resetAbortController = () => {
   if (loading.value) {
     abortController.abort();
     abortController = new AbortController();
   }
+};
+
+const resetInitialState = () => {
+  resetAbortController();
   found_answer.value = undefined;
   loading.value = false;
   fehler.value = "";
@@ -65,10 +68,7 @@ const submitQuery = (query: string) => {
     return;
   }
   initial.value = false;
-  if (loading.value) {
-    abortController.abort();
-    abortController = new AbortController();
-  }
+  resetAbortController();
   resetLoadingState();
 
   SearchService.search(
