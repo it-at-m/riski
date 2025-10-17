@@ -65,26 +65,6 @@ class PaperSubtypeEnum(str, Enum):
     MEETING_TEMPLATE_URGENT_PROPOSAL = "Sitzungsvorlage zur DA"
 
 
-subtype_mapping = {
-    # Council Proposal
-    PaperSubtypeEnum.URGENT_PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
-    PaperSubtypeEnum.PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
-    PaperSubtypeEnum.REQUEST: PaperTypeEnum.COUNCIL_PROPOSAL,
-    PaperSubtypeEnum.AMENDMENT_PROPOSAL: PaperTypeEnum.COUNCIL_PROPOSAL,
-    # District Committee Proposal
-    PaperSubtypeEnum.DISTRICT_COMMITTEE_PROPOSAL: PaperTypeEnum.DISTRICT_COMMITTEE_PROPOSAL,
-    # Citizens' Assembly Recommendation
-    PaperSubtypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION: PaperTypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION,
-    # Citizens' Assembly Request
-    PaperSubtypeEnum.CITIZENS_ASSEMBLY_REQUEST: PaperTypeEnum.CITIZENS_ASSEMBLY_REQUEST,
-    # Meeting Templates
-    PaperSubtypeEnum.RESOLUTION_TEMPLATE_VB: PaperTypeEnum.MEETING_TEMPLATE,
-    PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB: PaperTypeEnum.MEETING_TEMPLATE,
-    PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB_VB: PaperTypeEnum.MEETING_TEMPLATE,
-    PaperSubtypeEnum.ANNOUNCEMENT: PaperTypeEnum.MEETING_TEMPLATE,
-    PaperSubtypeEnum.DIRECT: PaperTypeEnum.MEETING_TEMPLATE,
-    PaperSubtypeEnum.MEETING_TEMPLATE_DISTRICT_COMMITTEE: PaperTypeEnum.MEETING_TEMPLATE,
-}
 ##############################################
 ################ Link types and other ########
 ##############################################

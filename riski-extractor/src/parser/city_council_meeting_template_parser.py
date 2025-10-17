@@ -60,7 +60,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             except ValueError:
                 self.logger.warning(f"{url}: Unparseable Freigabe date: {date_str!r}")
         paper_subtype_string = self._kv_value("Typ:", soup)
-        paper_subtype = self._get_paper_subtype_enum(paper_subtype_string)
+        paper_subtype = self._get_paper_subtype_enum(paper_subtype_string) if paper_subtype_string else None
 
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
