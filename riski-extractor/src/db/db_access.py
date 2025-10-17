@@ -97,9 +97,14 @@ def get_or_insert_object_to_database(obj: object, session=None):
 def request_person_by_full_name(familyName: str, givenName: str, logger, session=None) -> Person | None:
     session = session or get_session()
     stmt = select(Person).where(Person.familyName == familyName, Person.givenName == givenName)
-    result = session.exec(stmt).first()
-    if result:
-        logger.debug(f"Found person {givenName} {familyName} in DB")
-    else:
+    results = session.exec(stmt).all()
+
+    if not results:
         logger.warning(f"No person found for {givenName} {familyName}")
-    return result
+        return None
+    elif len(results) > 1:
+        logger.warning(f"Multiple persons found for {givenName} {familyName} — using the first one")
+
+    person = results[0]
+    logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
+    return person
