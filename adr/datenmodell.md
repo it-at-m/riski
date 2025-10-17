@@ -53,6 +53,7 @@ An AGENDA_ITEM can probably consult about only parts of a StR_Antrag and the dec
 | Antrag                  |
 | Anfrage                 |
 | Änderungsantrag         |
+| Ergänzungsantrag        |
 
 #### BA-Antrag
 

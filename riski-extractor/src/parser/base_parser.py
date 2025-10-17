@@ -29,7 +29,7 @@ class BaseParser(ABC, Generic[T]):
                     self.logger.warning("Locale 'de_DE' not available. Date parsing may fail.")
 
     @abstractmethod
-    def parse(self, link: str, content: str) -> T:
+    def parse(self, link: str, content: str) -> T | None:
         pass
 
     def _kv_value(self, key_label: str, soup: BeautifulSoup) -> str | None:

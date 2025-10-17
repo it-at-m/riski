@@ -117,6 +117,9 @@ class BaseExtractor(ABC, Generic[T]):
             try:
                 response = self._get_object_html(link)
                 extracted_object = self.parser.parse(link, response)
+                if extracted_object is None:
+                    self.logger.warning(f"No object parsed for {link}")
+                    continue
                 extracted_objects.append(extracted_object)
             except Exception:
                 self.logger.exception(f"Error parsing {link}")
