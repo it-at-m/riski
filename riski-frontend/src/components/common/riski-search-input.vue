@@ -15,7 +15,7 @@
             <input :id="'input-' + id" class="m-input autocomplete-input unset-border-right muc-input" :type="type"
                 v-model="modelValue" :aria-describedby="hint ? 'input-hint-' + id : undefined"
                 :placeholder="placeholder" :required="required"></input>
-            <button v-if="modelValue" class="m-input__suffix  unset-border-left"  @click="handleClearClick" >
+            <button v-if="modelValue" type="button" class="m-input__suffix  unset-border-left"  @click="handleClearClick" >
                 <svg aria-hidden="true" class="icon">
                     <use xlink:href="#icon-close"></use>
                 </svg>
@@ -29,7 +29,7 @@
                 </li>
             </ul>
 
-            <button v-if="suffixIcon" class="m-input__suffix" @click="handleSuffixClick">
+            <button v-if="suffixIcon" type="button" class="m-input__suffix" @click="handleSuffixClick">
                 <svg aria-hidden="true" class="icon">
                     <use :xlink:href="'#icon-' + suffixIcon"></use>
                 </svg>

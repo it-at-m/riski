@@ -123,7 +123,7 @@ const dashOffset: ComputedRef<number> = computed(() => {
   let validated_percentage = 0;
   if (percentage || percentage === 0) {
     if (percentage < 0) validated_percentage = 0;
-    if (percentage > 100) validated_percentage = 100;
+    else if (percentage > 100) validated_percentage = 100;
     else validated_percentage = Math.round(percentage);
   }
   return calculateDashoffset(validated_percentage, dashArray);

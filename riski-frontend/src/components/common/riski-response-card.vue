@@ -50,7 +50,7 @@ function fileSizeAsString(fileSize: number) {
     <h3 class="m-dataset-item__headline headline">Anträge</h3>
     <div class="marked_text m-dataset-item__text ai_response">
       <ul>
-        <li v-for="proposal in proposals">{{ proposal.identifier }} - {{ proposal.name }} <a :href="proposal.risUrl">{{proposal.risUrl}}</a></li>
+        <li v-for="proposal in proposals" :key="proposal.identifier">{{ proposal.identifier }} - {{ proposal.name }} <a :href="proposal.risUrl">{{proposal.risUrl}}</a></li>
       </ul>
     </div>
   </div>
@@ -59,7 +59,7 @@ function fileSizeAsString(fileSize: number) {
     <h3 class="m-dataset-item__headline headline">Dokumente</h3>
     <div class="marked_text m-dataset-item__text ai_response">
       <ul>
-        <li v-for="document in documents">{{ document.name }} ({{ fileSizeAsString(document.size) }}) <a :href="document.risUrl">{{document.risUrl}}</a></li>
+        <li v-for="document in documents" :key="document.risUrl">{{ document.name }} ({{ fileSizeAsString(document.size) }}) <a :href="document.risUrl">{{document.risUrl}}</a></li>
       </ul>
     </div>
   </div>

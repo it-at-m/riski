@@ -2,7 +2,7 @@
 
 Builds a custom webcomponent that can be used. Build with:
 
-- [V7ue.js](https://vuejs.org/)
+- [Vue.js](https://vuejs.org/)
 - [Refarch-Webcomponent-Starter](https://github.com/it-at-m/refarch-templates/tree/main/refarch-webcomponent)
 - [Muc-Patternlab als Komponentenlibrary](https://it-at-m.github.io/muc-patternlab-vue/)
 

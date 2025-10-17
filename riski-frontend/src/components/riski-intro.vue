@@ -1,7 +1,4 @@
 <script setup lang="ts">
-defineProps<{
-  labelfor: string;
-}>();
 </script>
 
 <template>
@@ -16,7 +13,6 @@ defineProps<{
         <div class="m-intro-vertical__content">
           <div
             class="intro-info"
-            :for="labelfor"
           >
             <p>
               Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus dem Ratsinformationssystem (RIS) stellen.

@@ -91,7 +91,7 @@ const submitQuery = (query: string) => {
       <div v-html="customIconsSprite" />
       <div v-html="riskiIconsSprite" />
 
-      <riski-intro labelfor="riski-searchbar">
+      <riski-intro>
         <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
           :on-clear="resetInitialState" />
       </riski-intro>
@@ -137,7 +137,7 @@ const submitQuery = (query: string) => {
               <template #content>
                 Die von diesem System bereitgestellten Informationen dienen als
                 erste Orientierung und es kann nicht zugesichert werden, dass diese tatsächlich korrekt sind. 
-                Wir arbeiten daran, dass die Informationen so korrekt wie möglich sind, können dafür jedoch keien Gewähr geben.
+                Wir arbeiten daran, dass die Informationen so korrekt wie möglich sind, können dafür jedoch keine Gewähr geben.
                 Überprüfen sie die Ergebnisse daher bitte mittels der angegeben Anträge und Dokumente selbständig um die 
                 Korrektheit zu garantieren, wo dies wichtig ist.
               </template>
