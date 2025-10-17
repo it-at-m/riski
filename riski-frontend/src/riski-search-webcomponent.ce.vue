@@ -116,7 +116,7 @@ const submitQuery = (query: string) => {
                   </template>
                 </muc-callout>
               </div>
-              <div v-else-if="found_answer != undefined">
+              <div v-else-if="found_answer != undefined && !loading">
                   <riski-response-card :riski-answer="found_answer"></riski-response-card>
               </div>
               <div v-if="fehler != ''">

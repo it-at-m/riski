@@ -49,5 +49,5 @@ See [Configuration Reference](https://vitejs.dev/config/).
 2. Add Element to page
 
 ```html
-<dlf-search-webcomponent></dlf-search-webcomponent>
+<riski-search-webcomponent></riski-search-webcomponent>
 ```
