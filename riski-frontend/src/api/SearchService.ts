@@ -36,7 +36,7 @@ export default class SearchService {
    * Performs a search based on the provided query.
    *
    * @param query - The search query.
-   * @param onProcessed - Callback function called when a DLFDocument is processed.
+   * @param onProcessed - Callback function called when a RiskiAnswer is processed.
    * @param onComplete - Callback function called when the search is complete.
    * @param signal - The AbortSignal used to cancel the search.
    * @throws {string} If the query is empty or null.
@@ -62,7 +62,7 @@ export default class SearchService {
    * Performs a search operation.
    *
    * @param query - The search query.
-   * @param onProcessed - Callback function called when a document is succesfully processed with the answer chain.
+   * @param onProcessed - Callback function called when a document is successfully processed with the answer chain.
    * @param onComplete - Callback function called when the search operation is complete.
    * @param signal - The AbortSignal used to cancel the search operation.
    * @returns A Promise that resolves when the search operation is complete.
