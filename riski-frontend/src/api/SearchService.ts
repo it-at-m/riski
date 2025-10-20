@@ -81,7 +81,7 @@ export default class SearchService {
                 onComplete();
               })
               .catch((err: any) => {
-                if (!err.includes("404")) {
+                if (err instanceof String && !err.includes("404")) {
                   console.debug(err);
                 }
                 onComplete();
@@ -98,8 +98,8 @@ export default class SearchService {
             if (answer) onProcessed(answer);
             onComplete();
           })
-          .catch((err: string) => {
-            if (!err.includes("404")) {
+          .catch((err: any) => {
+            if (err instanceof String && !err.includes("404")) {
               console.debug(err);
             }
             onComplete();
