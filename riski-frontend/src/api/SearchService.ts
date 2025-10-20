@@ -74,14 +74,14 @@ export default class SearchService {
     signal: AbortSignal,
   ): Promise<void> {
 
-    if(import.meta.env.VITE_NODE_ENV=="development"){
+    if(import.meta.env.VITE_NODE_ENV === "development"){
       return SearchService.localExampleAnswer()
               .then((answer) => {
                 if (answer) onProcessed(answer);
                 onComplete();
               })
               .catch((err: any) => {
-                if (err instanceof String && !err.includes("404")) {
+                if (typeof err === "string" && !err.includes("404")) {
                   console.debug(err);
                 }
                 onComplete();
@@ -99,7 +99,7 @@ export default class SearchService {
             onComplete();
           })
           .catch((err: any) => {
-            if (err instanceof String && !err.includes("404")) {
+            if (typeof err === "string" && !err.includes("404")) {
               console.debug(err);
             }
             onComplete();
