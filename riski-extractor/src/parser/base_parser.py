@@ -53,13 +53,19 @@ class BaseParser(ABC, Generic[T]):
         return title_text
 
     def _get_paper_subtype_enum(self, paper_subtype_string: str) -> PaperSubtypeEnum | None:
-        if "SB" in paper_subtype_string and "VB" in paper_subtype_string and "Beschlussvorlage" in paper_subtype_string:
+        if not paper_subtype_string:
+            return None
+        s = paper_subtype_string.strip()
+        norm = s.casefold()
+        if "beschlussvorlage" in norm and "sb" in norm and "vb" in norm:
             return PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB_VB
-        if "SB" in paper_subtype_string and "Beschlussvorlage" in paper_subtype_string:
+        if "beschlussvorlage" in norm and "sb" in norm:
             return PaperSubtypeEnum.RESOLUTION_TEMPLATE_SB
-        if "VB" in paper_subtype_string and "Beschlussvorlage" in paper_subtype_string:
+        if "beschlussvorlage" in norm and "vb" in norm:
             return PaperSubtypeEnum.RESOLUTION_TEMPLATE_VB
-        for subtype in PaperSubtypeEnum:
-            if subtype.value == paper_subtype_string:
-                return subtype
-        return None
+        # exact value match via Enum casting
+        try:
+            return PaperSubtypeEnum(s)
+        except ValueError:
+            self.logger.warning(f"Unknown PaperSubtypeEnum value: '{s}'")
+            return None
