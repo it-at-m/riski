@@ -120,7 +120,7 @@ const submitQuery = (query: string) => {
                   <riski-response-card :riski-answer="found_answer"></riski-response-card>
               </div>
               <div v-if="fehler != ''">
-                <muc-callout title="No information found" type="error">
+                <muc-callout title="Fehler" type="error">
                   <template #header>Ein Fehler ist aufgetreten.</template>
                   <template #content>
                     {{ fehler }}
@@ -138,7 +138,7 @@ const submitQuery = (query: string) => {
                 Die von diesem System bereitgestellten Informationen dienen als
                 erste Orientierung und es kann nicht zugesichert werden, dass diese tatsächlich korrekt sind. 
                 Wir arbeiten daran, dass die Informationen so korrekt wie möglich sind, können dafür jedoch keine Gewähr geben.
-                Überprüfen sie die Ergebnisse daher bitte mittels der angegeben Anträge und Dokumente selbständig um die 
+                Überprüfen sie die Ergebnisse daher bitte mittels der angegebenen Anträge und Dokumente selbständig um die
                 Korrektheit zu garantieren, wo dies wichtig ist.
               </template>
             </muc-callout>
@@ -153,6 +153,7 @@ const submitQuery = (query: string) => {
 <style>
 @import "@muenchen/muc-patternlab-vue/assets/css/custom-style.css";
 @import "@muenchen/muc-patternlab-vue/style.css";
+@import "@muenchen/muc-patternlab-vue/muc-patternlab-vue.css";
 
 .heading {
   margin-bottom: 0.5em;

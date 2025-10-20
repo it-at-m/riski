@@ -39,7 +39,7 @@ export default class SearchService {
    * @param onProcessed - Callback function called when a DLFDocument is processed.
    * @param onComplete - Callback function called when the search is complete.
    * @param signal - The AbortSignal used to cancel the search.
-   * @throws {ApiError} If the query is empty or null.
+   * @throws {string} If the query is empty or null.
    */
   static search(
     query: string | null | undefined,
@@ -55,7 +55,7 @@ export default class SearchService {
         signal
       );
     }
-    return Promise.reject("Die Anfrage is leer");
+    return Promise.reject("Die Anfrage ist leer");
   }
 
   /**
@@ -80,12 +80,12 @@ export default class SearchService {
                 if (answer) onProcessed(answer);
                 onComplete();
               })
-              .catch((err: string) => {
+              .catch((err: any) => {
                 if (!err.includes("404")) {
                   console.debug(err);
                 }
                 onComplete();
-                if (!signal.aborted) return Promise.reject(err);
+                if (!signal.aborted) return Promise.reject(String(err));
               });
     } else {
       return SearchService.answer(
@@ -103,7 +103,7 @@ export default class SearchService {
               console.debug(err);
             }
             onComplete();
-            if (!signal.aborted) return Promise.reject(err);
+            if (!signal.aborted) return Promise.reject(String(err));
           });
     }
   }
