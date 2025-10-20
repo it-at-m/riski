@@ -23,7 +23,7 @@ const fehler = ref<string>("");
 const searchquery = ref<string>("");
 
 /**
- * Callback function for a succesfully processed document with the answer chain.
+ * Callback function for a successfully processed document with the answer chain.
  *
  * @param {RiskiAnswer} answer - The processed document.
  */

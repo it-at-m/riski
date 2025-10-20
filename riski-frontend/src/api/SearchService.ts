@@ -116,13 +116,13 @@ export default class SearchService {
 
     let answer: RiskiAnswer = { ai_response: ai_response, proposals: [], documents: [], };
 
-    answer.proposals.push({name:"Name 1", identifier: "A1029", risUrl: "url"})
-    answer.proposals.push({name:"Name 2", identifier: "A2024", risUrl: "url"})
-    answer.proposals.push({name:"Name 3", identifier: "A3023", risUrl: "url"})
+    answer.proposals.push({name:"Name 1", identifier: "A1029", risUrl: "url4"})
+    answer.proposals.push({name:"Name 2", identifier: "A2024", risUrl: "url5"})
+    answer.proposals.push({name:"Name 3", identifier: "A3023", risUrl: "url6"})
 
-    answer.documents.push({name:"Name 1", size: 64000, risUrl: "url"})
-    answer.documents.push({name:"Name 2", size: 6423000, risUrl: "url"})
-    answer.documents.push({name:"Name 3", size: 240000, risUrl: "url"})
+    answer.documents.push({name:"Name 1", size: 64000, risUrl: "url1"})
+    answer.documents.push({name:"Name 2", size: 6423000, risUrl: "url2"})
+    answer.documents.push({name:"Name 3", size: 240000, risUrl: "url3"})
 
     return  Promise.resolve(answer);
   }
