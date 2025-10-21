@@ -17,8 +17,8 @@ from src.data_models import (
     OrganizationClassificationEnum,
     OrganizationTypeEnum,
     Paper,
-    PaperSubtype,
-    PaperType,
+    PaperSubtypeEnum,
+    PaperTypeEnum,
     Person,
     Post,
     System,
@@ -121,39 +121,14 @@ def meeting(session):
 
 @pytest.fixture(scope="function")
 def paper(session):
-    paper_type = PaperType(name="dummy")
-    session.add(paper_type)
-    session.commit()
-    paper_subtype = PaperSubtype(name="dummy", paper_type_id=paper_type.id)
-    session.add(paper_subtype)
-    session.commit()
     obj = Paper(
         id="https://example.org/paper/1",
         name="Test Paper",
         created=datetime.now(),
         modified=datetime.now(),
-        paper_type=paper_type.id,
-        paper_subtype=paper_subtype.id,
+        paper_type=PaperTypeEnum.CITIZENS_ASSEMBLY_RECOMMENDATION,
+        paper_subtype=PaperSubtypeEnum.AMENDMENT_PROPOSAL,
     )
-    session.add(obj)
-    session.commit()
-    return obj
-
-
-@pytest.fixture(scope="function")
-def papersubtype(session):
-    paper_type = PaperType(name="dummy")
-    session.add(paper_type)
-    session.commit()
-    obj = PaperSubtype(name="dummy", paper_type_id=paper_type.id)
-    session.add(obj)
-    session.commit()
-    return obj
-
-
-@pytest.fixture(scope="function")
-def papertype(session):
-    obj = PaperType(name="dummy")
     session.add(obj)
     session.commit()
     return obj

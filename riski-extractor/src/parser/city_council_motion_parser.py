@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from src.data_models import File, Keyword, Organization, Paper, PaperSubtype, PaperType, Person
+from src.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
 from src.db.db_access import get_or_insert_object_to_database, request_object_by_name, request_person_by_full_name
 from src.parser.base_parser import BaseParser
 
@@ -51,9 +51,9 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             return "StR-Antrag/Anfrage"
         text_lower = text.lower()
         if "str-anfrage" in text_lower:
-            return "StR-Anfrage"
+            return PaperTypeEnum.COUNCIL_REQUEST
         elif "str-antrag" in text_lower:
-            return "StR-Antrag"
+            return PaperTypeEnum.COUNCIL_PROPOSAL
         return "StR-Antrag/Anfrage"
 
     def _parse_date(self, text: str) -> datetime | None:
@@ -124,9 +124,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             reference = self._extract_reference(title) if title else None
 
         # --- determine type (Antrag vs Anfrage) ---
-        paper_type_str = self._detect_paper_type(title)
-        paper_type_fk = get_or_insert_object_to_database(PaperType(name=paper_type_str)).id
-
+        paper_type = self._detect_paper_type(title)
         # --- description / subject ---
         description = None
         desc_section = soup.select_one('section.card[aria-labelledby="sectionheader-betreff"] div.card-body p')
@@ -139,11 +137,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
 
         # --- subtype ---
         paper_subtype_string = self._kv_value("Typ:", soup)
-        paper_subtype_fk = (
-            get_or_insert_object_to_database(PaperSubtype(name=paper_subtype_string, paper_type_id=paper_type_fk)).id
-            if paper_subtype_string
-            else None
-        )
+        paper_subtype = self._get_paper_subtype_enum(paper_subtype_string) if paper_subtype_string else None
 
         # --- originators (persons + orgs) ---
         originator_text = self._kv_value("Gestellt von:", soup)
@@ -187,14 +181,13 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             auxiliary_files=auxiliary_files,
             keywords=keyword,
             subject=description,
-            paper_type=paper_type_fk,
-            paper_subtype=paper_subtype_fk,
+            paper_type=paper_type,
+            paper_subtype=paper_subtype,
             date=date,
             originator_persons=originator_persons,
             originator_orgs=originator_orgs,
             reference=reference,
-            paperType=paper_type_str,
         )
 
-        self.logger.debug(f"Parsed {paper_type_str} {reference} from {url}")
+        self.logger.debug(f"Parsed {paper_type} {reference} from {url}")
         return paper
