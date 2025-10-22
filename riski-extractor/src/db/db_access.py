@@ -6,7 +6,7 @@ from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Pers
 from src.db.db import get_session
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
-N = TypeVar("N", RIS_NAME_OBJECT, Keyword)
+N = TypeVar("N", Keyword, bound=RIS_NAME_OBJECT)
 
 
 def request_object_by_risid(risid: str, object_type: Type[T], session: Session | None = None) -> T | None:
