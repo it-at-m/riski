@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import List, Type, TypeVar
 
 from sqlmodel import Session, select
@@ -41,7 +42,7 @@ def insert_and_return_object(obj: T, session: Session | None = None) -> T:
         raise
 
 
-def request_person_by_familyName(familyName: str, logger, session: Session | None = None) -> Person | None:
+def request_person_by_familyName(familyName: str, logger: Logger, session: Session | None = None) -> Person | None:
     statement = select(Person).where(Person.familyName == familyName)
     sess = session or get_session()
     results = sess.exec(statement).all()
@@ -102,7 +103,7 @@ def get_or_insert_object_to_database(obj: T, session: Session | None = None) -> 
 def request_person_by_full_name(
     familyName: str,
     givenName: str,
-    logger,
+    logger: Logger,
     session: Session | None = None,
 ) -> Person | None:
     session = session or get_session()
