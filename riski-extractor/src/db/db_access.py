@@ -6,7 +6,7 @@ from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Pers
 from src.db.db import get_session
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
-N = TypeVar("N", Keyword, bound=RIS_NAME_OBJECT)
+N = TypeVar("N", bound=RIS_NAME_OBJECT)
 
 
 def request_object_by_risid(risid: str, object_type: Type[T], session: Session | None = None) -> T | None:
@@ -23,7 +23,7 @@ def request_all(object_type: Type[T], session: Session | None = None) -> List[T]
     return objects
 
 
-def request_object_by_name(name: str, object_type: Type[N], session: Session | None = None) -> N | None:
+def request_object_by_name(name: str, object_type: Type[N] | Keyword, session: Session | None = None) -> N | Keyword | None:
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
