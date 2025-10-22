@@ -354,21 +354,23 @@ class RIS_PARSED_DB_OBJECT(SQLModel, table=False):
     deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
 
 
-class LegislativeTerm(RIS_PARSED_DB_OBJECT, table=True):
+class RIS_NAME_OBJECT(RIS_PARSED_DB_OBJECT, table=False):
+    name: str | None = Field(None, description="Name of object")
+
+
+class LegislativeTerm(RIS_NAME_OBJECT, table=True):
     __tablename__ = "legislative_term"
-    id: str = Field(description="Unique URL of the legislative term.")
     type: str = Field(
         default="https://schema.oparl.org/1.1/LegislativeTerm",
         description="Type of the object: 'https://schema.oparl.org/1.1/LegislativeTerm'.",
     )
     body: str | None = Field(None, description="Reference to the body to which the legislative term belongs.")
-    name: str | None = Field(None, description="Designation of the legislative term.")
     startDate: datetime | None = Field(None, description="Start date of the legislative term.")
     endDate: datetime | None = Field(None, description="End date of the legislative term.")
     keywords: list["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
 
 
-class System(RIS_PARSED_DB_OBJECT, table=True):
+class System(RIS_NAME_OBJECT, table=True):
     __tablename__ = "system"
     type: str = Field(
         default="https://schema.oparl.org/1.1/System",
@@ -379,7 +381,6 @@ class System(RIS_PARSED_DB_OBJECT, table=True):
         None,
         description="License under which the data retrievable through this API is provided, unless otherwise stated for individual objects.",
     )
-    name: str | None = Field(None, description="User-friendly name for the system.")
     contactEmail: str | None = Field(None, description="Email address for inquiries about the OParl API.")
     contactName: str | None = Field(None, description="Name of the contact person.")
     website: str | None = Field(None, description="URL of the parliamentary information system's website")
@@ -421,13 +422,12 @@ class Location(RIS_PARSED_DB_OBJECT, table=True):
     keywords: list["Keyword"] = Relationship(back_populates="locations", link_model=LocationKeyword)
 
 
-class Organization(RIS_PARSED_DB_OBJECT, table=True):
+class Organization(RIS_NAME_OBJECT, table=True):
     __tablename__ = "organization"
     type: str = Field(
         default="https://schema.oparl.org/1.1/Organization", description="Type of the object: 'https://schema.oparl.org/1.1/Organization'."
     )
     body: str | None = Field(None, description="Reference to the body to which the organization belongs.")
-    name: str | None = Field(None, description="Designation of the organization.")
     meeting_id: uuid.UUID | None = Field(None, description="list of meetings of this organization.", foreign_key="meeting.db_id")
     shortName: str | None = Field(None, description="Abbreviation of the organization.")
     subOrganizationOf: uuid.UUID | None = Field(default=None, foreign_key="organization.db_id", description="FK to the parent organization")
@@ -454,11 +454,10 @@ class Organization(RIS_PARSED_DB_OBJECT, table=True):
     meetings: list["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
 
 
-class Person(RIS_PARSED_DB_OBJECT, table=True):
+class Person(RIS_NAME_OBJECT, table=True):
     __tablename__ = "person"
     type: str = Field(default="https://schema.oparl.org/1.1/Person", description="Type of the object")
     body: str | None = Field(None, description="Body")
-    name: str | None = Field(None, description="Full name")
     familyName: str | None = Field(None, description="Family name")
     givenName: str | None = Field(None, description="First name")
     formOfAddress: str | None = Field(None, description="Salutation")
@@ -505,10 +504,9 @@ class Membership(RIS_PARSED_DB_OBJECT, table=True):
     person: list["Person"] = Relationship(back_populates="membership", link_model=PersonMembershipLink)
 
 
-class File(RIS_PARSED_DB_OBJECT, table=True):
+class File(RIS_NAME_OBJECT, table=True):
     __tablename__ = "file"
     type: str = Field(default="https://schema.oparl.org/1.1/File", description="Type of the file")
-    name: str | None = Field(None, description="User-friendly name for the object. Should not contain file extensions like '.pdf'.")
     fileName: str | None = Field(
         None,
         description="Filename under which the file can be saved in a file system (e.g., 'aFile.pdf'). Clients should ensure that this name meets local file system requirements.",
@@ -547,7 +545,7 @@ class File(RIS_PARSED_DB_OBJECT, table=True):
     papers: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=PaperFileLink)
 
 
-class AgendaItem(RIS_PARSED_DB_OBJECT, table=True):
+class AgendaItem(RIS_NAME_OBJECT, table=True):
     __tablename__ = "agenda_item"
     type: str = Field(default="https://schema.oparl.org/1.1/AgendaItem", description="Type of the agenda item")
     meeting: uuid.UUID | None = Field(
@@ -563,7 +561,6 @@ class AgendaItem(RIS_PARSED_DB_OBJECT, table=True):
         None,
         description="The position of the agenda item in the meeting, starting from 0. This number corresponds to the position in Meeting:agendaItem.",
     )
-    name: str | None = Field(None, description="The topic of the agenda item.")
     public: bool | None = Field(None, description="Indicates whether the agenda item is intended to be dealt with in a public meeting.")
     result: str | None = Field(
         None,
@@ -582,11 +579,10 @@ class AgendaItem(RIS_PARSED_DB_OBJECT, table=True):
     meetings: list["Meeting"] = Relationship(back_populates="agenda_items", link_model=MeetingAgendaItemLink)
 
 
-class Paper(RIS_PARSED_DB_OBJECT, table=True):
+class Paper(RIS_NAME_OBJECT, table=True):
     __tablename__ = "paper"
     type: str = Field(default="https://schema.oparl.org/1.1/Paper", description="Type of the paper")
     body: str | None = Field(None, description="Body to which the paper belongs.")
-    name: str | None = Field(None, description="Title of the paper.")
     reference: str | None = Field(
         None,
         description="Identifier or file number of the paper, which can be uniquely referenced in parliamentary work.",
@@ -651,10 +647,9 @@ class Paper(RIS_PARSED_DB_OBJECT, table=True):
     paper_subtype: uuid.UUID | None = Field(default=None, foreign_key="paper_subtype.id", description="Subtype of the document")
 
 
-class Body(RIS_PARSED_DB_OBJECT, table=True):
+class Body(RIS_NAME_OBJECT, table=True):
     __tablename__ = "body"
     type: str = Field(default="https://schema.oparl.org/1.1/Body", description="Type indication: 'https://schema.oparl.org/1.1/Body'.")
-    name: str = Field(description="Name of the body.")
     shortName: str | None = Field(None, description="Abbreviation of the body.")
     system: str | None = Field(None, description="Reference to the associated system object.")
     website: str | None = Field(None, description="Official website of the body.")
@@ -700,10 +695,9 @@ class Body(RIS_PARSED_DB_OBJECT, table=True):
     system_link: System | None = Relationship(back_populates="bodies")
 
 
-class Meeting(RIS_PARSED_DB_OBJECT, table=True):
+class Meeting(RIS_NAME_OBJECT, table=True):
     __tablename__ = "meeting"
     type: str = Field(default="https://schema.oparl.org/1.1/Meeting", description="Type of the meeting")
-    name: str | None = Field(None, description="Name of the meeting.")
     meetingState: str | None = Field(
         None,
         description="Current status of the meeting. Recommended values are 'scheduled' (planned), 'invited' (before the meeting until the protocol is released), and 'conducted' (after the protocol is released).",
