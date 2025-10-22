@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import List, Type, TypeVar
+from typing import List, Type, TypeVar, overload
 
 from sqlmodel import Session, select
 from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Person
@@ -21,6 +21,14 @@ def request_all(object_type: Type[T], session: Session | None = None) -> List[T]
     sess = session or get_session()
     objects = sess.exec(statement).all()
     return objects
+
+
+@overload
+def request_object_by_name(name: str, object_type: Type[N], session: Session | None = None) -> N | None: ...
+
+
+@overload
+def request_object_by_name(name: str, object_type: Type[Keyword], session: Session | None = None) -> Keyword | None: ...
 
 
 def request_object_by_name(name: str, object_type: Type[N] | Type[Keyword], session: Session | None = None) -> N | Keyword | None:
