@@ -23,7 +23,7 @@ def request_all(object_type: Type[T], session: Session | None = None) -> List[T]
     return objects
 
 
-def request_object_by_name(name: str, object_type: Type[N] | Keyword, session: Session | None = None) -> N | Keyword | None:
+def request_object_by_name(name: str, object_type: Type[N] | Type[Keyword], session: Session | None = None) -> N | Keyword | None:
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
