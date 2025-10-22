@@ -35,6 +35,7 @@ class PaperTypeEnum(str, Enum):
     CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
     CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
     SUPPLEMENTARY_PROPOSAL = "Ergänzungsantrag"
+    COUNCIL_REQUEST = "Stadtratsanfrage"
 
 
 class PaperSubtypeEnum(str, Enum):
@@ -60,6 +61,7 @@ class PaperSubtypeEnum(str, Enum):
     ANNOUNCEMENT = "Bekanntgabe"
     DIRECT = "Direkt"
     MEETING_TEMPLATE_DISTRICT_COMMITTEE = "Sitzungsvorlage für den Bezirksausschuss"
+    MEETING_TEMPLATE_URGENT_PROPOSAL = "Sitzungsvorlage zur DA"
 
 
 ##############################################
@@ -71,27 +73,6 @@ class SYSTEM_OTHER_OPARL_VERSION(SQLModel, table=True):
     __tablename__ = "system_other_oparl_version"
     system_id: uuid.UUID = Field(foreign_key="system.db_id", primary_key=True)
     other_version_id: uuid.UUID = Field(foreign_key="system.db_id", primary_key=True)
-
-
-class PaperType(SQLModel, table=True):
-    __tablename__ = "paper_type"
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(description="Designation of the paper type")
-
-    # Relationship to subtypes
-    subtypes: list["PaperSubtype"] = Relationship(back_populates="parent_type")
-
-
-class PaperSubtype(SQLModel, table=True):
-    __tablename__ = "paper_subtype"
-
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str = Field(description="Designation of the paper subtype")
-
-    # FK to PaperTypeEnum
-    paper_type_id: uuid.UUID = Field(foreign_key="paper_type.id", description="Reference to the parent paper type")
-    parent_type: PaperType = Relationship(back_populates="subtypes")
 
 
 class PaperRelatedPaper(SQLModel, table=True):
@@ -590,7 +571,6 @@ class Paper(RIS_NAME_OBJECT, table=True):
     short_information: str | None = Field(None, description="Short Information of Paper")
     subject: str | None = Field(None, description="Description of Paper")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
-    paperType: str | None = Field(None, description="Type of the document, e.g., response to a query.")
     mainFile: uuid.UUID | None = Field(
         None,
         description="The main file for this paper. Example: The paper represents a resolution proposal and the main file contains the text of the resolution proposal. Should not be output if there is no unique main file.",
@@ -642,9 +622,9 @@ class Paper(RIS_NAME_OBJECT, table=True):
     under_direction_of: list["Organization"] = Relationship(back_populates="directed_papers", link_model=PaperDirectionLink)
     keywords: list["Keyword"] = Relationship(back_populates="paper", link_model=PaperKeywordLink)
 
-    paper_type: uuid.UUID | None = Field(default=None, foreign_key="paper_type.id", description="Type of the document")
+    paper_type: PaperTypeEnum | None = Field(default=None, sa_column=Column(String(length=50)), description="Type of the document")
 
-    paper_subtype: uuid.UUID | None = Field(default=None, foreign_key="paper_subtype.id", description="Subtype of the document")
+    paper_subtype: PaperSubtypeEnum | None = Field(default=None, sa_column=Column(String(length=50)), description="Subtype of the document")
 
 
 class Body(RIS_NAME_OBJECT, table=True):

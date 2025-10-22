@@ -1,7 +1,7 @@
 from typing import List, Type, TypeVar
 
 from sqlmodel import Session, select
-from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, PaperSubtype, PaperType, Person
+from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Person
 from src.db.db import get_session
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
@@ -90,7 +90,7 @@ def get_or_insert_object_to_database(obj: T, session: Session | None = None) -> 
         T: The retrieved or inserted object.
     """
     sess = session or get_session()
-    if isinstance(obj, (Keyword, PaperType, PaperSubtype)):
+    if isinstance(obj, Keyword):
         obj_db = request_object_by_name(obj.name, type(obj), sess)
     else:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)

@@ -37,9 +37,7 @@ from src.data_models import (
     PaperOriginatorPersonLink,
     PaperRelatedPaper,
     PaperSubordinatedLink,
-    PaperSubtype,
     PaperSuperordinatedLink,
-    PaperType,
     Person,
     PersonKeywordLink,
     PersonMembershipLink,
@@ -536,25 +534,6 @@ def test_paper_create(session, paper):
     assert db_paper.paper_subtype == paper.paper_subtype
     assert db_paper.created == paper.created
     assert db_paper.modified == paper.modified
-
-
-# ----------------------
-# Test PaperType
-# ----------------------
-def test_paper_type_create(session, papertype):
-    db_type = session.exec(select(PaperType).where(PaperType.id == papertype.id)).one()
-    assert db_type.id == papertype.id
-    assert db_type.name == papertype.name
-
-
-# ----------------------
-# Test PaperSubtype
-# ----------------------
-def test_paper_subtype_create(session, papersubtype):
-    db_subtype = session.exec(select(PaperSubtype).where(PaperSubtype.id == papersubtype.id)).one()
-    assert db_subtype.id == papersubtype.id
-    assert db_subtype.name == papersubtype.name
-    assert db_subtype.paper_type_id == papersubtype.paper_type_id
 
 
 # ----------------------
