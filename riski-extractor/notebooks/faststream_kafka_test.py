@@ -31,7 +31,6 @@ class RetryDLQMiddleware(BaseMiddleware):
                     raise
                 print(f"Retrying message, attempt {attempt + 1}")
                 await asyncio.sleep(2**attempt)
-        return None
 
 
 broker = KafkaBroker("localhost:9092", middlewares=[RetryDLQMiddleware])
