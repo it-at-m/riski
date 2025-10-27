@@ -5,7 +5,12 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 
 from src.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
-from src.db.db_access import get_or_insert_object_to_database, request_object_by_name, request_person_by_full_name
+from src.db.db_access import (
+    get_or_insert_object_to_database,
+    request_object_by_name,
+    request_paper_by_reference,
+    request_person_by_full_name,
+)
 from src.parser.base_parser import BaseParser
 
 
@@ -44,6 +49,11 @@ class CityCouncilMotionParser(BaseParser[Paper]):
     def _extract_reference(self, text: str) -> str | None:
         match = re.search(r"StR-(?:Antrag|Anfrage)\s+([\d\-]+ / [A-Z] \d+)", text)
         return match.group(1) if match else None
+
+    def _extract_meeting_template_reference(self, text: str) -> str | None:
+        # Regex: digits-digits / V digits
+        match = re.search(r"\d+-\d+\s*/\s*V\s*\d+", text)
+        return match.group(0) if match else None
 
     def _detect_paper_type(self, text: str | None) -> str:
         """Detects whether it is a city council motion or a city council inquiry."""
@@ -171,6 +181,19 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             file = get_or_insert_object_to_database(File(id=full_url, name=fname, accessUrl=full_url, downloadUrl=full_url))
             auxiliary_files.append(file)
 
+        # Meeting Templates
+        related_paper = []
+        result = soup.select_one('section.card[aria-labelledby="sectionheader-ergebnisse"] div.list-group')
+        sv_links = result.find_all("a", href=True)
+        for sv_link in sv_links:
+            # Suche nach dem Link zur Sitzungsvorlage
+            if sv_link and "Sitzungsvorlage" in sv_link.text:
+                sv_reference = self._extract_meeting_template_reference(sv_link.text)
+                sv = request_paper_by_reference(sv_reference, self.logger)
+                related_paper.append(sv)
+        paper_dict = {p.id: p for p in related_paper if p is not None}  # dict: id → Objekt
+        related_paper = list(paper for paper in paper_dict.values())
+
         main_file = auxiliary_files[0].db_id if auxiliary_files else None
         self.logger.debug(f"Parsed paper {reference} from {url}")
         # --- build Paper object ---
@@ -187,6 +210,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             originator_persons=originator_persons,
             originator_orgs=originator_orgs,
             reference=reference,
+            related_papers=related_paper,
         )
 
         self.logger.debug(f"Parsed {paper_type} {reference} from {url}")
