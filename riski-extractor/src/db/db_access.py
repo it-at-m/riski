@@ -102,6 +102,8 @@ def request_paper_by_reference(reference: str, logger, session=None) -> None | P
     if not results:
         logger.warning(f"No paper found for {reference}")
         return None
+    elif len(results) > 1:
+        logger.warning(f"Multiple papers found for reference '{reference}' — using the first one")
 
     paper = results[0]
     logger.debug(f"Found paper {reference} in DB (id={paper.id})")

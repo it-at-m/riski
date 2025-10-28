@@ -29,7 +29,7 @@ class Filehandler:
             try:
                 self.download_and_persist_file(file=file)
             except Exception:
-                self.logger.error(f"Could not download file '{file.id}'")
+                self.logger.exception(f"Could not download file '{file.id}'")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):

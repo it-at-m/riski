@@ -184,7 +184,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         # Meeting Templates
         related_paper = []
         result = soup.select_one('section.card[aria-labelledby="sectionheader-ergebnisse"] div.list-group')
-        sv_links = result.find_all("a", href=True)
+        sv_links = result.find_all("a", href=True) if result else []
         for sv_link in sv_links:
             # Suche nach dem Link zur Sitzungsvorlage
             if sv_link and "Sitzungsvorlage" in sv_link.text:
