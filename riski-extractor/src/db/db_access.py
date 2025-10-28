@@ -1,5 +1,5 @@
 from sqlmodel import select
-from src.data_models import Keyword, Person
+from src.data_models import Keyword, Paper, Person
 from src.db.db import get_session
 
 
@@ -92,6 +92,22 @@ def get_or_insert_object_to_database(obj: object, session=None):
     if not obj_db:
         obj_db = insert_and_return_object(obj, sess)
     return obj_db
+
+
+def request_paper_by_reference(reference: str, logger, session=None) -> None | Paper:
+    session = session or get_session()
+    stmt = select(Paper).where(Paper.reference == reference)
+    results = session.exec(stmt).all()
+
+    if not results:
+        logger.warning(f"No paper found for {reference}")
+        return None
+    elif len(results) > 1:
+        logger.warning(f"Multiple papers found for reference '{reference}' — using the first one")
+
+    paper = results[0]
+    logger.debug(f"Found paper {reference} in DB (id={paper.id})")
+    return paper
 
 
 def request_person_by_full_name(familyName: str, givenName: str, logger, session=None) -> Person | None:

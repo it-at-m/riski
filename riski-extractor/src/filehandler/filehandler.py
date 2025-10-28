@@ -28,8 +28,8 @@ class Filehandler:
             self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
             try:
                 self.download_and_persist_file(file=file)
-            except Exception as e:
-                self.logger.exception(f"Could not download file '{file.id}'", e)
+            except Exception:
+                self.logger.exception(f"Could not download file '{file.id}'")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):
