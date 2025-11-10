@@ -9,14 +9,14 @@ T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
 
 
-def request_object_by_risid(risid: str, object_type: T, session: Session | None = None) -> T | None:
+def request_object_by_risid(risid: str, object_type: type[T], session: Session | None = None) -> T | None:
     statement = select(object_type).where(object_type.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
 
 
-def request_all(object_type: T, session: Session | None = None) -> List[T]:
+def request_all(object_type: type[T], session: Session | None = None) -> List[T]:
     statement = select(object_type)
     sess = session or get_session()
     objects = sess.exec(statement).all()
@@ -24,14 +24,14 @@ def request_all(object_type: T, session: Session | None = None) -> List[T]:
 
 
 @overload
-def request_object_by_name(name: str, object_type: N, session: Session | None = None) -> N | None: ...
+def request_object_by_name(name: str, object_type: type[N], session: Session | None = None) -> N | None: ...
 
 
 @overload
-def request_object_by_name(name: str, object_type: Keyword, session: Session | None = None) -> Keyword | None: ...
+def request_object_by_name(name: str, object_type: type[Keyword], session: Session | None = None) -> Keyword | None: ...
 
 
-def request_object_by_name(name: str, object_type: N | Keyword, session: Session | None = None) -> N | Keyword | None:
+def request_object_by_name(name: str, object_type: type[N] | type[Keyword], session: Session | None = None) -> N | Keyword | None:
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
