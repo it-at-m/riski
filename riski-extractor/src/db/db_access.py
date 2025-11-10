@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import List, Type, TypeVar, overload
+from typing import List, TypeVar, overload
 
 from sqlmodel import Session, select
 from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Person
@@ -9,14 +9,14 @@ T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
 
 
-def request_object_by_risid(risid: str, object_type: Type[T], session: Session | None = None) -> T | None:
+def request_object_by_risid(risid: str, object_type: T, session: Session | None = None) -> T | None:
     statement = select(object_type).where(object_type.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
 
 
-def request_all(object_type: Type[T], session: Session | None = None) -> List[T]:
+def request_all(object_type: T, session: Session | None = None) -> List[T]:
     statement = select(object_type)
     sess = session or get_session()
     objects = sess.exec(statement).all()
@@ -24,14 +24,14 @@ def request_all(object_type: Type[T], session: Session | None = None) -> List[T]
 
 
 @overload
-def request_object_by_name(name: str, object_type: Type[N], session: Session | None = None) -> N | None: ...
+def request_object_by_name(name: str, object_type: N, session: Session | None = None) -> N | None: ...
 
 
 @overload
-def request_object_by_name(name: str, object_type: Type[Keyword], session: Session | None = None) -> Keyword | None: ...
+def request_object_by_name(name: str, object_type: Keyword, session: Session | None = None) -> Keyword | None: ...
 
 
-def request_object_by_name(name: str, object_type: Type[N] | Type[Keyword], session: Session | None = None) -> N | Keyword | None:
+def request_object_by_name(name: str, object_type: N | Keyword, session: Session | None = None) -> N | Keyword | None:
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
@@ -96,7 +96,7 @@ def get_or_insert_object_to_database(obj: T, session: Session | None = None) -> 
         session (Session | None): Optional SQLAlchemy session.
 
     Returns:
-        T: The retrieved or inserted object.
+        obj_db : The retrieved or inserted object.
     """
     sess = session or get_session()
     if isinstance(obj, Keyword):
