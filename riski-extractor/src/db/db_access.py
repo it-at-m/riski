@@ -91,7 +91,7 @@ def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None =
     Retrieves or inserts an object into the database.
 
     Args:
-        obj (T): The object to retrieve or insert, identified by 'name' (keyword)
+        obj (T | Keyword): The object to retrieve or insert, identified by 'name' (keyword)
                  or 'id' (for others).
         session (Session | None): Optional SQLAlchemy session.
 
