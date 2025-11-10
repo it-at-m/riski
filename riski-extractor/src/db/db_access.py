@@ -86,7 +86,7 @@ def insert_object_to_database(obj: T, session: Session | None = None) -> None:
     sess.commit()
 
 
-def get_or_insert_object_to_database(obj: T, session: Session | None = None) -> T:
+def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None = None) -> T | Keyword:
     """
     Retrieves or inserts an object into the database.
 
@@ -96,7 +96,7 @@ def get_or_insert_object_to_database(obj: T, session: Session | None = None) -> 
         session (Session | None): Optional SQLAlchemy session.
 
     Returns:
-        obj_db : The retrieved or inserted object.
+        obj_db: The retrieved or inserted object.
     """
     sess = session or get_session()
     if isinstance(obj, Keyword):
