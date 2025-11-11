@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "tsBuildInfoFile": "./cache/tsconfig.node.tsbuildinfo",
+    "types": [
+      "node"
+    ]
+  },
+  "extends": "@tsconfig/node-lts/tsconfig.json",
+  "include": [
+    "vite.config.*",
+    "vitest.config.*"
+  ]
+}
