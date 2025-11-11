@@ -108,7 +108,7 @@ def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None =
     return obj_db
 
 
-def request_paper_by_reference(reference: str, logger, session=None) -> None | Paper:
+def request_paper_by_reference(reference: str, logger, session: Session | None = None) -> None | Paper:
     session = session or get_session()
     stmt = select(Paper).where(Paper.reference == reference)
     results = session.exec(stmt).all()
