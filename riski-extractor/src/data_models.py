@@ -7,11 +7,10 @@ from pydantic import BaseModel
 from sqlalchemy import JSON, String
 from sqlmodel import Column, Field, Relationship, SQLModel
 
+
 ##############################################
 ################ Enums #######################
 ##############################################
-
-
 class OrganizationTypeEnum(str, Enum):
     FACTION = "Fraktion"
     PARTY = "Partei"
@@ -166,28 +165,6 @@ class LegislativeTermKeyword(SQLModel, table=True):
         foreign_key="legislative_term.db_id", primary_key=True, description="URL of the associated LegislativeTerm"
     )
     keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, description="Associated keyword")
-
-
-class LegislativeTerm(SQLModel, table=True):
-    __tablename__ = "legislative_term"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the legislative term.")
-    type: str = Field(
-        default="https://schema.oparl.org/1.1/LegislativeTerm",
-        description="Type of the object: 'https://schema.oparl.org/1.1/LegislativeTerm'.",
-    )
-    body: str | None = Field(None, description="Reference to the body to which the legislative term belongs.")
-    name: str | None = Field(None, description="Designation of the legislative term.")
-    startDate: datetime | None = Field(None, description="Start date of the legislative term.")
-    endDate: datetime | None = Field(None, description="End date of the legislative term.")
-    license: str | None = Field(None, description="License for the provided information.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the object.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
-    keywords: list["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
 
 
 class OrganizationMembership(SQLModel, table=True):
@@ -346,13 +323,36 @@ class Keyword(SQLModel, table=True):
 ##############################################
 ################ OParl types #################
 ##############################################
-
-
-class System(SQLModel, table=True):
-    __tablename__ = "system"
-
+class RIS_PARSED_DB_OBJECT(SQLModel, table=False):
     db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     id: str = Field(description="The unique URL of this object.")
+    license: str | None = Field(None, description="License for the provided information.")
+    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
+    modified: datetime | None = Field(
+        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
+    )
+    web: str | None = Field(None, description="HTML view of the object.")
+    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
+
+
+class RIS_NAME_OBJECT(RIS_PARSED_DB_OBJECT, table=False):
+    name: str | None = Field(None, description="Name of object")
+
+
+class LegislativeTerm(RIS_NAME_OBJECT, table=True):
+    __tablename__ = "legislative_term"
+    type: str = Field(
+        default="https://schema.oparl.org/1.1/LegislativeTerm",
+        description="Type of the object: 'https://schema.oparl.org/1.1/LegislativeTerm'.",
+    )
+    body: str | None = Field(None, description="Reference to the body to which the legislative term belongs.")
+    startDate: datetime | None = Field(None, description="Start date of the legislative term.")
+    endDate: datetime | None = Field(None, description="End date of the legislative term.")
+    keywords: list["Keyword"] = Relationship(back_populates="legislative_term", link_model=LegislativeTermKeyword)
+
+
+class System(RIS_NAME_OBJECT, table=True):
+    __tablename__ = "system"
     type: str = Field(
         default="https://schema.oparl.org/1.1/System",
         description="The fixed type of the object: 'https://schema.oparl.org/1.1/System'.",
@@ -362,18 +362,11 @@ class System(SQLModel, table=True):
         None,
         description="License under which the data retrievable through this API is provided, unless otherwise stated for individual objects.",
     )
-    name: str | None = Field(None, description="User-friendly name for the system.")
     contactEmail: str | None = Field(None, description="Email address for inquiries about the OParl API.")
     contactName: str | None = Field(None, description="Name of the contact person.")
     website: str | None = Field(None, description="URL of the parliamentary information system's website")
     vendor: str | None = Field(None, description="URL of the software vendor's website")
     product: str | None = Field(None, description="URL for information about the used OParl server software")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="URL for the HTML view of this object.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     other_oparl_versions: list["System"] = Relationship(
         link_model=SYSTEM_OTHER_OPARL_VERSION,
         sa_relationship_kwargs={
@@ -385,10 +378,8 @@ class System(SQLModel, table=True):
     bodies: list["Body"] = Relationship(back_populates="system_link")
 
 
-class Location(SQLModel, table=True):
+class Location(RIS_PARSED_DB_OBJECT, table=True):
     __tablename__ = "location"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="The unique URL of the location.")
     type: str = Field(default="https://schema.oparl.org/1.1/Location", description="Type of the location")
     description: str | None = Field(None, description="Textual description of a location, e.g., in the form of an address.")
     geojson: dict | None = Field(
@@ -403,13 +394,6 @@ class Location(SQLModel, table=True):
         None, description="Subordinate locality specification of the address, e.g., district, locality, or village."
     )
     locality: str | None = Field(None, description="Locality specification of the address.")
-    license: str | None = Field(None, description="License for the provided information.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the object.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     # Relationships
     bodies: list["Body"] = Relationship(link_model=LocationBodies)
     organizations: list["Organization"] = Relationship(link_model=LocationOrganizations)
@@ -419,15 +403,12 @@ class Location(SQLModel, table=True):
     keywords: list["Keyword"] = Relationship(back_populates="locations", link_model=LocationKeyword)
 
 
-class Organization(SQLModel, table=True):
+class Organization(RIS_NAME_OBJECT, table=True):
     __tablename__ = "organization"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the organization.")
     type: str = Field(
         default="https://schema.oparl.org/1.1/Organization", description="Type of the object: 'https://schema.oparl.org/1.1/Organization'."
     )
     body: str | None = Field(None, description="Reference to the body to which the organization belongs.")
-    name: str | None = Field(None, description="Designation of the organization.")
     meeting_id: uuid.UUID | None = Field(None, description="list of meetings of this organization.", foreign_key="meeting.db_id")
     shortName: str | None = Field(None, description="Abbreviation of the organization.")
     subOrganizationOf: uuid.UUID | None = Field(default=None, foreign_key="organization.db_id", description="FK to the parent organization")
@@ -440,14 +421,7 @@ class Organization(SQLModel, table=True):
     website: str | None = Field(None, description="Website of the organization.")
     location: uuid.UUID | None = Field(None, description="Location where the organization is based.", foreign_key="location.db_id")
     externalBody: str | None = Field(None, description="Reference to an external body (only for imports).")
-    license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the organization.")
     inactive: bool | None = Field(False, description="Marks this organization as inactive.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     membership: list["Membership"] = Relationship(link_model=OrganizationMembership)
     post: list["Post"] = Relationship(back_populates="organizations", link_model=OrganizationPost)
     # Relationships
@@ -461,14 +435,10 @@ class Organization(SQLModel, table=True):
     meetings: list["Meeting"] = Relationship(back_populates="organizations", link_model=MeetingOrganizationLink)
 
 
-class Person(SQLModel, table=True):
+class Person(RIS_NAME_OBJECT, table=True):
     __tablename__ = "person"
-
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the person.")
     type: str = Field(default="https://schema.oparl.org/1.1/Person", description="Type of the object")
     body: str | None = Field(None, description="Body")
-    name: str | None = Field(None, description="Full name")
     familyName: str | None = Field(None, description="Family name")
     givenName: str | None = Field(None, description="First name")
     formOfAddress: str | None = Field(None, description="Salutation")
@@ -477,14 +447,6 @@ class Person(SQLModel, table=True):
     location: uuid.UUID | None = Field(foreign_key="location.db_id", description="Location")
     life: str | None = Field(None, description="Life dates")
     lifeSource: str | None = Field(None, description="Source of life dates")
-    license: str | None = Field(None, description="License")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the person")
-    deleted: bool = Field(default=False, description="Marked as deleted")
-
     title: str | None = Field(default=None)
     phone: list[str] = Field(sa_column=Column(JSON), default_factory=list)
     email: list[str] = Field(sa_column=Column(JSON), default_factory=list)
@@ -501,10 +463,8 @@ class Person(SQLModel, table=True):
     meetings: list["Meeting"] = Relationship(back_populates="participants", link_model=MeetingParticipantLink)
 
 
-class Membership(SQLModel, table=True):
+class Membership(RIS_PARSED_DB_OBJECT, table=True):
     __tablename__ = "membership"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the membership.")
     type: str = Field(default="https://schema.oparl.org/1.1/Membership", description="Type of the membership")
     organization: uuid.UUID | None = Field(
         None, description="The grouping in which the person is or was a member.", foreign_key="organization.db_id"
@@ -520,24 +480,14 @@ class Membership(SQLModel, table=True):
         None,
         description="The grouping for which the person sits in the organization specified under organization. Example: Membership as a representative of a parliamentary faction, grouping, or external organization.",
     )
-    license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the person.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     keywords: list["Keyword"] = Relationship(back_populates="memberships", link_model=MembershipKeyword)
     organizations: list["Organization"] = Relationship(link_model=OrganizationMembership)
     person: list["Person"] = Relationship(back_populates="membership", link_model=PersonMembershipLink)
 
 
-class File(SQLModel, table=True):
+class File(RIS_NAME_OBJECT, table=True):
     __tablename__ = "file"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the document.")
     type: str = Field(default="https://schema.oparl.org/1.1/File", description="Type of the file")
-    name: str | None = Field(None, description="User-friendly name for the object. Should not contain file extensions like '.pdf'.")
     fileName: str | None = Field(
         None,
         description="Filename under which the file can be saved in a file system (e.g., 'aFile.pdf'). Clients should ensure that this name meets local file system requirements.",
@@ -562,14 +512,6 @@ class File(SQLModel, table=True):
         None,
         description="License under which the file is offered. If this property is not used, the value of license or the license of a parent object is decisive.",
     )
-    license: str | None = Field(None, description="License for the published data.")
-
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the person.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     derivative_files: list["File"] = Relationship(
         link_model=FileDerivativeLink,
         sa_relationship_kwargs={
@@ -584,10 +526,8 @@ class File(SQLModel, table=True):
     papers: list["Paper"] = Relationship(back_populates="auxiliary_files", link_model=PaperFileLink)
 
 
-class AgendaItem(SQLModel, table=True):
+class AgendaItem(RIS_NAME_OBJECT, table=True):
     __tablename__ = "agenda_item"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the agenda item.")
     type: str = Field(default="https://schema.oparl.org/1.1/AgendaItem", description="Type of the agenda item")
     meeting: uuid.UUID | None = Field(
         None,
@@ -602,7 +542,6 @@ class AgendaItem(SQLModel, table=True):
         None,
         description="The position of the agenda item in the meeting, starting from 0. This number corresponds to the position in Meeting:agendaItem.",
     )
-    name: str | None = Field(None, description="The topic of the agenda item.")
     public: bool | None = Field(None, description="Indicates whether the agenda item is intended to be dealt with in a public meeting.")
     result: str | None = Field(
         None,
@@ -616,25 +555,15 @@ class AgendaItem(SQLModel, table=True):
     )
     start: datetime | None = Field(None, description="Date and time of the start point of the agenda item.")
     end: datetime | None = Field(None, description="End point of the agenda item as date/time.")
-    license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the person.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     auxiliaryFile: list["File"] = Relationship(back_populates="agendaItem", link_model=FileAgendaItemLink)
     keywords: list["Keyword"] = Relationship(back_populates="agenda_items", link_model=AgendaItemKeywordLink)
     meetings: list["Meeting"] = Relationship(back_populates="agenda_items", link_model=MeetingAgendaItemLink)
 
 
-class Paper(SQLModel, table=True):
+class Paper(RIS_NAME_OBJECT, table=True):
     __tablename__ = "paper"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the paper.")
     type: str = Field(default="https://schema.oparl.org/1.1/Paper", description="Type of the paper")
     body: str | None = Field(None, description="Body to which the paper belongs.")
-    name: str | None = Field(None, description="Title of the paper.")
     reference: str | None = Field(
         None,
         description="Identifier or file number of the paper, which can be uniquely referenced in parliamentary work.",
@@ -647,13 +576,6 @@ class Paper(SQLModel, table=True):
         description="The main file for this paper. Example: The paper represents a resolution proposal and the main file contains the text of the resolution proposal. Should not be output if there is no unique main file.",
         foreign_key="file.db_id",
     )
-    license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the person.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     description: str | None = Field(None, description="Short description von RIS page.")
     auxiliary_files: list["File"] = Relationship(back_populates="papers", link_model=PaperFileLink)
     related_papers: list["Paper"] = Relationship(
@@ -705,16 +627,12 @@ class Paper(SQLModel, table=True):
     paper_subtype: PaperSubtypeEnum | None = Field(default=None, sa_column=Column(String(length=50)), description="Subtype of the document")
 
 
-class Body(SQLModel, table=True):
+class Body(RIS_NAME_OBJECT, table=True):
     __tablename__ = "body"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the body.")
     type: str = Field(default="https://schema.oparl.org/1.1/Body", description="Type indication: 'https://schema.oparl.org/1.1/Body'.")
-    name: str = Field(description="Name of the body.")
     shortName: str | None = Field(None, description="Abbreviation of the body.")
     system: str | None = Field(None, description="Reference to the associated system object.")
     website: str | None = Field(None, description="Official website of the body.")
-    license: str | None = Field(None, description="Standard license for data of this body.")
     licenseValidSince: datetime | None = Field(None, description="Time since when the license is valid.")
     oparlSince: datetime | None = Field(None, description="Time since the API has been available for this body.")
     ags: str | None = Field(None, description="Official municipality key.")
@@ -733,12 +651,6 @@ class Body(SQLModel, table=True):
     membership: str = Field(description="list of memberships in the body.")
     classification: str | None = Field(None, description="Type of the body, e.g., 'City' or 'District'.")
     location: str | None = Field(None, description="Location of the administration of this body.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the body.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted.")
     equivalents: list["Body"] = Relationship(
         back_populates="equivalent_to",
         link_model=BodyEquivalentLink,
@@ -763,12 +675,9 @@ class Body(SQLModel, table=True):
     system_link: System | None = Relationship(back_populates="bodies")
 
 
-class Meeting(SQLModel, table=True):
+class Meeting(RIS_NAME_OBJECT, table=True):
     __tablename__ = "meeting"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    id: str = Field(description="Unique URL of the meeting.")
     type: str = Field(default="https://schema.oparl.org/1.1/Meeting", description="Type of the meeting")
-    name: str | None = Field(None, description="Name of the meeting.")
     meetingState: str | None = Field(
         None,
         description="Current status of the meeting. Recommended values are 'scheduled' (planned), 'invited' (before the meeting until the protocol is released), and 'conducted' (after the protocol is released).",
@@ -793,13 +702,6 @@ class Meeting(SQLModel, table=True):
         description="Verbatim protocol for the meeting. This property can only occur after the meeting has taken place.",
         foreign_key="file.db_id",
     )
-    license: str | None = Field(None, description="License for the published data.")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(None, description="HTML view of the meeting.")
-    deleted: bool | None = Field(False, description="Marks this object as deleted (true).")
     organizations: list["Organization"] = Relationship(back_populates="meetings", link_model=MeetingOrganizationLink)
     participants: list["Person"] = Relationship(back_populates="meetings", link_model=MeetingParticipantLink)
     auxiliary_files: list["File"] = Relationship(back_populates="meetings", link_model=FileMeetingLink)
@@ -807,23 +709,15 @@ class Meeting(SQLModel, table=True):
     keywords: list["Keyword"] = Relationship(back_populates="meetings", link_model=MeetingKeywordLink)
 
 
-class Consultation(SQLModel, table=True):
+class Consultation(RIS_PARSED_DB_OBJECT, table=True):
     __tablename__ = "consultation"
-    db_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     type: str = Field(default="https://schema.oparl.org/1.1/Consultation", description="Type of the Consultation")
-    id: str | None = Field(default=None)
     url: str | None = Field(default=None, description="URL of this Consultation object")
     paper: uuid.UUID | None = Field(default=None, foreign_key="paper.db_id")
     agenda_item: uuid.UUID | None = Field(default=None, foreign_key="agenda_item.db_id")
     meeting: uuid.UUID | None = Field(default=None, foreign_key="meeting.db_id")
     authoritative: bool = Field(default=False, description="Was a resolution made?")
     role: str | None = Field(default=None, description="Function of the consultation (e.g., hearing, preliminary consultation)")
-    license: str | None = Field(default=None, description="License of the data")
-    created: datetime | None = Field(default_factory=lambda: datetime.now(), description="Time of creation.")
-    modified: datetime | None = Field(
-        default_factory=lambda: datetime.now(), sa_column_kwargs={"onupdate": lambda: datetime.now()}, description="Last modification."
-    )
-    web: str | None = Field(default=None, description="HTML view of the meeting.")
     keywords: list["Keyword"] = Relationship(back_populates="consultations", link_model=ConsultationKeywordLink)
 
 
