@@ -1,6 +1,7 @@
 from sqlmodel import select
 from src.data_models import Keyword, Paper, Person
 from src.db.db import get_session
+from src.filehandler.file_id_collector import collect_file_id
 
 
 def request_object_by_risid(risid: str, object_type: type, session=None):
@@ -72,6 +73,7 @@ def insert_object_to_database(obj: object, session=None):
     sess.commit()
 
 
+@collect_file_id
 def get_or_insert_object_to_database(obj: object, session=None):
     """
     Retrieves or inserts an object into the database.
