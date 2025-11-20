@@ -178,7 +178,12 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                 continue
             fname = a.get_text(strip=True)
             full_url = urljoin(url, href)
-            file = get_or_insert_object_to_database(File(id=full_url, fileName=fname, accessUrl=full_url, downloadUrl=full_url))
+
+            if fname == "Beschluss.pdf":
+                fname = f"Beschluss zu {title}"
+            fname = fname.replace(".pdf", "")
+
+            file = get_or_insert_object_to_database(File(id=full_url, name=fname, fileName=fname, accessUrl=full_url, downloadUrl=full_url))
             auxiliary_files.append(file)
 
         # Meeting Templates

@@ -1,3 +1,5 @@
+import re
+import urllib.parse
 from logging import Logger
 
 import httpx
@@ -37,6 +39,12 @@ class Filehandler:
         response.raise_for_status()
         content = response.content
         if file.content is None or content != file.content:
+            filenames = response.headers["content-disposition"].replace("inline; filename=", "").replace('"', "")
+            fileName = re.sub(r"; filename\*=.*", "", filenames)
+            fileName = urllib.parse.unquote(fileName)
+            self.logger.info(fileName)
+
+            file.fileName = fileName
             file.content = content
             file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")

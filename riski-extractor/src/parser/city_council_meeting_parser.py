@@ -74,9 +74,10 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         for doc_link in soup.select("a.downloadlink"):
             doc_url = urljoin(url, doc_link.get("href", ""))
             doc_title = doc_link.get_text(strip=True)
+            doc_title = doc_title.replace(".pdf", "")
             if doc_url:
                 self.logger.debug(f"Document found: {doc_title} ({doc_url})")
-                temp_file = File(id=doc_url, fileName=doc_title, accessUrl=doc_url)
+                temp_file = File(id=doc_url, name=doc_title, fileName=doc_title, accessUrl=doc_url, downloadUrl=doc_url)
                 try:
                     temp_file = get_or_insert_object_to_database(temp_file)
                     auxiliaryFile.append(temp_file)
