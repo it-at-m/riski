@@ -86,7 +86,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             fname = a.get_text(strip=True)
             if fname == "Beschluss.pdf":
                 fname = f"Beschluss zu {title_text}"
-            fname = fname.replace(".pdf", "")
+            fname = fname.removesuffix(".pdf")
 
             full_url = urljoin(url, href)
             file = get_or_insert_object_to_database(File(id=full_url, name=fname, fileName=fname, accessUrl=full_url, downloadUrl=full_url))

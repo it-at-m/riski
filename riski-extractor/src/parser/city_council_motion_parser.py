@@ -181,7 +181,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
 
             if fname == "Beschluss.pdf":
                 fname = f"Beschluss zu {title}"
-            fname = fname.replace(".pdf", "")
+            fname = fname.removesuffix(".pdf")
 
             file = get_or_insert_object_to_database(File(id=full_url, name=fname, fileName=fname, accessUrl=full_url, downloadUrl=full_url))
             auxiliary_files.append(file)
