@@ -144,15 +144,10 @@ def request_person_by_full_name(
     logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
     return person
 
-def request_batch(model: type[T], offset: int, limit: int) -> List:
+def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
     """
-    Lädt einen Batch von Datensätzen eines Models.
+    Loads a batch of records for a given model with offset and limit.
     """
-    with get_session() as session:  # oder session = SessionLocal()
-        return (
-            session.query(model)
-            .order_by(model.db_id)     # optional, aber empfehlenswert
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+    sess = get_session()
+    statement = select(model).order_by(model.db_id).offset(offset).limit(limit)
+    return sess.exec(statement).all()
