@@ -1,43 +1,24 @@
+import datetime
 from logging import Logger
 
-import httpx
-import stamina
-from config.config import Config, get_config
-from httpx import Client
+from config.config import get_config
 from src.data_models import File
-from src.db.db_access import request_all, update_or_insert_objects_to_database
+from src.db.db_access import remove_object_by_id, request_all
+from src.filehandler.file_id_collector import get_all_found_file_ids
 from src.logtools import getLogger
 
-config: Config = get_config()
 
-
-class Filehandler:
+class ConfidentialFileDeleter:
     logger: Logger
 
     def __init__(self) -> None:
         self.logger = getLogger()
-        if config.https_proxy or config.http_proxy:
-            self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
-        else:
-            self.client = Client(timeout=config.request_timeout)
+        self.config = get_config()
 
-    def download_and_persist_files(self):
-        self.logger.info("Persisting content of all scraped files to database.")
-        files: list[File] = request_all(File)
-        for file in files:
-            self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
-            try:
-                self.download_and_persist_file(file=file)
-            except Exception:
-                self.logger.exception(f"Could not download file '{file.id}'")
+    def delete_confidential_files(self):
+        doc_ids = get_all_found_file_ids()
 
-    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def download_and_persist_file(self, file: File):
-        response = self.client.get(url=file.id)
-        response.raise_for_status()
-        content = response.content
-        if file.content is None or content != file.content:
-            file.content = content
-            file.size = len(content)
-            self.logger.debug(f"Saving content of file {file.name} to database.")
-            update_or_insert_objects_to_database([file])
+        for file in request_all(File):
+            if file.id not in doc_ids and datetime.datetime.strptime(self.config.start_date, "%Y-%m-%d") > file.modified:
+                remove_object_by_id(file.id)
+                self.logger.info(f"Deleted File: {file.id}")

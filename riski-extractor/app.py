@@ -12,6 +12,7 @@ from src.extractor.city_council_meeting_template_extractor import CityCouncilMee
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
+from src.filehandler.confidential_file_deleter import ConfidentialFileDeleter
 from src.filehandler.filehandler import Filehandler
 from src.logtools import getLogger
 from src.version import get_version
@@ -76,6 +77,9 @@ def main():
 
     filehandler = Filehandler()
     filehandler.download_and_persist_files()
+
+    confidential_file_deleter = ConfidentialFileDeleter()
+    confidential_file_deleter.delete_confidential_files()
 
     if config.json_export:
         logger.info("Dumping extraction artifact to 'artifacts/extract.json'")

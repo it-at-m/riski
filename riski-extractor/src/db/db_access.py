@@ -25,6 +25,13 @@ def request_object_by_name(name: str, object_type: type, session=None):
     return obj
 
 
+def remove_object_by_id(id: str, object_type: type, session=None):
+    statement = select(object_type).where(object_type.id == id)
+    sess = session or get_session()
+    obj = sess.exec(statement).one()
+    session.delete(obj)
+
+
 def insert_and_return_object(obj: object, session=None):
     sess = session or get_session()
     try:
