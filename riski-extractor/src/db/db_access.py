@@ -1,4 +1,4 @@
-from logging import Logger
+from logging import Logger, getLogger
 from typing import List, TypeVar, overload
 
 from sqlmodel import Session, select
@@ -8,6 +8,8 @@ from src.filehandler.file_id_collector import collect_file_id
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
+
+logger: Logger = getLogger()
 
 
 def request_object_by_risid(risid: str, object_type: type[T], session: Session | None = None) -> T | None:
@@ -108,6 +110,8 @@ def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None =
         obj_db: The retrieved or inserted object.
     """
     sess = session or get_session()
+    print(T)
+    print(type(obj))
     if isinstance(obj, Keyword):
         obj_db = request_object_by_name(obj.name, type(obj), sess)
     else:

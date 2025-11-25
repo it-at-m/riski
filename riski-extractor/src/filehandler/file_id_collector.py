@@ -10,8 +10,8 @@ logger: Logger = getLogger()
 def collect_file_id(f):
     def wrap(*args, **kwargs):
         if isinstance(*args, File):
-            file_ids.append(args.id)
             logger.info(f"Found id: {args.id}")
+            file_ids.append(args.id)
         res = f(*args, **kwargs)
         return res
 
