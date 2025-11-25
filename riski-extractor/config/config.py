@@ -144,6 +144,24 @@ class Config(BaseSettings):
         description="Postgres port",
     )
 
+    # === Kafka Settings ===
+    kafka_server: str = Field(
+        validation_alias="KAFKA_SERVER",
+        description="Kafka Server URL",
+    )
+    kafka_ca_b64: str = Field(
+        validation_alias="KAFKA_CA_B64",
+        description="Kafka Server CA (B64 Encoded)",
+    )
+    kafka_pkcs12_data: str = Field(
+        validation_alias="KAFKA_PKCS12_B64",
+        description="Kafka P12 (B64 Encoded)",
+    )
+    kafka_pkcs12_pw: str = Field(
+        validation_alias="KAFKA_PKCS12_B64_PW",
+        description="Kafka P12 Password (B64 Encoded)",
+    )
+
     @property
     def database_url(self) -> PostgresDsn:
         """
@@ -219,15 +237,7 @@ class Config(BaseSettings):
     def print_config(self):
         logger = getLogger()
         logger.debug(
-            self.model_dump(
-                exclude={
-                    "openai_api_key",
-                    "riski_db_password",
-                    "database_url",
-                    "test_riski_db_password",
-                    "test_database_url",
-                }
-            )
+            self.model_dump(exclude={"openai_api_key", "riski_db_password", "database_url", "test_riski_db_password", "test_database_url"})
         )
 
     @model_validator(mode="after")

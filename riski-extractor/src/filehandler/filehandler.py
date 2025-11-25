@@ -6,6 +6,8 @@ from config.config import Config, get_config
 from httpx import Client
 from src.data_models import File
 from src.db.db_access import request_all, update_or_insert_objects_to_database
+from src.kafka.broker import LhmKafkaBroker
+from src.kafka.message import Message
 from src.logtools import getLogger
 
 config: Config = get_config()
@@ -20,6 +22,7 @@ class Filehandler:
             self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
         else:
             self.client = Client(timeout=config.request_timeout)
+        self.broker = LhmKafkaBroker()
 
     def download_and_persist_files(self):
         self.logger.info("Persisting content of all scraped files to database.")
@@ -41,3 +44,5 @@ class Filehandler:
             file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
+            msg = Message(file.db_id)
+            self.broker.publish(msg)
