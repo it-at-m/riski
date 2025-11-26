@@ -1,10 +1,6 @@
 name: Backend Tests
 
 on:
-  push:
-    paths:
-      - "riski-backend/**"
-      - ".github/workflows/backend-tests.yml"
   pull_request:
     paths:
       - "riski-backend/**"
