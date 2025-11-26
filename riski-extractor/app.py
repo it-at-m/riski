@@ -12,7 +12,6 @@ from src.extractor.city_council_meeting_template_extractor import CityCouncilMee
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
-from src.filehandler.filehandler import Filehandler
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -74,8 +73,8 @@ def main():
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
-    filehandler = Filehandler()
-    filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
+    # filehandler = Filehandler()
+    # filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
 
     if config.json_export:
         logger.info("Dumping extraction artifact to 'artifacts/extract.json'")
