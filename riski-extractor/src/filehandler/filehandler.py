@@ -54,5 +54,5 @@ class Filehandler:
             file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
-            msg = Message(content=file.db_id)
+            msg = Message(content=str(file.db_id))
             asyncio.get_event_loop().run_until_complete(self.broker.publish(msg))
