@@ -39,6 +39,8 @@ class Filehandler:
                     self.download_and_persist_file(file=file)
                 except Exception:
                     self.logger.exception(f"Could not download file '{file.id}'")
+                msg = Message(content=str(file.db_id))
+                self.broker.publish(msg)
 
             offset += batch_size
 
@@ -52,5 +54,3 @@ class Filehandler:
             file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
-        msg = Message(content=str(file.db_id))
-        self.broker.publish(msg)
