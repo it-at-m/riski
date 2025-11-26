@@ -30,8 +30,8 @@ class Filehandler:
         offset = 0
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=batch_size)
-
-            if not files or len(files) == 0:
+            self.logger.debug(f"{files}")
+            if not files or len(files) < 1:
                 break
 
             for file in files:
