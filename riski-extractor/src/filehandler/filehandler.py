@@ -1,3 +1,4 @@
+import asyncio
 from logging import Logger
 
 import httpx
@@ -30,6 +31,7 @@ class Filehandler:
         offset = 0
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=batch_size)
+
             if not files or len(files) < 1:
                 break
 
@@ -39,8 +41,6 @@ class Filehandler:
                     self.download_and_persist_file(file=file)
                 except Exception:
                     self.logger.exception(f"Could not download file '{file.id}'")
-                msg = Message(content=str(file.db_id))
-                self.broker.publish(msg)
 
             offset += batch_size
 
@@ -54,3 +54,5 @@ class Filehandler:
             file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
+            msg = Message(content=file.db_id)
+            asyncio.get_event_loop().run_until_complete(self.broker.publish(msg))
