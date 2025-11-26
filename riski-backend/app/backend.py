@@ -1,6 +1,6 @@
 # FastAPI backend creation
+from app.api.routers.system import router as systems_router
 from app.core.settings import get_settings
-from app.models.health_check_response import HealthCheckResponse
 from fastapi import FastAPI
 
 settings = get_settings()
@@ -14,14 +14,4 @@ backend = FastAPI(
     version=settings.version,
 )
 
-
-# Health check endpoint
-@backend.get("/api/healthz")
-def healthz() -> HealthCheckResponse:
-    """
-    Endpoint for checking the health status of the backend.
-
-    Returns:
-        HealthCheckResponse: The health check response including the version and status.
-    """
-    return HealthCheckResponse(version=settings.version)
+backend.include_router(systems_router)

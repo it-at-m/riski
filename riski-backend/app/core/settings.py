@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from pydantic import Field
-from pydantic_settings import BaseSettings, CliSettingsSource, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 
 
 class Settings(BaseSettings):
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         nested_model_default_partial_update=True,
         yaml_file="config.yaml",
         yaml_file_encoding="utf-8",
-        cli_parse_args=True,
+        cli_parse_args=False,
         cli_kebab_case=True,
         cli_prog_name="riski",
     )
@@ -38,7 +38,6 @@ class Settings(BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         return (
             init_settings,
-            CliSettingsSource(settings_cls),
             env_settings,
             YamlConfigSettingsSource(settings_cls),
             dotenv_settings,
