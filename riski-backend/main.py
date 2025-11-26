@@ -14,4 +14,4 @@ if __name__ == "__main__":
     """Runs the application."""
     logger: Logger = getLogger("riski-backend")
     logger.info("Starting application")
-    uvicorn.run(backend, host="localhost", port=8080, log_config="logconf.yaml")
+    uvicorn.run(backend, host="0.0.0.0", port=8080, log_config="logconf.yaml")

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from yaml import safe_load
 
 
-def getLogger(name: str = "zammad-ai") -> logging.Logger:
+def getLogger(name: str = "riski-backend") -> logging.Logger:
     """Configures logging and returns a logger with the specified name.
 
     Parameters:
