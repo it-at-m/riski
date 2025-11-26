@@ -143,6 +143,11 @@ class Config(BaseSettings):
         validation_alias="RISKI_DB_PORT",
         description="Postgres port",
     )
+    riski_batch_size: int = Field(
+        default=100,
+        validation_alias="RISKI_BATCH_SIZE",
+        description="Batch size for database operations",
+    )
 
     # === Kafka Settings ===
     kafka_server: str = Field(

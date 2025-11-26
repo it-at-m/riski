@@ -75,7 +75,7 @@ def main():
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
     filehandler = Filehandler()
-    filehandler.download_and_persist_files()
+    filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
 
     if config.json_export:
         logger.info("Dumping extraction artifact to 'artifacts/extract.json'")

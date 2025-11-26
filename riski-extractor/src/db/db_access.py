@@ -1,30 +1,44 @@
-from sqlmodel import select
-from src.data_models import Keyword, Paper, Person
+from logging import Logger
+from typing import List, TypeVar, overload
+
+from sqlmodel import Session, select
+from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Paper, Person
 from src.db.db import get_session
 
+T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
+N = TypeVar("N", bound=RIS_NAME_OBJECT)
 
-def request_object_by_risid(risid: str, object_type: type, session=None):
+
+def request_object_by_risid(risid: str, object_type: type[T], session: Session | None = None) -> T | None:
     statement = select(object_type).where(object_type.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
 
 
-def request_all(object_type: type, session=None) -> list[object]:
+def request_all(object_type: type[T], session: Session | None = None) -> List[T]:
     statement = select(object_type)
     sess = session or get_session()
     objects = sess.exec(statement).all()
     return objects
 
 
-def request_object_by_name(name: str, object_type: type, session=None):
+@overload
+def request_object_by_name(name: str, object_type: type[N], session: Session | None = None) -> N | None: ...
+
+
+@overload
+def request_object_by_name(name: str, object_type: type[Keyword], session: Session | None = None) -> Keyword | None: ...
+
+
+def request_object_by_name(name: str, object_type: type[N] | type[Keyword], session: Session | None = None) -> N | Keyword | None:
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
 
 
-def insert_and_return_object(obj: object, session=None):
+def insert_and_return_object(obj: T, session: Session | None = None) -> T:
     sess = session or get_session()
     try:
         sess.add(obj)
@@ -36,7 +50,7 @@ def insert_and_return_object(obj: object, session=None):
         raise
 
 
-def request_person_by_familyName(familyName: str, logger, session=None):
+def request_person_by_familyName(familyName: str, logger: Logger, session: Session | None = None) -> Person | None:
     statement = select(Person).where(Person.familyName == familyName)
     sess = session or get_session()
     results = sess.exec(statement).all()
@@ -45,7 +59,7 @@ def request_person_by_familyName(familyName: str, logger, session=None):
     return results[0] if results else None
 
 
-def update_or_insert_objects_to_database(objects: list[object], session=None):
+def update_or_insert_objects_to_database(objects: List[T], session: Session | None = None) -> None:
     sess = session or get_session()
     for obj in objects:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)
@@ -55,7 +69,7 @@ def update_or_insert_objects_to_database(objects: list[object], session=None):
             insert_object_to_database(obj, sess)
 
 
-def update_object(obj: object, obj_db: object, session=None):
+def update_object(obj: T, obj_db: T, session: Session | None = None) -> None:
     sess = session or get_session()
 
     for field, value in obj.__dict__.items():
@@ -66,23 +80,23 @@ def update_object(obj: object, obj_db: object, session=None):
     sess.commit()
 
 
-def insert_object_to_database(obj: object, session=None):
+def insert_object_to_database(obj: T, session: Session | None = None) -> None:
     sess = session or get_session()
     sess.add(obj)
     sess.commit()
 
 
-def get_or_insert_object_to_database(obj: object, session=None):
+def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None = None) -> T | Keyword:
     """
     Retrieves or inserts an object into the database.
 
     Args:
-        obj (object): The object to retrieve or insert, identified by 'name' (for Keyword/PaperType)
-                      or 'id' (for others).
-        session (Session, optional): Optional SQLAlchemy session.
+        obj (T | Keyword): The object to retrieve or insert, identified by 'name' (keyword)
+                 or 'id' (for others).
+        session (Session | None): Optional SQLAlchemy session.
 
     Returns:
-        object: The retrieved or inserted object.
+        obj_db: The retrieved or inserted object.
     """
     sess = session or get_session()
     if isinstance(obj, Keyword):
@@ -94,7 +108,7 @@ def get_or_insert_object_to_database(obj: object, session=None):
     return obj_db
 
 
-def request_paper_by_reference(reference: str, logger, session=None) -> None | Paper:
+def request_paper_by_reference(reference: str, logger: Logger, session: Session | None = None) -> None | Paper:
     session = session or get_session()
     stmt = select(Paper).where(Paper.reference == reference)
     results = session.exec(stmt).all()
@@ -110,7 +124,12 @@ def request_paper_by_reference(reference: str, logger, session=None) -> None | P
     return paper
 
 
-def request_person_by_full_name(familyName: str, givenName: str, logger, session=None) -> Person | None:
+def request_person_by_full_name(
+    familyName: str,
+    givenName: str,
+    logger: Logger,
+    session: Session | None = None,
+) -> Person | None:
     session = session or get_session()
     stmt = select(Person).where(Person.familyName == familyName, Person.givenName == givenName)
     results = session.exec(stmt).all()
@@ -124,3 +143,11 @@ def request_person_by_full_name(familyName: str, givenName: str, logger, session
     person = results[0]
     logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
     return person
+
+def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
+    """
+    Loads a batch of records for a given model with offset and limit.
+    """
+    sess = get_session()
+    statement = select(model).order_by(model.db_id).offset(offset).limit(limit)
+    return sess.exec(statement).all()

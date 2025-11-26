@@ -5,7 +5,7 @@ import stamina
 from config.config import Config, get_config
 from httpx import Client
 from src.data_models import File
-from src.db.db_access import request_all, update_or_insert_objects_to_database
+from src.db.db_access import request_batch, update_or_insert_objects_to_database
 from src.kafka.broker import LhmKafkaBroker
 from src.kafka.message import Message
 from src.logtools import getLogger
@@ -24,15 +24,24 @@ class Filehandler:
             self.client = Client(timeout=config.request_timeout)
         self.broker = LhmKafkaBroker()
 
-    def download_and_persist_files(self):
+    def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")
-        files: list[File] = request_all(File)
-        for file in files:
-            self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
-            try:
-                self.download_and_persist_file(file=file)
-            except Exception:
-                self.logger.exception(f"Could not download file '{file.id}'")
+
+        offset = 0
+        while True:
+            files: list[File] = request_batch(File, offset=offset, limit=batch_size)
+
+            if not files:
+                break
+
+            for file in files:
+                self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
+                try:
+                    self.download_and_persist_file(file=file)
+                except Exception:
+                    self.logger.exception(f"Could not download file '{file.id}'")
+
+            offset += batch_size
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):
