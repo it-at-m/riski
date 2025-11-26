@@ -155,12 +155,12 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         initiative_text = self._kv_value("Initiative:", soup)
         if initiative_text:
             initiative_persons, initiative_orgs = self._resolve_originators(initiative_text)
-            unique_persons = []  # {p.id: p for p in originator_persons}  # dict: id → Objekt
+            unique_persons = {p.id: p for p in originator_persons}  # dict: id → Objekt
             for p in initiative_persons:
                 unique_persons.setdefault(p.id, p)
             originator_persons = list(unique_persons.values())
 
-            unique_orgs = []  # {o.id: o for o in originator_orgs}
+            unique_orgs = {o.id: o for o in originator_orgs}
             for o in initiative_orgs:
                 unique_orgs.setdefault(o.id, o)
             originator_orgs = list(unique_orgs.values())
@@ -191,7 +191,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                 sv_reference = self._extract_meeting_template_reference(sv_link.text)
                 sv = request_paper_by_reference(sv_reference, self.logger)
                 related_paper.append(sv)
-        paper_dict = {}  # {p.id: p for p in related_paper if p is not None}  # dict: id → Objekt
+        paper_dict = {p.id: p for p in related_paper if p is not None}  # dict: id → Objekt
         related_paper = list(paper for paper in paper_dict.values())
 
         main_file = auxiliary_files[0].db_id if auxiliary_files else None

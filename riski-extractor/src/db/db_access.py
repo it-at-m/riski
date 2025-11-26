@@ -45,7 +45,8 @@ def remove_object_by_id(id: str, object_type: type, session=None):
     statement = select(object_type).where(object_type.id == id)
     sess = session or get_session()
     obj = sess.exec(statement).one()
-    session.delete(obj)
+    sess.delete(obj)
+    sess.commit()
 
 
 def insert_and_return_object(obj: T, session: Session | None = None) -> T:
@@ -110,8 +111,6 @@ def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None =
         obj_db: The retrieved or inserted object.
     """
     sess = session or get_session()
-    print(T)
-    print(type(obj))
     if isinstance(obj, Keyword):
         obj_db = request_object_by_name(obj.name, type(obj), sess)
     else:
