@@ -31,7 +31,7 @@ class Filehandler:
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=batch_size)
 
-            if not files:
+            if not files or len(files) == 0:
                 break
 
             for file in files:
