@@ -14,15 +14,14 @@ config: Config = get_config()
 class LhmKafkaBroker:
     def __init__(self):
         # Security setup
-        security = setup_security()
+        self.security = setup_security()
 
         # Kafka Broker and FastStream app setup
-        broker = KafkaBroker(
+        self.broker = KafkaBroker(
             bootstrap_servers=config.kafka_server,
-            security=security,
+            security=self.security,
         )
-
-        asyncio.get_event_loop().run_until_complete(broker.connect())
+        asyncio.get_event_loop().run_until_complete(self.broker.connect())
 
     async def publish(self, msg: Message):
         """
