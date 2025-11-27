@@ -247,7 +247,18 @@ class Config(BaseSettings):
     def print_config(self):
         logger = getLogger(__name__)
         logger.debug(
-            self.model_dump(exclude={"openai_api_key", "riski_db_password", "database_url", "test_riski_db_password", "test_database_url"})
+            self.model_dump(
+                exclude={
+                    "openai_api_key",
+                    "riski_db_password",
+                    "database_url",
+                    "test_riski_db_password",
+                    "test_database_url",
+                    "kafka_ca_b64",
+                    "kafka_pkcs12_data",
+                    "kafka_pkcs12_pw",
+                }
+            )
         )
 
     @model_validator(mode="after")

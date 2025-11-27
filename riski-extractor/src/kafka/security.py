@@ -1,7 +1,7 @@
 """Security helpers for configuring Kafka TLS/mTLS."""
 
 from base64 import b64decode
-from logging import Logger, getLogger
+from logging import Logger
 from pathlib import Path
 from ssl import SSLContext, create_default_context
 from tempfile import TemporaryDirectory
@@ -10,6 +10,7 @@ from config.config import Config, get_config
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 from faststream.security import BaseSecurity
+from src.logtools import getLogger
 
 logger: Logger = getLogger(__name__)
 config: Config = get_config()

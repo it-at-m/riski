@@ -1,9 +1,10 @@
-from logging import Logger, getLogger
+from logging import Logger
 from typing import List, TypeVar, overload
 
 from sqlmodel import Session, select
 from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Paper, Person
 from src.db.db import get_session
+from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)

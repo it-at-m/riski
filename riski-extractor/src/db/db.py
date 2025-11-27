@@ -1,7 +1,8 @@
-from logging import Logger, getLogger
+from logging import Logger
 
 from config.config import Config, get_config
 from sqlmodel import Session, SQLModel, create_engine
+from src.logtools import getLogger
 
 config: Config = get_config()
 logger: Logger = getLogger(__name__)
