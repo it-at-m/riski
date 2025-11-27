@@ -33,13 +33,7 @@ jobs:
       - name: Extract version from extractor tag
         id: vars
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            FULL_TAG=${GITHUB_SHA::7}          
-          else
-            echo "Error: This workflow should only be started manually. Something went wrong"
-            exit 1
-          fi
-
+          FULL_TAG=${GITHUB_SHA::7}
           echo "version=${FULL_TAG}" >> $GITHUB_OUTPUT
           echo "repo_lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       - name: Set build timestamp
