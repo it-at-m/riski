@@ -76,6 +76,26 @@ See the [open issues](#) for a full list of proposed features (and known issues)
 ## Documentation
 
 
+### Development
+
+#### Releasing backend or extractor images
+
+Use the `tag-version.ps1` helper to create semantic tags that trigger the
+GitHub Actions workflows responsible for building the `riski-backend` and
+`riski-extractor` container images.
+
+```powershell
+./tag-version.ps1
+```
+
+1. Select the service (`backend` or `extractor`).
+2. Choose the version bump (`major`, `minor`, or `patch`).
+3. Confirm the suggested tag (for example `backend-1.2.0`).
+4. Confirm pushing the tag to `origin` to start the corresponding Docker release workflow.
+
+After a successful push, the workflow builds and publishes the image to GitHub Container Registry.
+
+
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
@@ -100,4 +120,4 @@ Distributed under the MIT License. See [LICENSE](LICENSE) file for more informat
 
 ## Contact
 
-it@M - opensource@muenchen.de
+it@M - [opensource@muenchen.de](mailto:opensource@muenchen.de)
