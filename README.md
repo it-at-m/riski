@@ -1,35 +1,71 @@
-## Customize this file after creating the new REPO and remove this lines.
-What to adjust:  
-* Add the your project or repo name direct under the logo.
-* Add a short and long desciption.
-* Add links for your final repo to report a bug or request a feature.
-* Add list of used technologies.
-* If you have, add a roadmap or remove this section.
-* Fill up the section for set up and documentation.
- * Start in this file only with documentation and link to the docs folder.
-* Add more project shields. Use [shields.io](https://shields.io/) with style `for-the-badge`.
+# RIS-KI
 
-## ------- end to remove -------
-<!-- add Project Logo, if existing -->
+Find information in munich's political information system RIS with the help of ai.
 
-# repo or project name
+### Project Information
 
 [![Made with love by it@M][made-with-love-shield]][itm-opensource]
-<!-- feel free to add more shields, style 'for-the-badge' -> see https://shields.io/badges -->
+[![GitHub license][license-shield]][license]
 
-*Add a description from your project here.*
+<!-- Tech Stack -->
+### Technology Stack
+
+![Supported python versions][python-versions-shield]
+![Supported npm versions][npm-versions-shield]
+[![uv][uv-shield]][uv]
+[![FastAPI][fastapi-shield]][fastapi]
+[![vue][vue-shield]][vue]
+[![Postgres][postgres-shield]][postgres]
+[![LangGraph][langgraph-shield]][langgraph]
 
 
-### Built With
+<!-- CI -->
+### Build Status
 
-The documentation project is built with technologies we use in our projects:
+[![Backend tests][backend-tests-shield]][backend-tests]
 
-* *write here the list of used technologies*
+
+<!-- Container Images -->
+### Container Images
+
+[![Extractor][extractor-version-shield]][extractor-container]
+[![Backend][backend-version-shield]][backend-container]
+
+</div>
+
+<!-- ABOUT THE PROJECT -->
+
+
+[made-with-love-shield]: https://img.shields.io/badge/made%20with%20%E2%9D%A4%20by-it%40M-blue?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/it-at-m/itm-prettier-codeformat?style=for-the-badge&color=blue
+[python-versions-shield]: https://img.shields.io/badge/python-3.13-blue?style=for-the-badge
+[npm-versions-shield]: https://img.shields.io/badge/node-20+-blue?style=for-the-badge
+[uv-shield]: https://img.shields.io/badge/⚡-uv-blue?style=for-the-badge
+[fastapi-shield]: https://img.shields.io/badge/fastapi-blue?style=for-the-badge&logo=fastapi&logoColor=white
+[vue-shield]: https://shields.io/badge/Vue.js-blue?logo=vuedotjs&style=for-the-badge&logoColor=white
+[postgres-shield]: https://img.shields.io/badge/postgres-blue?&style=for-the-badge&logo=postgresql&logoColor=white
+[langgraph-shield]: https://img.shields.io/badge/LangGraph-blue?&style=for-the-badge&logo=langgraph&logoColor=white
+[extractor-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=extractor*&label=riski-extractor&style=for-the-badge&color=blue
+[backend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=backend*&label=riski-extractor&style=for-the-badge&color=blue
+[backend-tests-shield]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml/badge.svg
+
+[backend-tests]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml
+[extractor-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-extractor
+[backend-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-backend
+
+
+[itm-opensource]: https://opensource.muenchen.de/
+[license]: https://github.com/it-at-m/mucgpt/blob/main/LICENSE
+[releases]: https://github.com/it-at-m/mucgpt/releases
+[gitmoij]: https://gitmoji.dev/
+[uv]: https://github.com/astral-sh/uv
+[fastapi]: https://fastapi.tiangolo.com/
+[postgres]: https://www.postgresql.org/
+[langgraph]: https://langchain-ai.github.io/langgraph/
+[pages]: https://it-at-m.github.io/mucgpt/
+[vue]: https://vuejs.org/
 
 ## Roadmap
-
-*if you have a ROADMAP for your project add this here*
-
 
 See the [open issues](#) for a full list of proposed features (and known issues).
 
@@ -38,17 +74,7 @@ See the [open issues](#) for a full list of proposed features (and known issues)
 *how can i start and fly this project*
 
 ## Documentation
-*what insights do you have to tell*
 
-```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
-```
-
-use [diagrams](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams).
 
 ## Contributing
 
@@ -75,7 +101,3 @@ Distributed under the MIT License. See [LICENSE](LICENSE) file for more informat
 ## Contact
 
 it@M - opensource@muenchen.de
-
-<!-- project shields / links -->
-[made-with-love-shield]: https://img.shields.io/badge/made%20with%20%E2%9D%A4%20by-it%40M-yellow?style=for-the-badge
-[itm-opensource]: https://opensource.muenchen.de/
