@@ -19,8 +19,9 @@ class LhmKafkaBroker:
             bootstrap_servers=config.kafka_server,
             security=self.security,
         )
+        self._loop = asyncio.new_event_loop()
         self.logger.debug("Connecting to Broker...")
-        asyncio.run(self.broker.connect())
+        self._loop.run_until_complete(self.broker.connect())
         self.logger.info("Broker connected.")
 
     def publish(self, msg: Message):
@@ -29,5 +30,5 @@ class LhmKafkaBroker:
         The topic can be set via config.
         """
         self.logger.debug(f"Publishing: {msg}.")
-        asyncio.run(self.broker.publish(msg, topic=config.kafka_topic))
+        self._loop.run_until_complete(self.broker.publish(msg, topic=config.kafka_topic))
         self.logger.debug(f"Published: {msg}.")
