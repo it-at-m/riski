@@ -23,7 +23,7 @@ class LhmKafkaBroker:
         asyncio.get_event_loop().run_until_complete(self.broker.connect())
         self.logger.info("Broker connected.")
 
-    async def publish(self, msg: Message):
+    def publish(self, msg: Message):
         """
         Publish a Message to the Kafka Broker
         The topic is always lhm-riski-parse
