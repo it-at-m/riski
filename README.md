@@ -55,14 +55,11 @@ Find information in munich's political information system RIS with the help of a
 
 
 [itm-opensource]: https://opensource.muenchen.de/
-[license]: https://github.com/it-at-m/mucgpt/blob/main/LICENSE
-[releases]: https://github.com/it-at-m/mucgpt/releases
-[gitmoij]: https://gitmoji.dev/
+[license]: https://github.com/it-at-m/riski/blob/main/LICENSE
 [uv]: https://github.com/astral-sh/uv
 [fastapi]: https://fastapi.tiangolo.com/
 [postgres]: https://www.postgresql.org/
 [langgraph]: https://langchain-ai.github.io/langgraph/
-[pages]: https://it-at-m.github.io/mucgpt/
 [vue]: https://vuejs.org/
 
 ## Roadmap
