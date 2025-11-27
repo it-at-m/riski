@@ -5,7 +5,7 @@ from yaml import safe_load
 
 from src.logtools import getLogger
 
-logger = getLogger()
+logger = getLogger(__name__)
 
 
 def get_version() -> str:

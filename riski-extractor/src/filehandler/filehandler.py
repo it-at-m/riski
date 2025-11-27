@@ -1,4 +1,3 @@
-import asyncio
 from logging import Logger
 
 import httpx
@@ -58,5 +57,5 @@ class Filehandler:
             self.logger.debug(f"Saved content of file {file.name} to database.")
             msg = Message(content=str(file.db_id))
             self.logger.debug(f"Publishing: {msg}.")
-            asyncio.get_event_loop().run_until_complete(self.broker.publish(msg))
+            self.broker.publish(msg)
             self.logger.debug(f"Published: {msg}.")

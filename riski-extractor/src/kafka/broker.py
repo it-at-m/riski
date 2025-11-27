@@ -20,14 +20,14 @@ class LhmKafkaBroker:
             security=self.security,
         )
         self.logger.debug("Connecting to Broker...")
-        asyncio.get_event_loop().run_until_complete(self.broker.connect())
+        asyncio.run(self.broker.connect())
         self.logger.info("Broker connected.")
 
-    async def publish(self, msg: Message):
+    def publish(self, msg: Message):
         """
         Publish a Message to the Kafka Broker
         The topic is always lhm-riski-parse
         """
         self.logger.debug(f"Publishing: {msg}.")
-        await self.broker.publish(msg, topic="lhm-riski-parse")
+        asyncio.run(self.broker.publish(msg, topic=config.kafka_topic))
         self.logger.debug(f"Published: {msg}.")

@@ -5,8 +5,10 @@ from datetime import datetime
 
 from yaml import safe_load
 
+defautlName: str = "riski-extractor"
 
-def getLogger(name: str = "riski-extractor") -> logging.Logger:
+
+def getLogger(name: str) -> logging.Logger:
     """Configures logging and returns a logger with the specified name.
 
     Parameters:
@@ -19,7 +21,7 @@ def getLogger(name: str = "riski-extractor") -> logging.Logger:
         log_config = safe_load(file)
 
     logging.config.dictConfig(log_config)
-    return logging.getLogger(name)
+    return logging.getLogger(str.join([defautlName, name], "."))
 
 
 class JsonFormatter(logging.Formatter):

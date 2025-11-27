@@ -154,6 +154,11 @@ class Config(BaseSettings):
         validation_alias="KAFKA_SERVER",
         description="Kafka Server URL",
     )
+    kafka_topic: str = Field(
+        default="lhm-riski-parse",
+        validation_alias="KAFKA_TOPIC",
+        description="Kafka Topic Name",
+    )
     kafka_ca_b64: str = Field(
         validation_alias="KAFKA_CA_B64",
         description="Kafka Server CA (B64 Encoded)",
@@ -240,7 +245,7 @@ class Config(BaseSettings):
         super().__init__(**kwargs)
 
     def print_config(self):
-        logger = getLogger()
+        logger = getLogger(__name__)
         logger.debug(
             self.model_dump(exclude={"openai_api_key", "riski_db_password", "database_url", "test_riski_db_password", "test_database_url"})
         )

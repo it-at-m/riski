@@ -9,9 +9,9 @@ from config.config import Config, get_config
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 from faststream.security import BaseSecurity
-from src.logtools import getLogger
+from src.logtools import Logger, getLogger
 
-logger = getLogger(__name__)
+logger: Logger = getLogger(__name__)
 config: Config = get_config()
 
 

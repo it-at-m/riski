@@ -36,7 +36,7 @@ class BaseExtractor(ABC, Generic[T]):
         else:
             self.client = Client(timeout=config.request_timeout)
 
-        self.logger = getLogger()
+        self.logger = getLogger(__name__)
         self.base_url = base_url
         self.base_path = base_path
         self.parser = parser
