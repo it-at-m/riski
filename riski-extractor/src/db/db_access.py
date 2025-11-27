@@ -67,7 +67,7 @@ def request_person_by_familyName(familyName: str, logger: Logger, session: Sessi
 
 
 def update_or_insert_objects_to_database(objects: List[T], session: Session | None = None) -> None:
-    logger.debug(f"Update or insert objects of type {type(objects[0])}.")
+    logger.debug("Update or insert objects.")
     sess = session or get_session()
     for obj in objects:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)
@@ -78,7 +78,7 @@ def update_or_insert_objects_to_database(objects: List[T], session: Session | No
 
 
 def update_object(obj: T, obj_db: T, session: Session | None = None) -> None:
-    logger.debug(f"Update object {obj}")
+    logger.debug(f"Update object {obj}.")
     sess = session or get_session()
 
     for field, value in obj.__dict__.items():
@@ -124,13 +124,13 @@ def request_paper_by_reference(reference: str, logger: Logger, session: Session 
     results = session.exec(stmt).all()
 
     if not results:
-        logger.warning(f"No paper found for {reference}")
+        logger.warning(f"No paper found for {reference}.")
         return None
     elif len(results) > 1:
-        logger.warning(f"Multiple papers found for reference '{reference}' — using the first one")
+        logger.warning(f"Multiple papers found for reference '{reference}' — using the first one.")
 
     paper = results[0]
-    logger.debug(f"Found paper {reference} in DB (id={paper.id})")
+    logger.debug(f"Found paper {reference} in DB (id={paper.id}).")
     return paper
 
 
@@ -145,13 +145,13 @@ def request_person_by_full_name(
     results = session.exec(stmt).all()
 
     if not results:
-        logger.warning(f"No person found for {givenName} {familyName}")
+        logger.warning(f"No person found for {givenName} {familyName}.")
         return None
     elif len(results) > 1:
-        logger.warning(f"Multiple persons found for {givenName} {familyName} — using the first one")
+        logger.warning(f"Multiple persons found for {givenName} {familyName} — using the first one.")
 
     person = results[0]
-    logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
+    logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id}).")
     return person
 
 

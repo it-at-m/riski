@@ -8,7 +8,7 @@ from yaml import safe_load
 defautlName: str = "riski-extractor"
 
 
-def getLogger(name: str) -> logging.Logger:
+def getLogger(name: str = None) -> logging.Logger:
     """Configures logging and returns a logger with the specified name.
 
     Parameters:
@@ -21,7 +21,9 @@ def getLogger(name: str) -> logging.Logger:
         log_config = safe_load(file)
 
     logging.config.dictConfig(log_config)
-    return logging.getLogger(str.join([defautlName, name], "."))
+
+    logger_name = f"{defautlName}.{name}" if name else defautlName
+    return logging.getLogger(logger_name)
 
 
 class JsonFormatter(logging.Formatter):

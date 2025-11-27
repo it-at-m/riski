@@ -23,7 +23,7 @@ logger: Logger
 def main():
     config = get_config()
     config.print_config()
-    logger = getLogger()
+    logger = getLogger(__name__)
     version = get_version()
 
     create_db_and_tables()
