@@ -18,7 +18,7 @@ class Filehandler:
     logger: Logger
 
     def __init__(self) -> None:
-        self.logger = getLogger()
+        self.logger = getLogger(__name__)
         if config.https_proxy or config.http_proxy:
             self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
         else:
@@ -40,7 +40,7 @@ class Filehandler:
                 try:
                     self.download_and_persist_file(file=file)
                 except Exception:
-                    self.logger.exception(f"Could not download file '{file.id}'")
+                    self.logger.exception(f"Could not download file '{file.id}'.")
 
             offset += batch_size
 
@@ -49,10 +49,12 @@ class Filehandler:
         response = self.client.get(url=file.id)
         response.raise_for_status()
         content = response.content
+        self.logger.debug("Check for changes in file content.")
         if file.content is None or content != file.content:
             file.content = content
             file.size = len(content)
-            self.logger.debug(f"Saving content of file {file.name} to database.")
+            self.logger.info(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
             msg = Message(content=str(file.db_id))
+            self.logger.info(f"Publishing: {msg}.")
             asyncio.get_event_loop().run_until_complete(self.broker.publish(msg))
