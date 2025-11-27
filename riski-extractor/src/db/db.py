@@ -43,7 +43,7 @@ def check_tables_exist():
         # Only use 'public' schema for Postgres; None for others like SQLite
         schema = "public" if engine.url.get_backend_name() == "postgresql" else None
         tables = inspector.get_table_names(schema=schema)
-        logger.debug("Existing tables:", tables)
+        logger.debug("Existing tables: %s", tables)
 
 
 if __name__ == "__main__":
