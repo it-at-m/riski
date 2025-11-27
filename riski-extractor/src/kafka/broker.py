@@ -19,7 +19,7 @@ class LhmKafkaBroker:
             bootstrap_servers=config.kafka_server,
             security=self.security,
         )
-        self.logger.info("Connecting to Broker...")
+        self.logger.debug("Connecting to Broker...")
         asyncio.get_event_loop().run_until_complete(self.broker.connect())
         self.logger.info("Broker connected.")
 
@@ -28,5 +28,6 @@ class LhmKafkaBroker:
         Publish a Message to the Kafka Broker
         The topic is always lhm-riski-parse
         """
-        self.logger.info(f"Publishing: {msg}.")
+        self.logger.debug(f"Publishing: {msg}.")
         await self.broker.publish(msg, topic="lhm-riski-parse")
+        self.logger.debug(f"Published: {msg}.")

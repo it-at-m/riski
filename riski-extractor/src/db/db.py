@@ -1,7 +1,10 @@
+from logging import Logger, getLogger
+
 from config.config import Config, get_config
 from sqlmodel import Session, SQLModel, create_engine
 
 config: Config = get_config()
+logger: Logger = getLogger(__name__)
 
 _engine = None
 _session = None
@@ -39,7 +42,7 @@ def check_tables_exist():
         # Only use 'public' schema for Postgres; None for others like SQLite
         schema = "public" if engine.url.get_backend_name() == "postgresql" else None
         tables = inspector.get_table_names(schema=schema)
-        print("Existing tables:", tables)
+        logger.debug("Existing tables:", tables)
 
 
 if __name__ == "__main__":
@@ -47,5 +50,5 @@ if __name__ == "__main__":
         create_db_and_tables()
         check_tables_exist()
     except Exception as e:
-        print(f"Error initializing database: {e}")
+        logger.exception(f"Error initializing database: {e}")
         raise

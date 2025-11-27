@@ -1,4 +1,4 @@
-from logging import Logger
+from logging import Logger, getLogger
 from typing import List, TypeVar, overload
 
 from sqlmodel import Session, select
@@ -8,8 +8,11 @@ from src.db.db import get_session
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
 
+logger: Logger = getLogger(__name__)
+
 
 def request_object_by_risid(risid: str, object_type: type[T], session: Session | None = None) -> T | None:
+    logger.debug(f"Request object of type {object_type} by risid {risid}.")
     statement = select(object_type).where(object_type.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
@@ -17,6 +20,7 @@ def request_object_by_risid(risid: str, object_type: type[T], session: Session |
 
 
 def request_all(object_type: type[T], session: Session | None = None) -> List[T]:
+    logger.debug(f"Request all objects of type {object_type}.")
     statement = select(object_type)
     sess = session or get_session()
     objects = sess.exec(statement).all()
@@ -32,6 +36,7 @@ def request_object_by_name(name: str, object_type: type[Keyword], session: Sessi
 
 
 def request_object_by_name(name: str, object_type: type[N] | type[Keyword], session: Session | None = None) -> N | Keyword | None:
+    logger.debug(f"Request object of type {object_type} by name {name}.")
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
@@ -39,6 +44,7 @@ def request_object_by_name(name: str, object_type: type[N] | type[Keyword], sess
 
 
 def insert_and_return_object(obj: T, session: Session | None = None) -> T:
+    logger.debug(f"Insert object {obj} of type {type(obj)}.")
     sess = session or get_session()
     try:
         sess.add(obj)
@@ -51,6 +57,7 @@ def insert_and_return_object(obj: T, session: Session | None = None) -> T:
 
 
 def request_person_by_familyName(familyName: str, logger: Logger, session: Session | None = None) -> Person | None:
+    logger.debug(f"Request person by familyName {familyName}.")
     statement = select(Person).where(Person.familyName == familyName)
     sess = session or get_session()
     results = sess.exec(statement).all()
@@ -60,6 +67,7 @@ def request_person_by_familyName(familyName: str, logger: Logger, session: Sessi
 
 
 def update_or_insert_objects_to_database(objects: List[T], session: Session | None = None) -> None:
+    logger.debug(f"Update or insert objects of type {type(objects[0])}.")
     sess = session or get_session()
     for obj in objects:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)
@@ -70,6 +78,7 @@ def update_or_insert_objects_to_database(objects: List[T], session: Session | No
 
 
 def update_object(obj: T, obj_db: T, session: Session | None = None) -> None:
+    logger.debug(f"Update object {obj}")
     sess = session or get_session()
 
     for field, value in obj.__dict__.items():
@@ -81,6 +90,7 @@ def update_object(obj: T, obj_db: T, session: Session | None = None) -> None:
 
 
 def insert_object_to_database(obj: T, session: Session | None = None) -> None:
+    logger.debug(f"Insert object {obj}.")
     sess = session or get_session()
     sess.add(obj)
     sess.commit()
@@ -143,6 +153,7 @@ def request_person_by_full_name(
     person = results[0]
     logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
     return person
+
 
 def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
     """

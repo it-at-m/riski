@@ -24,6 +24,7 @@ class Filehandler:
         else:
             self.client = Client(timeout=config.request_timeout)
         self.broker = LhmKafkaBroker()
+        self.logger.info("Filehandler created.")
 
     def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")
@@ -36,7 +37,6 @@ class Filehandler:
                 break
 
             for file in files:
-                self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
                 try:
                     self.download_and_persist_file(file=file)
                 except Exception:
@@ -49,12 +49,14 @@ class Filehandler:
         response = self.client.get(url=file.id)
         response.raise_for_status()
         content = response.content
-        self.logger.debug("Check for changes in file content.")
+        self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
         if file.content is None or content != file.content:
             file.content = content
             file.size = len(content)
             self.logger.info(f"Saving content of file {file.name} to database.")
             update_or_insert_objects_to_database([file])
+            self.logger.debug(f"Saved content of file {file.name} to database.")
             msg = Message(content=str(file.db_id))
-            self.logger.info(f"Publishing: {msg}.")
+            self.logger.debug(f"Publishing: {msg}.")
             asyncio.get_event_loop().run_until_complete(self.broker.publish(msg))
+            self.logger.debug(f"Published: {msg}.")
