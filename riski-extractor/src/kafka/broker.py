@@ -29,4 +29,4 @@ class LhmKafkaBroker:
         The topic is always lhm-riski-parse
         """
         self.logger.info(f"Publishing: {msg}.")
-        self.broker.publish(msg, topic="lhm-riski-parse")
+        await self.broker.publish(msg, topic="lhm-riski-parse")
