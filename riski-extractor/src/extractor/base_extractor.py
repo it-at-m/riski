@@ -107,8 +107,8 @@ class BaseExtractor(ABC, Generic[T]):
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
 
             return extracted_objects
-        except Exception:
-            self.logger.exception("Error extracting objects")
+        except Exception as e:
+            self.logger.exception(f"Error extracting objects. - {e}")
             return []
 
     def _parse_objects_from_links(self, object_links: list[str]) -> list[T]:
@@ -121,8 +121,8 @@ class BaseExtractor(ABC, Generic[T]):
                     self.logger.warning(f"No object parsed for {link}")
                     continue
                 extracted_objects.append(extracted_object)
-            except Exception:
-                self.logger.exception(f"Error parsing {link}")
+            except Exception as e:
+                self.logger.exception(f"Error parsing {link}. - {e}")
         return extracted_objects
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)

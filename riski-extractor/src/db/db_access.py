@@ -52,9 +52,9 @@ def insert_and_return_object(obj: T, session: Session | None = None) -> T:
         sess.commit()
         sess.refresh(obj)
         return obj
-    except Exception:
+    except Exception as e:
         sess.rollback()
-        raise
+        raise e
 
 
 def request_person_by_familyName(familyName: str, logger: Logger, session: Session | None = None) -> Person | None:

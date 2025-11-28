@@ -1,12 +1,13 @@
+import asyncio
 from logging import Logger
 
 import httpx
 import stamina
 from config.config import Config, get_config
+from faststream.kafka import KafkaBroker
 from httpx import Client
 from src.data_models import File
 from src.db.db_access import request_batch, update_or_insert_objects_to_database
-from src.kafka.broker import LhmKafkaBroker
 from src.kafka.message import Message
 from src.logtools import getLogger
 
@@ -16,18 +17,18 @@ config: Config = get_config()
 class Filehandler:
     logger: Logger
 
-    def __init__(self) -> None:
+    def __init__(self, kafkaBroker: KafkaBroker) -> None:
         self.logger = getLogger(__name__)
         if config.https_proxy or config.http_proxy:
             self.client = Client(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout)
         else:
             self.client = Client(timeout=config.request_timeout)
-        self.broker = LhmKafkaBroker()
+        self.broker = kafkaBroker
         self.logger.info("Filehandler created.")
 
-    def download_and_persist_files(self, batch_size: int = 100):
+    async def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")
-
+        tasks = []
         offset = 0
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=batch_size)
@@ -37,15 +38,15 @@ class Filehandler:
 
             for file in files:
                 try:
-                    self.download_and_persist_file(file=file)
-                except Exception:
-                    self.logger.exception(f"Could not download file '{file.id}'.")
+                    tasks.append(self.download_and_persist_file(file=file))
+                except Exception as e:
+                    self.logger.error(f"Could not download file '{file.id}'. - {e}")
 
             offset += batch_size
-        self.broker.close()
+        await asyncio.gather(*tasks)
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    def download_and_persist_file(self, file: File):
+    async def download_and_persist_file(self, file: File):
         response = self.client.get(url=file.id)
         response.raise_for_status()
         content = response.content
@@ -58,5 +59,12 @@ class Filehandler:
             self.logger.debug(f"Saved content of file {file.name} to database.")
             msg = Message(content=str(file.db_id))
             self.logger.debug(f"Publishing: {msg}.")
-            self.broker.publish(msg)
-            self.logger.debug(f"Published: {msg}.")
+            try:
+                await self.broker.publish("message=msg", topic=config.kafka_topic)
+                self.logger.debug(f"Published: {msg}.")
+            except Exception as e:
+                # If Kafka Broker is unavailable rollback the file download to ensure
+                # All Documents that have content, are published to the Kafka Queue
+                file.content = None
+                update_or_insert_objects_to_database([file])
+                self.logger.error(f"Publishsing failed. Rolled file download back: {file.db_id}. - {e}")
