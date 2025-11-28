@@ -37,13 +37,13 @@ class Filehandler:
                 break
 
             for file in files:
-                try:
-                    tasks.append(self.download_and_persist_file(file=file))
-                except Exception as e:
-                    self.logger.error(f"Could not download file '{file.id}'. - {e}")
+                tasks.append(self.download_and_persist_file(file=file))
 
             offset += batch_size
-        await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for file, result in zip(files, results):
+            if isinstance(result, Exception):
+                self.logger.error(f"Could not download file '{file.id}'. - {result}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
@@ -60,11 +60,11 @@ class Filehandler:
             msg = Message(content=str(file.db_id))
             self.logger.debug(f"Publishing: {msg}.")
             try:
-                await self.broker.publish("message=msg", topic=config.kafka_topic)
+                await self.broker.publish(msg, topic=config.kafka_topic)
                 self.logger.debug(f"Published: {msg}.")
             except Exception as e:
                 # If Kafka Broker is unavailable rollback the file download to ensure
                 # All Documents that have content, are published to the Kafka Queue
                 file.content = None
                 update_or_insert_objects_to_database([file])
-                self.logger.error(f"Publishsing failed. Rolled file download back: {file.db_id}. - {e}")
+                self.logger.error(f"Publishing failed. Rolled file download back: {file.db_id}. - {e}")
