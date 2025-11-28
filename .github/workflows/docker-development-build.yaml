@@ -1,4 +1,4 @@
-name: Build and Push Extractor Docker Image (Development)
+name: Build Docker Image (Development)
 permissions:
   contents: read
 
