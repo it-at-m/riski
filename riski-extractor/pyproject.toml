@@ -1,9 +1,9 @@
 [project]
-name = "riski-extractor"
+name = "extractor"
 version = "0.0.1a1"
 description = "Python application for extracting information from munich's political information system RIS"
 readme = "README.md"
-requires-python = "==3.12.11"
+requires-python = "==3.13.9"
 license = { file = "LICENSE" }
 authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
@@ -13,12 +13,10 @@ authors = [
 ]
 dependencies = [
     "pydantic-settings>=2.10.1",
-    "sqlalchemy>=2.0.42",
-    "sqlmodel>=0.0.24",
     "tokenizers==0.21.2",
     "torch==2.8.0",
     "torchvision==0.23.0",
-    "truststore==0.10.3",
+    "truststore>=0.10.4",
     "gitpython>=3.1.45",
     "langchain>=0.3.27",
     "langchain-community>=0.3.28",
