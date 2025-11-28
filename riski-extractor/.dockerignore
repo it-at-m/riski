@@ -4,3 +4,5 @@ README.md
 src/docling/
 pgdata/
 artifacts/
+.pytest_cache/
+test.log

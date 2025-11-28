@@ -3,9 +3,9 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from core.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
+from core.model.data_models import File, Keyword, Paper, PaperTypeEnum, Person
 
-from src.data_models import File, Keyword, Paper, PaperTypeEnum, Person
-from src.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
 from src.parser.base_parser import BaseParser
 
 

@@ -3,14 +3,14 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-
-from src.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
-from src.db.db_access import (
+from core.db.db_access import (
     get_or_insert_object_to_database,
     request_object_by_name,
     request_paper_by_reference,
     request_person_by_full_name,
 )
+from core.model.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
+
 from src.parser.base_parser import BaseParser
 
 
