@@ -2,8 +2,9 @@ from logging import Logger
 from typing import List, TypeVar, overload
 
 from sqlmodel import Session, select
-from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Paper, Person
-from src.db.db import get_session
+
+from core.db.db import get_session
+from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Paper, Person
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
@@ -143,6 +144,7 @@ def request_person_by_full_name(
     person = results[0]
     logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
     return person
+
 
 def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
     """

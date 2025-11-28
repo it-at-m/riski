@@ -3,9 +3,9 @@ import sys
 from logging import Logger
 
 from config.config import Config, get_config
-from src.data_models import ExtractArtifact
-from src.db.db import create_db_and_tables
-from src.db.db_access import update_or_insert_objects_to_database
+from core.db.db import create_db_and_tables
+from core.db.db_access import update_or_insert_objects_to_database
+from core.model.data_models import ExtractArtifact
 from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor

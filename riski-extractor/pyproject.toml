@@ -26,7 +26,8 @@ dependencies = [
     "pyyaml>=6.0.2",
     "stamina>=25.1.0",
     "python-dotenv>=1.1.1",
-    "psycopg[binary,pool]>=3.2.9",
+    "core"
+    
 ]
 
 [project.optional-dependencies]
@@ -48,6 +49,7 @@ dev = [
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
+core = { path = "../riski-core" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -56,3 +58,7 @@ explicit = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"

@@ -303,6 +303,31 @@ wheels = [
 ]
 
 [[package]]
+name = "core"
+version = "0.1.0"
+source = { directory = "../riski-core" }
+dependencies = [
+    { name = "psycopg", extra = ["binary", "pool"] },
+    { name = "pydantic", extra = ["email"] },
+    { name = "sqlalchemy" },
+    { name = "sqlmodel" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
+    { name = "sqlalchemy", specifier = ">=2.0.42" },
+    { name = "sqlmodel", specifier = ">=0.0.24" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipykernel", specifier = ">=7.1.0" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
+]
+
+[[package]]
 name = "dataclasses-json"
 version = "0.6.7"
 source = { registry = "https://pypi.org/simple" }

@@ -1,6 +1,6 @@
 from config.config import Config, get_config
+from core.model.data_models import Person
 
-from src.data_models import Person
 from src.extractor.base_extractor import BaseExtractor
 from src.parser.person_parser import PersonParser
 
