@@ -42,6 +42,7 @@ class Filehandler:
                     self.logger.exception(f"Could not download file '{file.id}'.")
 
             offset += batch_size
+        self.broker.close()
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):

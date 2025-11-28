@@ -32,3 +32,10 @@ class LhmKafkaBroker:
         self.logger.debug(f"Publishing: {msg}.")
         self._loop.run_until_complete(self.broker.publish(msg, topic=config.kafka_topic))
         self.logger.debug(f"Published: {msg}.")
+
+    def close(self):
+        """Close the broker connection and event loop."""
+        self.logger.debug("Closing broker connection...")
+        self._loop.run_until_complete(self.broker.close())
+        self._loop.close()
+        self.logger.info("Broker closed.")
