@@ -62,7 +62,7 @@ Find information in munich's political information system RIS with the help of a
 
 ## Roadmap
 
-See the [open issues](#) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/it-at-m/riski/issues) for a full list of proposed features (and known issues).
 
 
 ## Set up

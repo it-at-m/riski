@@ -217,7 +217,9 @@ if ($tags.Count -gt 0) {
             Write-Host "  Warning: Skipping tag $tag as it doesn't follow semantic versioning format" -ForegroundColor Yellow
             Write-Host "  Error: $($_.Exception.Message)" -ForegroundColor DarkYellow
         }
-    }    if ($versionObjects.Count -gt 0) {
+    }   
+
+    if ($versionObjects.Count -gt 0) {
         # Sort by Major, Minor, Patch in descending order
         $sortedVersions = $versionObjects | Sort-Object -Property Major,Minor,Patch -Descending
 
@@ -361,7 +363,7 @@ if ($pushConfirmation -eq "y") {
         Write-Host "Check your internet connection or repository access permissions." -ForegroundColor Yellow
         Write-Host "To push later, use: git push origin $newTag" -ForegroundColor Cyan
     }
-}else {
+} else {
     Write-Host "Tag was created locally but not pushed." -ForegroundColor Yellow
     Write-Host "To push later, use: git push origin $newTag" -ForegroundColor Cyan
 }
