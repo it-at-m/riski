@@ -31,13 +31,11 @@ Find information in munich's political information system RIS with the help of a
 [![Extractor][extractor-version-shield]][extractor-container]
 [![Backend][backend-version-shield]][backend-container]
 
-</div>
-
 <!-- ABOUT THE PROJECT -->
 
 
 [made-with-love-shield]: https://img.shields.io/badge/made%20with%20%E2%9D%A4%20by-it%40M-blue?style=for-the-badge
-[license-shield]: https://img.shields.io/github/license/it-at-m/itm-prettier-codeformat?style=for-the-badge&color=blue
+[license-shield]: https://img.shields.io/github/license/it-at-m/riski?style=for-the-badge&color=blue
 [python-versions-shield]: https://img.shields.io/badge/python-3.13-blue?style=for-the-badge
 [npm-versions-shield]: https://img.shields.io/badge/node-20+-blue?style=for-the-badge
 [uv-shield]: https://img.shields.io/badge/⚡-uv-blue?style=for-the-badge
@@ -68,7 +66,7 @@ See the [open issues](#) for a full list of proposed features (and known issues)
 
 
 ## Set up
-*how can i start and fly this project*
+*How to get started with this project*
 
 ## Documentation
 
