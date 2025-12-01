@@ -15,13 +15,74 @@ $serviceConfig = @{
     backend = @{
         Prefix = "backend-"
         PackageUrl = "https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-backend"
+        ManifestPath = [System.IO.Path]::Combine("riski-backend", "pyproject.toml")
+        ManifestType = "pyproject"
     }
     extractor = @{
         Prefix = "extractor-"
         PackageUrl = "https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-extractor"
+        ManifestPath = [System.IO.Path]::Combine("riski-extractor", "pyproject.toml")
+        ManifestType = "pyproject"
     }
 }
 $availableServices = @($serviceConfig.Keys)
+
+function Read-YesNo {
+    param(
+        [Parameter(Mandatory=$true)][string]$Prompt
+    )
+
+    $options = @("y", "n")
+
+    while ($true) {
+        $input = Read-Host $Prompt
+
+        if ([string]::IsNullOrWhiteSpace($input)) {
+            Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
+            continue
+        }
+
+        if ($options -contains $input) {
+            return $input
+        }
+
+        $matches = $options | Where-Object { $_ -like "$input*" }
+        if ($matches.Count -eq 1) {
+            Write-Host "Selected: $($matches[0])" -ForegroundColor Green
+            return $matches[0]
+        }
+
+        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
+    }
+}
+
+function Update-ManifestVersion {
+    param(
+        [Parameter(Mandatory=$true)][string]$FilePath,
+        [Parameter(Mandatory=$true)][string]$ManifestType,
+        [Parameter(Mandatory=$true)][string]$NewVersion
+    )
+
+    if ($ManifestType -eq "pyproject") {
+        $content = Get-Content -Raw -Path $FilePath
+        $regex = [regex]::new('(?m)^(?<prefix>\s*version\s*=\s*")[^"]+(?<suffix>")')
+
+        if (-not $regex.IsMatch($content)) {
+            throw "Could not find a version entry in $FilePath"
+        }
+
+        $updatedContent = $regex.Replace($content, { param($match) return $match.Groups['prefix'].Value + $NewVersion + $match.Groups['suffix'].Value }, 1)
+        Set-Content -Path $FilePath -Value $updatedContent -Encoding UTF8
+    }
+    elseif ($ManifestType -eq "packageJson") {
+        $jsonContent = Get-Content -Raw -Path $FilePath | ConvertFrom-Json
+        $jsonContent.version = $NewVersion
+        $jsonContent | ConvertTo-Json -Depth 100 | Set-Content -Path $FilePath -Encoding UTF8
+    }
+    else {
+        throw "Unsupported manifest type '$ManifestType'"
+    }
+}
 
 # Interactive service selection if not provided
 if (-not $Service) {
@@ -214,33 +275,39 @@ Write-Host "New version:     $newVersion" -ForegroundColor Green
 Write-Host "New tag:         $newTag" -ForegroundColor Green
 Write-Host "=======================================" -ForegroundColor Cyan
 
-$options = @("y", "n")
-$confirmation = ""
-while ($confirmation -notin $options) {
-    $input = Read-Host "Do you want to create this tag? (y/n)"
 
-    # Handle empty input
-    if ([string]::IsNullOrWhiteSpace($input)) {
-        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
-        continue
+$manifestPath = $null
+$manifestType = $null
+if ($serviceConfig[$Service].ManifestPath) {
+    $manifestPath = Join-Path -Path $PSScriptRoot -ChildPath $serviceConfig[$Service].ManifestPath
+    $manifestType = $serviceConfig[$Service].ManifestType
+}
+
+if ($manifestPath) {
+    Write-Host "`nManifest file detected: $manifestPath" -ForegroundColor Cyan
+
+    if (-not (Test-Path $manifestPath)) {
+        Write-Host "  ⚠️ Unable to find manifest file. Skipping version file update." -ForegroundColor Yellow
     }
+    else {
+        $updateManifest = Read-YesNo "Do you want to update this file to version $newVersion? (y/n)"
 
-    # Direct match
-    if ($input -eq "y" -or $input -eq "n") {
-        $confirmation = $input
-        continue
-    }
-
-    # Try autocomplete
-    $matches = $options | Where-Object { $_ -like "$input*" }
-
-    if ($matches.Count -eq 1) {
-        $confirmation = $matches[0]
-        Write-Host "Selected: $confirmation" -ForegroundColor Green
-    } else {
-        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
+        if ($updateManifest -eq "y") {
+            try {
+                Update-ManifestVersion -FilePath $manifestPath -ManifestType $manifestType -NewVersion $newVersion
+                Write-Host "Manifest version updated to $newVersion" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "Failed to update manifest version: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Host "Manifest file left unchanged." -ForegroundColor Yellow
+        }
     }
 }
+
+$confirmation = Read-YesNo "Do you want to create this tag? (y/n)"
 
 if ($confirmation -ne "y") {
     Write-Host "Operation cancelled." -ForegroundColor Yellow
@@ -251,33 +318,7 @@ if ($confirmation -ne "y") {
 git tag $newTag
 Write-Host "Tag $newTag created locally." -ForegroundColor Green
 
-$pushOptions = @("y", "n")
-$pushConfirmation = ""
-while ($pushConfirmation -notin $pushOptions) {
-    $input = Read-Host "Do you want to push this tag to origin? (y/n)"
-
-    # Handle empty input
-    if ([string]::IsNullOrWhiteSpace($input)) {
-        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
-        continue
-    }
-
-    # Direct match
-    if ($input -eq "y" -or $input -eq "n") {
-        $pushConfirmation = $input
-        continue
-    }
-
-    # Try autocomplete
-    $matches = $pushOptions | Where-Object { $_ -like "$input*" }
-
-    if ($matches.Count -eq 1) {
-        $pushConfirmation = $matches[0]
-        Write-Host "Selected: $pushConfirmation" -ForegroundColor Green
-    } else {
-        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
-    }
-}
+$pushConfirmation = Read-YesNo "Do you want to push this tag to origin? (y/n)"
 
 if ($pushConfirmation -eq "y") {
     Write-Host "Pushing tag to origin..." -ForegroundColor Cyan

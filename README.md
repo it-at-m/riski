@@ -87,8 +87,9 @@ GitHub Actions workflows responsible for building the `riski-backend` and
 
 1. Select the service (`backend` or `extractor`).
 2. Choose the version bump (`major`, `minor`, or `patch`).
-3. Confirm the suggested tag (for example `backend-1.2.0`).
-4. Confirm pushing the tag to `origin` to start the corresponding Docker release workflow.
+3. When prompted, decide whether the script should also bump the detected manifest (for example `riski-backend/pyproject.toml` or a `package.json`) to the same version. This keeps the package metadata, container tags, and badges in sync.
+4. Confirm the suggested tag (for example `backend-1.2.0`).
+5. Confirm pushing the tag to `origin` to start the corresponding Docker release workflow.
 
 After a successful push, the workflow builds and publishes the image to GitHub Container Registry.
 
