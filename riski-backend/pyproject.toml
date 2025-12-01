@@ -1,4 +1,4 @@
-[project]
+﻿[project]
 name = "riski-backend"
 license = "MIT"
 version = "0.1.0"
@@ -25,6 +25,7 @@ dependencies = [
     "pydantic==2.12.4",
     "python-dotenv==1.2.1",
     "truststore==0.10.4",
+    "ag-ui-langgraph==0.0.22",
 ]
 
 [dependency-groups]

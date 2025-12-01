@@ -1,4 +1,5 @@
 # FastAPI backend creation
+from app.api.routers.ag_ui import router as ag_ui_router
 from app.api.routers.system import router as systems_router
 from app.core.settings import get_settings
 from fastapi import FastAPI
@@ -15,3 +16,4 @@ backend = FastAPI(
 )
 
 backend.include_router(systems_router)
+backend.include_router(ag_ui_router)
