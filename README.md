@@ -2,7 +2,7 @@
 
 Find information in munich's political information system RIS with the help of ai.
 
-### Project Information
+## Project Information
 
 [![Made with love by it@M][made-with-love-shield]][itm-opensource]
 [![GitHub license][license-shield]][license]
