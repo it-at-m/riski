@@ -62,7 +62,7 @@ See [Configuration Reference](https://vitejs.dev/config/).
 
 The webcomponent now talks to the RISKI backend via the AG-UI LangGraph protocol.
 
-- The backend endpoint must expose `POST /api/ag-ui/langgraph` (and optionally the health check at `/api/ag-ui/langgraph/health`).
+- The backend endpoint must expose `POST /api/ag-ui/riskiagent` at the path `/api/ag-ui/riskiagent`.
 - Configure the frontend to reach the backend by setting `VITE_VUE_APP_API_URL` in your `.env.*` file, e.g. `VITE_VUE_APP_API_URL=http://localhost:8080` (or rely on the Vite dev proxy when running `npm run dev-no-mock`).
 - `npm run dev` keeps the existing mocked answer for UI work, while `npm run dev-no-mock` proxies `/api` calls to the backend on `http://localhost:8080` and streams the real LangGraph response.
 

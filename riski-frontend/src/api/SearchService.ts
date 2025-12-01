@@ -63,8 +63,7 @@ export default class SearchService {
         });
     } else {
       return AgUiAgentClient.ask(query, signal, onProcessed)
-        .then((answer) => {
-          if (answer) onProcessed(answer);
+        .then(() => {
           onComplete();
         })
         .catch((err: any) => {

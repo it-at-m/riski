@@ -23,6 +23,7 @@ class RiskiAgentState(TypedDict, total=False):
 
     messages: Annotated[list[BaseMessage], add_messages]
     documents: NotRequired[list[Document]]
+    proposals: NotRequired[list[Document]]
 
 
 def _simulate_delay(duration: float) -> None:
@@ -90,12 +91,49 @@ def _build_document_candidates(question: str) -> list[Document]:
     ]
 
 
+def _build_proposal_candidates(question: str) -> list[Document]:
+    """Return a list of pseudo-proposals to mirror document structure."""
+
+    topic = "'%s'" % question if question else "aktuelles Thema"
+    base_metadata = {
+        "source": "mock://proposals",
+        "risUrl": "https://riski.mock/proposals",
+        "size": 1,
+    }
+
+    return [
+        Document(
+            page_content="Beschlussvorlage mit Schwerpunkt %s." % topic,
+            metadata={
+                **base_metadata,
+                "id": "proposal-1",
+                "identifier": "BV-2024-001",
+                "title": "Maßnahmenpaket für sichere KI",
+                "source": f"{base_metadata['source']}/1",
+                "risUrl": f"{base_metadata['risUrl']}/1",
+            },
+        ),
+        Document(
+            page_content="Alternativvorschlag zur weiteren Diskussion %s." % topic,
+            metadata={
+                **base_metadata,
+                "id": "proposal-2",
+                "identifier": "BV-2024-002",
+                "title": "Pilotprojekt Datenräume",
+                "source": f"{base_metadata['source']}/2",
+                "risUrl": f"{base_metadata['risUrl']}/2",
+            },
+        ),
+    ]
+
+
 def _retrieve_documents(state: RiskiAgentState) -> dict[str, list[Document]]:
     """Mock retriever returning pseudo-documents with a short delay."""
     _simulate_delay(_RETRIEVAL_DELAY_SECONDS)
     question = _extract_latest_question(state.get("messages"))
     docs = _build_document_candidates(question)
-    return {"documents": docs}
+    proposals = _build_proposal_candidates(question)
+    return {"documents": docs, "proposals": proposals}
 
 
 def _generate(state: RiskiAgentState) -> dict[str, list[BaseMessage]]:
@@ -129,11 +167,11 @@ def _build_riski_graph() -> CompiledStateGraph:
 
 @lru_cache(maxsize=1)
 def get_riski_agent() -> LangGraphAgent:
-    """Return tze cached riski agent"""
+    """Return the cached riski agent"""
 
     compiled_graph = _build_riski_graph()
     return LangGraphAgent(
         name="RISKI mock agent",
-        description="Placeholder riski agent till agi is archieved",
+        description="Placeholder riski agent till AGI is archieved",
         graph=compiled_graph,
     )
