@@ -8,10 +8,10 @@ import { ref } from "vue";
 
 import SearchService from "@/api/SearchService";
 import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
-import riskiIntro from "@/components/riski-intro.vue";
-import riskiSearchbar from "@/components/riski-searchbar.vue";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
+import riskiIntro from "@/components/riski-intro.vue";
 import RiskiProgress from "@/components/riski-progress.vue";
+import riskiSearchbar from "@/components/riski-searchbar.vue";
 
 let abortController = new AbortController();
 
@@ -80,11 +80,13 @@ const submitQuery = (query: string) => {
     fehler.value = e;
   });
 };
-
 </script>
 
 <template>
-  <link href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css" rel="stylesheet" />
+  <link
+    href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css"
+    rel="stylesheet"
+  />
   <main>
     <div>
       <div v-html="mucIconsSprite" />
@@ -92,22 +94,30 @@ const submitQuery = (query: string) => {
       <div v-html="riskiIconsSprite" />
 
       <riski-intro>
-        <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
-          :on-clear="resetInitialState" />
+        <riski-searchbar
+          id="riski-searchbar"
+          :submit-query="submitQuery"
+          :query="searchquery"
+          :on-clear="resetInitialState"
+        />
       </riski-intro>
 
       <div class="container">
         <div class="m-component__grid">
-          <div class="main-body-container">            
+          <div class="main-body-container">
             <div>
-              <div v-if="
-                loading == false &&
-                found_answer == undefined &&
-                initial == false &&
-                fehler == ''
-              ">
+              <div
+                v-if="
+                  loading == false &&
+                  found_answer == undefined &&
+                  initial == false &&
+                  fehler == ''
+                "
+              >
                 <muc-callout type="warning">
-                  <template #header>Wir haben leider keine Antwort gefunden.</template>
+                  <template #header
+                    >Wir haben leider keine Antwort gefunden.</template
+                  >
                   <template #content>
                     Entschuldigung. Für ihre Frage konnte unsere Künstliche
                     Intelligenz leider kein passendes Ergebnis finden.
@@ -117,10 +127,15 @@ const submitQuery = (query: string) => {
                 </muc-callout>
               </div>
               <div v-else-if="found_answer != undefined && !loading">
-                  <riski-response-card :riski-answer="found_answer"></riski-response-card>
+                <riski-response-card
+                  :riski-answer="found_answer"
+                ></riski-response-card>
               </div>
               <div v-if="fehler != ''">
-                <muc-callout title="Fehler" type="error">
+                <muc-callout
+                  title="Fehler"
+                  type="error"
+                >
                   <template #header>Ein Fehler ist aufgetreten.</template>
                   <template #content>
                     {{ fehler }}
@@ -128,24 +143,32 @@ const submitQuery = (query: string) => {
                 </muc-callout>
               </div>
               <div class="progress-container">
-                <riski-progress v-if="loading" :progress="40"></riski-progress>
+                <riski-progress
+                  v-if="loading"
+                  :progress="40"
+                ></riski-progress>
               </div>
             </div>
-            <div style="height: 48px;"></div>
-            <muc-callout title="Disclaimer" type="info" class="heading disclaimer-callout">
+            <div style="height: 48px"></div>
+            <muc-callout
+              title="Disclaimer"
+              type="info"
+              class="heading disclaimer-callout"
+            >
               <template #header>Rechtliche Hinweise</template>
               <template #content>
                 Die von diesem System bereitgestellten Informationen dienen als
-                erste Orientierung und es kann nicht zugesichert werden, dass diese tatsächlich korrekt sind. 
-                Wir arbeiten daran, dass die Informationen so korrekt wie möglich sind, können dafür jedoch keine Gewähr geben.
-                Überprüfen sie die Ergebnisse daher bitte mittels der angegebenen Anträge und Dokumente selbständig um die
+                erste Orientierung und es kann nicht zugesichert werden, dass
+                diese tatsächlich korrekt sind. Wir arbeiten daran, dass die
+                Informationen so korrekt wie möglich sind, können dafür jedoch
+                keine Gewähr geben. Überprüfen sie die Ergebnisse daher bitte
+                mittels der angegebenen Anträge und Dokumente selbständig um die
                 Korrektheit zu garantieren, wo dies wichtig ist.
               </template>
             </muc-callout>
           </div>
         </div>
       </div>
-      
     </div>
   </main>
 </template>

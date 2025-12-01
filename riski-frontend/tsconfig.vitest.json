@@ -1,10 +1,7 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./cache/tsconfig.vitest.tsbuildinfo",
-    "types": [
-      "node",
-      "vitest/jsdom"
-    ]
+    "types": ["node", "vitest/jsdom"]
   },
   "exclude": [],
   "extends": "./tsconfig.app.json"

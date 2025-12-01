@@ -1,37 +1,10 @@
 import type RiskiAnswer from "@/types/RiskiAnswer";
 
-import {
-  ANSWER_ENDPOINT,
-  getAPIBaseURL,
-} from "@/util/constants";
-
+import AgUiAgentClient from "@/api/AgUiAgentClient";
 
 type Callback<T> = (result: T) => void;
 
-/**
- * Service class for performing search operations against the backend API.
- */
 export default class SearchService {
-  static answer(
-    input: { question: string },
-    signal: AbortSignal
-  ): Promise<RiskiAnswer | undefined> {
-    return fetch(`${getAPIBaseURL()}${ANSWER_ENDPOINT}`, {
-      method: "POST",
-      signal: signal,
-      body: JSON.stringify(input), // Add the input as the request body
-      headers: {
-        "Content-Type": "application/json", // Set the content type header
-      },
-    }).then((response) => {
-      if (response.status !== 200) {
-        return Promise.reject(
-          response.status + ": Antwort konnte nicht generiert werden"
-        );
-      } else return response.json() as unknown as RiskiAnswer;
-    });
-  }
-
   /**
    * Performs a search based on the provided query.
    *
@@ -45,7 +18,7 @@ export default class SearchService {
     query: string | null | undefined,
     onProcessed: Callback<RiskiAnswer>,
     onComplete: Callback<void>,
-    signal: AbortSignal,
+    signal: AbortSignal
   ): Promise<void> {
     if (query) {
       return SearchService.performSearch(
@@ -71,59 +44,72 @@ export default class SearchService {
     query: string,
     onProcessed: Callback<RiskiAnswer>,
     onComplete: Callback<void>,
-    signal: AbortSignal,
+    signal: AbortSignal
   ): Promise<void> {
+    const isMockMode = import.meta.env.MODE === "development";
 
-    if(import.meta.env.VITE_NODE_ENV === "development"){
+    if (isMockMode) {
       return SearchService.localExampleAnswer()
-              .then((answer) => {
-                if (answer) onProcessed(answer);
-                onComplete();
-              })
-              .catch((err: any) => {
-                if (typeof err === "string" && !err.includes("404")) {
-                  console.debug(err);
-                }
-                onComplete();
-                if (!signal.aborted) return Promise.reject(String(err));
-              });
+        .then((answer) => {
+          if (answer) onProcessed(answer);
+          onComplete();
+        })
+        .catch((err: any) => {
+          if (typeof err === "string" && !err.includes("404")) {
+            console.debug(err);
+          }
+          onComplete();
+          if (!signal.aborted) return Promise.reject(String(err));
+        });
     } else {
-      return SearchService.answer(
-          {
-            question: query,
-          },
-          signal
-      )
-          .then((answer) => {
-            if (answer) onProcessed(answer);
-            onComplete();
-          })
-          .catch((err: any) => {
-            if (typeof err === "string" && !err.includes("404")) {
-              console.debug(err);
-            }
-            onComplete();
-            if (!signal.aborted) return Promise.reject(String(err));
-          });
+      return AgUiAgentClient.ask(query, signal, onProcessed)
+        .then((answer) => {
+          if (answer) onProcessed(answer);
+          onComplete();
+        })
+        .catch((err: any) => {
+          if (typeof err === "string" && !err.includes("404")) {
+            console.debug(err);
+          }
+          onComplete();
+          if (!signal.aborted) return Promise.reject(String(err));
+        });
     }
   }
 
   private static async localExampleAnswer() {
     const secondsToWait = Math.floor(Math.random() * 7) + 3;
-    await new Promise(r => setTimeout(r, secondsToWait * 1000));
+    await new Promise((r) => setTimeout(r, secondsToWait * 1000));
 
-    const ai_response = "Hier steht dann die Zusammenfassung der KI. Zum Beispiel, dass in den letztem 2 Jahren 27 Anfragen zu Haushaltsfragen im Stadtrat eingebracht wurden. Außerdem die Aufteilung auf die Fraktionen und die zentralen Ergebnisse der Anfragen."
+    const ai_response =
+      "Hier steht dann die Zusammenfassung der KI. Zum Beispiel, dass in den letztem 2 Jahren 27 Anfragen zu Haushaltsfragen im Stadtrat eingebracht wurden. Außerdem die Aufteilung auf die Fraktionen und die zentralen Ergebnisse der Anfragen.";
 
-    let answer: RiskiAnswer = { ai_response: ai_response, proposals: [], documents: [], };
+    let answer: RiskiAnswer = {
+      ai_response: ai_response,
+      proposals: [],
+      documents: [],
+    };
 
-    answer.proposals.push({name:"Name 1", identifier: "A1029", risUrl: "url4"})
-    answer.proposals.push({name:"Name 2", identifier: "A2024", risUrl: "url5"})
-    answer.proposals.push({name:"Name 3", identifier: "A3023", risUrl: "url6"})
+    answer.proposals.push({
+      name: "Name 1",
+      identifier: "A1029",
+      risUrl: "url4",
+    });
+    answer.proposals.push({
+      name: "Name 2",
+      identifier: "A2024",
+      risUrl: "url5",
+    });
+    answer.proposals.push({
+      name: "Name 3",
+      identifier: "A3023",
+      risUrl: "url6",
+    });
 
-    answer.documents.push({name:"Name 1", size: 64000, risUrl: "url1"})
-    answer.documents.push({name:"Name 2", size: 6423000, risUrl: "url2"})
-    answer.documents.push({name:"Name 3", size: 240000, risUrl: "url3"})
+    answer.documents.push({ name: "Name 1", size: 64000, risUrl: "url1" });
+    answer.documents.push({ name: "Name 2", size: 6423000, risUrl: "url2" });
+    answer.documents.push({ name: "Name 3", size: 240000, risUrl: "url3" });
 
-    return  Promise.resolve(answer);
+    return Promise.resolve(answer);
   }
 }
