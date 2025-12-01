@@ -31,6 +31,10 @@ type TextFragment = {
   text?: unknown;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null;
+};
+
 const isTextFragment = (value: unknown): value is TextFragment => {
   return (
     typeof value === "object" &&
@@ -74,17 +78,58 @@ const extractAssistantResponse = (messages: Message[]): string => {
   return "";
 };
 
+const pickStringValue = (...values: unknown[]): string => {
+  for (const value of values) {
+    const text = stringifyValue(value);
+    if (text) {
+      return text;
+    }
+  }
+  return "";
+};
+
+const getDocumentMetadata = (
+  document: AgUiDocument
+): Record<string, unknown> | undefined => {
+  const metadataCandidate = (document as { metadata?: unknown }).metadata;
+  return isRecord(metadataCandidate) ? metadataCandidate : undefined;
+};
+
 const mapDocument = (document: AgUiDocument): Document => {
+  const metadata = getDocumentMetadata(document);
   const name =
-    stringifyValue(document.title) || stringifyValue(document.id) || "Dokument";
-  const risUrl =
-    stringifyValue(document.source) || stringifyValue(document.risUrl) || "";
-  const size = typeof document.size === "number" ? document.size : 0;
+    pickStringValue(
+      metadata?.title,
+      metadata?.name,
+      document.title,
+      document.name,
+      metadata?.id,
+      document.id
+    ) || "Dokument";
+  const risUrl = pickStringValue(
+    metadata?.risUrl,
+    metadata?.source,
+    document.risUrl,
+    document.source
+  );
+  const size =
+    typeof metadata?.size === "number"
+      ? metadata.size
+      : typeof document.size === "number"
+        ? document.size
+        : 0;
+  const identifier = pickStringValue(
+    metadata?.identifier,
+    document.identifier,
+    metadata?.id,
+    document.id
+  );
 
   return {
     name,
     risUrl,
     size,
+    identifier,
   };
 };
 
@@ -96,7 +141,7 @@ const mapProposal = (proposal: AgUiDocument): Proposal => ({
     stringifyValue(proposal.risUrl) || stringifyValue(proposal.source) || "",
 });
 
-const stringifyValue = (value: unknown): string => {
+function stringifyValue(value: unknown): string {
   if (typeof value === "string") {
     return value;
   }
@@ -104,7 +149,7 @@ const stringifyValue = (value: unknown): string => {
     return value.toString();
   }
   return "";
-};
+}
 
 const extractAnswerFromState = (
   state: RiskiAgentState

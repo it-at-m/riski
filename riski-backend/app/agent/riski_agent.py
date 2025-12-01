@@ -67,18 +67,24 @@ def _build_document_candidates(question: str) -> list[Document]:
             page_content=template["snippet"],
             metadata={
                 "id": "total-echtes-doc-1",
+                "identifier": "BR-2024-001",
                 "title": "Wissen zu riskanten, streng geheimen KI Protokollen",
                 "source": "mock://documents/1",
+                "risUrl": "https://riski.mock/documents/1",
                 "score": 0.92,
+                "size": 2,
             },
         ),
         Document(
             page_content=template["snippet"],
             metadata={
                 "id": "total-echtes-doc-2",
+                "identifier": "BR-2024-002",
                 "title": "Weniger relevantes Wissen",
                 "source": "mock://documents/2",
+                "risUrl": "https://riski.mock/documents/2",
                 "score": 0.50,
+                "size": 3,
             },
         ),
     ]
@@ -92,36 +98,18 @@ def _retrieve_documents(state: RiskiAgentState) -> dict[str, list[Document]]:
     return {"documents": docs}
 
 
-def _format_document_bullets(documents: list[Document]) -> str:
-    """Create a markdown bullet list summarising retrieved documents."""
-    bullets = []
-    for doc in documents[:3]:
-        metadata = doc.metadata or {}
-        title = metadata.get("title", "Dokument")
-        source = metadata.get("source", "mock://documents")
-        snippet = doc.page_content or "Keine Zusammenfassung verfügbar."
-        score = metadata.get("score")
-        score_suffix = " (Relevanz %.2f)" % score if isinstance(score, (int, float)) else ""
-        bullets.append("- **%s**%s — %s (%s)" % (title, score_suffix, snippet, source))
-    if not bullets:
-        bullets.append("- Keine Dokumente gefunden, bitte später erneut versuchen.")
-    return "\n".join(bullets)
-
-
 def _generate(state: RiskiAgentState) -> dict[str, list[BaseMessage]]:
     """Return a richer mock response referencing retrieved documents."""
 
     _simulate_delay(_RESPONSE_DELAY_SECONDS)
     question = _extract_latest_question(state.get("messages")) or "deine Frage"
-    documents = state.get("documents", [])
-    bullets = _format_document_bullets(documents)
     content = (
         "Ich habe folgende Hinweise zu '%s' zusammengetragen:\n\n" % question
-        + "Gefundene Unterlagen:\n"
-        + bullets
-        + "\n\n"
-        + "\n\n"
-        + "Dies ist ein höchstriskanter MOCK Agent. Bitte möglichst Bald durch einen echten Assistenten ersetzten!"
+        + ""
+        + "Das ist die Zusammenfassung <>"
+        + ""
+        + "**Hinweis**"
+        + "Dies ist ein höchstriskanter MOCK Agent. Sobald AGI Verfügbar, bitte austauschen"
     )
     return {"messages": [AIMessage(content=content)]}
 
