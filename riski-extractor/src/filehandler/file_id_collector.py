@@ -20,3 +20,7 @@ def collect_file_id(f):
 
 def get_all_found_file_ids() -> list[str]:
     return file_ids
+
+
+def clear_ids():
+    file_ids.clear()
