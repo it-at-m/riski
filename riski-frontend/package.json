@@ -31,10 +31,11 @@
   "name": "refarch-webcomponent",
   "private": true,
   "scripts": {
-    "build": "tsc && vite build --outDir dist ",
+    "build": "vue-tsc --build --noCheck && vite build && npm run post-build",
     "dev": "vite",
-    "fix": "prettier . --write && eslint . --fix",
-    "lint": "prettier . --check && eslint . && vue-tsc --build --noEmit",
+    "fix": "prettier . --write && eslint . --fix --concurrency auto",
+    "lint": "prettier . --check && eslint . --concurrency auto && vue-tsc --build --noEmit",
+    "post-build": "node ./processes/post-build.js && cyclonedx-npm --omit dev --omit optional --output-reproducible -o dist/application.cdx.json",
     "preview": "vite preview",
     "test": "vitest run"
   },
