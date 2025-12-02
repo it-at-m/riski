@@ -133,13 +133,36 @@ const mapDocument = (document: AgUiDocument): Document => {
   };
 };
 
-const mapProposal = (proposal: AgUiDocument): Proposal => ({
-  name: stringifyValue(proposal.name) || stringifyValue(proposal.title) || "",
-  identifier:
-    stringifyValue(proposal.identifier) || stringifyValue(proposal.id) || "",
-  risUrl:
-    stringifyValue(proposal.risUrl) || stringifyValue(proposal.source) || "",
-});
+const mapProposal = (proposal: AgUiDocument): Proposal => {
+  const metadata = getDocumentMetadata(proposal);
+  const name =
+    pickStringValue(
+      metadata?.title,
+      metadata?.name,
+      proposal.title,
+      proposal.name,
+      metadata?.id,
+      proposal.id
+    ) || "";
+  const identifier = pickStringValue(
+    metadata?.identifier,
+    metadata?.id,
+    proposal.identifier,
+    proposal.id
+  );
+  const risUrl = pickStringValue(
+    metadata?.risUrl,
+    metadata?.source,
+    proposal.risUrl,
+    proposal.source
+  );
+
+  return {
+    name,
+    identifier,
+    risUrl,
+  };
+};
 
 function stringifyValue(value: unknown): string {
   if (typeof value === "string") {
