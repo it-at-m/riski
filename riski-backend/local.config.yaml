@@ -1,0 +1,4 @@
+# This is a local configuration file for RISKI backend.
+# Copy this file and rename it to config.yaml to override default settings.
+enable_docs: True
+version: 0.1.0

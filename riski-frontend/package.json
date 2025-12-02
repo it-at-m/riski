@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@ag-ui/client": "0.0.41",
+    "@ag-ui/core": "0.0.41",
     "@muenchen/muc-patternlab-vue": "6.1.0",
     "@vueuse/core": "13.9.0",
     "vue": "3.5.22"
@@ -19,7 +21,7 @@
     "jsdom": "27.0.0",
     "prettier": "3.6.2",
     "typescript": "5.9.3",
-    "vite": "7.1.9",
+    "vite": "7.1.11",
     "vite-plugin-vue-devtools": "8.0.2",
     "vitest": "3.2.4",
     "vue-tsc": "3.1.0"
@@ -33,9 +35,10 @@
   "scripts": {
     "build": "vue-tsc --build --noCheck && vite build && npm run post-build",
     "dev": "vite",
-    "fix": "prettier . --write && eslint . --fix --concurrency auto",
-    "lint": "prettier . --check && eslint . --concurrency auto && vue-tsc --build --noEmit",
-    "post-build": "node ./processes/post-build.js && cyclonedx-npm --omit dev --omit optional --output-reproducible -o dist/application.cdx.json",
+    "dev-no-mock": "vite --mode development-no-mock",
+    "fix": "prettier . --write && eslint . --fix",
+    "lint": "prettier . --check && eslint . && vue-tsc --build --noEmit",
+    "post-build": "node ./processes/post-build.js && cyclonedx-npm --omit dev --omit optional --output-reproducible -o dist/application.cdx.json  --validate",
     "preview": "vite preview",
     "test": "vitest run"
   },

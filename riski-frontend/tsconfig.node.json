@@ -5,13 +5,8 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "tsBuildInfoFile": "./cache/tsconfig.node.tsbuildinfo",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
   "extends": "@tsconfig/node-lts/tsconfig.json",
-  "include": [
-    "vite.config.*",
-    "vitest.config.*"
-  ]
+  "include": ["vite.config.*", "vitest.config.*"]
 }

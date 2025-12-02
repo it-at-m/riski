@@ -1,5 +1,4 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div
@@ -11,14 +10,14 @@
         <h1 class="m-intro-vertical__title">RIS KI Suche (Beta-Version)</h1>
 
         <div class="m-intro-vertical__content">
-          <div
-            class="intro-info"
-          >
+          <div class="intro-info">
             <p>
-              Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus dem Ratsinformationssystem (RIS) stellen.
-              Die Suche liefert ihnen dann eine zusammenfassende Antwort sowie relevante Dokumente und die Bezeichnungen relevanter Anträge.
+              Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus
+              dem Ratsinformationssystem (RIS) stellen. Die Suche liefert ihnen
+              dann eine zusammenfassende Antwort sowie relevante Dokumente und
+              die Bezeichnungen relevanter Anträge.
             </p>
-            <div style="margin-bottom: 24px;"></div>
+            <div style="margin-bottom: 24px"></div>
             <slot></slot>
           </div>
         </div>

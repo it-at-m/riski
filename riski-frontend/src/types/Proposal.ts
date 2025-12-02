@@ -1,5 +1,5 @@
 export default interface Proposal {
-    identifier: string;
-    name: string;
-    risUrl: string;
+  identifier: string;
+  name: string;
+  risUrl: string;
 }
