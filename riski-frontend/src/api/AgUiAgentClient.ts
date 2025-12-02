@@ -280,6 +280,13 @@ export default class AgUiAgentClient {
         latestText || extractAssistantResponse(agent.messages);
 
       return buildAnswer(responseText, latestState);
+    } catch (error) {
+      console.error("Agent execution failed:", error);
+      // Return a user-friendly error response
+      return buildAnswer(
+        "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten.",
+        latestState
+      );
     } finally {
       abortController.abort();
     }
