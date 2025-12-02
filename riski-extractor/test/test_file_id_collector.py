@@ -11,11 +11,12 @@ logger.debug = MagicMock()
 
 # Decorated Test function
 @collect_file_id
-def sample_function(file: File):
-    return file.id
+def sample_function(obj: File):
+    return obj.id
 
 
 def test_collect_file_id():
+    clear_ids()
     file = File(id="123")
     assert get_all_found_file_ids() == []
 

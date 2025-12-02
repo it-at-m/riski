@@ -31,7 +31,8 @@ def test_delete_confidential_files(mock_remove_object_by_id, mock_request_all, m
     deleter.delete_confidential_files()
 
     calls = [call("file3", File), call("file4", File)]
-    mock_remove_object_by_id.assert_has_calls(calls)
+    mock_remove_object_by_id.assert_has_calls(calls, any_order=False)
+    assert mock_remove_object_by_id.call_count == 2
 
 
 @patch("src.filehandler.confidential_file_deleter.get_all_found_file_ids")

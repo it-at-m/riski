@@ -19,6 +19,9 @@ class ConfidentialFileDeleter:
         doc_ids = get_all_found_file_ids()
 
         for file in request_all(File):
+            if not file.modified:
+                continue
+
             if file.id not in doc_ids and datetime.datetime.strptime(self.config.start_date, "%Y-%m-%d") < file.modified:
                 remove_object_by_id(file.id, File)
                 self.logger.info(f"Deleted File: {file.id}")
