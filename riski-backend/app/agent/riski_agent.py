@@ -127,7 +127,7 @@ def _build_proposal_candidates(question: str) -> list[Document]:
     ]
 
 
-def _retrieve_documents(state: RiskiAgentState) -> dict[str, list[Document]]:
+def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     """Mock retriever returning pseudo-documents with a short delay."""
     _simulate_delay(_RETRIEVAL_DELAY_SECONDS)
     question = _extract_latest_question(state.get("messages"))
@@ -136,7 +136,7 @@ def _retrieve_documents(state: RiskiAgentState) -> dict[str, list[Document]]:
     return {"documents": docs, "proposals": proposals}
 
 
-def _generate(state: RiskiAgentState) -> dict[str, list[BaseMessage]]:
+def _generate(state: RiskiAgentState) -> RiskiAgentState:
     """Return a richer mock response referencing retrieved documents."""
 
     _simulate_delay(_RESPONSE_DELAY_SECONDS)
