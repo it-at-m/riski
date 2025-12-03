@@ -80,5 +80,5 @@ jobs:
       - name: Image digest
         run: |
           echo "riski-frontend image built and pushed:"
-          echo "  ghcr.io/${{ github.repository }}/riski-frontend:${{ steps.vars.outputs.version }}"
-          echo "  ghcr.io/${{ github.repository }}/riski-frontend:latest"
+          echo "  ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-frontend:${{ steps.vars.outputs.version }}"
+          echo "  ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-frontend:latest"
