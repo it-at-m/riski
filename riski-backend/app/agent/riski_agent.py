@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Annotated, NotRequired, TypedDict
 
 from ag_ui_langgraph import LangGraphAgent
+from app.core import settings
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -12,10 +13,7 @@ from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
 
-_RETRIEVAL_DELAY_SECONDS = 0.4
-_RESPONSE_DELAY_SECONDS = 0.6
-_RETRIEVAL_NODE = "RETRIEVAL"
-_GENERATE_NODE = "GENERATE"
+config = settings.get_settings()
 
 
 class RiskiAgentState(TypedDict, total=False):
@@ -129,7 +127,7 @@ def _build_proposal_candidates(question: str) -> list[Document]:
 
 def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     """Mock retriever returning pseudo-documents with a short delay."""
-    _simulate_delay(_RETRIEVAL_DELAY_SECONDS)
+    _simulate_delay(config.mock_retrieval_delay_seconds)
     question = _extract_latest_question(state.get("messages"))
     docs = _build_document_candidates(question)
     proposals = _build_proposal_candidates(question)
@@ -139,7 +137,7 @@ def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
 def _generate(state: RiskiAgentState) -> RiskiAgentState:
     """Return a richer mock response referencing retrieved documents."""
 
-    _simulate_delay(_RESPONSE_DELAY_SECONDS)
+    _simulate_delay(config.mock_response_delay_seconds)
     question = _extract_latest_question(state.get("messages")) or "deine Frage"
     content = (
         "Ich habe folgende Hinweise zu '%s' zusammengetragen:\n\n" % question
@@ -156,11 +154,11 @@ def _build_riski_graph() -> CompiledStateGraph:
     """Create the LangGraph graph powering the mock agent."""
 
     graph = StateGraph(RiskiAgentState)
-    graph.add_node(_RETRIEVAL_NODE, _retrieve_documents)
-    graph.add_node(_GENERATE_NODE, _generate)
-    graph.set_entry_point(_RETRIEVAL_NODE)
-    graph.add_edge(_RETRIEVAL_NODE, _GENERATE_NODE)
-    graph.add_edge(_GENERATE_NODE, END)
+    graph.add_node(config.mock_retrieval_node, _retrieve_documents)
+    graph.add_node(config.mock_generate_node, _generate)
+    graph.set_entry_point(config.mock_retrieval_node)
+    graph.add_edge(config.mock_retrieval_node, config.mock_generate_node)
+    graph.add_edge(config.mock_generate_node, END)
     checkpointer = MemorySaver()
     return graph.compile(checkpointer=checkpointer)
 

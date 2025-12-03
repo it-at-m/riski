@@ -1,7 +1,11 @@
 from functools import lru_cache
+from logging import Logger
 
+from app.utils.logging import getLogger
 from pydantic import Field
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
+
+logger: Logger
 
 
 class Settings(BaseSettings):
@@ -12,8 +16,71 @@ class Settings(BaseSettings):
     version: str = Field(description="The version of the riski backend.")
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
 
+    # === LLM Settings ===
+    llm_api_key: str = Field(
+        ...,
+        validation_alias="OPENAI_API_KEY",
+        description="API key for OpenAI",
+    )
+    llm_api_base: str | None = Field(
+        default=None,
+        validation_alias="OPENAI_API_BASE",
+        description="Base URL for OpenAI API",
+    )
+    llm_api_version: str | None = Field(
+        default=None,
+        validation_alias="OPENAI_API_VERSION",
+        description="Version of the OpenAI API to use",
+    )
+    tiktoken_cache_dir: str = Field(
+        default="tiktoken_cache",
+        validation_alias="TIKTOKEN_CACHE_DIR",
+        description="Directory to store tiktoken cache",
+    )
+    riski_llm_embedding_model: str = Field(
+        default="text-embedding-3-large",
+        validation_alias="RISKI_OPENAI_EMBEDDING_MODEL",
+        description="OpenAI embedding model to use",
+    )
+
+    # === Langfuse Settings ===
+    langfuse_secret_key: str = Field(
+        ...,
+        validation_alias="LANGFUSE_SECRET_KEY",
+        description="Secret Key for Langfuse",
+    )
+    langfuse_public_key: str = Field(
+        ...,
+        validation_alias="LANGFUSE_PUBLIC_KEY",
+        description="Public Key for Langfuse",
+    )
+    langfuse_host: str = Field(
+        ...,
+        validation_alias="LANGFUSE_HOST",
+        description="Langfuse host",
+    )
+
+    # === Mock Langfuse Agent Settings ===
+
+    mock_retrieval_delay_seconds: float | None = Field(
+        default=0.4,
+        validation_alias="MOCK_RETRIEVAL_DELAY_SECONDS",
+    )
+    mock_response_delay_seconds: float | None = Field(
+        default=0.6,
+        validation_alias="MOCK_RESPONSE_DELAY_SECONDS",
+    )
+    mock_retrieval_node: str | None = Field(
+        default="RETRIEVAL",
+        validation_alias="MOCK_RETRIEVAL_NODE",
+    )
+    mock_generate_node: str | None = Field(
+        default="GENERATE",
+        validation_alias="MOCK_GENERATE_NODE",
+    )
+
     model_config = SettingsConfigDict(
-        env_prefix="RISKI_",
+        env_prefix="RISKI_BACKEND_",
         env_file=".env",
         env_file_encoding="utf-8",
         env_ignore_empty=True,
@@ -42,6 +109,19 @@ class Settings(BaseSettings):
             YamlConfigSettingsSource(settings_cls),
             dotenv_settings,
         )
+
+
+def print_config(self):
+    logger = getLogger()
+    logger.debug(
+        self.model_dump(
+            exclude={
+                "llm_api_key",
+                "langfuse_secret_key",
+                "langfuse_public_key",
+            }
+        )
+    )
 
 
 @lru_cache(maxsize=1)
