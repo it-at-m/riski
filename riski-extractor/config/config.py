@@ -144,9 +144,32 @@ class Config(BaseSettings):
         description="Postgres port",
     )
     riski_batch_size: int = Field(
-        default=100,   
+        default=100,
         validation_alias="RISKI_BATCH_SIZE",
         description="Batch size for database operations",
+    )
+
+    # === Kafka Settings ===
+    kafka_server: str = Field(
+        validation_alias="KAFKA_SERVER",
+        description="Kafka Server URL",
+    )
+    kafka_topic: str = Field(
+        default="lhm-riski-parse",
+        validation_alias="KAFKA_TOPIC",
+        description="Kafka Topic Name",
+    )
+    kafka_ca_b64: str = Field(
+        validation_alias="KAFKA_CA_B64",
+        description="Kafka Server CA (B64 Encoded)",
+    )
+    kafka_pkcs12_data: str = Field(
+        validation_alias="KAFKA_PKCS12_B64",
+        description="Kafka P12 (B64 Encoded)",
+    )
+    kafka_pkcs12_pw: str = Field(
+        validation_alias="KAFKA_PKCS12_B64_PW",
+        description="Kafka P12 Password (B64 Encoded)",
     )
 
     @property
@@ -222,7 +245,7 @@ class Config(BaseSettings):
         super().__init__(**kwargs)
 
     def print_config(self):
-        logger = getLogger()
+        logger = getLogger(__name__)
         logger.debug(
             self.model_dump(
                 exclude={
@@ -231,6 +254,9 @@ class Config(BaseSettings):
                     "database_url",
                     "test_riski_db_password",
                     "test_database_url",
+                    "kafka_ca_b64",
+                    "kafka_pkcs12_data",
+                    "kafka_pkcs12_pw",
                 }
             )
         )
