@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import time
-from functools import lru_cache
 from typing import Annotated, NotRequired, TypedDict
 
+from ag_ui.core.types import RunAgentInput
 from ag_ui_langgraph import LangGraphAgent
 from app.core import settings
+from app.core.observer import langfuse_handler
+from app.utils.logging import getLogger
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -14,6 +16,7 @@ from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
 
 config = settings.get_settings()
+logger = getLogger()
 
 
 class RiskiAgentState(TypedDict, total=False):
@@ -163,11 +166,16 @@ def _build_riski_graph() -> CompiledStateGraph:
     return graph.compile(checkpointer=checkpointer)
 
 
-@lru_cache(maxsize=1)
-def get_riski_agent() -> LangGraphAgent:
+def get_riski_agent(human: RunAgentInput) -> LangGraphAgent:
     """Return the cached riski agent"""
-
     compiled_graph = _build_riski_graph()
+    human_inputs = human_inputs = [message.content for message in human.messages if message.role == "user"]
+    logger.info(human_inputs)
+    for s in compiled_graph.stream(
+        {"messages": [HumanMessage(content=human_inputs[0])]},
+        config={"callbacks": [langfuse_handler], "thread_id": "riski-thread", "checkpoint_ns": "riski-agent", "checkpoint_id": "main"},
+    ):
+        logger.debug(s)
     return LangGraphAgent(
         name="RISKI mock agent",
         description="Placeholder riski agent till AGI is archieved",

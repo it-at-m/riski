@@ -5,7 +5,6 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/api/ag-ui", tags=["ag-ui"])
-_agent = get_riski_agent()
 
 
 @router.post("/riskiagent", response_class=StreamingResponse)
@@ -13,6 +12,7 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
     """Stream LangGraph events back to AG-UI clients."""
 
     encoder = EventEncoder(accept=request.headers.get("accept"))
+    _agent = get_riski_agent(input_data)
 
     async def event_generator():
         async for event in _agent.run(input_data):
