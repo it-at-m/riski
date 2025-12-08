@@ -49,10 +49,10 @@ def test_extractor_with_different_person(session):
     assert person_count == 2, f"There should be exactly 2 people in the db. Found: {person_count}"
     statement = select(func.count()).select_from(Person).where(Person.familyName == "Doe")
     person_count = session.exec(statement).one()
-    assert person_count == 1, f"Person Doe should be in DB exactlöy once. Found: {person_count}"
+    assert person_count == 1, f"Person Doe should be in DB exactly once. Found: {person_count}"
     statement = select(func.count()).select_from(Person).where(Person.familyName == "Joe")
     person_count = session.exec(statement).one()
-    assert person_count == 1, f"Person Joe should be in DB exactlöy once. Found: {person_count}"
+    assert person_count == 1, f"Person Joe should be in DB exactly once. Found: {person_count}"
 
 
 def test_extractor_with_same_person(session):
@@ -87,4 +87,4 @@ def test_extractor_with_same_person(session):
 
     statement = select(func.count()).select_from(Person).where(Person.familyName == "Doe")
     person_count = session.exec(statement).one()
-    assert person_count == 1, f"Person Doe should be in DB exactlöy once. Found: {person_count}"
+    assert person_count == 1, f"Person Doe should be in DB exactly once. Found: {person_count}"
