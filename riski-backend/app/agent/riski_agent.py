@@ -3,13 +3,12 @@ from __future__ import annotations
 import time
 from typing import Annotated, NotRequired, TypedDict
 
-from ag_ui.core.types import RunAgentInput
 from ag_ui_langgraph import LangGraphAgent
 from app.core import settings
-from app.core.observer import langfuse_handler
 from app.utils.logging import getLogger
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langfuse import observe
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
@@ -128,6 +127,7 @@ def _build_proposal_candidates(question: str) -> list[Document]:
     ]
 
 
+@observe(name="retrival")
 def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     """Mock retriever returning pseudo-documents with a short delay."""
     _simulate_delay(config.mock_retrieval_delay_seconds)
@@ -137,6 +137,7 @@ def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     return {"documents": docs, "proposals": proposals}
 
 
+@observe(name="generate")
 def _generate(state: RiskiAgentState) -> RiskiAgentState:
     """Return a richer mock response referencing retrieved documents."""
 
@@ -166,16 +167,9 @@ def _build_riski_graph() -> CompiledStateGraph:
     return graph.compile(checkpointer=checkpointer)
 
 
-def get_riski_agent(human: RunAgentInput) -> LangGraphAgent:
+def get_riski_agent() -> LangGraphAgent:
     """Return the cached riski agent"""
     compiled_graph = _build_riski_graph()
-    human_inputs = human_inputs = [message.content for message in human.messages if message.role == "user"]
-    logger.info(human_inputs)
-    for s in compiled_graph.stream(
-        {"messages": [HumanMessage(content=human_inputs[0])]},
-        config={"callbacks": [langfuse_handler], "thread_id": "riski-thread", "checkpoint_ns": "riski-agent", "checkpoint_id": "main"},
-    ):
-        logger.debug(s)
     return LangGraphAgent(
         name="RISKI mock agent",
         description="Placeholder riski agent till AGI is archieved",
