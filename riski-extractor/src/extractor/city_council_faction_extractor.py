@@ -1,7 +1,7 @@
 from bs4.element import Tag
 from config.config import Config, get_config
+from core.model.data_models import Organization
 
-from src.data_models import Organization
 from src.extractor.base_extractor import BaseExtractor
 from src.parser.city_council_faction_parser import CityCouncilFactionParser
 

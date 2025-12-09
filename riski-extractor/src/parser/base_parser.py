@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
 from bs4 import BeautifulSoup
+from core.model.data_models import PaperSubtypeEnum
 
-from src.data_models import PaperSubtypeEnum
 from src.logtools import getLogger
 
 T = TypeVar("T")
