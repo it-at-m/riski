@@ -9,6 +9,7 @@ dependencies = [
     "sqlmodel>=0.0.24",
     "psycopg[binary,pool]>=3.2.9",
     "pydantic[email]>=2.11.7",
+    "pydantic-settings>=2.10.1",
 ]
 
 [dependency-groups]

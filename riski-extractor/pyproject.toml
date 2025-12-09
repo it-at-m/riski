@@ -12,7 +12,6 @@ authors = [
     { name = "Tim-Luca Pfeifer", email = "tim-luca.pfeifer@muenchen.de" },
 ]
 dependencies = [
-    "pydantic-settings>=2.10.1",
     "tokenizers==0.21.2",
     "torch==2.8.0",
     "torchvision==0.23.0",
@@ -22,10 +21,8 @@ dependencies = [
     "langchain-community>=0.3.28",
     "langchain-docling>=1.0.0",
     "langchain-openai>=0.3.32",
-    "pydantic[email]>=2.11.7",
     "pyyaml>=6.0.2",
     "stamina>=25.1.0",
-    "python-dotenv>=1.1.1",
     "core"
     
 ]
