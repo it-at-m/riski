@@ -127,7 +127,7 @@ def _build_proposal_candidates(question: str) -> list[Document]:
     ]
 
 
-@observe(name="retrieval")
+@observe(name="retrieval", as_type="retriever")
 def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     """Mock retriever returning pseudo-documents with a short delay."""
     _simulate_delay(config.mock_retrieval_delay_seconds)
@@ -137,7 +137,7 @@ def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     return {"documents": docs, "proposals": proposals}
 
 
-@observe(name="generate")
+@observe(name="generate", as_type="generation")
 def _generate(state: RiskiAgentState) -> RiskiAgentState:
     """Return a richer mock response referencing retrieved documents."""
 
