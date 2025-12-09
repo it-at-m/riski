@@ -7,10 +7,13 @@ from langfuse.langchain import CallbackHandler
 logger: Logger = getLogger()
 langfuse = get_client()
 # Verify connection
-if langfuse.auth_check():
-    logger.info("Langfuse client is authenticated and ready!")
-else:
-    logger.error("Authentication failed. Please check your credentials and host.")
+
+try:
+    langfuse.auth_check()
+    logger.info("Langfuse auth check successful.")
+except Exception as e:
+    logger.error(f"Langfuse auth check failed with the following error {e}. ")
+
 
 # Initialize Langfuse CallbackHandler for Tracing
 langfuse_handler = CallbackHandler()
