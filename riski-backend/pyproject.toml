@@ -26,7 +26,7 @@ dependencies = [
     "python-dotenv==1.2.1",
     "truststore==0.10.4",
     "ag-ui-langgraph==0.0.22",
-    "langfuse==3.10.3",
+    "langfuse==3.10.5",
 ]
 
 [dependency-groups]
