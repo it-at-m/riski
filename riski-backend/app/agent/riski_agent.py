@@ -127,7 +127,7 @@ def _build_proposal_candidates(question: str) -> list[Document]:
     ]
 
 
-@observe(name="retrival")
+@observe(name="retrieval")
 def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
     """Mock retriever returning pseudo-documents with a short delay."""
     _simulate_delay(config.mock_retrieval_delay_seconds)
