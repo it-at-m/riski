@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     Application settings for the  riski-backend.
     """
 
-    version: str = Field(description="The version of the riski backend.")
+    version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
 
     # === LLM Settings ===
