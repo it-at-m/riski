@@ -62,19 +62,19 @@ class Settings(BaseSettings):
 
     # === Mock Langfuse Agent Settings ===
 
-    mock_retrieval_delay_seconds: float | None = Field(
+    mock_retrieval_delay_seconds: float = Field(
         default=0.4,
         validation_alias="MOCK_RETRIEVAL_DELAY_SECONDS",
     )
-    mock_response_delay_seconds: float | None = Field(
+    mock_response_delay_seconds: float = Field(
         default=0.6,
         validation_alias="MOCK_RESPONSE_DELAY_SECONDS",
     )
-    mock_retrieval_node: str | None = Field(
+    mock_retrieval_node: str = Field(
         default="RETRIEVAL",
         validation_alias="MOCK_RETRIEVAL_NODE",
     )
-    mock_generate_node: str | None = Field(
+    mock_generate_node: str = Field(
         default="GENERATE",
         validation_alias="MOCK_GENERATE_NODE",
     )
