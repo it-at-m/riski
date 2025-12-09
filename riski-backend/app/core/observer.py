@@ -12,5 +12,5 @@ if langfuse.auth_check():
 else:
     logger.error("Authentication failed. Please check your credentials and host.")
 
-# Initialize Langfuse CallbackHandler for Traicing
+# Initialize Langfuse CallbackHandler for Tracing
 langfuse_handler = CallbackHandler()

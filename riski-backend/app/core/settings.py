@@ -5,7 +5,7 @@ from app.utils.logging import getLogger
 from pydantic import Field
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 
-logger: Logger
+logger: Logger = getLogger()
 
 
 class Settings(BaseSettings):
@@ -110,18 +110,17 @@ class Settings(BaseSettings):
             dotenv_settings,
         )
 
-
-def print_config(self):
-    logger = getLogger()
-    logger.debug(
-        self.model_dump(
-            exclude={
-                "llm_api_key",
-                "langfuse_secret_key",
-                "langfuse_public_key",
-            }
+    def print_config(self):
+        logger = getLogger()
+        logger.debug(
+            self.model_dump(
+                exclude={
+                    "llm_api_key",
+                    "langfuse_secret_key",
+                    "langfuse_public_key",
+                }
+            )
         )
-    )
 
 
 @lru_cache(maxsize=1)
