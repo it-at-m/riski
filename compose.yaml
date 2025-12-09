@@ -2,7 +2,7 @@ volumes:
   riskidata:
 services:
   db:
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
     container_name: pgvector-db
     environment:
       POSTGRES_USER: postgres
@@ -13,7 +13,7 @@ services:
     volumes:
       - riskidata:/var/lib/postgresql/data
   adminer:
-    image: adminer
+    image: adminer@sha256:3bce505927f115e80dedfa3be4c2a7c79226ae8b1994fd5bf7517d83bb8abf60
     restart: always
     ports:
       - 8080:8080
