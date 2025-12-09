@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     # === LLM Settings ===
     llm_api_key: str = Field(
-        ...,
+        default="DUMMY FOR GITHUBACTION",
         validation_alias="OPENAI_API_KEY",
         description="API key for OpenAI",
     )
@@ -45,17 +45,17 @@ class Settings(BaseSettings):
 
     # === Langfuse Settings ===
     langfuse_secret_key: str = Field(
-        ...,
+        default="DUMMY FOR GITHUBACTION",
         validation_alias="LANGFUSE_SECRET_KEY",
         description="Secret Key for Langfuse",
     )
     langfuse_public_key: str = Field(
-        ...,
+        default="DUMMY FOR GITHUBACTION",
         validation_alias="LANGFUSE_PUBLIC_KEY",
         description="Public Key for Langfuse",
     )
     langfuse_host: str = Field(
-        ...,
+        default="DUMMY FOR GITHUBACTION",
         validation_alias="LANGFUSE_HOST",
         description="Langfuse host",
     )
