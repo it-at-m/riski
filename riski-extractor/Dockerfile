@@ -11,7 +11,7 @@ ENV LANG=de_DE.UTF-8 \
     LANGUAGE=de_DE:de
 
 # Test
-RUN locale
+RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
