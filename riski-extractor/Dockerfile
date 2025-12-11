@@ -1,5 +1,5 @@
 
-FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest
+FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:a13cec4e2e30fa2ca6468d474d02eb349200dc4a831c8c93f05a2154c559f09b
 
 USER root
 
@@ -13,7 +13,7 @@ ENV LANG=de_DE.UTF-8 \
 # Test
 RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest@sha256:5cb6b54d2bc3fe2eb9a8483db958a0b9eebf9edff68adedb369df8e7b98711a2 /uv /uvx /bin/
 
 # Install the project into `/app`
 WORKDIR /app
