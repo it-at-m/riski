@@ -10,6 +10,7 @@ from src.db.db_access import (
     request_object_by_name,
     request_paper_by_reference,
     request_person_by_full_name,
+    update_or_insert_objects_to_database,
 )
 from src.parser.base_parser import BaseParser
 
@@ -178,7 +179,17 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                 continue
             fname = a.get_text(strip=True)
             full_url = urljoin(url, href)
-            file = get_or_insert_object_to_database(File(id=full_url, name=fname, accessUrl=full_url, downloadUrl=full_url))
+
+            if fname == "Beschluss.pdf":
+                fname = f"Beschluss zu {title}"
+            fname = fname.removesuffix(".pdf")
+
+            file = get_or_insert_object_to_database(File(id=full_url, name=fname, fileName=fname, accessUrl=full_url, downloadUrl=full_url))
+            # This update should only occur on the first extraction run a file is found.
+            # It is first found via the meeting template
+            file.name = fname
+            update_or_insert_objects_to_database([file])
+
             auxiliary_files.append(file)
 
         # Meeting Templates

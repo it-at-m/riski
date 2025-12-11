@@ -1,19 +1,19 @@
 <script setup lang="ts">
-
-import type Proposal from "@/types/Proposal.ts";
 import type Document from "@/types/Document.ts";
-import {onMounted, ref} from "vue";
+import type Proposal from "@/types/Proposal.ts";
 import type RiskiAnswer from "@/types/RiskiAnswer.ts";
 
+import { onMounted, ref } from "vue";
+
 const props = defineProps<{
-  riskiAnswer?: RiskiAnswer
+  riskiAnswer?: RiskiAnswer;
 }>();
 
 const aiResponse = ref<string>("");
 const proposals = ref<Proposal[]>([]);
 const documents = ref<Document[]>([]);
 
-onMounted(()=>{
+onMounted(() => {
   if (props.riskiAnswer) {
     aiResponse.value = props.riskiAnswer.ai_response;
     documents.value = props.riskiAnswer.documents;
@@ -35,7 +35,6 @@ function fileSizeAsString(fileSize: number) {
   // Format the string to two digits after the decimal point
   return `${size.toFixed(2)} ${units[unitIndex]}`;
 }
-
 </script>
 
 <template>
@@ -45,21 +44,33 @@ function fileSizeAsString(fileSize: number) {
       {{ aiResponse }}
     </div>
   </div>
-  <br>
+  <br />
   <div>
     <h3 class="m-dataset-item__headline headline">Anträge</h3>
     <div class="marked_text m-dataset-item__text ai_response">
       <ul>
-        <li v-for="proposal in proposals" :key="proposal.identifier">{{ proposal.identifier }} - {{ proposal.name }} <a :href="proposal.risUrl">{{proposal.risUrl}}</a></li>
+        <li
+          v-for="proposal in proposals"
+          :key="proposal.identifier"
+        >
+          {{ proposal.identifier }} - {{ proposal.name }}
+          <a :href="proposal.risUrl">{{ proposal.risUrl }}</a>
+        </li>
       </ul>
     </div>
   </div>
-  <br>
+  <br />
   <div>
     <h3 class="m-dataset-item__headline headline">Dokumente</h3>
     <div class="marked_text m-dataset-item__text ai_response">
       <ul>
-        <li v-for="document in documents" :key="document.risUrl">{{ document.name }} ({{ fileSizeAsString(document.size) }}) <a :href="document.risUrl">{{document.risUrl}}</a></li>
+        <li
+          v-for="document in documents"
+          :key="document.risUrl"
+        >
+          {{ document.name }} ({{ fileSizeAsString(document.size) }})
+          <a :href="document.risUrl">{{ document.risUrl }}</a>
+        </li>
       </ul>
     </div>
   </div>

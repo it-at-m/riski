@@ -4,20 +4,11 @@
     "composite": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     "tsBuildInfoFile": "./cache/tsconfig.app.tsbuildinfo"
   },
-  "exclude": [
-    "tests/**/*"
-  ],
+  "exclude": ["tests/**/*"],
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": [
-    "env.d.ts",
-    "declarations.d.ts",
-    "src/**/*",
-    "src/**/*.vue"
-  ]
+  "include": ["env.d.ts", "declarations.d.ts", "src/**/*", "src/**/*.vue"]
 }

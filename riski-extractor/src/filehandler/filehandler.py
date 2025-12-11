@@ -1,4 +1,6 @@
+
 import asyncio
+import urllib.parse
 from logging import Logger
 
 import httpx
@@ -52,6 +54,21 @@ class Filehandler:
         content = response.content
         self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
         if file.content is None or content != file.content:
+            content_disposition = response.headers.get("content-disposition")
+            if content_disposition:
+                # Parse using cgi module for robust header parsing
+                import cgi
+
+                _, params = cgi.parse_header(content_disposition)
+                fileName = params.get("filename")
+                if fileName:
+                    fileName = urllib.parse.unquote(fileName)
+                    self.logger.debug(f"Extracted fileName: {fileName}")
+                    file.fileName = fileName
+                else:
+                    self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
+            else:
+                self.logger.debug(f"No Content-Disposition header for {file.id}")
             file.content = content
             file.size = len(content)
             self.logger.info(f"Saving content of file {file.name} to database.")

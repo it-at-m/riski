@@ -7,3 +7,4 @@ export function getAPIBaseURL(): string {
 }
 
 export const ANSWER_ENDPOINT = "/api/answer";
+export const RISKI_AGENT_ENDPOINT = "/api/ag-ui/riskiagent";
