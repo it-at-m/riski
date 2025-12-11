@@ -5,7 +5,7 @@ USER root
 
 RUN microdnf install glibc-all-langpacks -y && \
     microdnf clean all
-
+USER 1000
 ENV LANG=de_DE.UTF-8 \
     LC_ALL=de_DE.UTF-8 \
     LANGUAGE=de_DE:de
