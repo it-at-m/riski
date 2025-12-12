@@ -22,7 +22,7 @@ const vitepressConfig = defineConfig({
       {
         text: "Docs",
         items: [
-          { text: "External link", link: "https://ki.muenchen.de" },
+          { text: "Artificial intelligence for Munich", link: "https://ki.muenchen.de" },
         ],
       },
     ],
@@ -33,7 +33,15 @@ const vitepressConfig = defineConfig({
         items: [
           {
             text: "01: System architecture",
+            link: "/adr/architecture_overview",
+          },
+          {
+            text: "02: Data Modell",
             link: "/adr/datenmodell",
+          },
+          {
+            text: "03: Extraction Pipeline",
+            link: "/adr/extract_process",
           },
         ],
       },
@@ -44,6 +52,16 @@ const vitepressConfig = defineConfig({
           {
             text: "Kafka message broker",
             link: "/components/kafka",
+          },
+        ],
+      },
+      {
+        text: "RIS",
+        link: "/ris",
+        items: [
+          {
+            text: "Programmatic query of the RIS",
+            link: "/ris/ris_verwendung",
           },
         ],
       },

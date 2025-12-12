@@ -4,8 +4,8 @@ layout: home
 
 hero:
   name: "RISKI"
-  text: "Starter files for Vitepress-based documentation"
-  tagline: "This is the default template for writing documentation in RefArch applications"
+  text: "Optimization of the search in the Munich council information system with the help of AI"
+  tagline: "Improve the findability of city council information with an intelligent and user-friendly search function"
   actions:
     - theme: brand
       text: ADR
@@ -13,14 +13,17 @@ hero:
     - theme: secondary
       text: Components
       link: /components
+    - theme: secondary
+      text: RIS spezific knowledge
+      link: /ris
 features:
-  - icon: 1️⃣
-    title: Title 1
-    details: Add some interesting information here
-  - icon: 2️⃣
-    title: Title 2
-    details: Add some interesting information here
-  - icon: 3️⃣
-    title: Title 3
-    details: Add some interesting information here
+  - icon: 🔍
+    title: Streamlined Search Experience
+    details: Provide users with a fast and intuitive search experience that makes finding relevant council information effortless.
+  - icon: 🧠
+    title: Understand Context
+    details: Leverage AI-driven capabilities to interpret context and relationships between documents, providing users with relevant insights.
+  - icon: 🖥️
+    title: User-Friendly Experience
+    details: Enjoy an intuitive interface that allows all citizens to quickly and easily find the information they need.
 ---
