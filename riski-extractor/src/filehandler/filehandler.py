@@ -1,4 +1,3 @@
-
 import asyncio
 import urllib.parse
 from logging import Logger
@@ -31,6 +30,7 @@ class Filehandler:
     async def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")
         tasks = []
+        all_files = []
         offset = 0
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=batch_size)
@@ -40,10 +40,11 @@ class Filehandler:
 
             for file in files:
                 tasks.append(self.download_and_persist_file(file=file))
+                all_files.append(file)
 
             offset += batch_size
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        for file, result in zip(files, results):
+        for file, result in zip(all_files, results):
             if isinstance(result, Exception):
                 self.logger.error(f"Could not download file '{file.id}'. - {result}")
 
