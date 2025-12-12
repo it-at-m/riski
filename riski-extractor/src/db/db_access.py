@@ -42,10 +42,13 @@ def request_object_by_name(name: str, object_type: type[N] | type[Keyword], sess
     return obj
 
 
-def remove_object_by_id(id: str, object_type: type[T], session=None):
+def remove_object_by_id(id: str, object_type: type[T], session: Session | None = None):
     statement = select(object_type).where(object_type.id == id)
     sess = session or get_session()
-    obj = sess.exec(statement).one()
+    obj = sess.exec(statement).first()
+    if obj is None:
+        logger.warning(f"Object with id '{id}' not found for deletion")
+        return
     sess.delete(obj)
     sess.commit()
 
