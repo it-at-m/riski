@@ -25,7 +25,6 @@ class Config(AppBaseSettings):
 
     test: TestSettings = Field(
         default_factory=lambda: TestSettings(),
-        validation_alias="TEST",
         description="Testing related settings",
     )
 
