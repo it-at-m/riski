@@ -1,51 +1,56 @@
-from config.config import Config, get_config
-from sqlmodel import Session, SQLModel, create_engine
+from urllib.parse import urlsplit
 
-config: Config = get_config()
+from pydantic import PostgresDsn
+from sqlalchemy.orm import sessionmaker
+from sqlmodel import Session, SQLModel, create_engine
+from src.logtools import getLogger
 
 _engine = None
-_session = None
+_SessionLocal = None
+logger = getLogger()
 
 
 ###########################################################
-#############  Create Database Schema ###################
+#############  Create Database Schema #####################
 ###########################################################
+def init_db(db_url: PostgresDsn) -> None:
+    """
+    Initialize the module-level engine and session factory.
+    Call this from the application before using get_session()/create_db_and_tables().
+    """
+    global _engine, _SessionLocal
+    if _engine is None:
+        logger.info(
+            f"########## Initializing DB connection: {db_url.scheme}://<user><pw>@{urlsplit(str(db_url)).hostname}:{urlsplit(str(db_url)).port}{db_url.path} ##########"
+        )
+        _engine = create_engine(str(db_url), echo=False)
+        _SessionLocal = sessionmaker(bind=_engine, class_=Session, expire_on_commit=False)
+
+
 def get_engine():
-    """Lazy initialization of database engine."""
+    """
+    Return initialized engine. If not available, raises.
+    """
     global _engine
     if _engine is None:
-        _engine = create_engine(str(config.database_url), echo=True)
+        raise RuntimeError("Database engine not initialized. Call init_db(db_url) first.")
     return _engine
 
 
-def get_session():
-    """Lazy initialization of database session."""
-    global _session
-    if _session is None:
-        _session = Session(get_engine())
-    return _session
+def get_session() -> Session:
+    """
+    Return a new Session instance from the module-level session factory.
+    Application must call init_db(db_url) before this.
+    Use as context manager: `with get_session() as sess: ...`
+    """
+    global _SessionLocal
+    if _SessionLocal is None:
+        raise RuntimeError("Session factory not initialized. Call init_db(db_url) first.")
+    return _SessionLocal()
 
 
-def create_db_and_tables():
+def create_db_and_tables() -> None:
+    """
+    Create DB tables.
+    """
     SQLModel.metadata.create_all(get_engine())
-
-
-def check_tables_exist():
-    engine = get_engine()
-    with engine.connect() as conn:
-        from sqlalchemy import inspect as _inspect
-
-        inspector = _inspect(conn)
-        # Only use 'public' schema for Postgres; None for others like SQLite
-        schema = "public" if engine.url.get_backend_name() == "postgresql" else None
-        tables = inspector.get_table_names(schema=schema)
-        print("Existing tables:", tables)
-
-
-if __name__ == "__main__":
-    try:
-        create_db_and_tables()
-        check_tables_exist()
-    except Exception as e:
-        print(f"Error initializing database: {e}")
-        raise
