@@ -23,7 +23,7 @@ dependencies = [
     "langchain-openai>=0.3.32",
     "pyyaml>=6.0.2",
     "stamina>=25.1.0",
-    "core"
+    "core",
     
 ]
 

@@ -92,11 +92,9 @@ class Config(AppBaseSettings):
         logger.debug(
             self.model_dump(
                 exclude={
-                    "openai_api_key",
-                    "riski_db_password",
-                    "database_url",
-                    "test_riski_db_password",
-                    "test_database_url",
+                    "openai_api_key": True,
+                    "core": {"db": {"password", "database_url"}},
+                    "test": {"db_password", "database_url"},
                 }
             )
         )
