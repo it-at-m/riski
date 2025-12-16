@@ -1,12 +1,11 @@
 import urllib.parse
 from logging import Logger
 
-import httpx
 import stamina
 from config.config import Config, get_config
-from httpx import Client
-from src.data_models import File
-from src.db.db_access import request_batch, update_or_insert_objects_to_database
+from core.db.db_access import request_batch, update_or_insert_objects_to_database
+from core.model.data_models import File
+from httpx import Client, HTTPError
 from src.logtools import getLogger
 
 config: Config = get_config()
@@ -41,7 +40,7 @@ class Filehandler:
 
             offset += batch_size
 
-    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
+    @stamina.retry(on=HTTPError, attempts=config.max_retries)
     def download_and_persist_file(self, file: File):
         response = self.client.get(url=file.id)
         response.raise_for_status()
