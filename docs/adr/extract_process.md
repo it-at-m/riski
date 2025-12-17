@@ -8,8 +8,8 @@ We extract data from the RIS as plain HTML without direct datastore access. Rela
 
 Split the pipeline into two passes:
 
-1) Entities pass: extract and persist entities without relations.
-2) Relations pass: resolve and persist relations between existing entities.
+1. Entities pass: extract and persist entities without relations.
+2. Relations pass: resolve and persist relations between existing entities.
 
 If a relation targets a non-existent entity, log at ERROR and skip it.
 
