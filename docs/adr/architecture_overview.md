@@ -1,1 +1,1 @@
-# System Architekture
+# System Architecture

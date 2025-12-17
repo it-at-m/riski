@@ -36,7 +36,7 @@ const vitepressConfig = defineConfig({
             link: "/adr/architecture_overview",
           },
           {
-            text: "02: Data Modell",
+            text: "02: Data Model",
             link: "/adr/datenmodell",
           },
           {

@@ -14,7 +14,7 @@ hero:
       text: Components
       link: /components
     - theme: secondary
-      text: RIS spezific knowledge
+      text: RIS specific knowledge
       link: /ris
 features:
   - icon: 🔍
