@@ -95,6 +95,18 @@ def request_object_by_name(name: str, object_type: type[N] | type[Keyword], sess
 
 
 @log_execution_time
+def remove_object_by_id(id: str, object_type: type[T]):
+    statement = select(object_type).where(object_type.id == id)
+    with _get_session_ctx() as session:
+        obj = session.exec(statement).first()
+        if obj is None:
+            logger.warning(f"Object with id '{id}' not found for deletion")
+            return
+        session.delete(obj)
+        session.commit()
+
+
+@log_execution_time
 def insert_and_return_object(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS_PARSED_DB_OBJECT | Keyword:
     with _get_session_ctx() as session:
         try:

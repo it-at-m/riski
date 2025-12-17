@@ -20,7 +20,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "stamina>=25.1.0",
     "core",
-    
+    "legacy-cgi>=2.6.4",
 ]
 
 [project.optional-dependencies]
