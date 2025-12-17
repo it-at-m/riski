@@ -1,0 +1,23 @@
+[project]
+name = "document_pipeline"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.13.9"
+dependencies = [
+    "mistralai>=1.9.11",
+    "psycopg[binary,pool]>=3.2.12",
+    "sqlmodel>=0.0.27",
+    "truststore>=0.10.4",
+    "core",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
+    "pypdf>=6.4.1",
+    "python-dotenv>=1.2.1",
+]
+
+[tool.uv.sources]
+core = { path = "../riski-core" }
