@@ -5,6 +5,7 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 const vitepressConfig = defineConfig({
   title: "RISKI Docs",
   description: "TBD",
+  base: "/riski/",
   head: [
     [
       "link",
