@@ -46,6 +46,10 @@ const vitepressConfig = defineConfig({
             text: "03: Extraction Pipeline",
             link: "/adr/extract_process",
           },
+          {
+            text: "04: Evaluation Docling",
+            link: "/adr/eval_docling",
+          },
         ],
       },
       {
