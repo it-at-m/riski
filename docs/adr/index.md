@@ -5,7 +5,6 @@ If you don't know if you should create an ADR, the answer is probably "yes".
 
 ## ADR List
 
-
 ## Background
 
 Background information on ADRs:

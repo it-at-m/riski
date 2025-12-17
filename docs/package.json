@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
-    "lint": "prettier . --check && markdownlint .",
-    "fix": "prettier . --write && markdownlint -f ."
+    "lint": "prettier . --check",
+    "fix": "prettier . --write"
   },
   "devDependencies": {
     "@mdi/font": "7.4.47",

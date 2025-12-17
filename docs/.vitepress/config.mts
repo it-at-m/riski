@@ -22,7 +22,10 @@ const vitepressConfig = defineConfig({
       {
         text: "Docs",
         items: [
-          { text: "Artificial intelligence for Munich", link: "https://ki.muenchen.de" },
+          {
+            text: "Artificial intelligence for Munich",
+            link: "https://ki.muenchen.de",
+          },
         ],
       },
     ],
@@ -66,9 +69,7 @@ const vitepressConfig = defineConfig({
         ],
       },
     ],
-    socialLinks: [
-      { icon: "github", link: "https://github.com/it-at-m/riski" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/it-at-m/riski" }],
     footer: {
       message: `<a href="https://ki.muenchen.de/impressum">Impress and Contact</a>`,
     },

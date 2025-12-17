@@ -10,23 +10,23 @@ The RIS (Rat-Informations-System = Council Information System) manages various l
 
 ## Mapping RIS to Oparl
 
-| **RIS Entity**              | **OParl Entity**    |
-|------------------------------|----------------------|
-| STR_SITZUNG                  | MEETING              |
-| TAGESORDNUNGSPUNKT           | AGENDA_ITEM          |
-| VORGANG                      | PAPER                |
-| DOKUMENT                     | FILE                 |
-| ANTRAG                       | PAPER                |
-| BV_Empfehlung                | PAPER                |
-| SITZUNGSVORLAGE              | PAPER                |
-| AUSSCHUSS                    | ORGANIZATION         |
-| MITGLIEDER                   | PERSON               |
-| Wahlperiode                  | LEGISLATIVE_TERM     |
-| indirekt über Vorsitz, Fraktionszugehörigkeit, etc... |MEMBERSHIP |
-| jegliche Ortsangaben         | LOCATION             |
-|                              | CONSULTATION         |
-| (nur bei Oparl Schnittstelle)| BODY                 |
-| (nur bei Oparl Schnittstelle)| SYSTEM               |
+| **RIS Entity**                                        | **OParl Entity** |
+| ----------------------------------------------------- | ---------------- |
+| STR_SITZUNG                                           | MEETING          |
+| TAGESORDNUNGSPUNKT                                    | AGENDA_ITEM      |
+| VORGANG                                               | PAPER            |
+| DOKUMENT                                              | FILE             |
+| ANTRAG                                                | PAPER            |
+| BV_Empfehlung                                         | PAPER            |
+| SITZUNGSVORLAGE                                       | PAPER            |
+| AUSSCHUSS                                             | ORGANIZATION     |
+| MITGLIEDER                                            | PERSON           |
+| Wahlperiode                                           | LEGISLATIVE_TERM |
+| indirekt über Vorsitz, Fraktionszugehörigkeit, etc... | MEMBERSHIP       |
+| jegliche Ortsangaben                                  | LOCATION         |
+|                                                       | CONSULTATION     |
+| (nur bei Oparl Schnittstelle)                         | BODY             |
+| (nur bei Oparl Schnittstelle)                         | SYSTEM           |
 
 A city council MEETING (StR_Sitzung) has multiple AGENDA_ITEMs of which each can have a "Sitzungsvorlage" or "Beschlussvorlage" (PAPER with accompanying FILE). This relates to one or multiple StR_Antrag or BV_Empfehlung (different type of PAPER). So these will for now be modeled via the relationship relatedPaper. The consultation about those will result in the AGENDA_ITEM's result str, resolutionText, and resolutionFile. A StR_Antrag that wasn't consulted about yet (i.e. when being created) will only exist in its relation to its initiating originatorPersons and/or originatorOrganizations.
 An AGENDA_ITEM can probably consult about only parts of a StR_Antrag and the decision about it (result) can be delayed, so multiple AGENDA_ITEMs can relate to the same StR_Antrag/BV_Empfehlung. That fact is modeled by the list of CONSULTATIONs that the PAPER (= StR_Antrag in that case) contains.
@@ -36,7 +36,7 @@ An AGENDA_ITEM can probably consult about only parts of a StR_Antrag and the dec
 ## Paper Types
 
 | **Type Identification** |
-|-------------------------|
+| ----------------------- |
 | Str-Antrag              |
 | BA-Antrag               |
 | Sitzungsvorlage         |
@@ -48,7 +48,7 @@ An AGENDA_ITEM can probably consult about only parts of a StR_Antrag and the dec
 #### Str-Antrag
 
 | **Type Identification** |
-|-------------------------|
+| ----------------------- |
 | Dringlichkeitsantrag    |
 | Antrag                  |
 | Anfrage                 |
@@ -58,25 +58,25 @@ An AGENDA_ITEM can probably consult about only parts of a StR_Antrag and the dec
 #### BA-Antrag
 
 | **Type Identification** |
-|-------------------------|
+| ----------------------- |
 | BA-Antrag               |
 
 #### BV-Empfehlung
 
 | **Type Identification** |
-|-------------------------|
+| ----------------------- |
 | BV-Empfehlung           |
 
 #### BV-Anfrage
 
 | **Type Identification** |
-|-------------------------|
+| ----------------------- |
 | BV-Anfrage              |
 
 #### Sitzungsvorlage
 
 | **Type Identification** |
-|-------------------------|
+| ----------------------- |
 | Beschlussvorlage VB     |
 | Beschlussvorlage SB     |
 | Beschlussvorlage SB+VB  |
