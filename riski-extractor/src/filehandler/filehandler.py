@@ -47,9 +47,16 @@ class Filehandler:
             offset += batch_size
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        for file, result in zip(batch_files, results):
+        successful_files = []
+        for file, result in zip(files, results):
             if isinstance(result, Exception):
                 self.logger.error(f"Could not download file '{file.id}'. - {result}")
+            else:
+                successful_files.append(file)
+
+        if successful_files:
+            self.logger.debug(f"Saving content of {len(successful_files)} files to database.")
+            update_or_insert_objects_to_database(successful_files)
 
     # @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
