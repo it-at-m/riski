@@ -1,11 +1,9 @@
 # Smallest ubi10 image
 FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
 
-COPY --from=ghcr.io/astral-sh/uv:latest@sha256:5aa820129de0a600924f166aec9cb51613b15b68f1dcd2a02f31a500d2ede568 /uv /uvx /bin/
-
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Install the project into `/app`
 WORKDIR /app
-
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
