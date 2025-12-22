@@ -13,7 +13,7 @@ services:
     volumes:
       - riskidata:/var/lib/postgresql/data
   adminer:
-    image: adminer@sha256:3bce505927f115e80dedfa3be4c2a7c79226ae8b1994fd5bf7517d83bb8abf60
+    image: adminer@sha256:ae1d4d7774c544d084e42887a318e6b0f47ad8c60fe1661d9278ef169c8b4eaa
     restart: always
     ports:
       - 8080:8080
