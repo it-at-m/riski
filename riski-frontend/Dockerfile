@@ -30,6 +30,11 @@ FROM nginx:stable-alpine as production-stage
 # Copy built web components
 COPY --from=builder /build/dist /usr/share/nginx/html
 COPY --from=builder /build/dist/src/index.html /usr/share/nginx/html/index.html
+# Make writable directories for arbitrary UID
+RUN mkdir -p /tmp/nginx \
+    && chmod -R 777 /tmp \
+    && chmod -R 777 /usr/share/nginx/html
+    
 EXPOSE 80
 
 # Start the web server
