@@ -30,6 +30,8 @@ FROM registry.access.redhat.com/ubi10/nginx-126:10.1-1763382165@sha256:4c3e5e60d
 # Copy built web components
 COPY --from=builder /build/dist .
 COPY --from=builder /build/dist/src/index.html ./index.html
+# Copy custom nginx configurations
+COPY docker/nginx/*.conf "${NGINX_DEFAULT_CONF_PATH}"
 
 EXPOSE 8080
 
