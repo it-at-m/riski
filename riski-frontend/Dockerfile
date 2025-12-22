@@ -28,14 +28,10 @@ RUN --mount=type=cache,target=/build/node_modules/.vite \
 FROM registry.access.redhat.com/ubi10/nginx-126:10.1-1763382165@sha256:4c3e5e60d785e6e8bb25a13320fffae720cf0a5d1c3d161c2fb98567421da840
 
 # Copy built web components
-COPY --from=builder /build/dist /usr/share/nginx/html
-COPY --from=builder /build/dist/src/index.html /usr/share/nginx/html/index.html
-# Make writable directories for arbitrary UID
-RUN mkdir -p /tmp/nginx \
-    && chmod -R 777 /tmp \
-    && chmod -R 777 /usr/share/nginx/html
+COPY --from=builder /build/dist .
+COPY --from=builder /build/dist/src/index.html ./index.html
 
-EXPOSE 80
+EXPOSE 8080
 
 # Start the web server
 CMD ["nginx", "-g", "daemon off;"]
