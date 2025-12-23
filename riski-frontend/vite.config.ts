@@ -11,14 +11,22 @@ export default defineConfig(({ mode }) => {
   const isDevelopment = mode === "development";
   const isDevNoMock = mode === "development-no-mock";
   const enableOptionsAPI = isDevelopment || isDevNoMock;
-  const proxy: Record<string, string | ProxyOptions> | undefined = isDevNoMock
-    ? {
-        "/api": {
+
+  // Proxy-Configuration
+  const proxy: Record<string, string | ProxyOptions> | undefined = {
+    "/api": isDevNoMock
+      ? {
           target: "http://localhost:8080",
           changeOrigin: true,
+        }
+      : {
+          // Deployment
+          target: "http://riski-backend:8080",
+          changeOrigin: true,
+          rewrite: (path) => path,
         },
-      }
-    : undefined;
+  };
+
   return {
     plugins: [
       vue({
