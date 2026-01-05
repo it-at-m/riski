@@ -98,6 +98,18 @@ def request_object_by_name(name: str, object_type: type[N] | type[Keyword], sess
 
 
 @log_execution_time
+def remove_object_by_id(id: str, object_type: type[T]):
+    statement = select(object_type).where(object_type.id == id)
+    with _get_session_ctx() as session:
+        obj = session.exec(statement).first()
+        if obj is None:
+            logger.warning(f"Object with id '{id}' not found for deletion")
+            return
+        session.delete(obj)
+        session.commit()
+
+
+@log_execution_time
 def insert_and_return_object(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS_PARSED_DB_OBJECT | Keyword:
     with _get_session_ctx() as session:
         try:
@@ -216,7 +228,7 @@ def update_object(obj, obj_db, session: Session) -> None:
 
 
 @log_execution_time
-def update_file_content(file_id, content):
+def update_file_content(file_id, content, fileName=None):
     with _get_session_ctx() as session:
         file_db = session.get(File, file_id)
         if not file_db:
@@ -224,6 +236,8 @@ def update_file_content(file_id, content):
 
         file_db.content = content
         file_db.size = len(content)
+        if fileName:
+            file_db.fileName = fileName
         session.commit()
 
 

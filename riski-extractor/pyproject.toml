@@ -35,12 +35,12 @@ pgvector = [
 
 [dependency-groups]
 dev = [
-    "ipykernel>=6.30.0",
-    "pre-commit>=4.2.0",
-    "ruff>=0.12.5",
-    "ty>=0.0.1a16",
-    "pytest>=8.4.1",
-    "faststream[kafka]>=0.5.48",
+    "ipykernel==7.0.1",
+    "pre-commit==4.3.0",
+    "ruff==0.14.1",
+    "ty==0.0.1a23",
+    "pytest==8.4.2",
+    "faststream[kafka]==0.6.1",
 ]
 
 [tool.uv.sources]

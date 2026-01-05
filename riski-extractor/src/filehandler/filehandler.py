@@ -1,3 +1,4 @@
+import urllib.parse
 from logging import Logger
 
 import stamina
@@ -45,5 +46,19 @@ class Filehandler:
         response.raise_for_status()
         content = response.content
         if file.content is None or content != file.content:
+            content_disposition = response.headers.get("content-disposition")
+            if content_disposition:
+                # Parse using cgi module for robust header parsing
+                import cgi
+
+                _, params = cgi.parse_header(content_disposition)
+                fileName = params.get("filename")
+                if fileName:
+                    fileName = urllib.parse.unquote(fileName)
+                    self.logger.debug(f"Extracted fileName: {fileName}")
+                else:
+                    self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
+            else:
+                self.logger.debug(f"No Content-Disposition header for {file.id}")
             self.logger.debug(f"Saving content of file {file.name} to database.")
-            update_file_content(file.db_id, content)
+            update_file_content(file.db_id, content, fileName)

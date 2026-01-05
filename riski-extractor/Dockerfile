@@ -1,5 +1,17 @@
-# Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-micro:latest
+
+FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest
+
+USER root
+
+RUN microdnf install glibc-all-langpacks -y && \
+    microdnf clean all
+USER 1000
+ENV LANG=de_DE.UTF-8 \
+    LC_ALL=de_DE.UTF-8 \
+    LANGUAGE=de_DE:de
+
+# Test
+RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
