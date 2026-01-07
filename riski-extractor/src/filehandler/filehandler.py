@@ -3,6 +3,7 @@ import urllib.parse
 from logging import Logger
 
 import httpx
+import stamina
 from config.config import Config, get_config
 from httpx import AsyncClient
 from src.data_models import File
@@ -18,12 +19,12 @@ class Filehandler:
     def __init__(self) -> None:
         self.logger = getLogger()
         if config.https_proxy or config.http_proxy:
-            limits = httpx.Limits(max_keepalive_connections=10001, max_connections=10001)
+            limits = httpx.Limits(max_keepalive_connections=100000, max_connections=100000)
             self.client = AsyncClient(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout, limits=limits)
         else:
             self.client = AsyncClient(timeout=config.request_timeout)
 
-    async def download_and_persist_files(self, batch_size: int = 20):
+    async def download_and_persist_files(self, batch_size: int = 200):
         self.logger.info("Persisting content of all scraped files to database.")
 
         offset = 0
@@ -58,7 +59,7 @@ class Filehandler:
             self.logger.debug(f"Saving content of {len(successful_files)} files to database.")
             update_or_insert_objects_to_database(successful_files)
 
-    # @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
+    @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
         response = await self.client.get(url=file.id)
         response.raise_for_status()
