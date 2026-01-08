@@ -74,12 +74,10 @@ def request_all(object_type: type[T]) -> List[T]:
         return objects
 
 
-@log_execution_time
 @overload
 def request_object_by_name(name: str, object_type: type[N], session: Session | None = None) -> N | None: ...
 
 
-@log_execution_time
 @overload
 def request_object_by_name(name: str, object_type: type[Keyword], session: Session | None = None) -> Keyword | None: ...
 
