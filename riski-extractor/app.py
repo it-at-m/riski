@@ -76,8 +76,8 @@ async def main():
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
-    filehandler = Filehandler()
-    await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
+    async with Filehandler() as filehandler:
+        await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
