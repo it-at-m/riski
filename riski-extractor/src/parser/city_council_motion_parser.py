@@ -8,7 +8,6 @@ from core.db.db_access import (
     request_object_by_name,
     request_paper_by_reference,
     request_person_by_full_name,
-    update_or_insert_objects_to_database,
 )
 from core.model.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
 
@@ -188,7 +187,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             # This update should only occur on the first extraction run a file is found.
             # It is first found via the meeting template
             file.name = fname
-            update_or_insert_objects_to_database([file])
 
             auxiliary_files.append(file)
 
