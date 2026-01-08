@@ -13,17 +13,20 @@ def deleter():
 
 
 @patch("src.filehandler.confidential_file_deleter.get_all_found_file_ids")
-@patch("src.filehandler.confidential_file_deleter.request_all")
+@patch("src.filehandler.confidential_file_deleter.request_batch")
 @patch("src.filehandler.confidential_file_deleter.remove_object_by_id")
-def test_delete_confidential_files(mock_remove_object_by_id, mock_request_all, mock_get_all_found_file_ids, deleter):
+def test_delete_confidential_files(mock_remove_object_by_id, mock_request_batch, mock_get_all_found_file_ids, deleter):
     mock_get_all_found_file_ids.return_value = ["file1", "file2"]
     mock_remove_object_by_id.return_value = None
 
-    mock_request_all.return_value = [
-        File(id="file1", modified=datetime.datetime(2023, 10, 1)),
-        File(id="file2", modified=datetime.datetime(2023, 10, 2)),
-        File(id="file3", modified=datetime.datetime(2023, 10, 3)),
-        File(id="file4", modified=datetime.datetime(2023, 10, 30)),
+    mock_request_batch.side_effect = [
+        [
+            File(id="file1", modified=datetime.datetime(2023, 10, 1)),
+            File(id="file2", modified=datetime.datetime(2023, 10, 2)),
+            File(id="file3", modified=datetime.datetime(2023, 10, 3)),
+            File(id="file4", modified=datetime.datetime(2023, 10, 30)),
+        ],
+        [],
     ]
 
     deleter.config.start_date = "2023-10-01"
@@ -36,14 +39,17 @@ def test_delete_confidential_files(mock_remove_object_by_id, mock_request_all, m
 
 
 @patch("src.filehandler.confidential_file_deleter.get_all_found_file_ids")
-@patch("src.filehandler.confidential_file_deleter.request_all")
+@patch("src.filehandler.confidential_file_deleter.request_batch")
 @patch("src.filehandler.confidential_file_deleter.remove_object_by_id")
-def test_no_files_deleted(mock_remove_object_by_id, mock_request_all, mock_get_all_found_file_ids, deleter):
+def test_no_files_deleted(mock_remove_object_by_id, mock_request_batch, mock_get_all_found_file_ids, deleter):
     mock_get_all_found_file_ids.return_value = ["file1", "file2"]
 
-    mock_request_all.return_value = [
-        File(id="file1", modified=datetime.datetime(2023, 10, 1)),
-        File(id="file2", modified=datetime.datetime(2023, 10, 2)),
+    mock_request_batch.side_effect = [
+        [
+            File(id="file1", modified=datetime.datetime(2023, 10, 1)),
+            File(id="file2", modified=datetime.datetime(2023, 10, 2)),
+        ],
+        [],
     ]
 
     mock_remove_object_by_id.return_value = None
@@ -56,14 +62,17 @@ def test_no_files_deleted(mock_remove_object_by_id, mock_request_all, mock_get_a
 
 
 @patch("src.filehandler.confidential_file_deleter.get_all_found_file_ids")
-@patch("src.filehandler.confidential_file_deleter.request_all")
+@patch("src.filehandler.confidential_file_deleter.request_batch")
 @patch("src.filehandler.confidential_file_deleter.remove_object_by_id")
-def test_files_not_modified_after_start_date(mock_remove_object_by_id, mock_request_all, mock_get_all_found_file_ids, deleter):
+def test_files_not_modified_after_start_date(mock_remove_object_by_id, mock_request_batch, mock_get_all_found_file_ids, deleter):
     mock_get_all_found_file_ids.return_value = []
 
-    mock_request_all.return_value = [
-        File(id="file1", modified=datetime.datetime(2023, 9, 30)),
-        File(id="file2", modified=datetime.datetime(2023, 9, 29)),
+    mock_request_batch.side_effect = [
+        [
+            File(id="file1", modified=datetime.datetime(2023, 9, 30)),
+            File(id="file2", modified=datetime.datetime(2023, 9, 29)),
+        ],
+        [],
     ]
 
     deleter.config.start_date = "2023-10-01"

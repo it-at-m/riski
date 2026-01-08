@@ -17,7 +17,7 @@ class ConfidentialFileDeleter:
 
     def delete_confidential_files(self):
         doc_ids = get_all_found_file_ids()
-        limit = self.config.riski_batch_size
+        limit = self.config.core.db.batch_size
         offset = 0
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=limit)
