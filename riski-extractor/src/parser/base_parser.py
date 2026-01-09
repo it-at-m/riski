@@ -13,7 +13,7 @@ T = TypeVar("T")
 
 class BaseParser(ABC, Generic[T]):
     def __init__(self) -> None:
-        self.logger = getLogger()
+        self.logger = getLogger(__name__)
         if platform.system() == "Windows":
             # For Windows, use the specific code page that works
             locale.setlocale(locale.LC_TIME, "German_Germany.1252")

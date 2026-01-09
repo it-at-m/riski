@@ -1,8 +1,10 @@
+import asyncio
 import os
 import sys
 from logging import Logger
 
 from config.config import Config, get_config
+from faststream.kafka import KafkaBroker
 from src.data_models import ExtractArtifact
 from src.db.db import create_db_and_tables
 from src.db.db_access import update_or_insert_objects_to_database
@@ -14,6 +16,7 @@ from src.extractor.city_council_motion_extractor import CityCouncilMotionExtract
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.filehandler.confidential_file_deleter import ConfidentialFileDeleter
 from src.filehandler.filehandler import Filehandler
+from src.kafka.security import setup_security
 from src.logtools import getLogger
 from src.version import get_version
 
@@ -21,10 +24,10 @@ config: Config
 logger: Logger
 
 
-def main():
+async def main():
     config = get_config()
     config.print_config()
-    logger = getLogger()
+    logger = getLogger(__name__)
     version = get_version()
 
     create_db_and_tables()
@@ -75,8 +78,11 @@ def main():
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
-    filehandler = Filehandler()
-    filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
+    broker = await createKafkaBroker(config, logger)
+    filehandler = Filehandler(broker)
+    await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
+    await broker.stop()
+    logger.info("Broker closed.")
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
@@ -101,5 +107,19 @@ def main():
     return 0
 
 
+async def createKafkaBroker(config: Config, logger: Logger) -> KafkaBroker:
+    security = setup_security()
+    # Kafka Broker and FastStream app setup
+    broker = KafkaBroker(bootstrap_servers=config.kafka_server, security=security)
+    logger.debug("Connecting to Broker...")
+    try:
+        await broker.connect()
+        logger.info("Broker connected.")
+        return broker
+    except Exception as e:
+        logger.exception(f"Failed to connect to broker. - {e}")
+        raise
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(asyncio.run(main()))

@@ -82,8 +82,8 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
                     temp_file = get_or_insert_object_to_database(temp_file)
                     auxiliaryFile.append(temp_file)
                     self.logger.debug(f"Saved Document to DB: {doc_title} ({doc_url})")
-                except Exception:
-                    self.logger.exception(f"Could not save File: {doc_url}")
+                except Exception as e:
+                    self.logger.exception(f"Could not save File: {doc_url}. - {e}")
 
         # --- Remaining Fields ---
         deleted = False

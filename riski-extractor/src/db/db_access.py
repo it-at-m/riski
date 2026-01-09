@@ -14,6 +14,7 @@ logger: Logger = getLogger()
 
 
 def request_object_by_risid(risid: str, object_type: type[T], session: Session | None = None) -> T | None:
+    logger.debug(f"Request object of type {object_type} by risid {risid}.")
     statement = select(object_type).where(object_type.id == risid)
     sess = session or get_session()
     obj = sess.exec(statement).first()
@@ -21,6 +22,7 @@ def request_object_by_risid(risid: str, object_type: type[T], session: Session |
 
 
 def request_all(object_type: type[T], session: Session | None = None) -> List[T]:
+    logger.debug(f"Request all objects of type {object_type}.")
     statement = select(object_type)
     sess = session or get_session()
     objects = sess.exec(statement).all()
@@ -36,6 +38,7 @@ def request_object_by_name(name: str, object_type: type[Keyword], session: Sessi
 
 
 def request_object_by_name(name: str, object_type: type[N] | type[Keyword], session: Session | None = None) -> N | Keyword | None:
+    logger.debug(f"Request object of type {object_type} by name {name}.")
     statement = select(object_type).where(object_type.name == name)
     sess = session or get_session()
     obj = sess.exec(statement).first()
@@ -54,18 +57,20 @@ def remove_object_by_id(id: str, object_type: type[T], session: Session | None =
 
 
 def insert_and_return_object(obj: T, session: Session | None = None) -> T:
+    logger.debug(f"Insert object {obj} of type {type(obj)}.")
     sess = session or get_session()
     try:
         sess.add(obj)
         sess.commit()
         sess.refresh(obj)
         return obj
-    except Exception:
+    except Exception as e:
         sess.rollback()
-        raise
+        raise e
 
 
 def request_person_by_familyName(familyName: str, logger: Logger, session: Session | None = None) -> Person | None:
+    logger.debug(f"Request person by familyName {familyName}.")
     statement = select(Person).where(Person.familyName == familyName)
     sess = session or get_session()
     results = sess.exec(statement).all()
@@ -75,6 +80,7 @@ def request_person_by_familyName(familyName: str, logger: Logger, session: Sessi
 
 
 def update_or_insert_objects_to_database(objects: List[T], session: Session | None = None) -> None:
+    logger.debug("Update or insert objects.")
     sess = session or get_session()
     for obj in objects:
         obj_db = request_object_by_risid(obj.id, type(obj), sess)
@@ -85,6 +91,7 @@ def update_or_insert_objects_to_database(objects: List[T], session: Session | No
 
 
 def update_object(obj: T, obj_db: T, session: Session | None = None) -> None:
+    logger.debug(f"Update object {obj}.")
     sess = session or get_session()
 
     for field, value in obj.__dict__.items():
@@ -96,6 +103,7 @@ def update_object(obj: T, obj_db: T, session: Session | None = None) -> None:
 
 
 def insert_object_to_database(obj: T, session: Session | None = None) -> None:
+    logger.debug(f"Insert object {obj}.")
     sess = session or get_session()
     sess.add(obj)
     sess.commit()
@@ -130,13 +138,13 @@ def request_paper_by_reference(reference: str, logger: Logger, session: Session 
     results = session.exec(stmt).all()
 
     if not results:
-        logger.warning(f"No paper found for {reference}")
+        logger.warning(f"No paper found for {reference}.")
         return None
     elif len(results) > 1:
-        logger.warning(f"Multiple papers found for reference '{reference}' — using the first one")
+        logger.warning(f"Multiple papers found for reference '{reference}' — using the first one.")
 
     paper = results[0]
-    logger.debug(f"Found paper {reference} in DB (id={paper.id})")
+    logger.debug(f"Found paper {reference} in DB (id={paper.id}).")
     return paper
 
 
@@ -151,13 +159,13 @@ def request_person_by_full_name(
     results = session.exec(stmt).all()
 
     if not results:
-        logger.warning(f"No person found for {givenName} {familyName}")
+        logger.warning(f"No person found for {givenName} {familyName}.")
         return None
     elif len(results) > 1:
-        logger.warning(f"Multiple persons found for {givenName} {familyName} — using the first one")
+        logger.warning(f"Multiple persons found for {givenName} {familyName} — using the first one.")
 
     person = results[0]
-    logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id})")
+    logger.debug(f"Found person {givenName} {familyName} in DB (id={person.id}).")
     return person
 
 
