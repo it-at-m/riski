@@ -92,7 +92,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             file = get_or_insert_object_to_database(File(id=full_url, name=fname, fileName=fname, accessUrl=full_url, downloadUrl=full_url))
             auxiliary_files.append(file)
 
-        main_file = auxiliary_files[0].db_id if auxiliary_files else None
+        main_file = auxiliary_files[0] if auxiliary_files else None
         self.logger.debug(f"Parsed paper {reference} from {url}")
         paper = Paper(
             id=url,

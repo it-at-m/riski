@@ -203,7 +203,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         paper_dict = {p.id: p for p in related_paper if p is not None}  # dict: id → Objekt
         related_paper = list(paper for paper in paper_dict.values())
 
-        main_file = auxiliary_files[0].db_id if auxiliary_files else None
+        main_file = auxiliary_files[0] if auxiliary_files else None
         self.logger.debug(f"Parsed paper {reference} from {url}")
         # --- build Paper object ---
         paper = Paper(

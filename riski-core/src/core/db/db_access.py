@@ -48,15 +48,25 @@ def log_execution_time(func):
 
 @contextmanager
 def _get_session_ctx():
-    """Yield a session from `get_session()`.
-
+    """
+    Yield a session from `get_session()`.
     Use as: `with _get_session_ctx() as sess:`
+    The code that owns the session must own commit/rollback.
     """
     session = get_session()
     try:
         yield session
     finally:
         session.close()
+
+
+@contextmanager
+def optional_session(session: Session | None = None):
+    if session is not None:
+        yield session
+    else:
+        with _get_session_ctx() as sess:
+            yield sess
 
 
 @log_execution_time
@@ -84,15 +94,10 @@ def request_object_by_name(name: str, object_type: type[Keyword], session: Sessi
 
 @log_execution_time
 def request_object_by_name(name: str, object_type: type[N] | type[Keyword], session: Session | None = None) -> N | Keyword | None:
-    if session:
+    with optional_session(session) as sess:
         statement = select(object_type).where(object_type.name == name)
-        obj = session.exec(statement).first()
+        obj = sess.exec(statement).first()
         return obj
-    else:
-        with _get_session_ctx() as sess:
-            statement = select(object_type).where(object_type.name == name)
-            obj = sess.exec(statement).first()
-            return obj
 
 
 @log_execution_time
@@ -108,15 +113,17 @@ def remove_object_by_id(id: str, object_type: type[T]):
 
 
 @log_execution_time
-def insert_and_return_object(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS_PARSED_DB_OBJECT | Keyword:
-    with _get_session_ctx() as session:
+def insert_and_return_object(obj: RIS_PARSED_DB_OBJECT | Keyword, session: Session | None = None) -> RIS_PARSED_DB_OBJECT | Keyword:
+    with optional_session(session) as sess:
         try:
-            session.add(obj)
-            session.commit()
-            session.refresh(obj)
+            sess.add(obj)
+            if session is None:
+                sess.commit()
+                sess.refresh(obj)
             return obj
         except Exception:
-            session.rollback()
+            if session is None:
+                sess.rollback()
             raise
 
 
@@ -135,6 +142,8 @@ def update_or_insert_objects_to_database(objects: List[T]) -> None:
     total = len(objects)
     logger.debug("update_or_insert_objects_to_database: processing %d objects", total)
     for idx, obj in enumerate(objects, start=1):
+        # Each object gets its own session/transaction for fault isolation
+        # failures on individual objects won't roll back the entire batch.
         with _get_session_ctx() as sess:
             obj_db = request_object_by_risid(obj.id, type(obj), sess)
             if obj_db:
@@ -143,6 +152,7 @@ def update_or_insert_objects_to_database(objects: List[T]) -> None:
             else:
                 logger.debug("inserting new %s id=%s (item %d/%d)", type(obj).__name__, getattr(obj, "id", None), idx, total)
                 insert_object_to_database(obj, sess)
+            sess.commit()
 
 
 @log_execution_time
@@ -222,8 +232,6 @@ def update_object(obj, obj_db, session: Session) -> None:
 
         setattr(obj_db, name, updated_value)
 
-    session.commit()
-
 
 @log_execution_time
 def update_file_content(file_id, content, fileName=None):
@@ -242,7 +250,6 @@ def update_file_content(file_id, content, fileName=None):
 @log_execution_time
 def insert_object_to_database(obj: T, session: Session) -> None:
     session.add(obj)
-    session.commit()
 
 
 @log_execution_time
@@ -253,7 +260,6 @@ def get_or_insert_object_to_database(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS
     Args:
         obj (T | Keyword): The object to retrieve or insert, identified by 'name' (keyword)
                  or 'id' (for others).
-        session (Session | None): Optional SQLAlchemy session.
 
     Returns:
         obj_db: The retrieved or inserted object.
@@ -265,9 +271,10 @@ def get_or_insert_object_to_database(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS
         else:
             obj_db = request_object_by_risid(obj.id, type(obj), sess)
 
-    if not obj_db:
-        logger.debug("Not found. Inserting new %s id=%s", type(obj).__name__, getattr(obj, "id", None))
-        obj_db = insert_and_return_object(obj)
+        if not obj_db:
+            logger.debug("Not found. Inserting new %s id=%s", type(obj).__name__, getattr(obj, "id", None))
+            obj_db = insert_and_return_object(obj, sess)
+            sess.commit()
     return obj_db
 
 
