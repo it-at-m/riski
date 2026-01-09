@@ -7,7 +7,7 @@ import stamina
 from config.config import Config, get_config
 from httpx import AsyncClient
 from src.data_models import File
-from src.db.db_access import request_batch, update_or_insert_objects_to_database
+from src.db.db_access import request_all_ids, request_object_by_risid, update_or_insert_objects_to_database
 from src.logtools import getLogger
 
 config: Config = get_config()
@@ -20,7 +20,7 @@ class Filehandler:
     def __init__(self) -> None:
         self.logger = getLogger()
         if config.https_proxy or config.http_proxy:
-            limits = httpx.Limits(max_keepalive_connections=100, max_connections=1000)
+            limits = httpx.Limits(max_keepalive_connections=5, max_connections=250)
             self.client = AsyncClient(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout, limits=limits)
         else:
             self.client = AsyncClient(timeout=config.request_timeout)
@@ -31,39 +31,37 @@ class Filehandler:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.client.aclose()
 
-    async def download_and_persist_files(self, batch_size: int = 100):
+    async def download_and_persist_files(self):
         self.logger.info("Persisting content of all scraped files to database.")
 
-        offset = 0
-        batch_files = []
-        while True:
-            files: list[File] = request_batch(File, offset=offset, limit=batch_size)
-            tasks = []
-            if not files or len(files) < 1:
-                break
+        fileUrls = request_all_ids(File)
 
-            for file in files:
-                self.logger.debug(f"Checking necessity of inserting/updating file {file.name} to database.")
+        semaphore = asyncio.Semaphore(250)
+        tasks = []
+
+        async def sem_task(fileUrl):
+            async with semaphore:
                 try:
-                    tasks.append(self.download_and_persist_file(file=file))
-                    batch_files.append(file)
-                    self.logger.info(f"Queued file {file.name} for downloading.")
-                except Exception:
-                    self.logger.exception(f"Could not schedule file download for '{file.id}'")
+                    await self.download_and_persist_file(fileUrl=fileUrl)
+                except Exception as e:
+                    self.logger.exception(f"Could not download file '{fileUrl} - {e}'")
 
-            offset += batch_size
+        for fileUrl in fileUrls:
+            tasks.append(sem_task(fileUrl))
 
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            for file, result in zip(files, results):
-                if isinstance(result, Exception):
-                    self.logger.error(f"Could not download file '{file.id}'. - {result}")
+        self.logger.info("Queued files for downloading.")
+        await asyncio.gather(*tasks, return_exceptions=True)
+        self.logger.info("Finished processing files.")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
-    async def download_and_persist_file(self, file: File):
+    async def download_and_persist_file(self, fileUrl: str):
+        file = request_object_by_risid(fileUrl, File)
         response = await self.client.get(url=file.id)
+        self.logger.debug(f"Finished downloading: {fileUrl}")
         response.raise_for_status()
         content = response.content
         if file.content is None or content != file.content:
+            self.logger.debug(f"Update file: {fileUrl}")
             content_disposition = response.headers.get("content-disposition")
             if content_disposition:
                 # Parse using cgi module for robust header parsing

@@ -33,7 +33,7 @@ async def main():
     logger.info(f"RIS Indexer v{version} starting up")
 
     logger.info(f"Extract data from {config.start_date}{f' until {config.end_date}' if config.end_date else ''}")
-
+    # """
     logger.info("Extracting City Council Factions")
     faction_extractor = CityCouncilFactionExtractor()
     extracted_faction_list = faction_extractor.run()
@@ -75,9 +75,10 @@ async def main():
     logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motions")
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
+    # """
 
     async with Filehandler() as filehandler:
-        await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
+        await filehandler.download_and_persist_files()
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
