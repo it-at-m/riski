@@ -1,6 +1,6 @@
 from logging import Logger
 
-from src.data_models import File
+from core.model.data_models import File
 from src.logtools import getLogger
 
 file_ids: list[str] = []

@@ -3,15 +3,14 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-
-from src.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
-from src.db.db_access import (
+from core.db.db_access import (
     get_or_insert_object_to_database,
     request_object_by_name,
     request_paper_by_reference,
     request_person_by_full_name,
-    update_or_insert_objects_to_database,
 )
+from core.model.data_models import File, Keyword, Organization, Paper, PaperTypeEnum, Person
+
 from src.parser.base_parser import BaseParser
 
 
@@ -110,7 +109,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             # 2. Try to find person in DB (first name + last name)
             given, family = self._extract_person_names(clean_entry)
             if family:
-                person = request_person_by_full_name(familyName=family, givenName=given, logger=self.logger)
+                person = request_person_by_full_name(familyName=family, givenName=given)
                 if person:
                     persons.append(person)
                     self.logger.debug(f"Matched person: {given or ''} {family}")
@@ -188,7 +187,6 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             # This update should only occur on the first extraction run a file is found.
             # It is first found via the meeting template
             file.name = fname
-            update_or_insert_objects_to_database([file])
 
             auxiliary_files.append(file)
 
@@ -200,12 +198,12 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             # Suche nach dem Link zur Sitzungsvorlage
             if sv_link and "Sitzungsvorlage" in sv_link.text:
                 sv_reference = self._extract_meeting_template_reference(sv_link.text)
-                sv = request_paper_by_reference(sv_reference, self.logger)
+                sv = request_paper_by_reference(sv_reference)
                 related_paper.append(sv)
         paper_dict = {p.id: p for p in related_paper if p is not None}  # dict: id → Objekt
         related_paper = list(paper for paper in paper_dict.values())
 
-        main_file = auxiliary_files[0].db_id if auxiliary_files else None
+        main_file = auxiliary_files[0] if auxiliary_files else None
         self.logger.debug(f"Parsed paper {reference} from {url}")
         # --- build Paper object ---
         paper = Paper(

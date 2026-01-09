@@ -15,8 +15,10 @@ RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && ex
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+ENV UV_PROJECT_ENVIRONMENT=system
+
 # Install the project into `/app`
-WORKDIR /app
+WORKDIR /app/extractor
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -25,14 +27,16 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
 # Leverage layer cache
-COPY pyproject.toml uv.lock ./
+COPY riski-extractor/pyproject.toml riski-extractor/uv.lock ./
+COPY riski-core/pyproject.toml /app/riski-core/
 
 # Install the transitive dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev --locked --no-install-project
+    uv sync --no-dev --locked --no-install-local
 
 # Copy the application files
-COPY . /app
+COPY riski-extractor /app/extractor/
+COPY riski-core /app/riski-core/
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -60,7 +64,6 @@ RUN chown -R root:0 /app && chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1

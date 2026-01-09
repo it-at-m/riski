@@ -1,5 +1,5 @@
-from src.data_models import Person
-from src.db.db_access import request_object_by_risid
+from core.db.db_access import request_object_by_risid
+from core.model.data_models import Person
 
 
 # ----------------------
