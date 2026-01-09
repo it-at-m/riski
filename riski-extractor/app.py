@@ -14,6 +14,7 @@ from src.extractor.city_council_meeting_template_extractor import CityCouncilMee
 from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
 from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
+from src.filehandler.confidential_file_deleter import ConfidentialFileDeleter
 from src.filehandler.filehandler import Filehandler
 from src.kafka.security import setup_security
 from src.logtools import getLogger
@@ -82,6 +83,9 @@ async def main():
     await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
     await broker.stop()
     logger.info("Broker closed.")
+
+    confidential_file_deleter = ConfidentialFileDeleter()
+    confidential_file_deleter.delete_confidential_files()
 
     if config.json_export:
         logger.info("Dumping extraction artifact to 'artifacts/extract.json'")

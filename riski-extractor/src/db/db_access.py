@@ -4,12 +4,13 @@ from typing import List, TypeVar, overload
 from sqlmodel import Session, select
 from src.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Paper, Person
 from src.db.db import get_session
+from src.filehandler.file_id_collector import collect_file_id
 from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
 
-logger: Logger = getLogger(__name__)
+logger: Logger = getLogger()
 
 
 def request_object_by_risid(risid: str, object_type: type[T], session: Session | None = None) -> T | None:
@@ -42,6 +43,17 @@ def request_object_by_name(name: str, object_type: type[N] | type[Keyword], sess
     sess = session or get_session()
     obj = sess.exec(statement).first()
     return obj
+
+
+def remove_object_by_id(id: str, object_type: type[T], session: Session | None = None):
+    statement = select(object_type).where(object_type.id == id)
+    sess = session or get_session()
+    obj = sess.exec(statement).first()
+    if obj is None:
+        logger.warning(f"Object with id '{id}' not found for deletion")
+        return
+    sess.delete(obj)
+    sess.commit()
 
 
 def insert_and_return_object(obj: T, session: Session | None = None) -> T:
@@ -97,6 +109,7 @@ def insert_object_to_database(obj: T, session: Session | None = None) -> None:
     sess.commit()
 
 
+@collect_file_id
 def get_or_insert_object_to_database(obj: T | Keyword, session: Session | None = None) -> T | Keyword:
     """
     Retrieves or inserts an object into the database.
