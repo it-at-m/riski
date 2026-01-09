@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from src.data_models import File
@@ -18,15 +18,21 @@ def filehandler_instance():
     return instance
 
 
-def test_download_and_persist_file_updates_filename(filehandler_instance, mock_file):
+@pytest.mark.asyncio
+async def test_download_and_persist_file_updates_filename(filehandler_instance, mock_file):
     mock_response = MagicMock()
     mock_response.content = b"test content"
     mock_response.headers = {"content-disposition": 'inline; filename="test_file.txt"'}
 
-    filehandler_instance.client.get = MagicMock(return_value=mock_response)
+    filehandler_instance.client.get = AsyncMock(return_value=mock_response)
 
-    with patch("src.filehandler.filehandler.update_or_insert_objects_to_database") as mock_update:
-        filehandler_instance.download_and_persist_file(mock_file)
+    with (
+        patch("src.filehandler.filehandler.update_or_insert_objects_to_database") as mock_update,
+        patch("src.filehandler.filehandler.request_object_by_risid") as mock_request_object,
+    ):
+        mock_request_object.return_value = mock_file
+
+        await filehandler_instance.download_and_persist_file(mock_file.id)
 
         assert mock_file.fileName == "test_file.txt"
         assert mock_file.content == b"test content"
@@ -34,14 +40,21 @@ def test_download_and_persist_file_updates_filename(filehandler_instance, mock_f
         mock_update.assert_called_once()
 
 
-def test_download_and_persist_file_updates_filename_urlencoding(filehandler_instance, mock_file):
+@pytest.mark.asyncio
+async def test_download_and_persist_file_updates_filename_urlencoding(filehandler_instance, mock_file):
     mock_response = MagicMock()
     mock_response.content = b"test content"
     mock_response.headers = {"content-disposition": 'inline; filename="test%20file.txt"'}
 
-    filehandler_instance.client.get = MagicMock(return_value=mock_response)
-    with patch("src.filehandler.filehandler.update_or_insert_objects_to_database") as mock_update:
-        filehandler_instance.download_and_persist_file(mock_file)
+    filehandler_instance.client.get = AsyncMock(return_value=mock_response)
+
+    with (
+        patch("src.filehandler.filehandler.update_or_insert_objects_to_database") as mock_update,
+        patch("src.filehandler.filehandler.request_object_by_risid") as mock_request_object,
+    ):
+        mock_request_object.return_value = mock_file
+
+        await filehandler_instance.download_and_persist_file(mock_file.id)
 
         assert mock_file.fileName == "test file.txt"
         assert mock_file.content == b"test content"
@@ -49,17 +62,23 @@ def test_download_and_persist_file_updates_filename_urlencoding(filehandler_inst
         mock_update.assert_called_once()
 
 
-def test_download_and_persist_file_not_updates_filename_when_unchanged_file(filehandler_instance, mock_file):
+@pytest.mark.asyncio
+async def test_download_and_persist_file_not_updates_filename_when_unchanged_file(filehandler_instance, mock_file):
     mock_response = MagicMock()
     mock_response.content = b"test"
     mock_response.headers = {"content-disposition": 'inline; filename="test_file.txt"'}
 
-    filehandler_instance.client.get = MagicMock(return_value=mock_response)
+    filehandler_instance.client.get = AsyncMock(return_value=mock_response)
     mock_file.content = b"test"
     mock_file.size = len(b"test")
 
-    with patch("src.filehandler.filehandler.update_or_insert_objects_to_database") as mock_update:
-        filehandler_instance.download_and_persist_file(mock_file)
+    with (
+        patch("src.filehandler.filehandler.update_or_insert_objects_to_database") as mock_update,
+        patch("src.filehandler.filehandler.request_object_by_risid") as mock_request_object,
+    ):
+        mock_request_object.return_value = mock_file
+
+        await filehandler_instance.download_and_persist_file(mock_file.id)
 
         assert mock_file.fileName == "initial_filename.pdf"
         assert mock_file.content == b"test"
