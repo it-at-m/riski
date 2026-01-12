@@ -19,7 +19,7 @@ dependencies = [
     "torch==2.8.0",
     "torchvision==0.23.0",
     "truststore==0.10.3",
-    "faststream[kafka]>=0.6.1",
+    "faststream[kafka]>=0.6.5",
     "cryptography>=46.0.3",
     "gitpython==3.1.45",
     "langchain==0.3.27",
@@ -46,7 +46,7 @@ dev = [
     "ruff==0.14.1",
     "ty==0.0.1a23",
     "pytest==8.4.2",
-    "faststream[kafka]==0.6.1",
+    "faststream[kafka]==0.6.5",
 ]
 
 [tool.uv.sources]
