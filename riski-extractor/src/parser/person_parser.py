@@ -1,8 +1,8 @@
 import re
 
 from bs4 import BeautifulSoup
+from core.model.data_models import Person
 
-from src.data_models import Person
 from src.parser.base_parser import BaseParser
 
 

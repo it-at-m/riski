@@ -1,9 +1,9 @@
 [project]
-name = "riski-extractor"
+name = "extractor"
 version = "0.0.1a1"
 description = "Python application for extracting information from munich's political information system RIS"
 readme = "README.md"
-requires-python = "==3.12.11"
+requires-python = "==3.13.9"
 license = { file = "LICENSE" }
 authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
@@ -12,23 +12,18 @@ authors = [
     { name = "Tim-Luca Pfeifer", email = "tim-luca.pfeifer@muenchen.de" },
 ]
 dependencies = [
-    "pydantic-settings==2.11.0",
-    "sqlalchemy==2.0.44",
-    "sqlmodel==0.0.27",
     "tokenizers==0.21.2",
     "torch==2.8.0",
     "torchvision==0.23.0",
-    "truststore==0.10.3",
-    "gitpython==3.1.45",
-    "langchain==0.3.27",
-    "langchain-community==0.3.31",
-    "langchain-docling==1.1.0",
-    "langchain-openai==0.3.35",
-    "pydantic[email]==2.12.2",
-    "pyyaml==6.0.3",
-    "stamina==25.1.0",
-    "python-dotenv==1.1.1",
-    "psycopg[binary,pool]==3.2.10",
+    "truststore>=0.10.4",
+    "gitpython>=3.1.45",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.28",
+    "langchain-openai>=0.3.32",
+    "pyyaml>=6.0.2",
+    "stamina>=25.1.0",
+    "core",
+    "legacy-cgi>=2.6.4",
 ]
 
 [project.optional-dependencies]
@@ -45,11 +40,13 @@ dev = [
     "ty==0.0.1a23",
     "pytest==8.4.2",
     "faststream[kafka]==0.6.1",
+    "langchain-docling>=1.1.0",
 ]
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
+core = { path = "../riski-core" }
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -58,3 +55,11 @@ explicit = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
+
+
+[tool.uv]
+exclude-dependencies = ["tree-sitter-java-orchard"]

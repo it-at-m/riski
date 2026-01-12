@@ -572,12 +572,13 @@ class Paper(RIS_NAME_OBJECT, table=True):
     short_information: str | None = Field(None, description="Short Information of Paper")
     subject: str | None = Field(None, description="Description of Paper")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
-    mainFile: uuid.UUID | None = Field(
+    mainFile_id: uuid.UUID | None = Field(
         None,
         description="The main file for this paper. Example: The paper represents a resolution proposal and the main file contains the text of the resolution proposal. Should not be output if there is no unique main file.",
         foreign_key="file.db_id",
         ondelete="SET NULL",
     )
+    mainFile: "File" = Relationship()
     description: str | None = Field(None, description="Short description von RIS page.")
     auxiliary_files: list["File"] = Relationship(back_populates="papers", link_model=PaperFileLink)
     related_papers: list["Paper"] = Relationship(
