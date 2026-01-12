@@ -64,6 +64,7 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
 
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
+        # try to find originator person by family name, use first match
         if familyName:
             originators = [request_person_by_familyName(familyName)]
             if originators == [None]:

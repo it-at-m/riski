@@ -109,6 +109,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             # 2. Try to find person in DB (first name + last name)
             given, family = self._extract_person_names(clean_entry)
             if family and given:
+                # if multiple exist, use first match
                 person = request_person_by_full_name(familyName=family, givenName=given)
                 if person:
                     persons.append(person)
@@ -195,7 +196,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         result = soup.select_one('section.card[aria-labelledby="sectionheader-ergebnisse"] div.list-group')
         sv_links = result.find_all("a", href=True) if result else []
         for sv_link in sv_links:
-            # Suche nach dem Link zur Sitzungsvorlage
+            # try to find linked meeting template
             if sv_link and "Sitzungsvorlage" in sv_link.text:
                 sv_reference = self._extract_meeting_template_reference(sv_link.text)
                 if sv_reference:
