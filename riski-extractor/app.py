@@ -80,9 +80,11 @@ async def main():
 
     broker = await createKafkaBroker(config, logger)
     filehandler = Filehandler(broker)
-    await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
-    await broker.stop()
-    logger.info("Broker closed.")
+    try:
+        await filehandler.download_and_persist_files(batch_size=config.riski_batch_size)
+    finally:
+        await broker.stop()
+        logger.info("Broker closed.")
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
