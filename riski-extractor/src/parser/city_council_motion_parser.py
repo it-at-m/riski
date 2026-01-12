@@ -108,7 +108,7 @@ class CityCouncilMotionParser(BaseParser[Paper]):
 
             # 2. Try to find person in DB (first name + last name)
             given, family = self._extract_person_names(clean_entry)
-            if family:
+            if family and given:
                 person = request_person_by_full_name(familyName=family, givenName=given)
                 if person:
                     persons.append(person)
@@ -198,8 +198,10 @@ class CityCouncilMotionParser(BaseParser[Paper]):
             # Suche nach dem Link zur Sitzungsvorlage
             if sv_link and "Sitzungsvorlage" in sv_link.text:
                 sv_reference = self._extract_meeting_template_reference(sv_link.text)
-                sv = request_paper_by_reference(sv_reference)
-                related_paper.append(sv)
+                if sv_reference:
+                    sv = request_paper_by_reference(sv_reference)
+                    if sv:
+                        related_paper.append(sv)
         paper_dict = {p.id: p for p in related_paper if p is not None}  # dict: id → Objekt
         related_paper = list(paper for paper in paper_dict.values())
 
