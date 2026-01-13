@@ -14,7 +14,10 @@ dependencies = [
 dev = [
     "ipykernel>=7.1.0",
     "pypdf>=6.4.1",
+    "pytest>=9.0.2",
     "python-dotenv>=1.2.1",
+    "ruff>=0.14.11",
+    "ty>=0.0.11",
 ]
 
 [tool.uv.sources]

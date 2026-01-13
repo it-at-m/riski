@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 
-import { defineConfig, mergeConfig } from "vitest/config.js";
+import { defineConfig, mergeConfig } from "vitest/config";
 
 import viteConfig from "./vite.config";
 

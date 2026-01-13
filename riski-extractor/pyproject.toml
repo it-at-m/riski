@@ -33,15 +33,15 @@ pgvector = [
 dev = [
     "ipykernel==7.0.1",
     "pre-commit==4.3.0",
-    "ruff==0.14.1",
     "ty==0.0.1a23",
     "langchain>=0.3.27",
     "langchain-community>=0.3.28",
-    "langchain-docling>=1.0.0",
+    "langchain-docling>=1.1.0",
     "langchain-openai>=0.3.32",
     "pytest==8.4.2",
     "faststream[kafka]==0.6.1",
-    "langchain-docling>=1.1.0",
+    "ruff>=0.14.11",
+    "python-dotenv>=1.2.1",
 ]
 
 [tool.uv.sources]
