@@ -9,10 +9,14 @@ from sqlmodel import Session, select
 from src.logtools import getLogger
 
 from core.db.db import get_session
-from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, Keyword, Paper, Person
+from core.db.file_id_collector import collect_file_id
+from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, File, Keyword, Paper, Person
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
+UPDATE_EXCLUDED_FIELDS_BY_CLASS = {
+    File: {"content", "size"},
+}
 
 logger = getLogger()
 
@@ -45,15 +49,25 @@ def log_execution_time(func):
 
 @contextmanager
 def _get_session_ctx():
-    """Yield a session from `get_session()`.
-
+    """
+    Yield a session from `get_session()`.
     Use as: `with _get_session_ctx() as sess:`
+    The code that owns the session must own commit/rollback.
     """
     session = get_session()
     try:
         yield session
     finally:
         session.close()
+
+
+@contextmanager
+def optional_session(session: Session | None = None):
+    if session is not None:
+        yield session
+    else:
+        with _get_session_ctx() as sess:
+            yield sess
 
 
 @log_execution_time
@@ -71,27 +85,20 @@ def request_all(object_type: type[T]) -> List[T]:
         return objects
 
 
-@log_execution_time
 @overload
 def request_object_by_name(name: str, object_type: type[N], session: Session | None = None) -> N | None: ...
 
 
-@log_execution_time
 @overload
 def request_object_by_name(name: str, object_type: type[Keyword], session: Session | None = None) -> Keyword | None: ...
 
 
 @log_execution_time
 def request_object_by_name(name: str, object_type: type[N] | type[Keyword], session: Session | None = None) -> N | Keyword | None:
-    if session:
+    with optional_session(session) as sess:
         statement = select(object_type).where(object_type.name == name)
-        obj = session.exec(statement).first()
+        obj = sess.exec(statement).first()
         return obj
-    else:
-        with _get_session_ctx() as sess:
-            statement = select(object_type).where(object_type.name == name)
-            obj = sess.exec(statement).first()
-            return obj
 
 
 @log_execution_time
@@ -107,15 +114,17 @@ def remove_object_by_id(id: str, object_type: type[T]):
 
 
 @log_execution_time
-def insert_and_return_object(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS_PARSED_DB_OBJECT | Keyword:
-    with _get_session_ctx() as session:
+def insert_and_return_object(obj: RIS_PARSED_DB_OBJECT | Keyword, session: Session | None = None) -> RIS_PARSED_DB_OBJECT | Keyword:
+    with optional_session(session) as sess:
         try:
-            session.add(obj)
-            session.commit()
-            session.refresh(obj)
+            sess.add(obj)
+            if session is None:
+                sess.commit()
+                sess.refresh(obj)
             return obj
         except Exception:
-            session.rollback()
+            if session is None:
+                sess.rollback()
             raise
 
 
@@ -134,6 +143,8 @@ def update_or_insert_objects_to_database(objects: List[T]) -> None:
     total = len(objects)
     logger.debug("update_or_insert_objects_to_database: processing %d objects", total)
     for idx, obj in enumerate(objects, start=1):
+        # Each object gets its own session/transaction for fault isolation
+        # failures on individual objects won't roll back the entire batch.
         with _get_session_ctx() as sess:
             obj_db = request_object_by_risid(obj.id, type(obj), sess)
             if obj_db:
@@ -142,38 +153,108 @@ def update_or_insert_objects_to_database(objects: List[T]) -> None:
             else:
                 logger.debug("inserting new %s id=%s (item %d/%d)", type(obj).__name__, getattr(obj, "id", None), idx, total)
                 insert_object_to_database(obj, sess)
+            sess.commit()
 
 
 @log_execution_time
-def update_object(obj: T, obj_db: T, session: Session) -> None:
-    mapper = inspect(obj.__class__)
-    for field, value in obj.__dict__.items():
-        if field not in ("db_id", "created", "modified") and not field.startswith("_"):
-            # Check if the attribute is a relationship field
-            prop = mapper.all_orm_descriptors.get(field)
-            if prop and isinstance(prop.property, RelationshipProperty):
-                # One-to-many or many-to-many relationship
-                if prop.property.uselist:
-                    for related_obj in value:
-                        session.merge(related_obj)
-                # Many-to-one or one-to-one relationship
-                else:
-                    if value is not None:
-                        session.merge(value)
-            else:
-                setattr(obj_db, field, value)
+def update_object(obj, obj_db, session: Session) -> None:
+    """
+    Update a persistent ORM object using PUT semantics.
 
-    session.add(obj_db)
-    session.commit()
+    The incoming `obj` is treated as the complete desired state:
+    - Scalar fields are fully overwritten
+    - Relationship collections are replaced wholesale
+    - Missing or empty relationships remove existing associations
+    - Related rows are NOT deleted unless cascade rules specify it
+
+    Assumptions / guarantees:
+    - `obj` is NOT attached to the session
+    - `obj_db` IS persistent in the session
+    - Related objects may already exist in the database
+    - Related objects may be transient or detached
+    - Relationship existence / authorization has been validated beforehand
+
+    PUT impact:
+    - Missing relationships ⇒ cleared
+    - Removed collection items ⇒ disassociated
+    - Orphan deletion occurs ONLY if `delete-orphan` is configured
+    """
+    mapper = inspect(obj_db).mapper
+    pk_keys = {col.key for col in mapper.primary_key}
+    excluded = UPDATE_EXCLUDED_FIELDS_BY_CLASS.get(type(obj_db), set())
+
+    for attr in mapper.attrs:
+        name = attr.key
+
+        # Never overwrite identity or audit fields
+        if name in pk_keys or name in {"created", "modified"}:
+            continue
+
+        if name in excluded:
+            continue
+
+        incoming = getattr(obj, name, None)
+        updated_value = None
+
+        # ---------- relationships ----------
+        if isinstance(attr, RelationshipProperty):
+            if attr.uselist:
+                if incoming is None:
+                    updated_value = []
+                else:
+                    updated_items = []
+                    for item in incoming:
+                        state = inspect(item)
+
+                        if state.detached:
+                            item = session.merge(item)
+                        elif state.transient:
+                            session.add(item)
+
+                        updated_items.append(item)
+
+                    updated_value = updated_items
+            else:
+                if incoming is None:
+                    updated_value = None
+                else:
+                    state = inspect(incoming)
+
+                    if state.detached:
+                        incoming = session.merge(incoming)
+                    elif state.transient:
+                        session.add(incoming)
+
+                    updated_value = incoming
+
+        # ---------- scalar columns ----------
+        else:
+            updated_value = incoming
+
+        setattr(obj_db, name, updated_value)
+
+
+@log_execution_time
+def update_file_content(file_id, content, fileName=None):
+    with _get_session_ctx() as session:
+        file_db = session.get(File, file_id)
+        if not file_db:
+            return
+
+        file_db.content = content
+        file_db.size = len(content)
+        if fileName:
+            file_db.fileName = fileName
+        session.commit()
 
 
 @log_execution_time
 def insert_object_to_database(obj: T, session: Session) -> None:
     session.add(obj)
-    session.commit()
 
 
 @log_execution_time
+@collect_file_id
 def get_or_insert_object_to_database(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS_PARSED_DB_OBJECT | Keyword:
     """
     Retrieves or inserts an object into the database.
@@ -181,7 +262,6 @@ def get_or_insert_object_to_database(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS
     Args:
         obj (T | Keyword): The object to retrieve or insert, identified by 'name' (keyword)
                  or 'id' (for others).
-        session (Session | None): Optional SQLAlchemy session.
 
     Returns:
         obj_db: The retrieved or inserted object.
@@ -193,9 +273,10 @@ def get_or_insert_object_to_database(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS
         else:
             obj_db = request_object_by_risid(obj.id, type(obj), sess)
 
-    if not obj_db:
-        logger.debug("Not found. Inserting new %s id=%s", type(obj).__name__, getattr(obj, "id", None))
-        obj_db = insert_and_return_object(obj)
+        if not obj_db:
+            logger.debug("Not found. Inserting new %s id=%s", type(obj).__name__, getattr(obj, "id", None))
+            obj_db = insert_and_return_object(obj, sess)
+            sess.commit()
     return obj_db
 
 

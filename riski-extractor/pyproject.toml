@@ -41,6 +41,7 @@ dev = [
     "langchain-openai>=0.3.32",
     "pytest==8.4.2",
     "faststream[kafka]==0.6.1",
+    "langchain-docling>=1.1.0",
 ]
 
 [tool.uv.sources]
@@ -59,3 +60,7 @@ pythonpath = ["."]
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]
 build-backend = "uv_build"
+
+
+[tool.uv]
+exclude-dependencies = ["tree-sitter-java-orchard"]

@@ -15,7 +15,26 @@ class TestSettings(BaseModel):
         default=None,
         description="Test database password",
     )
-    database_url: PostgresDsn | None = Field(
-        default=None,
-        description="Full test database connection URL",
+    db_port: int | None = Field(
+        default=5432,
+        description="Test database port",
     )
+    db_hostname: str | None = Field(
+        default="localhost",
+        description="Test database host",
+    )
+
+    @property
+    def database_url(self) -> PostgresDsn:
+        """
+        Full Postgres connection URL
+        """
+        return PostgresDsn.build(
+            # use psycopg version 3
+            scheme="postgresql+psycopg",
+            username=self.db_user,
+            password=self.db_password,
+            host=self.db_hostname,
+            port=self.db_port,
+            path=self.db_name,
+        )

@@ -3,7 +3,7 @@ from logging import Logger
 
 import stamina
 from config.config import Config, get_config
-from core.db.db_access import request_batch, update_or_insert_objects_to_database
+from core.db.db_access import request_batch, update_file_content
 from core.model.data_models import File
 from httpx import Client, HTTPError
 from src.logtools import getLogger
@@ -56,12 +56,9 @@ class Filehandler:
                 if fileName:
                     fileName = urllib.parse.unquote(fileName)
                     self.logger.debug(f"Extracted fileName: {fileName}")
-                    file.fileName = fileName
                 else:
                     self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
             else:
                 self.logger.debug(f"No Content-Disposition header for {file.id}")
-            file.content = content
-            file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
-            update_or_insert_objects_to_database([file])
+            update_file_content(file.db_id, content, fileName)

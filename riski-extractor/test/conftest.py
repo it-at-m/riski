@@ -39,16 +39,9 @@ def pytest_addoption(parser):
 def engine(pytestconfig):
     db_url = pytestconfig.getoption("--db-url")
     if not db_url:
-        DB_USER = config.test.db_user
-        DB_PASSWORD = config.test.db_password
-        DB_NAME = config.test.db_name
         DB_URL = config.test.database_url
         if DB_URL:
             db_url = str(DB_URL)
-        elif DB_USER and DB_PASSWORD and DB_NAME:
-            db_url = f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
-        else:
-            db_url = "sqlite:///:memory:"
     engine = create_engine(db_url, echo=True)
     SQLModel.metadata.create_all(engine)
     yield engine
@@ -59,6 +52,12 @@ def engine(pytestconfig):
 def session(engine):
     with Session(engine) as session:
         yield session
+
+
+@pytest.fixture(autouse=True)
+def patch_get_session(monkeypatch, session):
+    # Patch get_session to always return the pytest session fixture
+    monkeypatch.setattr("core.db.db_access.get_session", lambda: session)
 
 
 @pytest.fixture(scope="function")

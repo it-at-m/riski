@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
-from src.data_models import File
-from src.filehandler.file_id_collector import clear_ids, collect_file_id, get_all_found_file_ids
+from core.db.file_id_collector import clear_ids, collect_file_id, get_all_found_file_ids
+from core.model.data_models import File
 from src.logtools import getLogger
 
 # Mock Logger
