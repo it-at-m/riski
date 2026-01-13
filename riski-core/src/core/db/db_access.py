@@ -322,13 +322,3 @@ def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
     statement = select(model).order_by(model.db_id).offset(offset).limit(limit)
     with _get_session_ctx() as sess:
         return list(sess.exec(statement).all())
-
-
-@log_execution_time
-def request_all_ids(model: type[T]) -> List[str]:
-    """
-    Loads all the ids of records for a given model.
-    """
-    sess = get_session()
-    statement = select(model.id).order_by(model.db_id)
-    return sess.exec(statement).all()
