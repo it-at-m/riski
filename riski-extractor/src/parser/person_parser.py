@@ -1,6 +1,7 @@
 import re
 
 from bs4 import BeautifulSoup
+from core.db.db_access import request_person_by_full_name
 from core.model.data_models import Person
 
 from src.parser.base_parser import BaseParser
@@ -83,7 +84,7 @@ class PersonParser(BaseParser[Person]):
 
         potential_titles = []
         form_of_address = None
-
+        print(parts_of_name)
         for i in range(2, len(parts_of_name) + 1):
             if self._is_form_of_address(parts_of_name[-i]):
                 form_of_address = parts_of_name[-i]
@@ -93,8 +94,9 @@ class PersonParser(BaseParser[Person]):
             else:
                 given_name.append(parts_of_name[-i])
 
-        given_name.reverse()
         potential_titles.reverse()
+        given_name.reverse()
+        given_name = " ".join(given_name)
 
         # --- Key-Value Data Extraction ---
         # Relevant for CV
@@ -116,11 +118,45 @@ class PersonParser(BaseParser[Person]):
                     value = val_el.get_text(strip=True)
                     data_dict[key] = value
 
+        life = data_dict.get("Lebenslauf:")
+
+        if last_name and given_name:
+            existing_person = request_person_by_full_name(last_name, given_name)
+        else:
+            existing_person = None
+
+        if existing_person and status not in existing_person.status:
+            person = Person(
+                id=existing_person.id,
+                familyName=existing_person.familyName,
+                givenName=existing_person.givenName,
+                name=existing_person.name,
+                formOfAddress=existing_person.formOfAddress,
+                life=existing_person.life,
+                lifeSource=existing_person.lifeSource,
+                status=existing_person.status,
+                title=existing_person.title,
+                web=existing_person.web,
+                deleted=existing_person.deleted,
+            )
+            if not existing_person.name and name:
+                person.name = name
+            if not existing_person.formOfAddress and form_of_address:
+                person.formOfAddress = form_of_address
+            if (not existing_person.life and life) or (len(existing_person.life) < len(life)):
+                person.life = life
+                person.lifeSource = url
+            for stat in status:
+                if stat not in existing_person.status:
+                    existing_person.status.append(stat)
+
+            return person
+
         # --- Assemble Person ---
         person = Person(
             id=url,
             familyName=last_name,
-            givenName=" ".join(given_name),
+            givenName=given_name,
             name=name,
             formOfAddress=form_of_address,
             life=data_dict.get("Lebenslauf:"),
