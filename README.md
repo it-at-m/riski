@@ -116,4 +116,4 @@ Distributed under the MIT License. See [LICENSE](LICENSE) file for more informat
 
 ## Contact
 
-it@M - [opensource@muenchen.de](mailto:opensource@muenchen.de)
+it@M - [kicc@muenchen.de](mailto:kicc@muenchen.de)

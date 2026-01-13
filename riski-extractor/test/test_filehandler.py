@@ -1,7 +1,7 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
-from src.data_models import File
+from core.model.data_models import File
 from src.filehandler.filehandler import Filehandler
 
 
@@ -34,10 +34,7 @@ async def test_download_and_persist_file_updates_filename(filehandler_instance, 
 
         await filehandler_instance.download_and_persist_file(mock_file.id)
 
-        assert mock_file.fileName == "test_file.txt"
-        assert mock_file.content == b"test content"
-        assert mock_file.size == len(b"test content")
-        mock_update.assert_called_once()
+        mock_update.assert_called_once_with(ANY, b"test content", "test_file.txt")
 
 
 @pytest.mark.asyncio
@@ -56,10 +53,7 @@ async def test_download_and_persist_file_updates_filename_urlencoding(filehandle
 
         await filehandler_instance.download_and_persist_file(mock_file.id)
 
-        assert mock_file.fileName == "test file.txt"
-        assert mock_file.content == b"test content"
-        assert mock_file.size == len(b"test content")
-        mock_update.assert_called_once()
+        mock_update.assert_called_once_with(ANY, b"test content", "test file.txt")
 
 
 @pytest.mark.asyncio
@@ -80,7 +74,4 @@ async def test_download_and_persist_file_not_updates_filename_when_unchanged_fil
 
         await filehandler_instance.download_and_persist_file(mock_file.id)
 
-        assert mock_file.fileName == "initial_filename.pdf"
-        assert mock_file.content == b"test"
-        assert mock_file.size == len(b"test")
         mock_update.assert_not_called()

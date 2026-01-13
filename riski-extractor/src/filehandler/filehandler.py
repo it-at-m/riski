@@ -5,9 +5,9 @@ from logging import Logger
 import httpx
 import stamina
 from config.config import Config, get_config
+from core.db.db_access import request_all_ids, request_object_by_risid, update_file_content
+from core.model.data_models import File
 from httpx import AsyncClient
-from src.data_models import File
-from src.db.db_access import request_all_ids, request_object_by_risid, update_or_insert_objects_to_database
 from src.logtools import getLogger
 
 config: Config = get_config()
@@ -58,6 +58,7 @@ class Filehandler:
         file = request_object_by_risid(fileUrl, File)
         response = await self.client.get(url=file.id)
         self.logger.debug(f"Finished downloading: {fileUrl}")
+
         response.raise_for_status()
         content = response.content
         if file.content is None or content != file.content:
@@ -72,12 +73,9 @@ class Filehandler:
                 if fileName:
                     fileName = urllib.parse.unquote(fileName)
                     self.logger.debug(f"Extracted fileName: {fileName}")
-                    file.fileName = fileName
                 else:
                     self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
             else:
                 self.logger.debug(f"No Content-Disposition header for {file.id}")
-            file.content = content
-            file.size = len(content)
             self.logger.debug(f"Saving content of file {file.name} to database.")
-            update_or_insert_objects_to_database([file])
+            update_file_content(file.db_id, content, fileName)

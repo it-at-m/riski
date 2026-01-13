@@ -1,8 +1,8 @@
 import re
 
 from bs4 import BeautifulSoup
+from core.model.data_models import Organization, OrganizationClassificationEnum, OrganizationTypeEnum
 
-from src.data_models import Organization, OrganizationClassificationEnum, OrganizationTypeEnum
 from src.parser.base_parser import BaseParser
 
 
