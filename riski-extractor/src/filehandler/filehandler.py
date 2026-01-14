@@ -79,5 +79,6 @@ class Filehandler:
                     fileName = file.name
             else:
                 self.logger.debug(f"No Content-Disposition header for {file.id}")
+                fileName = file.name
             self.logger.debug(f"Saving content of file {file.name} to database.")
             update_file_content(file.db_id, content, fileName)
