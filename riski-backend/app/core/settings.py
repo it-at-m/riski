@@ -44,18 +44,18 @@ class Settings(BaseSettings):
     )
 
     # === Langfuse Settings ===
-    langfuse_secret_key: str = Field(
-        default="DUMMY FOR GITHUBACTION",
+    langfuse_secret_key: str | None = Field(
+        default=None,
         validation_alias="LANGFUSE_SECRET_KEY",
         description="Secret Key for Langfuse",
     )
-    langfuse_public_key: str = Field(
-        default="DUMMY FOR GITHUBACTION",
+    langfuse_public_key: str | None= Field(
+        default=None,
         validation_alias="LANGFUSE_PUBLIC_KEY",
         description="Public Key for Langfuse",
     )
-    langfuse_host: str = Field(
-        default="DUMMY FOR GITHUBACTION",
+    langfuse_host: str | None = Field(
+        default=None,
         validation_alias="LANGFUSE_HOST",
         description="Langfuse host",
     )
