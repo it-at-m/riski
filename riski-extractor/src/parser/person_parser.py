@@ -84,7 +84,6 @@ class PersonParser(BaseParser[Person]):
 
         potential_titles = []
         form_of_address = None
-        print(parts_of_name)
         for i in range(2, len(parts_of_name) + 1):
             if self._is_form_of_address(parts_of_name[-i]):
                 form_of_address = parts_of_name[-i]
@@ -125,7 +124,7 @@ class PersonParser(BaseParser[Person]):
         else:
             existing_person = None
 
-        if existing_person and status not in existing_person.status:
+        if existing_person and any(s not in existing_person.status for s in status):
             person = Person(
                 id=existing_person.id,
                 familyName=existing_person.familyName,
@@ -143,7 +142,7 @@ class PersonParser(BaseParser[Person]):
                 person.name = name
             if not existing_person.formOfAddress and form_of_address:
                 person.formOfAddress = form_of_address
-            if (not existing_person.life and life) or (len(existing_person.life) < len(life)):
+            if (not existing_person.life and life) or (life and existing_person.life and len(existing_person.life) < len(life)):
                 person.life = life
                 person.lifeSource = url
             for stat in status:

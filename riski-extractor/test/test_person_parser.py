@@ -13,7 +13,6 @@ def load_html(file_path):
 
 def _create_html(name="Frau Dr. Laura Dornheim", status="Referent*in", life="IT-Referentin seit 2022"):
     html_template = load_html(os.path.join(os.path.dirname(__file__), "test_person_template.html"))
-    print(name)
     html_template = html_template.replace(">>name<<", name)
     html_template = html_template.replace(">>status<<", status)
     html_template = html_template.replace(">>life<<", life)
@@ -32,7 +31,6 @@ def test_new_person(mock_request_person_by_full_name, parser):
     url = "http://example.com/person/3"
     html = _create_html()
     person = parser.parse(url, html)
-    print(person)
     assert person.familyName == "Dornheim"
     assert person.givenName == "Laura"
     assert person.name == "Frau Dr. Laura Dornheim"
