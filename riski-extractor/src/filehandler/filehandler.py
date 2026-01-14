@@ -42,12 +42,12 @@ class Filehandler:
             semaphore = asyncio.Semaphore(batch_size)
             tasks = []
 
-            async def sem_task(fileUrl):
+            async def sem_task(file_in):
                 async with semaphore:
                     try:
-                        await self.download_and_persist_file(file=file)
+                        await self.download_and_persist_file(file=file_in)
                     except Exception as e:
-                        self.logger.exception(f"Could not download file '{fileUrl} - {e}'")
+                        self.logger.exception(f"Could not download file '{file_in.id} - {e}'")
 
             for file in files:
                 tasks.append(sem_task(file))
@@ -76,6 +76,7 @@ class Filehandler:
                     self.logger.debug(f"Extracted fileName: {fileName}")
                 else:
                     self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
+                    fileName = file.name
             else:
                 self.logger.debug(f"No Content-Disposition header for {file.id}")
             self.logger.debug(f"Saving content of file {file.name} to database.")
