@@ -1,8 +1,7 @@
 from logging import Logger
 
-from src.logtools import getLogger
-
 from core.model.data_models import File
+from src.logtools import getLogger
 
 file_ids: list[str] = []
 logger: Logger = getLogger()

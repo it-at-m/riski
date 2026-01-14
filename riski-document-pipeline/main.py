@@ -1,4 +1,5 @@
 from core.db.db import init_db
+
 from settings.settings import get_settings
 from src.parse.parse import run_ocr_for_documents
 

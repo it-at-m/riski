@@ -6,9 +6,9 @@ from pathlib import Path
 from core.settings.base import AppBaseSettings
 from pydantic import Field, HttpUrl, model_validator
 from pydantic_settings import SettingsConfigDict
-from src.logtools import getLogger
 
 from config.test import TestSettings
+from src.logtools import getLogger
 
 logger: Logger
 
