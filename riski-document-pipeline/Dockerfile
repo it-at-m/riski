@@ -39,12 +39,12 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.created="$IMAGE_CREATED" \
     org.opencontainers.image.revision="$IMAGE_REVISION" \
     org.opencontainers.image.version="$IMAGE_VERSION" \
-    org.opencontainers.image.url='https://github.com/it-at-m/riski/pkgs/container/riski-extractor' \
+    org.opencontainers.image.url='https://github.com/it-at-m/riski/pkgs/container/riski-document-pipeline' \
     org.opencontainers.image.documentation='https://github.com/it-at-m/riski/README.md' \
     org.opencontainers.image.source='https://github.com/it-at-m/riski' \
     org.opencontainers.image.licenses='MIT' \
-    org.opencontainers.image.title='riski-extractor' \
-    org.opencontainers.image.description="Python application for extracting information from munich's political information system RIS"
+    org.opencontainers.image.title='riski-document-pipeline' \
+    org.opencontainers.image.description="Python application for OCR processing of PDF documents from munich's political information system RIS"
 
 # Give permissions to all so random UID can write
 # This should be compatible with OpenShift and plain K8s
