@@ -18,7 +18,7 @@ services:
     ports:
       - 8080:8080
   kafka:
-    image: apache/kafka:4.1.0 
+    image: apache/kafka:4.1.0
     ports:
       - "9092:9092"
     environment:
@@ -42,7 +42,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-  # run topic creation with `podman compose --profile init up` or as single service when kafka was already started  
+  # run topic creation with `podman compose --profile init up` or as single service when kafka was already started
   # creates example topic, corresponding dlq and managment topic for group tracking
   topic-init:
     image: apache/kafka:4.1.0
@@ -56,3 +56,53 @@ services:
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic my-topic-dlq --partitions 1 --replication-factor 1 || true &&
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic __consumer_offsets --partitions 50 --replication-factor 1 --config cleanup.policy=compact || true
       "
+  backend:
+    build:
+      context: ../riski-backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    ports:
+      - "39146:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:8000/api/healthz"]
+
+  refarch-gateway:
+    image: ghcr.io/it-at-m/refarch/refarch-gateway:1.7.0@sha256:3f82ab83c212ca53c9c2b606cfe29291f21525eac86fece215d0e1c6ca51273f
+    ports:
+      - "8083:8080"
+    env_file:
+      - ./.env
+    environment:
+      - ALLOWED_ORIGINS_PUBLIC=http://localhost:*
+      - ALLOWED_ORIGINS_CLIENTS=http://localhost:*
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=backend
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://core-service:8000/
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/backend/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/api/backend/(?<urlsegments>.*), /api/$\{urlsegments}
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=frontend
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://frontend:8080/
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/**
+      - SPRING_PROFILES_ACTIVE=hazelcast-local
+    networks:
+      - internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:8080/actuator/health/liveness"]
+    security_opt: &security_settings
+      - no-new-privileges:true
+
+  frontend:
+    build:
+      context: ../riski-frontend
+      dockerfile: Dockerfile
+      args:
+        - HTTPS_PROXY=${HTTPS_PROXY}
+    ports:
+      - "8081:8080"
+    networks:
+      - internal
+
+networks:
+  internal:
