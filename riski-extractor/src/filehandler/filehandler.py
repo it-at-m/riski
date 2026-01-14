@@ -5,10 +5,10 @@ from logging import Logger
 import httpx
 import stamina
 from config.config import Config, get_config
+from core.db.db_access import request_batch, update_file_content
+from core.model.data_models import File
 from faststream.kafka import KafkaBroker
 from httpx import Client
-from src.data_models import File
-from src.db.db_access import request_batch, update_or_insert_objects_to_database
 from src.kafka.message import Message
 from src.logtools import getLogger
 
@@ -65,15 +65,15 @@ class Filehandler:
                 if fileName:
                     fileName = urllib.parse.unquote(fileName)
                     self.logger.debug(f"Extracted fileName: {fileName}")
-                    file.fileName = fileName
                 else:
                     self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
             else:
                 self.logger.debug(f"No Content-Disposition header for {file.id}")
+
             file.content = content
             file.size = len(content)
-            self.logger.info(f"Saving content of file {file.name} to database.")
-            update_or_insert_objects_to_database([file])
+            self.logger.debug(f"Saving content of file {file.name} to database.")
+            update_file_content(file.db_id, content, fileName)
             self.logger.debug(f"Saved content of file {file.name} to database.")
             msg = Message(content=str(file.db_id))
             self.logger.debug(f"Publishing: {msg}.")
@@ -83,6 +83,5 @@ class Filehandler:
             except Exception as e:
                 # If Kafka Broker is unavailable rollback the file download to ensure
                 # All Documents that have content, are published to the Kafka Queue
-                file.content = None
-                update_or_insert_objects_to_database([file])
+                update_file_content(file.db_id, None, "")
                 self.logger.error(f"Publishing failed. Rolled file download back: {file.db_id}. - {e}")

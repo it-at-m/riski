@@ -3,9 +3,9 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from core.db.db_access import get_or_insert_object_to_database
+from core.model.data_models import File, Meeting
 
-from src.data_models import File, Meeting
-from src.db.db_access import get_or_insert_object_to_database
 from src.parser.base_parser import BaseParser
 
 
