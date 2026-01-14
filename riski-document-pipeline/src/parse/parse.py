@@ -31,14 +31,18 @@ def run_ocr_for_documents(settings):
             pages_text = []
             for pdf_chunk in chunk_pdf_into_max_page_blocks(doc.content, chunk_size=30):
                 base64_pdf = base64.b64encode(pdf_chunk).decode("utf-8")
-                resp = client.ocr.process(
-                    model="mistral-document-ai-2505",
-                    document={"type": "document_url", "document_url": f"data:application/pdf;base64,{base64_pdf}"},
-                )
-                chunk_pages_text = [page.markdown for page in resp.pages]
-                logger.debug(chunk_pages_text[: min(3, len(chunk_pages_text))])
+                try:
+                    resp = client.ocr.process(
+                        model="mistral-document-ai-2505",
+                        document={"type": "document_url", "document_url": f"data:application/pdf;base64,{base64_pdf}"},
+                    )
+                    chunk_pages_text = [page.markdown for page in resp.pages]
+                    logger.debug(chunk_pages_text[: min(3, len(chunk_pages_text))])
 
-                pages_text.extend(chunk_pages_text)
+                    pages_text.extend(chunk_pages_text)
+                except Exception as e:
+                    logger.error(f"Error processing OCR for doc id={doc.db_id}: {e}")
+                    continue
 
             # Combine all pages' markdown into one text blob
             full_markdown = "\n\n".join(pages_text)
