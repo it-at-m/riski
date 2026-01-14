@@ -3,9 +3,9 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from core.db.db_access import get_or_insert_object_to_database
+from core.model.data_models import File, Meeting
 
-from src.data_models import File, Meeting
-from src.db.db_access import get_or_insert_object_to_database
 from src.parser.base_parser import BaseParser
 
 
@@ -74,9 +74,10 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         for doc_link in soup.select("a.downloadlink"):
             doc_url = urljoin(url, doc_link.get("href", ""))
             doc_title = doc_link.get_text(strip=True)
+            doc_title = doc_title.removesuffix(".pdf")
             if doc_url:
                 self.logger.debug(f"Document found: {doc_title} ({doc_url})")
-                temp_file = File(id=doc_url, name=doc_title, accessUrl=doc_url)
+                temp_file = File(id=doc_url, name=doc_title, fileName=doc_title, accessUrl=doc_url, downloadUrl=doc_url)
                 try:
                     temp_file = get_or_insert_object_to_database(temp_file)
                     auxiliaryFile.append(temp_file)

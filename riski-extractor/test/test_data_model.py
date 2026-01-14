@@ -1,5 +1,4 @@
-from sqlmodel import select
-from src.data_models import (
+from core.model.data_models import (
     AgendaItem,
     Body,
     BodyEquivalentLink,
@@ -44,6 +43,7 @@ from src.data_models import (
     Post,
     System,
 )
+from sqlmodel import select
 
 
 # Test for the System class

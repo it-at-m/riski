@@ -3,9 +3,9 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from core.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
+from core.model.data_models import File, Keyword, Paper, PaperTypeEnum, Person
 
-from src.data_models import File, Keyword, Paper, PaperTypeEnum, Person
-from src.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
 from src.parser.base_parser import BaseParser
 
 
@@ -64,8 +64,9 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
 
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
+        # try to find originator person by family name, use first match
         if familyName:
-            originators = [request_person_by_familyName(familyName, self.logger)]
+            originators = [request_person_by_familyName(familyName)]
             if originators == [None]:
                 self.logger.warning(f"{url}: Person not found: {familyName}")
                 originators = [insert_and_return_object(Person(id="", familyName=familyName))]
@@ -84,11 +85,15 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
             if not href:
                 continue
             fname = a.get_text(strip=True)
+            if fname == "Beschluss.pdf":
+                fname = f"Beschluss zu {title_text}"
+            fname = fname.removesuffix(".pdf")
+
             full_url = urljoin(url, href)
-            file = get_or_insert_object_to_database(File(id=full_url, name=fname, accessUrl=full_url, downloadUrl=full_url))
+            file = get_or_insert_object_to_database(File(id=full_url, name=fname, fileName=fname, accessUrl=full_url, downloadUrl=full_url))
             auxiliary_files.append(file)
 
-        main_file = auxiliary_files[0].db_id if auxiliary_files else None
+        main_file = auxiliary_files[0] if auxiliary_files else None
         self.logger.debug(f"Parsed paper {reference} from {url}")
         paper = Paper(
             id=url,
