@@ -41,7 +41,7 @@ def run_ocr_for_documents(settings):
 
                     pages_text.extend(chunk_pages_text)
                 except Exception as e:
-                    logger.error(f"Error processing OCR for doc id={doc.db_id}: {e}")
+                    logger.error(f"Error processing OCR for doc id={doc.id}: {e}")
                     continue
 
             # Combine all pages' markdown into one text blob
