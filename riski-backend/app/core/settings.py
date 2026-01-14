@@ -1,11 +1,8 @@
 from functools import lru_cache
-from logging import Logger
 
-from app.utils.logging import getLogger
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 
-logger: Logger = getLogger()
 
 
 class Settings(BaseSettings):
@@ -17,7 +14,7 @@ class Settings(BaseSettings):
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
 
     # === LLM Settings ===
-    llm_api_key: str = Field(
+    llm_api_key: SecretStr = Field(
         default="DUMMY FOR GITHUBACTION",
         validation_alias="OPENAI_API_KEY",
         description="API key for OpenAI",
@@ -44,12 +41,12 @@ class Settings(BaseSettings):
     )
 
     # === Langfuse Settings ===
-    langfuse_secret_key: str | None = Field(
+    langfuse_secret_key: SecretStr | None = Field(
         default=None,
         validation_alias="LANGFUSE_SECRET_KEY",
         description="Secret Key for Langfuse",
     )
-    langfuse_public_key: str | None= Field(
+    langfuse_public_key: SecretStr | None= Field(
         default=None,
         validation_alias="LANGFUSE_PUBLIC_KEY",
         description="Public Key for Langfuse",
@@ -110,17 +107,6 @@ class Settings(BaseSettings):
             dotenv_settings,
         )
 
-    def print_config(self):
-        logger = getLogger()
-        logger.debug(
-            self.model_dump(
-                exclude={
-                    "llm_api_key",
-                    "langfuse_secret_key",
-                    "langfuse_public_key",
-                }
-            )
-        )
 
 
 @lru_cache(maxsize=1)
