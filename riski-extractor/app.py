@@ -80,9 +80,9 @@ async def main():
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
     broker = await createKafkaBroker(config, logger)
-    filehandler = Filehandler(broker)
     try:
-        await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
+        async with Filehandler(broker) as filehandler:
+            await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
     finally:
         await broker.stop()
         logger.info("Broker closed.")
