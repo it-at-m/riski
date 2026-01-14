@@ -1,4 +1,4 @@
-src = ["riski-document_pipeline"]
+src = ["riski-document-pipeline"]
 
 # Exclude a variety of commonly ignored directories.
 exclude = [
