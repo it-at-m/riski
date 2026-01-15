@@ -12,12 +12,6 @@ dependencies = [
     "pydantic-settings>=2.10.1",
 ]
 
-[dependency-groups]
-dev = [
-    "ipykernel>=7.1.0",
-    "python-dotenv>=1.2.1",
-]
-
 [build-system]
 requires = ["uv_build>=0.9.13,<0.10.0"]
 build-backend = "uv_build"
