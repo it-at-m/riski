@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Annotated, NotRequired, TypedDict
 
 from ag_ui_langgraph import LangGraphAgent
+from app.core.settings import get_settings
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
@@ -16,6 +17,7 @@ _RETRIEVAL_DELAY_SECONDS = 0.4
 _RESPONSE_DELAY_SECONDS = 0.6
 _RETRIEVAL_NODE = "RETRIEVAL"
 _GENERATE_NODE = "GENERATE"
+settings = get_settings()
 
 
 class RiskiAgentState(TypedDict, total=False):
@@ -127,15 +129,6 @@ def _build_proposal_candidates(question: str) -> list[Document]:
     ]
 
 
-def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
-    """Mock retriever returning pseudo-documents with a short delay."""
-    _simulate_delay(_RETRIEVAL_DELAY_SECONDS)
-    question = _extract_latest_question(state.get("messages"))
-    docs = _build_document_candidates(question)
-    proposals = _build_proposal_candidates(question)
-    return {"documents": docs, "proposals": proposals}
-
-
 def _generate(state: RiskiAgentState) -> RiskiAgentState:
     """Return a richer mock response referencing retrieved documents."""
 
@@ -152,8 +145,15 @@ def _generate(state: RiskiAgentState) -> RiskiAgentState:
     return {"messages": [AIMessage(content=content)]}
 
 
-def _build_riski_graph() -> CompiledStateGraph:
+def _build_riski_graph(vectorstore) -> CompiledStateGraph:
     """Create the LangGraph graph powering the mock agent."""
+
+    def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
+        question = _extract_latest_question(state.get("messages"))
+        # docs = _build_document_candidates(question)
+        docs = vectorstore.similarity_search(question, k=5)
+        proposals = _build_proposal_candidates(question)
+        return {"documents": docs, "proposals": proposals}
 
     graph = StateGraph(RiskiAgentState)
     graph.add_node(_RETRIEVAL_NODE, _retrieve_documents)
@@ -166,10 +166,10 @@ def _build_riski_graph() -> CompiledStateGraph:
 
 
 @lru_cache(maxsize=1)
-def get_riski_agent() -> LangGraphAgent:
+def get_riski_agent(vectorstore) -> LangGraphAgent:
     """Return the cached riski agent"""
 
-    compiled_graph = _build_riski_graph()
+    compiled_graph = _build_riski_graph(vectorstore)
     return LangGraphAgent(
         name="RISKI mock agent",
         description="Placeholder riski agent till AGI is archieved",
