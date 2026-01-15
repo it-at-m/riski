@@ -309,6 +309,7 @@ name = "core"
 version = "0.1.0"
 source = { directory = "../riski-core" }
 dependencies = [
+    { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -318,6 +319,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "pgvector", specifier = "<0.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
