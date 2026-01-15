@@ -6,11 +6,11 @@ from typing import List, TypeVar, overload
 from sqlalchemy import inspect
 from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
-from src.logtools import getLogger
 
 from core.db.db import get_session
 from core.db.file_id_collector import collect_file_id
 from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, File, Keyword, Paper, Person
+from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)

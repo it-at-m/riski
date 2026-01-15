@@ -15,8 +15,9 @@ from src.extractor.city_council_motion_extractor import CityCouncilMotionExtract
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.filehandler.confidential_file_deleter import ConfidentialFileDeleter
 from src.filehandler.filehandler import Filehandler
-from src.logtools import getLogger
 from src.version import get_version
+
+from src.logtools import getLogger
 
 config: Config
 logger: Logger
