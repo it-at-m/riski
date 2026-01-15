@@ -3,8 +3,10 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 
+from core.settings.base import AppBaseSettings
 
-class Settings(BaseSettings):
+
+class Settings(AppBaseSettings):
     """
     Application settings for the  riski-backend.
     """
