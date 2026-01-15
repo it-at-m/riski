@@ -17,5 +17,5 @@ if __name__ == "__main__":
     logger: Logger = getLogger("riski-backend")
     config: Settings = get_settings()
     logger.info("Starting application")
-    logger.info(config.model_dump())
+    logger.info(config.model_dump(mode="json"))
     uvicorn.run(backend, host="0.0.0.0", port=8080, log_config="logconf.yaml")
