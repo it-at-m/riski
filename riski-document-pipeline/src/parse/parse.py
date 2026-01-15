@@ -16,24 +16,33 @@ def run_ocr_for_documents(settings):
     api_key = settings.openai_api_key
     server_url = settings.openai_api_base
     client = Mistral(api_key=api_key, server_url=server_url)
-
-    LOCAL_TEST = False
-    if LOCAL_TEST:
-        # Process only first 2 for testing
-        NUM_DOCS_TO_PROCESS = 2
+    ocr_model = settings.ocr_model_name
+    max_docs = settings.max_documents_to_process
+    if max_docs is not None and max_docs <= 0:
+        logger.info("max_documents_to_process is %s; skipping OCR run.", max_docs)
+        return
 
     with _get_session_ctx() as session:
         # Query documents which haven't had OCR yet TODO: replace with kafka consumer
         docs = session.exec(select(File).where(File.content != None, File.text == None)).all()  # noqa: E711
         logger.info(f"Found {len(docs)} documents to process.")
-        for doc in docs[:NUM_DOCS_TO_PROCESS] if LOCAL_TEST else docs:
+
+        docs_to_process = docs if max_docs is None else docs[:max_docs]
+        if max_docs is not None:
+            logger.info(
+                "Processing up to %s documents (actual: %s)",
+                max_docs,
+                len(docs_to_process),
+            )
+
+        for doc in docs_to_process:
             logger.debug(f"Processing doc id={doc.id}")
             pages_text = []
             for pdf_chunk in chunk_pdf_into_max_page_blocks(doc.content, chunk_size=30):
                 base64_pdf = base64.b64encode(pdf_chunk).decode("utf-8")
                 try:
                     resp = client.ocr.process(
-                        model="mistral-document-ai-2505",
+                        model=ocr_model,
                         document={"type": "document_url", "document_url": f"data:application/pdf;base64,{base64_pdf}"},
                     )
                     chunk_pages_text = [page.markdown for page in resp.pages]
