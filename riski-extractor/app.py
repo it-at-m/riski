@@ -17,8 +17,9 @@ from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.filehandler.confidential_file_deleter import ConfidentialFileDeleter
 from src.filehandler.filehandler import Filehandler
 from src.kafka.security import setup_security
-from src.logtools import getLogger
 from src.version import get_version
+
+from src.logtools import getLogger
 
 config: Config
 logger: Logger

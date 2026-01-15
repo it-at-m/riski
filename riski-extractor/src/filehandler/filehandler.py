@@ -10,6 +10,7 @@ from core.model.data_models import File
 from faststream.kafka import KafkaBroker
 from httpx import AsyncClient
 from src.kafka.message import Message
+
 from src.logtools import getLogger
 
 config: Config = get_config()
