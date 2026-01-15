@@ -1,10 +1,10 @@
 # ruff: noqa: E402
 from logging import Logger, getLogger
-from app.core.settings import get_settings, Settings
+
 import uvicorn
+from app.core.settings import Settings, get_settings
 from dotenv import load_dotenv
 from truststore import inject_into_ssl
-
 
 load_dotenv()
 inject_into_ssl()

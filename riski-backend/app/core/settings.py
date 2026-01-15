@@ -4,7 +4,6 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
 
 
-
 class Settings(BaseSettings):
     """
     Application settings for the  riski-backend.
@@ -46,7 +45,7 @@ class Settings(BaseSettings):
         validation_alias="LANGFUSE_SECRET_KEY",
         description="Secret Key for Langfuse",
     )
-    langfuse_public_key: SecretStr | None= Field(
+    langfuse_public_key: SecretStr | None = Field(
         default=None,
         validation_alias="LANGFUSE_PUBLIC_KEY",
         description="Public Key for Langfuse",
@@ -106,7 +105,6 @@ class Settings(BaseSettings):
             YamlConfigSettingsSource(settings_cls),
             dotenv_settings,
         )
-
 
 
 @lru_cache(maxsize=1)
