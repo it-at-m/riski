@@ -9,7 +9,6 @@ dependencies = [
     "truststore>=0.10.4",
     "core",
     "langchain-postgres>=0.0.16",
-    "langchain-openai>=1.1.7",
     "langchain-text-splitters>=1.1.0",
 ]
 

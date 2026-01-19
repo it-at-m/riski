@@ -1,6 +1,6 @@
 from core.db.db_access import _get_session_ctx
+from core.lm.helper import create_embedding_model
 from core.model.data_models import File
-from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import TokenTextSplitter
 from sqlmodel import select
 
@@ -10,14 +10,7 @@ logger = getLogger()
 
 
 def embed_documents(settings):
-    api_key = settings.openai_api_key
-    server_url = settings.openai_api_base
-    embedding_model = OpenAIEmbeddings(
-        model=settings.core.lm.embedding_model,
-        base_url=server_url,
-        api_key=api_key,
-        dimensions=settings.core.lm.embedding_dimension,
-    )
+    embedding_model = create_embedding_model(settings)
 
     with _get_session_ctx() as session:
         # TODO: add chunking
