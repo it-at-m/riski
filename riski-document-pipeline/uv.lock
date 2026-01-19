@@ -146,6 +146,7 @@ name = "core"
 version = "0.1.0"
 source = { directory = "../riski-core" }
 dependencies = [
+    { name = "langchain-openai" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic", extra = ["email"] },
@@ -156,6 +157,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "langchain-openai", specifier = ">=1.1.7" },
     { name = "pgvector", specifier = "<0.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
@@ -219,7 +221,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "core" },
-    { name = "langchain-openai" },
     { name = "langchain-postgres" },
     { name = "langchain-text-splitters" },
     { name = "mistralai" },
@@ -240,7 +241,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "core", directory = "../riski-core" },
-    { name = "langchain-openai", specifier = ">=1.1.7" },
     { name = "langchain-postgres", specifier = ">=0.0.16" },
     { name = "langchain-text-splitters", specifier = ">=1.1.0" },
     { name = "mistralai", specifier = ">=1.9.11" },

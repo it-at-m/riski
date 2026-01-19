@@ -26,7 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 pgvector = [
     "asyncpg==0.30.0",
-    "langchain-postgres==0.0.15",
+    "langchain-postgres>=0.0.15",
 ]
 
 [dependency-groups]
