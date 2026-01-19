@@ -39,6 +39,11 @@ jobs:
       RISKI_EXTRACTOR__TEST__DB_PASSWORD: postgres
       RISKI_EXTRACTOR__TEST__DB_HOSTNAME: localhost
       RISKI_EXTRACTOR__TEST__DB_PORT: "5432"
+      OPENAI_API_KEY: example
+      OPENAI_API_BASE: https://example.de
+      OPENAI_API_VERSION: 2024-08-01-preview
+      TIKTOKEN_CACHE_DIR: tiktoken_cache
+      RISKI_OPENAI_EMBEDDING_MODEL: text-embedding-3-large
 
     defaults:
       run:
