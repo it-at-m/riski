@@ -6,17 +6,16 @@ from pathlib import Path
 from ssl import SSLContext, create_default_context
 from tempfile import TemporaryDirectory
 
-from config.config import Config, get_config
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 from faststream.security import BaseSecurity
+
 from src.logtools import getLogger
 
 logger: Logger = getLogger(__name__)
-config: Config = get_config()
 
 
-def setup_security() -> BaseSecurity:
+def setup_security(kafka_pkcs12_data: str, kafka_pkcs12_pw: str, kafka_ca_b64: str) -> BaseSecurity:
     """Set up Kafka security configuration based on application settings.
 
     Returns:
@@ -29,16 +28,17 @@ def setup_security() -> BaseSecurity:
     with TemporaryDirectory() as tempdir:
         tempdir_path: Path = Path(tempdir)
         logger.debug("Setting up Kafka mTLS security using environment variables.")
+
         # Unpack CA file
-        ca_data: str | None = config.kafka_ca_b64
+        ca_data: str | None = kafka_ca_b64
         ca_data = b64decode(s=ca_data).decode(encoding="utf-8")
 
         # Unpack PKCS#12 file
-        pkcs12_data: str | None = config.kafka_pkcs12_data
+        pkcs12_data: str | None = kafka_pkcs12_data
         pkcs12_bytes = b64decode(s=pkcs12_data)
 
         # Unpack PKCS#12 password
-        pkcs12_pw: str | None = config.kafka_pkcs12_pw
+        pkcs12_pw: str | None = kafka_pkcs12_pw
         pkcs12_pw_bytes: bytes = b64decode(s=pkcs12_pw)
 
         # Extract the private key and certificate from the PKCS#12 file

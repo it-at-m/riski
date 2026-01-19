@@ -98,7 +98,7 @@ class Filehandler:
             msg = Message(content=str(file.db_id))
             self.logger.debug(f"Publishing: {msg}.")
             try:
-                await self.broker.publish(msg, topic=config.kafka_topic)
+                await self.broker.publish(msg, topic=config.core.kafka.topic)
                 self.logger.debug(f"Published: {msg}.")
             except Exception as e:
                 # If Kafka Broker is unavailable rollback the file download to ensure

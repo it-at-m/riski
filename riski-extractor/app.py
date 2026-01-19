@@ -6,6 +6,7 @@ from logging import Logger
 from config.config import Config, get_config
 from core.db.db import create_db_and_tables, init_db
 from core.db.db_access import update_or_insert_objects_to_database
+from core.kafka.security import setup_security
 from core.model.data_models import ExtractArtifact
 from faststream.kafka import KafkaBroker
 from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
@@ -16,7 +17,6 @@ from src.extractor.city_council_motion_extractor import CityCouncilMotionExtract
 from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
 from src.filehandler.confidential_file_deleter import ConfidentialFileDeleter
 from src.filehandler.filehandler import Filehandler
-from src.kafka.security import setup_security
 from src.version import get_version
 
 from src.logtools import getLogger
@@ -112,9 +112,9 @@ async def main():
 
 
 async def createKafkaBroker(config: Config, logger: Logger) -> KafkaBroker:
-    security = setup_security()
+    security = setup_security(config.core.kafka.pkcs12_data, config.core.kafka.pkcs12_pw, config.core.kafka.ca_b64)
     # Kafka Broker and FastStream app setup
-    broker = KafkaBroker(bootstrap_servers=config.kafka_server, security=security)
+    broker = KafkaBroker(bootstrap_servers=config.core.kafka.server, security=security)
     logger.debug("Connecting to Broker...")
     try:
         await broker.connect()
