@@ -29,11 +29,16 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
-      DB_NAME: test_db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOSTNAME: localhost
-      DB_PORT: "5432"
+      RISKI__DB__NAME: test_db
+      RISKI__DB__PASSWORD: password
+      RISKI__DB__USER: postgres
+      RISKI__DB__HOSTNAME: localhost
+      RISKI__DB__PORT: 5432
+      RISKI_EXTRACTOR__TEST__DB_NAME: test_db
+      RISKI_EXTRACTOR__TEST__DB_USER: postgres
+      RISKI_EXTRACTOR__TEST__DB_PASSWORD: postgres
+      RISKI_EXTRACTOR__TEST__DB_HOSTNAME: localhost
+      RISKI_EXTRACTOR__TEST__DB_PORT: "5432"
 
     defaults:
       run:
