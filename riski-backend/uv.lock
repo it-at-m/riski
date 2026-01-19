@@ -169,7 +169,6 @@ name = "core"
 version = "0.1.0"
 source = { directory = "../riski-core" }
 dependencies = [
-    { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -179,7 +178,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "pgvector", specifier = "<0.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
@@ -1029,6 +1027,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "langchain-postgres" },
     { name = "pydantic" },
@@ -1056,6 +1055,7 @@ requires-dist = [
     { name = "cryptography", specifier = "==46.0.3" },
     { name = "fastapi", specifier = "==0.120.2" },
     { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-core", specifier = "==1.2.7" },
     { name = "langchain-openai", specifier = "==1.1.7" },
     { name = "langchain-postgres", specifier = "==0.0.16" },
     { name = "pydantic", specifier = "==2.12.4" },

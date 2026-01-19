@@ -33,6 +33,7 @@ async def lifespan(app: FastAPI):
         metadata_columns=["id", "name"],
     )
     yield
+    pg_engine.close()
 
 
 backend = FastAPI(
