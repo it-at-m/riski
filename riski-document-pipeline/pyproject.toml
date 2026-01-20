@@ -8,6 +8,7 @@ dependencies = [
     "mistralai>=1.9.11",
     "truststore>=0.10.4",
     "core",
+    "pypdf>=6.6.0",
 ]
 
 [dependency-groups]

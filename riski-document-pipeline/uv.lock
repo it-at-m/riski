@@ -193,6 +193,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "core" },
     { name = "mistralai" },
+    { name = "pypdf" },
     { name = "truststore" },
 ]
 
@@ -211,6 +212,7 @@ dev = [
 requires-dist = [
     { name = "core", directory = "../riski-core" },
     { name = "mistralai", specifier = ">=1.9.11" },
+    { name = "pypdf", specifier = ">=6.6.0" },
     { name = "truststore", specifier = ">=0.10.4" },
 ]
 
