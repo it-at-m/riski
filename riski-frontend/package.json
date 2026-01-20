@@ -9,7 +9,7 @@
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "4.0.3",
     "@muenchen/prettier-codeformat": "1.0.2",
-    "@tsconfig/node-lts": "22.0.2",
+    "@tsconfig/node-lts": "22.0.4",
     "@types/node": "22.14.0",
     "@vitejs/plugin-vue": "6.0.1",
     "@vue/eslint-config-prettier": "10.2.0",

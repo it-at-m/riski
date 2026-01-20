@@ -4,7 +4,7 @@ license = "MIT"
 version = "0.1.0"
 description = "Python backend for finding information in munich's political information system RIS"
 readme = "README.md"
-requires-python = "==3.13.10"
+requires-python = "==3.13.11"
 authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
     { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
@@ -26,7 +26,7 @@ dependencies = [
     "python-dotenv==1.2.1",
     "truststore==0.10.4",
     "ag-ui-langgraph==0.0.22",
-    "langfuse==3.10.5",
+    "pyyaml==6.0.3",
 ]
 
 [dependency-groups]

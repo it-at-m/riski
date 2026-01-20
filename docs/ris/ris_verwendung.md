@@ -39,7 +39,7 @@ Experience has shown that it is also incremented by 1 with every state-changing 
 However, we do know that the corresponding links can be found in the HTML of the page. This method can therefore be used to determine the currently valid and functioning URL.
 
 ```javascript
-Wicket.Event.add(window, "domready", function(event) { 
+Wicket.Event.add(window, "domready", function(event) {
 Wicket.Ajax.ajax({"u":"./uebersicht?9-2.0-form-periodeButton-periodenEintrag-0-periode","c":"id33","e":"click","pd":true});;
 Wicket.Ajax.ajax({"u":"./uebersicht?9-2.0-form-periodeButton-periodenEintrag-1-periode","c":"id34","e":"click","pd":true});;
 Wicket.Ajax.ajax({"u":"./uebersicht?9-2.0-form-periodeButton-periodenEintrag-2-periode","c":"id35","e":"click","pd":true});;

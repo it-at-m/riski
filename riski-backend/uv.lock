@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = "==3.13.10"
+requires-python = "==3.13.11"
 
 [[package]]
 name = "ag-ui-langgraph"
@@ -937,6 +937,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
+    { name = "pyyaml" },
     { name = "truststore" },
     { name = "uvicorn" },
 ]
@@ -961,6 +962,7 @@ requires-dist = [
     { name = "pydantic", specifier = "==2.12.4" },
     { name = "pydantic-settings", specifier = "==2.12.0" },
     { name = "python-dotenv", specifier = "==1.2.1" },
+    { name = "pyyaml", specifier = "==6.0.3" },
     { name = "truststore", specifier = "==0.10.4" },
     { name = "uvicorn", specifier = "==0.38.0" },
 ]

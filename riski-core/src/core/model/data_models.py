@@ -234,32 +234,32 @@ class MembershipKeyword(SQLModel, table=True):
 
 class FileDerivativeLink(SQLModel, table=True):
     __tablename__ = "file_derivative_link"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    derivative_file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True, ondelete="CASCADE")
+    derivative_file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True, ondelete="CASCADE")
 
 
 class FileMeetingLink(SQLModel, table=True):
     __tablename__ = "file_meeting"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True, ondelete="CASCADE")
+    meeting_id: uuid.UUID = Field(foreign_key="meeting.db_id", primary_key=True, ondelete="CASCADE")
 
 
 class FileAgendaItemLink(SQLModel, table=True):
     __tablename__ = "file_agenda"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    agendaItem: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True, ondelete="CASCADE")
+    agendaItem: uuid.UUID = Field(foreign_key="agenda_item.db_id", primary_key=True, ondelete="CASCADE")
 
 
 class FileKeywordLink(SQLModel, table=True):
     __tablename__ = "file_keyword"
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
-    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True)
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True, ondelete="CASCADE")
+    keyword_id: uuid.UUID = Field(foreign_key="keyword.db_id", primary_key=True, ondelete="CASCADE")
 
 
 class PaperFileLink(SQLModel, table=True):
     __tablename__ = "paper_file"
-    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True)
-    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True)
+    paper_id: uuid.UUID = Field(foreign_key="paper.db_id", primary_key=True, ondelete="CASCADE")
+    file_id: uuid.UUID = Field(foreign_key="file.db_id", primary_key=True, ondelete="CASCADE")
 
 
 class AgendaItemKeywordLink(SQLModel, table=True):
@@ -552,6 +552,7 @@ class AgendaItem(RIS_NAME_OBJECT, table=True):
         None,
         description="File containing the resolution, if a resolution was made in this agenda item.",
         foreign_key="file.db_id",
+        ondelete="SET NULL",
     )
     start: datetime | None = Field(None, description="Date and time of the start point of the agenda item.")
     end: datetime | None = Field(None, description="End point of the agenda item as date/time.")
@@ -571,11 +572,13 @@ class Paper(RIS_NAME_OBJECT, table=True):
     short_information: str | None = Field(None, description="Short Information of Paper")
     subject: str | None = Field(None, description="Description of Paper")
     date: datetime | None = Field(None, description="Date used as a reference point for deadlines, etc.")
-    mainFile: uuid.UUID | None = Field(
+    mainFile_id: uuid.UUID | None = Field(
         None,
         description="The main file for this paper. Example: The paper represents a resolution proposal and the main file contains the text of the resolution proposal. Should not be output if there is no unique main file.",
         foreign_key="file.db_id",
+        ondelete="SET NULL",
     )
+    mainFile: "File" = Relationship()
     description: str | None = Field(None, description="Short description von RIS page.")
     auxiliary_files: list["File"] = Relationship(back_populates="papers", link_model=PaperFileLink)
     related_papers: list["Paper"] = Relationship(
@@ -691,16 +694,20 @@ class Meeting(RIS_NAME_OBJECT, table=True):
         None,
         description="End point of the meeting as date/time. For a future meeting, this is the planned time; for a past meeting, it can be the actual end time.",
     )
-    invitation: uuid.UUID | None = Field(None, description="Invitation document for the meeting.", foreign_key="file.db_id")
+    invitation: uuid.UUID | None = Field(
+        None, description="Invitation document for the meeting.", foreign_key="file.db_id", ondelete="SET NULL"
+    )
     resultsProtocol: uuid.UUID | None = Field(
         None,
         description="Results protocol for the meeting. This property can only occur after the meeting has taken place.",
         foreign_key="file.db_id",
+        ondelete="SET NULL",
     )
     verbatimProtocol: uuid.UUID | None = Field(
         None,
         description="Verbatim protocol for the meeting. This property can only occur after the meeting has taken place.",
         foreign_key="file.db_id",
+        ondelete="SET NULL",
     )
     organizations: list["Organization"] = Relationship(back_populates="meetings", link_model=MeetingOrganizationLink)
     participants: list["Person"] = Relationship(back_populates="meetings", link_model=MeetingParticipantLink)

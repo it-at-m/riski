@@ -1,0 +1,17 @@
+[project]
+name = "core"
+version = "0.1.0"
+description = "Riski core for shared functionality like data model, db access, etc."
+readme = "README.md"
+requires-python = "==3.13.9"
+dependencies = [
+    "sqlalchemy>=2.0.42",
+    "sqlmodel>=0.0.24",
+    "psycopg[binary,pool]>=3.2.9",
+    "pydantic[email]>=2.11.7",
+    "pydantic-settings>=2.10.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"

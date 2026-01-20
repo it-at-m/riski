@@ -2,7 +2,7 @@ volumes:
   riskidata:
 services:
   db:
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
     container_name: pgvector-db
     environment:
       POSTGRES_USER: postgres
@@ -13,12 +13,12 @@ services:
     volumes:
       - riskidata:/var/lib/postgresql/data
   adminer:
-    image: adminer
+    image: adminer@sha256:3bce505927f115e80dedfa3be4c2a7c79226ae8b1994fd5bf7517d83bb8abf60
     restart: always
     ports:
       - 8080:8080
   kafka:
-    image: apache/kafka:4.1.0
+    image: apache/kafka:4.1.1@sha256:0bc1bb2478f45b6cea78864df86acdc11e8df2c5172477819a4d12942cbe5d40
     ports:
       - "9092:9092"
     environment:
@@ -45,7 +45,7 @@ services:
   # run topic creation with `podman compose --profile init up` or as single service when kafka was already started
   # creates example topic, corresponding dlq and managment topic for group tracking
   topic-init:
-    image: apache/kafka:4.1.0
+    image: apache/kafka:4.1.1@sha256:0bc1bb2478f45b6cea78864df86acdc11e8df2c5172477819a4d12942cbe5d40
     profiles: ["init"]
     depends_on:
       kafka:

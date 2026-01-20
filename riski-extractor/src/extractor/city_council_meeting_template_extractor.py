@@ -1,6 +1,6 @@
 from config.config import Config, get_config
+from core.model.data_models import Paper
 
-from src.data_models import Paper
 from src.extractor.base_extractor import BaseExtractor
 from src.parser.city_council_meeting_template_parser import CityCouncilMeetingTemplateParser
 
