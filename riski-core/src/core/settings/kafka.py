@@ -14,13 +14,19 @@ class KafkaSettings(BaseModel):
         default="lhm-riski-parse",
         description="Kafka Topic Name",
     )
-    ca_b64: str = Field(
+    security: bool = Field(
+        description="Enable mTLS security for accessing Kafka Server",
+    )
+    ca_b64: str | None = Field(
+        default=None,
         description="Kafka Server CA (B64 Encoded)",
     )
-    pkcs12_data: str = Field(
+    pkcs12_data: str | None = Field(
+        default=None,
         description="Kafka P12 (B64 Encoded)",
     )
-    pkcs12_pw: str = Field(
+    pkcs12_pw: str | None = Field(
+        default=None,
         description="Kafka P12 Password (B64 Encoded)",
     )
 

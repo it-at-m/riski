@@ -112,7 +112,10 @@ async def main():
 
 
 async def createKafkaBroker(config: Config, logger: Logger) -> KafkaBroker:
-    security = setup_security(config.core.kafka.pkcs12_data, config.core.kafka.pkcs12_pw, config.core.kafka.ca_b64)
+    security = None
+    if config.core.kafka.security:
+        security = setup_security(config.core.kafka.pkcs12_data, config.core.kafka.pkcs12_pw, config.core.kafka.ca_b64)
+
     # Kafka Broker and FastStream app setup
     broker = KafkaBroker(bootstrap_servers=config.core.kafka.server, security=security)
     logger.debug("Connecting to Broker...")
