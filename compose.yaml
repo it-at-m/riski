@@ -58,8 +58,10 @@ services:
       "
   backend:
     build:
-      context: ../riski-backend
+      context: riski-backend
       dockerfile: Dockerfile
+      args:
+        - HTTPS_PROXY=${HTTPS_PROXY}
     env_file:
       - ./.env
     ports:
@@ -95,7 +97,7 @@ services:
 
   frontend:
     build:
-      context: ../riski-frontend
+      context: riski-frontend
       dockerfile: Dockerfile
       args:
         - HTTPS_PROXY=${HTTPS_PROXY}
