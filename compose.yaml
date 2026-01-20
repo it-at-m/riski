@@ -66,6 +66,8 @@ services:
       - ./.env
     ports:
       - "39146:8080"
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:8000/api/healthz"]
 
@@ -79,13 +81,13 @@ services:
       - ALLOWED_ORIGINS_PUBLIC=http://localhost:*
       - ALLOWED_ORIGINS_CLIENTS=http://localhost:*
       - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=backend
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://core-service:8000/
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/backend/**
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/api/backend/(?<urlsegments>.*), /api/$\{urlsegments}
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://backend:8080/
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/api/(?<urlsegments>.*), /api/$\{urlsegments}
       - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=frontend
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://frontend:8080/
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://frontend:80/
       - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/**
-      - SPRING_PROFILES_ACTIVE=hazelcast-local
+      - SPRING_PROFILES_ACTIVE=no-security,hazelcast-local
     networks:
       - internal
     extra_hosts:
@@ -102,7 +104,7 @@ services:
       args:
         - HTTPS_PROXY=${HTTPS_PROXY}
     ports:
-      - "8081:8080"
+      - "8081:80"
     networks:
       - internal
 
