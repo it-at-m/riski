@@ -79,7 +79,7 @@ async def main():
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
 
     async with Filehandler() as filehandler:
-        await filehandler.download_and_persist_files()
+        await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
