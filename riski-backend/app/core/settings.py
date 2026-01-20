@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field, SecretStr
 from pydantic_settings import SettingsConfigDict
@@ -13,33 +14,6 @@ class Settings(AppBaseSettings):
 
     version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
-
-    # === LLM Settings ===
-    llm_api_key: SecretStr = Field(
-        default="DUMMY FOR GITHUBACTION",
-        validation_alias="OPENAI_API_KEY",
-        description="API key for OpenAI",
-    )
-    llm_api_base: str | None = Field(
-        default=None,
-        validation_alias="OPENAI_API_BASE",
-        description="Base URL for OpenAI API",
-    )
-    llm_api_version: str | None = Field(
-        default=None,
-        validation_alias="OPENAI_API_VERSION",
-        description="Version of the OpenAI API to use",
-    )
-    tiktoken_cache_dir: str = Field(
-        default="tiktoken_cache",
-        validation_alias="TIKTOKEN_CACHE_DIR",
-        description="Directory to store tiktoken cache",
-    )
-    riski_llm_embedding_model: str = Field(
-        default="text-embedding-3-large",
-        validation_alias="RISKI_OPENAI_EMBEDDING_MODEL",
-        description="OpenAI embedding model to use",
-    )
 
     # === Langfuse Settings ===
     langfuse_secret_key: SecretStr | None = Field(
@@ -77,8 +51,8 @@ class Settings(AppBaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        env_prefix="RISKI_BACKEND_",
-        env_file=".env",
+        env_prefix="RISKI_BACKEND__",
+        env_file=str(Path(__file__).resolve().parents[3] / ".env"),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         env_nested_delimiter="__",

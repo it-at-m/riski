@@ -2,15 +2,8 @@
 from logging import Logger, getLogger
 
 import uvicorn
-from app.core.settings import Settings, get_settings
-from dotenv import load_dotenv
-from truststore import inject_into_ssl
-
-load_dotenv()
-inject_into_ssl()
-
-
 from app.backend import backend
+from app.core.settings import Settings, get_settings
 
 if __name__ == "__main__":
     """Runs the application."""
