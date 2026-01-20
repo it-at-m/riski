@@ -3,9 +3,14 @@ from datetime import datetime
 from enum import Enum
 from typing import Union
 
+from pgvector.sqlalchemy import Vector
 from pydantic import BaseModel
-from sqlalchemy import JSON, String
+from sqlalchemy import JSON, String  # , Computed
+
+# from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlmodel import Column, Field, Relationship, SQLModel
+
+VECTOR_DIM = 3072
 
 
 ##############################################
@@ -512,6 +517,24 @@ class File(RIS_NAME_OBJECT, table=True):
         None,
         description="License under which the file is offered. If this property is not used, the value of license or the license of a parent object is decisive.",
     )
+    # Embedding column (pgvector)
+    embed: list[float] | None = Field(
+        default=None,
+        sa_column=Column("embed", Vector(VECTOR_DIM), nullable=True),
+    )
+    # TODO: add field for hybrid search
+    # stored/generated tsvector on name + text for hybrid search
+    # TODO: read German from same setting as hybrid search config
+    # hybrid_tsv = Field(
+    #     sa_column=Column(
+    #         "hybrid_tsv",
+    #         TSVECTOR,
+    #         Computed(
+    #             "to_tsvector('pg_catalog.german', coalesce(name,'') || ' ' || coalesce(text,''))",
+    #             persisted=True,
+    #         ),
+    #     )
+    # )
     derivative_files: list["File"] = Relationship(
         link_model=FileDerivativeLink,
         sa_relationship_kwargs={
