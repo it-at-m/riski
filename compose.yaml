@@ -12,6 +12,11 @@ services:
       - "5432:5432"
     volumes:
       - riskidata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   adminer:
     image: adminer@sha256:3bce505927f115e80dedfa3be4c2a7c79226ae8b1994fd5bf7517d83bb8abf60
     restart: always
@@ -56,6 +61,40 @@ services:
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic my-topic-dlq --partitions 1 --replication-factor 1 || true &&
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic __consumer_offsets --partitions 50 --replication-factor 1 --config cleanup.policy=compact || true
       "
+
+  # run data extraction with `podman compose --profile init up`
+  # seeds the database with sample entities and files from the configured RIS endpoint
+  extractor:
+    build:
+      context: .
+      dockerfile: riski-extractor/Dockerfile
+      args:
+        - HTTPS_PROXY=${HTTPS_PROXY}
+    profiles: ["init"]
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # run document processing with `podman compose --profile init up`
+  # processes file blobs with OCR and stores extracted markdown back to the database
+  document-pipeline:
+    build:
+      context: .
+      dockerfile: riski-document-pipeline/Dockerfile
+      args:
+        - HTTPS_PROXY=${HTTPS_PROXY}
+    profiles: ["init"]
+    env_file:
+      - ./.env
+    volumes:
+      - ./ca-bundle.crt:/etc/ssl/certs/ca-bundle.crt:ro
+    depends_on:
+      extractor:
+        condition: service_completed_successfully
+    restart: "no"
   backend:
     build:
       context: riski-backend

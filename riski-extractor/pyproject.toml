@@ -19,14 +19,16 @@ dependencies = [
     "gitpython>=3.1.45",
     "pyyaml>=6.0.2",
     "stamina>=25.1.0",
+    "httpx>=0.28.1",
     "core",
     "legacy-cgi>=2.6.4",
+    "bs4>=0.0.2",
 ]
 
 [project.optional-dependencies]
 pgvector = [
     "asyncpg==0.30.0",
-    "langchain-postgres==0.0.15",
+    "langchain-postgres>=0.0.15",
 ]
 
 [dependency-groups]

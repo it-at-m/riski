@@ -76,29 +76,26 @@ podman compose up -d
 
 Defaults for Postgres (from `compose.yaml`): user `postgres`, password `password`, database `example_db`, exposed on `5432`.
 
-### 2) Seed data with the extractor
+### 2) (Optional) Seed with sample data
 
-The document pipeline expects data already ingested by the extractor. Run it once to create the schema and insert sample entities/files (honors your `.env`, e.g., date range and base URL):
-
-```powershell
-cd riski-extractor
-uv run python app.py
-```
-
-### 3) (Optional) Run the document pipeline
-
-This reads file blobs from the database, runs OCR, and writes extracted Markdown back to the same DB. Configure OCR-related variables (for example `RISKI__DOCUMENTS__MAX_DOCUMENTS_TO_PROCESS`, `RISKI__DOCUMENTS__OCR_MODEL_NAME`, OpenAI credentials) in your `.env`, then:
+To populate the database with sample data from Munich's RIS and process documents with OCR, run the initialization services:
 
 ```powershell
-cd riski-document-pipeline
-uv run python main.py
+podman compose --profile init up
 ```
 
-Adminer is available on [http://localhost:8080](http://localhost:8080) if you want to inspect the database contents.
+This will:
 
-### 4) Access the frontend
+- Create necessary Kafka topics
+- Extract sample entities and files from the configured RIS endpoint (honors your `.env`, e.g., date range and base URL)  
+- Run OCR on documents and store extracted markdown (configure OCR variables like `RISKI__DOCUMENTS__MAX_DOCUMENTS_TO_PROCESS` and `RISKI__DOCUMENTS__OCR_MODEL_NAME` in your `.env`)
 
-Once the stack is up and the database populated, open [http://localhost:8083/](http://localhost:8083/) to reach the frontend via the refarch gateway.
+### 3) Access the application
+
+Once the stack is running, visit:
+
+- **Frontend**: [http://localhost:8083/](http://localhost:8083/) (via the refarch gateway)
+- **Database UI**: [http://localhost:8080](http://localhost:8080) (Adminer for inspecting database contents)
 
 ## Roadmap
 

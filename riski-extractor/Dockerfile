@@ -1,45 +1,32 @@
-
-FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest
 
 USER root
+RUN microdnf install -y glibc-all-langpacks && microdnf clean all
+RUN mkdir -p /home/app && chown -R 1000:0 /home/app
 
-RUN microdnf install glibc-all-langpacks -y && \
-    microdnf clean all
-USER 1000
+ENV HOME=/home/app
 ENV LANG=de_DE.UTF-8 \
     LC_ALL=de_DE.UTF-8 \
     LANGUAGE=de_DE:de
 
-# Test
 RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-ENV UV_PROJECT_ENVIRONMENT=system
 
-# Install the project into `/app`
-WORKDIR /app/extractor
-
-# Enable bytecode compilation
+WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
 # Leverage layer cache
 COPY riski-extractor/pyproject.toml riski-extractor/uv.lock ./
 COPY riski-core/pyproject.toml /app/riski-core/
 
-# Install the transitive dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev --locked --no-install-local
-
-# Copy the application files
+WORKDIR /app/extractor
 COPY riski-extractor /app/extractor/
 COPY riski-core /app/riski-core/
 
-# Install the project
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,target=/home/app/.cache/uv \
     uv sync --no-dev --locked
 
 # Metadata for the image
@@ -58,21 +45,6 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.title='riski-extractor' \
     org.opencontainers.image.description="Python application for extracting information from munich's political information system RIS"
 
-# Give permissions to all so random UID can write
-# This should be compatible with OpenShift and plain K8s
-RUN chown -R root:0 /app && chmod -R g=u /app
+ENV PATH="/app/extractor/.venv/bin:$PATH"
 
-# Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Disable tqdm for cleaner logs
-ENV TQDM_DISABLE=1
-ENV HF_HUB_DISABLE_PROGRESS_BARS=1
-
-# Disable python warnings
-ENV PYTHONWARNINGS="ignore"
-
-ENV APP_VERSION=${IMAGE_VERSION}
-
-# Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT ["python", "app.py"]
