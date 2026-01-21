@@ -15,6 +15,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 
 WORKDIR /app
+# Give permissions to all so random UID can write
+# This should be compatible with OpenShift and plain K8s
+RUN chown -R root:0 /app && chmod -R g=u /app
+
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
