@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from app.api.routers.ag_ui import router as ag_ui_router
 from app.api.routers.system import router as systems_router
 from app.core.settings import get_settings
+from core.lm.helper import create_embedding_model
 from fastapi import FastAPI
-from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGEngine, PGVectorStore
 
 settings = get_settings()
@@ -15,14 +15,7 @@ docs_enabled = settings.enable_docs
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     pg_engine = PGEngine.from_connection_string(url=str(settings.core.db.async_database_url))
-    api_key = settings.openai_api_key
-    server_url = settings.openai_api_base
-    embedding_model = OpenAIEmbeddings(
-        model=settings.core.lm.embedding_model,
-        base_url=server_url,
-        api_key=api_key,
-        dimensions=settings.core.lm.embedding_dimension,
-    )
+    embedding_model = create_embedding_model(settings)
     app.state.vectorstore = await PGVectorStore.create(
         engine=pg_engine,
         table_name="file",
