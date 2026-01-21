@@ -1,6 +1,5 @@
 # Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
-
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install the project into `/app`
@@ -17,7 +16,6 @@ COPY riski-document-pipeline/pyproject.toml riski-document-pipeline/uv.lock /app
 COPY riski-core/pyproject.toml /app/riski-core/
 
 WORKDIR /app/document-pipeline
-
 
 COPY riski-document-pipeline/ /app/document-pipeline/
 COPY riski-core/ /app/riski-core/
@@ -55,5 +53,4 @@ ENV PYTHONWARNINGS="ignore"
 
 ENV APP_VERSION=${IMAGE_VERSION}
 
-WORKDIR /app/document-pipeline
 ENTRYPOINT ["python", "main.py"]
