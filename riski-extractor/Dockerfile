@@ -20,7 +20,7 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-COPY riski-extractor/pyproject.toml riski-extractor/uv.lock ./
+COPY riski-extractor/pyproject.toml riski-extractor/uv.lock /app/extractor/
 COPY riski-core/pyproject.toml /app/riski-core/
 
 WORKDIR /app/extractor
