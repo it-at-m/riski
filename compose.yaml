@@ -108,7 +108,7 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "curl http://localhost:8000/api/healthz"]
+      test: ["CMD-SHELL", "curl http://localhost:8080/api/healthz"]
 
   refarch-gateway:
     image: ghcr.io/it-at-m/refarch/refarch-gateway:1.7.0@sha256:3f82ab83c212ca53c9c2b606cfe29291f21525eac86fece215d0e1c6ca51273f
