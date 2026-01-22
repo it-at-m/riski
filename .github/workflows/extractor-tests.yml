@@ -12,9 +12,10 @@ permissions:
 jobs:
   extractor-tests:
     runs-on: ubuntu-latest
+
     services:
       postgres:
-        image: postgres:17
+        image: pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -29,15 +30,10 @@ jobs:
 
     env:
       RISKI__DB__NAME: test_db
-      RISKI__DB__PASSWORD: password
       RISKI__DB__USER: postgres
+      RISKI__DB__PASSWORD: postgres
       RISKI__DB__HOSTNAME: localhost
       RISKI__DB__PORT: 5432
-      RISKI_EXTRACTOR__TEST__DB_NAME: test_db
-      RISKI_EXTRACTOR__TEST__DB_USER: postgres
-      RISKI_EXTRACTOR__TEST__DB_PASSWORD: postgres
-      RISKI_EXTRACTOR__TEST__DB_HOSTNAME: localhost
-      RISKI_EXTRACTOR__TEST__DB_PORT: "5432"
       OPENAI_API_KEY: example
       OPENAI_API_BASE: https://example.de
       OPENAI_API_VERSION: 2024-08-01-preview
@@ -47,6 +43,7 @@ jobs:
     defaults:
       run:
         working-directory: riski-extractor
+
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -63,6 +60,27 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --group dev
+
+      - name: Install Postgres client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Enable pgvector extension
+        env:
+          PGPASSWORD: postgres
+        run: |
+          echo "Waiting for Postgres..."
+          for i in {1..30}; do
+            if psql -h localhost -U postgres -d test_db -c "SELECT 1;" >/dev/null 2>&1; then
+              echo "Postgres is up."
+              break
+            fi
+            sleep 1
+          done
+
+          psql -h localhost -U postgres -d test_db -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS vector;"
+          psql -h localhost -U postgres -d test_db -c "SELECT extname, extversion FROM pg_extension WHERE extname='vector';"
 
       - name: Run extractor tests
         run: uv run pytest
