@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -28,7 +28,6 @@ jobs:
           --health-retries=20
 
     env:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/test_db
       RISKI__DB__NAME: test_db
       RISKI__DB__PASSWORD: password
       RISKI__DB__USER: postgres
