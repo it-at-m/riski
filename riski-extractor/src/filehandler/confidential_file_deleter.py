@@ -20,9 +20,9 @@ class ConfidentialFileDeleter:
         doc_ids = get_all_found_file_ids()
         limit = self.config.core.db.batch_size
         offset = 0
+        file_ids_to_delete = []
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=limit)
-
             if not files:
                 break
 
@@ -30,8 +30,11 @@ class ConfidentialFileDeleter:
                 if not file.modified:
                     continue
 
-                if file.id not in doc_ids and datetime.datetime.strptime(self.config.start_date, "%Y-%m-%d") < file.modified:
-                    remove_object_by_id(file.id, File)
-                    self.logger.info(f"Deleted File: {file.id}")
+                if file.id not in doc_ids and datetime.datetime.strptime(self.config.start_date, "%Y-%m-%d").date() <= file.modified.date():
+                    file_ids_to_delete.append(file.id)
+                    self.logger.info(f"Marked File {file.id} for deletion")
 
             offset += limit
+
+        for id in file_ids_to_delete:
+            remove_object_by_id(id, File)
