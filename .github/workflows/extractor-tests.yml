@@ -30,7 +30,7 @@ jobs:
     env:
       RISKI__DB__NAME: test_db
       RISKI__DB__USER: postgres
-      RISKI__DB__PASSWORD: postgres
+      RISKI__DB__PASSWORD: password
       RISKI__DB__HOSTNAME: localhost
       RISKI__DB__PORT: 5432
       OPENAI_API_KEY: example
@@ -68,7 +68,7 @@ jobs:
       - name: Enable pgvector
         run: |
           # pgvector
-          psql "postgresql://postgres:postgres@localhost:5432/test_db" -v ON_ERROR_STOP=1 \
+          psql "postgresql://postgres:password@localhost:5432/test_db" -v ON_ERROR_STOP=1 \
             -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: Run extractor tests
