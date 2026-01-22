@@ -18,15 +18,16 @@ jobs:
         image: pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: password
           POSTGRES_DB: test_db
         ports:
-          - 5432:5432
+          - "5432:5432"
         options: >-
           --health-cmd="pg_isready -U postgres -d test_db"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
+          --mount type=bind,source=${{ github.workspace }}/riski-extractor/db/init.sql,target=/docker-entrypoint-initdb.d/init.sql
 
     env:
       RISKI__DB__NAME: test_db
@@ -60,27 +61,6 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --group dev
-
-      - name: Install Postgres client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
-      - name: Enable pgvector extension
-        env:
-          PGPASSWORD: postgres
-        run: |
-          echo "Waiting for Postgres..."
-          for i in {1..30}; do
-            if psql -h localhost -U postgres -d test_db -c "SELECT 1;" >/dev/null 2>&1; then
-              echo "Postgres is up."
-              break
-            fi
-            sleep 1
-          done
-
-          psql -h localhost -U postgres -d test_db -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS vector;"
-          psql -h localhost -U postgres -d test_db -c "SELECT extname, extversion FROM pg_extension WHERE extname='vector';"
-
+        
       - name: Run extractor tests
         run: uv run pytest
