@@ -27,8 +27,6 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
-          --mount type=bind,source=${{ github.workspace }}/riski-extractor/db/init.sql,target=/docker-entrypoint-initdb.d/init.sql
-
     env:
       RISKI__DB__NAME: test_db
       RISKI__DB__USER: postgres
@@ -61,6 +59,17 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --group dev
-        
+
+      - name: Install Postgres client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Enable pgvector
+        run: |
+          # pgvector
+          psql "postgresql+psycopg://postgres:postgres@localhost:5432/test_db" -v ON_ERROR_STOP=1 \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
       - name: Run extractor tests
         run: uv run pytest
