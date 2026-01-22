@@ -68,7 +68,7 @@ jobs:
       - name: Enable pgvector
         run: |
           # pgvector
-          psql "postgresql+psycopg://postgres:postgres@localhost:5432/test_db" -v ON_ERROR_STOP=1 \
+          psql "postgresql://postgres:postgres@localhost:5432/test_db" -v ON_ERROR_STOP=1 \
             -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
       - name: Run extractor tests
