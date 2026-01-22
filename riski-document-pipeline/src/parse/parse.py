@@ -12,6 +12,7 @@ from src.logtools import getLogger
 logger = getLogger()
 
 
+# TODO: probably add summary for each text content
 def run_ocr_for_documents(settings):
     api_key = settings.openai_api_key
     server_url = settings.openai_api_base
