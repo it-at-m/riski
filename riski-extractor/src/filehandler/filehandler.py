@@ -39,7 +39,6 @@ class Filehandler:
     async def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")
         tasks = []
-        all_files = []
         offset = 0
         while True:
             files: list[File] = request_batch(File, offset=offset, limit=batch_size)
@@ -64,10 +63,6 @@ class Filehandler:
             self.logger.info(f"Finished processing filebatch. {offset} - {offset + batch_size}")
 
             offset += batch_size
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        for file, result in zip(all_files, results):
-            if isinstance(result, Exception):
-                self.logger.error(f"Could not download file '{file.id}'. - {result}")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
