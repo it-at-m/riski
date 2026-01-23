@@ -8,6 +8,8 @@ dependencies = [
     "mistralai>=1.9.11",
     "truststore>=0.10.4",
     "core",
+    "langchain-postgres>=0.0.16",
+    "langchain-text-splitters>=1.1.0",
 ]
 
 [dependency-groups]
