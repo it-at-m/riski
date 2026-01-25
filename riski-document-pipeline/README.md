@@ -35,4 +35,4 @@ cd riski-document-pipeline
 uv run python main.py
 ```
 
-Configure OCR-related env vars in `.env` (e.g., `RISKI__DOCUMENTS__MAX_DOCUMENTS_TO_PROCESS`, `RISKI__DOCUMENTS__OCR_MODEL_NAME`, OpenAI credentials) before running.
+Configure OCR-related env vars in `.env` (e.g., `RISKI_DOCUMENTS__MAX_DOCUMENTS_TO_PROCESS`, `RISKI_DOCUMENTS__OCR_MODEL_NAME`, OpenAI credentials) before running.
