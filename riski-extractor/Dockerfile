@@ -1,3 +1,4 @@
+# Smallest ubi10 image with package manager
 FROM registry.access.redhat.com/ubi10/ubi-minimal:latest
 
 USER root
@@ -13,6 +14,7 @@ RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && ex
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+ENV UV_PROJECT_ENVIRONMENT=/app/extractor/.venv
 
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
@@ -45,6 +47,21 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.title='riski-extractor' \
     org.opencontainers.image.description="Python application for extracting information from munich's political information system RIS"
 
+# Give permissions to all so random UID can write
+# This should be compatible with OpenShift and plain K8s
+RUN chown -R root:0 /app && chmod -R g=u /app
+
+# Place executables in the environment at the front of the path
 ENV PATH="/app/extractor/.venv/bin:$PATH"
 
-ENTRYPOINT ["python", "app.py"]
+# Disable tqdm for cleaner logs
+ENV TQDM_DISABLE=1
+ENV HF_HUB_DISABLE_PROGRESS_BARS=1
+
+# Disable python warnings
+ENV PYTHONWARNINGS="ignore"
+
+ENV APP_VERSION=${IMAGE_VERSION}
+
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT ["/app/extractor/.venv/bin/python", "app.py"]
