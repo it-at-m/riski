@@ -74,6 +74,12 @@ From the repository root you can start everything (DB, Adminer, Kafka, backend, 
 podman compose up -d
 ```
 
+One-time setup (required before the first backend start) to create the Kafka topics:
+
+```powershell
+podman compose --profile init up
+```
+
 Defaults for Postgres (from `compose.yaml`): user `postgres`, password `password`, database `example_db`, exposed on `5432`.
 
 ### 2) (Optional) Seed with sample data
