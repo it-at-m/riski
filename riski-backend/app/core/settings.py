@@ -7,7 +7,7 @@ from pydantic_settings import SettingsConfigDict
 from core.settings.base import AppBaseSettings
 
 
-class Settings(AppBaseSettings):
+class BackendSettings(AppBaseSettings):
     """
     Application settings for the riski-backend.
     """
@@ -64,6 +64,6 @@ class Settings(AppBaseSettings):
 
 
 @lru_cache(maxsize=1)
-def get_settings() -> Settings:
+def get_settings() -> BackendSettings:
     """Get cached application settings."""
-    return Settings()  # type: ignore
+    return BackendSettings()  # type: ignore
