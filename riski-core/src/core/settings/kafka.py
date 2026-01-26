@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, PostgresDsn
+from pydantic import BaseModel, Field
 
 
 class KafkaSettings(BaseModel):
@@ -29,18 +29,3 @@ class KafkaSettings(BaseModel):
         default=None,
         description="Kafka P12 Password (B64 Encoded)",
     )
-
-    @property
-    def database_url(self) -> PostgresDsn:
-        """
-        Full Postgres connection URL
-        """
-        return PostgresDsn.build(
-            # use psycopg version 3
-            scheme="postgresql+psycopg",
-            username=self.user,
-            password=self.password,
-            host=self.hostname,
-            port=self.port,
-            path=self.name,
-        )
