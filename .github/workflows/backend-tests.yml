@@ -39,3 +39,4 @@ jobs:
       RISKI__DB__PASSWORD: dummypassword
       RISKI__DB__USER: dummyuser
       RISKI__DB__HOSTNAME: dummyhost
+      OPENAI_API_KEY: dummykey
