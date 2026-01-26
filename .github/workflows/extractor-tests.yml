@@ -1,0 +1,80 @@
+name: Extractor Tests
+
+on:
+  pull_request:
+    paths:
+      - "riski-extractor/**"
+      - ".github/workflows/extractor-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  extractor-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: test_db
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U postgres -d test_db"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      RISKI__DB__NAME: test_db
+      RISKI__DB__USER: postgres
+      RISKI__DB__PASSWORD: password
+      RISKI__DB__HOSTNAME: localhost
+      RISKI__DB__PORT: 5432
+      OPENAI_API_KEY: example
+      OPENAI_API_BASE: https://example.de
+      OPENAI_API_VERSION: 2024-08-01-preview
+      TIKTOKEN_CACHE_DIR: tiktoken_cache
+      RISKI_OPENAI_EMBEDDING_MODEL: text-embedding-3-large
+      RISKI_EXTRACTOR__TEST__DB_NAME: test_db
+      RISKI_EXTRACTOR__TEST__DB_USER: postgres
+      RISKI_EXTRACTOR__TEST__DB_PASSWORD: password
+      RISKI_EXTRACTOR__TEST__DB_HOSTNAME: 127.0.0.1
+      RISKI_EXTRACTOR__TEST__DB_PORT: 5432
+
+    defaults:
+      run:
+        working-directory: riski-extractor
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version-file: "riski-extractor/.python-version"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Install Postgres client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Enable pgvector
+        run: |
+          # pgvector
+          psql "postgresql://postgres:password@localhost:5432/test_db" -v ON_ERROR_STOP=1 \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Run extractor tests
+        run: uv run pytest
