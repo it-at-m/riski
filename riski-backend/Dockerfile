@@ -1,9 +1,12 @@
-# Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
+# Smallest ubi10 image with package manager
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ENV UV_PROJECT_ENVIRONMENT=/app/backend/.venv
+
 # Install the project into `/app`
-WORKDIR /app
+WORKDIR /app/backend
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
@@ -18,7 +21,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked --no-install-project
 
 # Copy the application files
-COPY . /app
+COPY . /app/backend
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -45,8 +48,7 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
 RUN chown -R root:0 /app && chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
-
+ENV PATH="/app/backend/.venv/bin:$PATH"
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1
@@ -58,4 +60,4 @@ ENV PYTHONWARNINGS="ignore"
 ENV APP_VERSION=${IMAGE_VERSION}
 
 # Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["/app/backend/.venv/bin/python", "main.py"]

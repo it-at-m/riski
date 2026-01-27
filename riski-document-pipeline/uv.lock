@@ -224,6 +224,7 @@ dependencies = [
     { name = "langchain-postgres" },
     { name = "langchain-text-splitters" },
     { name = "mistralai" },
+    { name = "pypdf" },
     { name = "truststore" },
 ]
 
@@ -244,6 +245,7 @@ requires-dist = [
     { name = "langchain-postgres", specifier = ">=0.0.16" },
     { name = "langchain-text-splitters", specifier = ">=1.1.0" },
     { name = "mistralai", specifier = ">=1.9.11" },
+    { name = "pypdf", specifier = ">=6.4.1" },
     { name = "truststore", specifier = ">=0.10.4" },
 ]
 

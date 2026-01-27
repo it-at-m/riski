@@ -1,8 +1,10 @@
-.venv/
-notebooks/
-README.md
-src/docling/
-pgdata/
+# Local .dockerignore for riski-extractor
+
+# Note: Root-level .dockerignore handles most exclusions when build context is root
+
+# Extractor-specific exclusions
+
 artifacts/
-.pytest_cache/
-test.log
+src/docling/
+
+# Keep this minimal since root .dockerignore handles the rest
