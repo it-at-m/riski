@@ -8,6 +8,7 @@ from app.core import settings
 from app.utils.logging import getLogger
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from langchain_postgres import PGVectorStore
 from langfuse import observe
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
@@ -127,16 +128,6 @@ def _build_proposal_candidates(question: str) -> list[Document]:
     ]
 
 
-@observe(name="retrieval", as_type="retriever")
-def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
-    """Mock retriever returning pseudo-documents with a short delay."""
-    _simulate_delay(config.mock_retrieval_delay_seconds)
-    question = _extract_latest_question(state.get("messages"))
-    docs = _build_document_candidates(question)
-    proposals = _build_proposal_candidates(question)
-    return {"documents": docs, "proposals": proposals}
-
-
 @observe(name="generate", as_type="generation")
 def _generate(state: RiskiAgentState) -> RiskiAgentState:
     """Return a richer mock response referencing retrieved documents."""
@@ -154,8 +145,15 @@ def _generate(state: RiskiAgentState) -> RiskiAgentState:
     return {"messages": [AIMessage(content=content)]}
 
 
-def _build_riski_graph() -> CompiledStateGraph:
+def _build_riski_graph(vectorstore: PGVectorStore) -> CompiledStateGraph:
     """Create the LangGraph graph powering the mock agent."""
+
+    @observe(name="retrieval", as_type="retriever")
+    def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
+        question = _extract_latest_question(state.get("messages"))
+        docs = vectorstore.similarity_search(question, k=5)
+        proposals = _build_proposal_candidates(question)
+        return {"documents": docs, "proposals": proposals}
 
     graph = StateGraph(RiskiAgentState)
     graph.add_node(config.mock_retrieval_node, _retrieve_documents)
@@ -167,9 +165,10 @@ def _build_riski_graph() -> CompiledStateGraph:
     return graph.compile(checkpointer=checkpointer)
 
 
-def get_riski_agent() -> LangGraphAgent:
+def get_riski_agent(vectorstore: PGVectorStore) -> LangGraphAgent:
     """Return the cached riski agent"""
-    compiled_graph = _build_riski_graph()
+
+    compiled_graph = _build_riski_graph(vectorstore)
     return LangGraphAgent(
         name="RISKI mock agent",
         description="Placeholder riski agent till AGI is archieved",

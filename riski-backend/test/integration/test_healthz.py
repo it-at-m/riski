@@ -4,12 +4,12 @@ from fastapi.testclient import TestClient
 
 
 def test_healthz_returns_ok_and_version() -> None:
+    settings = get_settings()
     client = TestClient(backend)
     response = client.get("/api/healthz")
 
     assert response.status_code == 200
 
     payload = response.json()
-    settings = get_settings()
 
     assert payload == {"status": "ok", "version": settings.version}

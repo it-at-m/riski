@@ -75,6 +75,7 @@ class Config(AppBaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[2] / ".env"),
         env_prefix="RISKI_EXTRACTOR__",  # only applies to extractor-related fields
+        extra="ignore",
     )
 
     @model_validator(mode="after")

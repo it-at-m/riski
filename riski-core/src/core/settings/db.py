@@ -42,3 +42,18 @@ class DatabaseSettings(BaseModel):
             port=self.port,
             path=self.name,
         )
+
+    @property
+    def async_database_url(self) -> PostgresDsn:
+        """
+        Full Postgres connection URL
+        """
+        return PostgresDsn.build(
+            # use asyncpg
+            scheme="postgresql+asyncpg",
+            username=self.user,
+            password=self.password,
+            host=self.hostname,
+            port=self.port,
+            path=self.name,
+        )
