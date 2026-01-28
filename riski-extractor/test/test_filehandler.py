@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 import pytest
 from core.model.data_models import File
@@ -15,7 +15,7 @@ def filehandler_instance():
     kafkaBroker = AsyncMock()
     instance = Filehandler(kafkaBroker)
     instance.client = AsyncMock()
-    instance.logger = AsyncMock()
+    instance.logger = MagicMock()
     return instance
 
 
