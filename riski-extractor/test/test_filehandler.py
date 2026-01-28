@@ -31,6 +31,7 @@ async def test_download_and_persist_file_updates_filename(filehandler_instance, 
         await filehandler_instance.download_and_persist_file(mock_file)
 
         mock_update.assert_called_once_with(ANY, b"test content", "test_file.txt")
+        filehandler_instance.broker.publish.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -44,6 +45,7 @@ async def test_download_and_persist_file_updates_filename_urlencoding(filehandle
         await filehandler_instance.download_and_persist_file(mock_file)
 
         mock_update.assert_called_once_with(ANY, b"test content", "test file.txt")
+        filehandler_instance.broker.publish.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -58,5 +60,4 @@ async def test_download_and_persist_file_not_updates_filename_when_unchanged_fil
 
     with patch("src.filehandler.filehandler.update_file_content") as mock_update:
         await filehandler_instance.download_and_persist_file(mock_file)
-
         mock_update.assert_not_called()
