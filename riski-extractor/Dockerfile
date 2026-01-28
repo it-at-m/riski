@@ -1,5 +1,5 @@
 
-FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest
+FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:919a5a4c8595deb2f9c21b8a05ad027157f42feb6eed6b64efd1f4f455a5f759
 
 USER root
 
@@ -13,7 +13,7 @@ ENV LANG=de_DE.UTF-8 \
 # Test
 RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest@sha256:143b40f4ab56a780f43377604702107b5a35f83a4453daf1e4be691358718a6a /uv /uvx /bin/
 
 ENV UV_PROJECT_ENVIRONMENT=system
 
