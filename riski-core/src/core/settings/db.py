@@ -19,8 +19,8 @@ class DatabaseSettings(BaseModel):
     hostname: str = Field(
         description="Postgres host",
     )
-    port: int = Field(
-        default=5432,
+    port: str = Field(
+        default="5432",
         description="Postgres port",
     )
     batch_size: int = Field(
