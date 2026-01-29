@@ -120,17 +120,16 @@ See the [open issues](https://github.com/it-at-m/riski/issues) for a full list o
 #### Releasing backend or extractor images
 
 Use the `tag-version.ps1` helper to create semantic tags that trigger the
-GitHub Actions workflows responsible for building the `riski-backend` and
-`riski-extractor` container images.
+GitHub Actions workflows responsible for building the container images.
 
 ```powershell
 ./tag-version.ps1
 ```
 
-1. Select the service (`backend` or `extractor`).
+1. Select the service (`backend`, `extractor`, `frontend`, or `document-pipeline`).
 2. Choose the version bump (`major`, `minor`, or `patch`).
-3. When prompted, decide whether the script should also bump the detected manifest (for example `riski-backend/pyproject.toml` or a `package.json`) to the same version. This keeps the package metadata, container tags, and badges in sync.
-4. Confirm the suggested tag (for example `backend-1.2.0`).
+3. When prompted, decide whether the script should also bump the detected manifest (for example `riski-backend/pyproject.toml`, `riski-extractor/pyproject.toml`, `riski-document-pipeline/pyproject.toml`, or `riski-frontend/package.json`) to the same version. This keeps the package metadata, container tags, and badges in sync.
+4. Confirm the suggested tag (for example `backend-1.2.0`, `extractor-1.2.0`, `document-pipeline-1.2.0`, or `riski-frontend-1.2.0`).
 5. Confirm pushing the tag to `origin` to start the corresponding Docker release workflow.
 
 After a successful push, the workflow builds and publishes the image to GitHub Container Registry.
