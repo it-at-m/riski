@@ -8,7 +8,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV UV_PROJECT_ENVIRONMENT=/app/document-pipeline/.venv
 
 # Install the project into `/app`
-WORKDIR /app
+WORKDIR /app/document-pipeline
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -16,18 +16,23 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Leverage layer cache: nur Lockfiles/Metadaten zuerst
-COPY riski-document-pipeline/pyproject.toml riski-document-pipeline/uv.lock /app/document-pipeline/
+# Leverage layer cache
+COPY riski-document-pipeline/pyproject.toml riski-document-pipeline/uv.lock ./
 COPY riski-core/pyproject.toml /app/riski-core/
 
-WORKDIR /app/document-pipeline
+# Install the transitive dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-dev --locked --no-install-local
 
-COPY riski-document-pipeline/ /app/document-pipeline/
-COPY riski-core/ /app/riski-core/
+# Copy the application files
+COPY riski-document-pipeline /app/document-pipeline/
+COPY riski-core /app/riski-core/
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked
+
+# Metadata for the image
 ARG IMAGE_CREATED="unknown"
 ARG IMAGE_REVISION="unknown"
 ARG IMAGE_VERSION="unknown"
