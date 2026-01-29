@@ -13,7 +13,10 @@ from truststore import inject_into_ssl
 
 
 class AppBaseSettings(BaseSettings):
-    core: CoreSettings = Field(default_factory=lambda: CoreSettings(), validation_alias="RISKI")
+    core: CoreSettings = Field(
+        default_factory=lambda: CoreSettings(),
+        validation_alias="RISKI",
+    )
 
     # === General Settings ===
     debug: bool = Field(

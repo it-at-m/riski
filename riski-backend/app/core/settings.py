@@ -1,7 +1,8 @@
+from abc import ABC
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import BaseModel, Field, RedisDsn, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
@@ -32,22 +33,20 @@ class BackendSettings(AppBaseSettings):
         description="Langfuse host",
     )
 
-    # === Mock Langfuse Agent Settings ===
-    mock_retrieval_delay_seconds: float = Field(
-        default=0.4,
-        validation_alias="MOCK_RETRIEVAL_DELAY_SECONDS",
+    # === Agent Settings ===
+    checkpointer: "BaseCheckpointerSettings | None" = Field(
+        description="Settings for agent checkpointer",
+        default_factory=lambda: RedisCheckpointerSettings(),
     )
-    mock_response_delay_seconds: float = Field(
-        default=0.6,
-        validation_alias="MOCK_RESPONSE_DELAY_SECONDS",
+
+    # === Server Settings ===
+    server_host: str = Field(
+        default="localhost",
+        description="The host for the riski-backend server to bind to.",
     )
-    mock_retrieval_node: str = Field(
-        default="RETRIEVAL",
-        validation_alias="MOCK_RETRIEVAL_NODE",
-    )
-    mock_generate_node: str = Field(
-        default="GENERATE",
-        validation_alias="MOCK_GENERATE_NODE",
+    server_port: int = Field(
+        default=8080,
+        description="The port for the riski-backend server to bind to.",
     )
 
     model_config = SettingsConfigDict(
@@ -63,7 +62,52 @@ class BackendSettings(AppBaseSettings):
     )
 
 
+class BaseCheckpointerSettings(BaseModel, ABC):
+    """Base settings for agent checkpointers."""
+
+    pass
+
+
+class RedisCheckpointerSettings(BaseCheckpointerSettings):
+    host: str = Field(
+        default="localhost",
+        description="Redis host for checkpointer",
+    )
+    port: int = Field(
+        default=6379,
+        description="Redis port for checkpointer",
+    )
+    db: int = Field(
+        default=0,
+        description="Redis database number for checkpointer",
+    )
+    password: SecretStr | None = Field(
+        default=None,
+        description="Redis password for checkpointer",
+    )
+    secure: bool = Field(
+        default=False,
+        description="Use SSL/TLS for Redis connection",
+    )
+    ttl_minutes: int = Field(
+        default=720,
+        description="TTL for checkpoints in minutes",
+    )
+
+    @property
+    def redis_url(self) -> RedisDsn:
+        """Construct the Redis DSN URL."""
+        return RedisDsn.build(
+            scheme="rediss" if self.secure else "redis",
+            username=None,
+            password=self.password.get_secret_value() if self.password else None,
+            host=self.host,
+            port=self.port,
+            path=f"/{self.db}",
+        )
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> BackendSettings:
     """Get cached application settings."""
-    return BackendSettings()  # type: ignore
+    return BackendSettings()

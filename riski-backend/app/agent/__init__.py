@@ -1,5 +1,5 @@
 """Agent utilities for RISKI backend."""
 
-from .riski_agent import get_riski_agent
+from .builder import build_agent
 
-__all__ = ["get_riski_agent"]
+__all__ = ["build_agent"]

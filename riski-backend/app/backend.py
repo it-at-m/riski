@@ -1,15 +1,16 @@
 # FastAPI backend creation
 from contextlib import asynccontextmanager
 
-from app.agent import get_riski_agent
+from app.agent import build_agent
 from app.api.routers.ag_ui import router as ag_ui_router
 from app.api.routers.system import router as systems_router
 from app.core.settings import BackendSettings, get_settings
 from app.utils.logging import getLogger
-from core.lm.helper import create_embedding_model
+from core.genai import create_embedding_model
 from fastapi import FastAPI
 from langchain_postgres import PGEngine, PGVectorStore
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlmodel import text
 
 logger = getLogger()
@@ -22,21 +23,34 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        logger.info("Create database connection")
-        db_engine = create_async_engine(str(settings.core.db.async_database_url), echo=True, pool_timeout=10, connect_args={"timeout": 30})
+        # Setup database connection
+        logger.info(msg="Starting up application and creating database handler")
+        db_engine: AsyncEngine = create_async_engine(
+            url=settings.core.db.async_database_url.encoded_string(),
+            echo=True,
+            pool_timeout=10,
+            connect_args={"timeout": 30},
+        )
         import asyncio
 
         logger.info("current loop id = %s", id(asyncio.get_running_loop()))
-        db_sessionmaker = async_sessionmaker(
-            db_engine,
+        db_sessionmaker: async_sessionmaker[AsyncSession] = async_sessionmaker(
+            bind=db_engine,
             expire_on_commit=False,
         )
-        logger.info("Create vectorstore")
-        vectorstore, pg_engine = await get_vectorstore(settings)
-        logger.info("Create agent")
-        app.state.agent = get_riski_agent(vectorstore, db_sessionmaker)
+        vectorstore, pg_engine = await build_vectorstore(settings)
+        logger.info("Database handler created")
+
+        # Build and assign the agent
+        logger.info("Setting up the agent")
+        app.state.agent = await build_agent(
+            vectorstore=vectorstore,
+            db_sessionmaker=db_sessionmaker,
+        )
+        logger.info("Agent setup complete")
+
         # initial db call to establish connection (longer waiting time for first request)
-        logger.info("Run initial DB connection test")
+        logger.info("Running initial DB connection test")
         async with db_engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
         logger.info("Setup on startup complete")
@@ -64,7 +78,7 @@ def get_pgengine(settings) -> PGEngine:
     return pg_engine
 
 
-async def get_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
+async def build_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
     pg_engine = get_pgengine(settings)
     embedding_model = create_embedding_model(settings)
     vectorstore = await PGVectorStore.create(

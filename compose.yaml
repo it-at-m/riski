@@ -43,7 +43,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-  # run topic creation with `podman compose --profile init up` or as single service when kafka was already started  
+
+  redis:
+    image: docker.io/redis:8.4@sha256:73dad4271642c5966db88db7a7585fae7cf10b685d1e48006f31e0294c29fdd7
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    command: redis-server /etc/redis.conf
+    configs:
+      - target: /etc/redis.conf
+        source: redis_config
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # run topic creation with `podman compose --profile init up` or as single service when kafka was already started
   # creates example topic, corresponding dlq and managment topic for group tracking
   topic-init:
     image: docker.io/apache/kafka:4.1.1@sha256:0bc1bb2478f45b6cea78864df86acdc11e8df2c5172477819a4d12942cbe5d40
@@ -57,3 +77,12 @@ services:
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic my-topic-dlq --partitions 1 --replication-factor 1 || true &&
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9094 --create --topic __consumer_offsets --partitions 50 --replication-factor 1 --config cleanup.policy=compact || true
       "
+
+configs:
+  redis_config:
+    content: |
+      maxmemory 450mb
+      maxmemory-policy allkeys-lru
+      save ""
+      appendonly yes
+      protected-mode no

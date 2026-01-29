@@ -9,23 +9,27 @@ class DatabaseSettings(BaseModel):
     # === Postgres Settings ===
     name: str = Field(
         description="Postgres database name",
+        default="example_db",
     )
     user: str = Field(
         description="Postgres username",
+        default="postgres",
     )
     password: str = Field(
         description="Postgres password",
+        default="<your-password-here>",
     )
     hostname: str = Field(
         description="Postgres host",
+        default="localhost",
     )
     port: int = Field(
-        default=5432,
         description="Postgres port",
+        default=5432,
     )
     batch_size: int = Field(
-        default=100,
         description="Batch size for database operations",
+        default=100,
     )
 
     @property
