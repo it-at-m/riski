@@ -1,6 +1,11 @@
 # Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-minimal:latest 
+FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
+
+RUN microdnf install -y postgresql-libs zlib && microdnf clean all
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ENV UV_PROJECT_ENVIRONMENT=/app/document-pipeline/.venv
 
 # Install the project into `/app`
 WORKDIR /app
@@ -42,6 +47,7 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
 # This should be compatible with OpenShift and plain K8s
 RUN chown -R root:0 /app && chmod -R g=u /app
 
+# Place executables in the environment at the front of the path
 ENV PATH="/app/document-pipeline/.venv/bin:$PATH"
 
 # Disable tqdm for cleaner logs
@@ -53,4 +59,5 @@ ENV PYTHONWARNINGS="ignore"
 
 ENV APP_VERSION=${IMAGE_VERSION}
 
-ENTRYPOINT ["python", "main.py"]
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT ["/app/document-pipeline/.venv/bin/python", "main.py"]
