@@ -27,10 +27,25 @@ RUN --mount=type=cache,target=/build/node_modules/.vite \
 
 FROM nginx:stable-alpine as production-stage
 
-# Copy built web components
-COPY --from=builder /build/dist /usr/share/nginx/html
-COPY --from=builder /build/dist/src/index.html /usr/share/nginx/html/index.html
-EXPOSE 80
+# Copy built web application
+COPY --from=builder /build/dist ./
 
-# Start the web server
+ARG IMAGE_CREATED="unknown"
+ARG IMAGE_REVISION="unknown"
+ARG IMAGE_VERSION="unknown"
+LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@muenchen.de>' \
+    org.opencontainers.image.vendor='Landeshauptstadt München' \
+    org.opencontainers.image.created="$IMAGE_CREATED" \
+    org.opencontainers.image.revision="$IMAGE_REVISION" \
+    org.opencontainers.image.version="$IMAGE_VERSION" \
+    org.opencontainers.image.url='https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-frontend' \
+    org.opencontainers.image.documentation='https://github.com/it-at-m/riski/README.md' \
+    org.opencontainers.image.source='https://github.com/it-at-m/riski' \
+    org.opencontainers.image.licenses='MIT' \
+    org.opencontainers.image.title='riski-frontend' \
+    org.opencontainers.image.description="Frontend for riski. Provides a web interface for interacting with the backend."
+
+# Copy custom nginx configurations
+COPY docker/nginx/*.conf "${NGINX_DEFAULT_CONF_PATH}"
+
 CMD ["nginx", "-g", "daemon off;"]
