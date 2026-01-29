@@ -68,16 +68,16 @@ The quickest way to try RIS-KI locally is to start the shared database with Comp
 
 ### 1) Start the stack via Compose
 
+One-time setup (required before the first backend start) to create the Kafka topics:
+
+```powershell
+podman compose --profile init up topic-init
+```
+
 From the repository root you can start everything (DB, Adminer, Kafka, backend, gateway, frontend) with:
 
 ```powershell
 podman compose up -d
-```
-
-One-time setup (required before the first backend start) to create the Kafka topics:
-
-```powershell
-podman compose --profile init up
 ```
 
 Defaults for Postgres (from `compose.yaml`): user `postgres`, password `password`, database `example_db`, exposed on `5432`.
