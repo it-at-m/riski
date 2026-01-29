@@ -51,6 +51,8 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
 # This should be compatible with OpenShift and plain K8s
 RUN chown -R root:0 /app && chmod -R g=u /app
 
+USER 1000:0
+
 # Place executables in the environment at the front of the path
 ENV PATH="/app/extractor/.venv/bin:$PATH"
 
