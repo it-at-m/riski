@@ -1,45 +1,34 @@
-
-FROM  registry.access.redhat.com/ubi10/ubi-minimal:latest
+# Smallest ubi10 image
+FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
 
 USER root
+RUN microdnf install -y glibc-all-langpacks && microdnf clean all
+RUN mkdir -p /home/app && chown -R 1000:0 /home/app
 
-RUN microdnf install glibc-all-langpacks -y && \
-    microdnf clean all
-USER 1000
+ENV HOME=/home/app
 ENV LANG=de_DE.UTF-8 \
     LC_ALL=de_DE.UTF-8 \
     LANGUAGE=de_DE:de
 
-# Test
 RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-ENV UV_PROJECT_ENVIRONMENT=system
+ENV UV_PROJECT_ENVIRONMENT=/app/extractor/.venv
 
-# Install the project into `/app`
-WORKDIR /app/extractor
-
-# Enable bytecode compilation
+WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
 # Leverage layer cache
 COPY riski-extractor/pyproject.toml riski-extractor/uv.lock ./
 COPY riski-core/pyproject.toml /app/riski-core/
 
-# Install the transitive dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev --locked --no-install-local
-
-# Copy the application files
+WORKDIR /app/extractor
 COPY riski-extractor /app/extractor/
 COPY riski-core /app/riski-core/
 
-# Install the project
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,target=/home/app/.cache/uv \
     uv sync --no-dev --locked
 
 # Metadata for the image
@@ -62,8 +51,10 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
 # This should be compatible with OpenShift and plain K8s
 RUN chown -R root:0 /app && chmod -R g=u /app
 
+USER 1000:0
+
 # Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/extractor/.venv/bin:$PATH"
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1
@@ -75,4 +66,4 @@ ENV PYTHONWARNINGS="ignore"
 ENV APP_VERSION=${IMAGE_VERSION}
 
 # Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT ["python", "app.py"]
+ENTRYPOINT ["/app/extractor/.venv/bin/python", "app.py"]
