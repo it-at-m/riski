@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from pydantic import BaseModel, Field, PostgresDsn
 
 
@@ -37,7 +39,7 @@ class DatabaseSettings(BaseModel):
             # use psycopg version 3
             scheme="postgresql+psycopg",
             username=self.user,
-            password=self.password,
+            password=quote(self.password, safe=""),
             host=self.hostname,
             port=self.port,
             path=self.name,
