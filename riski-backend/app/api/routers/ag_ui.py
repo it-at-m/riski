@@ -1,6 +1,5 @@
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder
-from app.agent import get_riski_agent
 from app.utils.logging import getLogger
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -11,9 +10,8 @@ logger = getLogger()
 
 
 @observe(name="ag-ui-agent-run")
-async def run_agent_traced(input_data):
-    _agent = get_riski_agent()
-    async for event in _agent.run(input_data):
+async def run_agent_traced(input_data, request):
+    async for event in request.app.state.agent.run(input_data):
         yield event
 
 
@@ -24,7 +22,7 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
     encoder = EventEncoder(accept=request.headers.get("accept"))
 
     async def event_generator():
-        async for event in run_agent_traced(input_data):
+        async for event in run_agent_traced(input_data, request):
             logger.debug(event)
             yield encoder.encode(event)
 
