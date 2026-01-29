@@ -6,6 +6,7 @@ from typing import Annotated, NotRequired, TypedDict
 from ag_ui_langgraph import LangGraphAgent
 from app.core import settings
 from app.utils.logging import getLogger
+from core.model.data_models import File
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain_postgres import PGVectorStore
@@ -14,6 +15,8 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.graph.state import CompiledStateGraph
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlmodel import Column, select
 
 config = settings.get_settings()
 logger = getLogger()
@@ -145,14 +148,44 @@ def _generate(state: RiskiAgentState) -> RiskiAgentState:
     return {"messages": [AIMessage(content=content)]}
 
 
-def _build_riski_graph(vectorstore: PGVectorStore) -> CompiledStateGraph:
+async def get_proposals(documents: list[Document], db_sessionmaker: async_sessionmaker):
+    file_ids = {doc.id for doc in documents}
+    logger.info(f"Fetching proposals for file IDs: {file_ids}")
+    import asyncio
+
+    logger.info("current loop id = %s", id(asyncio.get_running_loop()))
+
+    async with db_sessionmaker() as db_session:
+        logger.info("session created")
+        result = await db_session.execute(
+            # test with first file only
+            select(File).where(Column(File.db_id) == file_ids.pop()),
+            # actual needed query
+            # select(File).where(Column(File.db_id).in_(file_ids))
+            execution_options={"timeout": 10},
+        )
+        logger.info("got result from db")
+
+        files = result.scalars().all()
+    # files = []
+    logger.info(f"Look  for proposals in {len(files)} files from db.")
+    # TODO: for each file find related proposals if existing
+    proposals = [
+        {"identifier": p.reference, "name": p.name, "risUrl": p.id} for f in files for p in f.papers if p.paper_type == "Stadtratsantrag"
+    ]
+    return proposals
+
+
+def _build_riski_graph(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker) -> CompiledStateGraph:
     """Create the LangGraph graph powering the mock agent."""
 
     @observe(name="retrieval", as_type="retriever")
-    def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
+    async def _retrieve_documents(state: RiskiAgentState) -> RiskiAgentState:
         question = _extract_latest_question(state.get("messages"))
+        logger.info(f"Retrieving documents for question: {question}")
         docs = vectorstore.similarity_search(question, k=5)
-        proposals = _build_proposal_candidates(question)
+        logger.info("get proposals for retrieved documents")
+        proposals = await get_proposals(docs, db_sessionmaker)
         return {"documents": docs, "proposals": proposals}
 
     graph = StateGraph(RiskiAgentState)
@@ -165,10 +198,10 @@ def _build_riski_graph(vectorstore: PGVectorStore) -> CompiledStateGraph:
     return graph.compile(checkpointer=checkpointer)
 
 
-def get_riski_agent(vectorstore: PGVectorStore) -> LangGraphAgent:
+def get_riski_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker) -> LangGraphAgent:
     """Return the cached riski agent"""
 
-    compiled_graph = _build_riski_graph(vectorstore)
+    compiled_graph = _build_riski_graph(vectorstore, db_sessionmaker)
     return LangGraphAgent(
         name="RISKI mock agent",
         description="Placeholder riski agent till AGI is archieved",
