@@ -562,7 +562,7 @@ wheels = [
 
 [[package]]
 name = "extractor"
-version = "0.0.4"
+version = "0.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "bs4" },
