@@ -1,5 +1,5 @@
-# Smallest ubi10 image with package manager
-FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:67aafc6c9c44374e1baf340110d4c835457d59a0444c068ba9ac6431a6d9e7ac
+# Smallest ubi10 image
+FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
 
 RUN microdnf install -y postgresql-libs zlib && microdnf clean all
 
