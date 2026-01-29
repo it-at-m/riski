@@ -25,7 +25,8 @@ COPY src/ ./src/
 RUN --mount=type=cache,target=/build/node_modules/.vite \
     npm run build
 
-FROM nginx:stable-alpine AS production-stage
+# For documentation see https://github.com/sclorg/nginx-container
+FROM registry.access.redhat.com/ubi10/nginx-126:10.1-1769387039@sha256:32ddb5455a72fe75f708f71ac2e7915107168f975d43fa5a97baf7bbcd5658aa
 
 # Copy built web application
 COPY --from=builder /build/dist ./
@@ -46,13 +47,6 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.description="Frontend for riski. Provides a web interface for interacting with the backend."
 
 # Copy custom nginx configurations
-COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY docker/nginx/*.conf /etc/nginx/conf.d/
-
-RUN mkdir -p /tmp/nginx/client_temp \
-    /tmp/nginx/proxy_temp \
-    /tmp/nginx/fastcgi_temp \
-    /tmp/nginx/uwsgi_temp \
-    /tmp/nginx/scgi_temp
+COPY docker/nginx/*.conf "${NGINX_DEFAULT_CONF_PATH}"
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
