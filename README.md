@@ -8,6 +8,7 @@ Find information in munich's political information system RIS with the help of a
 [![GitHub license][license-shield]][license]
 
 <!-- Tech Stack -->
+
 ### Technology Stack
 
 ![Supported python versions][python-versions-shield]
@@ -18,21 +19,20 @@ Find information in munich's political information system RIS with the help of a
 [![Postgres][postgres-shield]][postgres]
 [![LangGraph][langgraph-shield]][langgraph]
 
-
 <!-- CI -->
+
 ### Build Status
 
 [![Backend tests][backend-tests-shield]][backend-tests]
 
-
 <!-- Container Images -->
+
 ### Container Images
 
 [![Extractor][extractor-version-shield]][extractor-container]
 [![Backend][backend-version-shield]][backend-container]
 
 <!-- ABOUT THE PROJECT -->
-
 
 [made-with-love-shield]: https://img.shields.io/badge/made%20with%20%E2%9D%A4%20by-it%40M-blue?style=for-the-badge
 [license-shield]: https://img.shields.io/github/license/it-at-m/riski?style=for-the-badge&color=blue
@@ -46,12 +46,9 @@ Find information in munich's political information system RIS with the help of a
 [extractor-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=extractor*&label=riski-extractor&style=for-the-badge&color=blue
 [backend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=backend*&label=riski-backend&style=for-the-badge&color=blue
 [backend-tests-shield]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml/badge.svg
-
 [backend-tests]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml
 [extractor-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-extractor
 [backend-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-backend
-
-
 [itm-opensource]: https://opensource.muenchen.de/
 [license]: https://github.com/it-at-m/riski/blob/main/LICENSE
 [uv]: https://github.com/astral-sh/uv
@@ -64,12 +61,11 @@ Find information in munich's political information system RIS with the help of a
 
 See the [open issues](https://github.com/it-at-m/riski/issues) for a full list of proposed features (and known issues).
 
-
 ## Set up
-*How to get started with this project*
+
+_How to get started with this project_
 
 ## Documentation
-
 
 ### Development
 
@@ -91,6 +87,16 @@ GitHub Actions workflows responsible for building the `riski-backend` and
 
 After a successful push, the workflow builds and publishes the image to GitHub Container Registry.
 
+#### Syncing `riski-core` changes into other services
+
+The Python services (`riski-backend`, `riski-document-pipeline`, `riski-extractor`) import the local `riski-core` package via path dependencies.
+Whenever you change `riski-core`, rerun the dependency install inside each consumer so uv rebuilds the local package:
+
+```powershell
+uv sync --reinstall-package core
+```
+
+Run the command from the respective service folder (for example `riski-backend`) so `uv` picks up the correct `pyproject.toml`.
 
 ## Contributing
 
@@ -108,11 +114,9 @@ Don't forget to give the project a star! Thanks again!
 
 More about this in the [CODE_OF_CONDUCT](/CODE_OF_CONDUCT.md) file.
 
-
 ## License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) file for more information.
-
 
 ## Contact
 
