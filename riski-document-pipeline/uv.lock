@@ -247,11 +247,7 @@ requires-dist = [
     { name = "langchain-postgres", specifier = ">=0.0.16" },
     { name = "langchain-text-splitters", specifier = ">=1.1.0" },
     { name = "mistralai", specifier = ">=1.9.11" },
-<<<<<<< HEAD
     { name = "pypdf", specifier = ">=6.6.0" },
-=======
-    { name = "pypdf", specifier = ">=6.4.1" },
->>>>>>> main
     { name = "truststore", specifier = ">=0.10.4" },
 ]
 
