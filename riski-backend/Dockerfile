@@ -1,5 +1,5 @@
 # Smallest ubi10 image with package manager
-FROM registry.access.redhat.com/ubi10/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:67aafc6c9c44374e1baf340110d4c835457d59a0444c068ba9ac6431a6d9e7ac
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
