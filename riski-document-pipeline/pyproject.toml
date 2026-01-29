@@ -1,14 +1,14 @@
 [project]
 name = "document_pipeline"
-version = "0.1.0"
+version = "0.1.2"
 description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.13.9"
 dependencies = [
     "mistralai>=1.9.11",
     "truststore>=0.10.4",
-    "pypdf>=6.4.1",
     "core",
+    "pypdf>=6.6.0",
     "langchain-postgres>=0.0.16",
     "langchain-text-splitters>=1.1.0",
 ]

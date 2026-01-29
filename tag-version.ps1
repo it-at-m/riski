@@ -2,7 +2,7 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [ValidateSet("backend", "extractor")]
+    [ValidateSet("backend", "extractor", "frontend", "document-pipeline")]
     [string]$Service,
 
     [Parameter(Mandatory=$false)]
@@ -22,6 +22,18 @@ $serviceConfig = @{
         Prefix = "extractor-"
         PackageUrl = "https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-extractor"
         ManifestPath = [System.IO.Path]::Combine("riski-extractor", "pyproject.toml")
+        ManifestType = "pyproject"
+    }
+    frontend = @{
+        Prefix = "riski-frontend-"
+        PackageUrl = "https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-frontend"
+        ManifestPath = [System.IO.Path]::Combine("riski-frontend", "package.json")
+        ManifestType = "packageJson"
+    }
+    "document-pipeline" = @{
+        Prefix = "document-pipeline-"
+        PackageUrl = "https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-document-pipeline"
+        ManifestPath = [System.IO.Path]::Combine("riski-document-pipeline", "pyproject.toml")
         ManifestType = "pyproject"
     }
 }
@@ -72,12 +84,19 @@ function Update-ManifestVersion {
         }
 
         $updatedContent = $regex.Replace($content, { param($match) return $match.Groups['prefix'].Value + $NewVersion + $match.Groups['suffix'].Value }, 1)
-        Set-Content -Path $FilePath -Value $updatedContent -Encoding UTF8
+        [System.IO.File]::WriteAllText($FilePath, $updatedContent, (New-Object System.Text.UTF8Encoding $false))
     }
     elseif ($ManifestType -eq "packageJson") {
-        $jsonContent = Get-Content -Raw -Path $FilePath | ConvertFrom-Json
-        $jsonContent.version = $NewVersion
-        $jsonContent | ConvertTo-Json -Depth 100 | Set-Content -Path $FilePath -Encoding UTF8
+        $content = Get-Content -Raw -Path $FilePath
+        $regex = [regex]::new('(?m)("version"\s*:\s*")[^"]+("\s*)')
+
+        if (-not $regex.IsMatch($content)) {
+            throw "Could not find a version entry in $FilePath"
+        }
+
+        $replacement = { param($match) return $match.Groups[1].Value + $NewVersion + $match.Groups[2].Value }
+        $updatedContent = $regex.Replace($content, $replacement, 1)
+        [System.IO.File]::WriteAllText($FilePath, $updatedContent, (New-Object System.Text.UTF8Encoding $false))
     }
     else {
         throw "Unsupported manifest type '$ManifestType'"
@@ -285,31 +304,32 @@ if ($serviceConfig[$Service].ManifestPath) {
     $manifestType = $serviceConfig[$Service].ManifestType
 }
 
-if ($manifestPath) {
-    Write-Host "`nManifest file detected: $manifestPath" -ForegroundColor Cyan
+$operationSucceeded = $false
 
-    if (-not (Test-Path $manifestPath)) {
-        Write-Host "  ⚠️ Unable to find manifest file. Skipping version file update." -ForegroundColor Yellow
+$options = @("y", "n")
+$confirmation = ""
+while ($confirmation -notin $options) {
+    $userInput = Read-Host "Do you want to create this tag? (y/n)"
+
+    if ([string]::IsNullOrWhiteSpace($userInput)) {
+        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
+        continue
     }
-    else {
-        $updateManifest = Read-YesNo "Do you want to update this file to version $newVersion? (y/n)"
 
-        if ($updateManifest -eq "y") {
-            try {
-                Update-ManifestVersion -FilePath $manifestPath -ManifestType $manifestType -NewVersion $newVersion
-                Write-Host "Manifest version updated to $newVersion" -ForegroundColor Green
-            }
-            catch {
-                Write-Host "Failed to update manifest version: $($_.Exception.Message)" -ForegroundColor Red
-            }
-        }
-        else {
-            Write-Host "Manifest file left unchanged." -ForegroundColor Yellow
-        }
+    if ($userInput -eq "y" -or $userInput -eq "n") {
+        $confirmation = $userInput
+        continue
+    }
+
+    $matchedOptions = $options | Where-Object { $_ -like "$userInput*" }
+
+    if ($matchedOptions.Count -eq 1) {
+        $confirmation = $matchedOptions[0]
+        Write-Host "Selected: $confirmation" -ForegroundColor Green
+    } else {
+        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
     }
 }
-
-$confirmation = Read-YesNo "Do you want to create this tag? (y/n)"
 
 if ($confirmation -ne "y") {
     Write-Host "Operation cancelled." -ForegroundColor Yellow
@@ -317,10 +337,47 @@ if ($confirmation -ne "y") {
 }
 
 # Create the tag
-git tag $newTag
+$tagCreationOutput = git tag $newTag 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`n❌ ERROR CREATING TAG" -ForegroundColor White -BackgroundColor Red
+    Write-Host "-------------------------------------" -ForegroundColor Red
+    foreach ($line in $tagCreationOutput) {
+        Write-Host $line -ForegroundColor Red
+    }
+    Write-Host "-------------------------------------" -ForegroundColor Red
+    if ($manifestPath) {
+        Write-Host "Manifest update skipped because tag creation failed." -ForegroundColor Yellow
+    }
+    exit 1
+}
+
+$operationSucceeded = $true
 Write-Host "Tag $newTag created locally." -ForegroundColor Green
 
-$pushConfirmation = Read-YesNo "Do you want to push this tag to origin? (y/n)"
+$pushOptions = @("y", "n")
+$pushConfirmation = ""
+while ($pushConfirmation -notin $pushOptions) {
+    $userInput = Read-Host "Do you want to push this tag to origin? (y/n)"
+
+    if ([string]::IsNullOrWhiteSpace($userInput)) {
+        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
+        continue
+    }
+
+    if ($userInput -eq "y" -or $userInput -eq "n") {
+        $pushConfirmation = $userInput
+        continue
+    }
+
+    $matchedOptions = $pushOptions | Where-Object { $_ -like "$userInput*" }
+
+    if ($matchedOptions.Count -eq 1) {
+        $pushConfirmation = $matchedOptions[0]
+        Write-Host "Selected: $pushConfirmation" -ForegroundColor Green
+    } else {
+        Write-Host "Please enter 'y' or 'n'" -ForegroundColor Red
+    }
+}
 
 if ($pushConfirmation -eq "y") {
     Write-Host "Pushing tag to origin..." -ForegroundColor Cyan
@@ -343,6 +400,7 @@ if ($pushConfirmation -eq "y") {
             if ($packageUrl) {
                 Write-Host "You can check the new $Service version at: $packageUrl" -ForegroundColor Cyan
             }
+            $operationSucceeded = $true
         } else {
             Write-Host "`n❌ ERROR PUSHING TAG" -ForegroundColor White -BackgroundColor Red
             Write-Host "-------------------------------------" -ForegroundColor Red
@@ -353,6 +411,7 @@ if ($pushConfirmation -eq "y") {
             Write-Host "The tag was created locally but could not be pushed to remote repository." -ForegroundColor Yellow
             Write-Host "Check your internet connection or repository access permissions." -ForegroundColor Yellow
             Write-Host "To push later, use: git push origin $newTag" -ForegroundColor Cyan
+            $operationSucceeded = $false
         }
     } catch {
         Write-Host "`n❌ ERROR PUSHING TAG" -ForegroundColor White -BackgroundColor Red
@@ -362,8 +421,36 @@ if ($pushConfirmation -eq "y") {
         Write-Host "The tag was created locally but could not be pushed to remote repository." -ForegroundColor Yellow
         Write-Host "Check your internet connection or repository access permissions." -ForegroundColor Yellow
         Write-Host "To push later, use: git push origin $newTag" -ForegroundColor Cyan
+        $operationSucceeded = $false
     }
 } else {
     Write-Host "Tag was created locally but not pushed." -ForegroundColor Yellow
     Write-Host "To push later, use: git push origin $newTag" -ForegroundColor Cyan
+}
+
+if ($operationSucceeded -and $manifestPath) {
+    Write-Host "`nManifest file detected: $manifestPath" -ForegroundColor Cyan
+
+    if (-not (Test-Path $manifestPath)) {
+        Write-Host "  ⚠️ Unable to find manifest file. Skipping version file update." -ForegroundColor Yellow
+    }
+    else {
+        $updateManifest = Read-YesNo "Do you want to update this file to version $newVersion? (y/n)"
+
+        if ($updateManifest -eq "y") {
+            try {
+                Update-ManifestVersion -FilePath $manifestPath -ManifestType $manifestType -NewVersion $newVersion
+                Write-Host "Manifest version updated to $newVersion" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "Failed to update manifest version: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
+        else {
+            Write-Host "Manifest file left unchanged." -ForegroundColor Yellow
+        }
+    }
+}
+elseif ($manifestPath) {
+    Write-Host "`nSkipping manifest update because the tagging workflow did not complete successfully." -ForegroundColor Yellow
 }

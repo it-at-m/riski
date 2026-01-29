@@ -327,6 +327,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "sqlalchemy" },
     { name = "sqlmodel" },
+    { name = "truststore" },
 ]
 
 [package.metadata]
@@ -338,6 +339,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.10.1" },
     { name = "sqlalchemy", specifier = ">=2.0.42" },
     { name = "sqlmodel", specifier = ">=0.0.24" },
+    { name = "truststore", specifier = ">=0.10.4" },
 ]
 
 [[package]]
@@ -560,7 +562,7 @@ wheels = [
 
 [[package]]
 name = "extractor"
-version = "0.0.1a1"
+version = "0.0.4"
 source = { editable = "." }
 dependencies = [
     { name = "bs4" },
