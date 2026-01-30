@@ -125,7 +125,7 @@ services:
       - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/**
       - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/api/(?<urlsegments>.*), /api/$\{urlsegments}
       - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=frontend
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://frontend:80/
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://frontend:8080/
       - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/**
       - SPRING_PROFILES_ACTIVE=no-security,hazelcast-local
     networks:
@@ -144,7 +144,7 @@ services:
       args:
         - HTTPS_PROXY=${HTTPS_PROXY}
     ports:
-      - "8081:80"
+      - "8081:8080"
     networks:
       - internal
 
