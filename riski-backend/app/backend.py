@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from app.agent import build_agent
 from app.api.routers.ag_ui import router as ag_ui_router
 from app.api.routers.system import router as systems_router
+from app.core.observer import setup_langfuse
 from app.core.settings import BackendSettings, get_settings
 from app.utils.logging import getLogger
 from core.genai import create_embedding_model
@@ -41,11 +42,14 @@ def create_app() -> FastAPI:
         vectorstore, pg_engine = await build_vectorstore(settings)
         logger.info("Database handler created")
 
+        lf_client, lf_callback_handler = setup_langfuse()
+
         # Build and assign the agent
         logger.info("Setting up the agent")
         app.state.agent = await build_agent(
             vectorstore=vectorstore,
             db_sessionmaker=db_sessionmaker,
+            callbacks=[lf_callback_handler],
         )
         logger.info("Agent setup complete")
 

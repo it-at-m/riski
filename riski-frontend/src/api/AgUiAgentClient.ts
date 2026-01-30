@@ -205,7 +205,7 @@ const createAbortController = (signal: AbortSignal): AbortController => {
 const buildAnswer = (text: string, state: RiskiAgentState): RiskiAnswer => {
   const { documents, proposals } = extractAnswerFromState(state);
   return {
-    ai_response: text || "Unsere KI konnte keine Antwort generieren.",
+    response: text || "Unsere KI konnte keine Antwort generieren.",
     documents,
     proposals,
   };

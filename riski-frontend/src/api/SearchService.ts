@@ -84,7 +84,7 @@ export default class SearchService {
       "Hier steht dann die Zusammenfassung der KI. Zum Beispiel, dass in den letztem 2 Jahren 27 Anfragen zu Haushaltsfragen im Stadtrat eingebracht wurden. Außerdem die Aufteilung auf die Fraktionen und die zentralen Ergebnisse der Anfragen.";
 
     let answer: RiskiAnswer = {
-      ai_response: ai_response,
+      response: ai_response,
       proposals: [],
       documents: [],
     };

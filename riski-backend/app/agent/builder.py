@@ -5,13 +5,15 @@ from ag_ui_langgraph import LangGraphAgent
 from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_settings
 from app.utils.logging import getLogger
 from langchain.agents import create_agent
+from langchain.agents.structured_output import ProviderStrategy
 from langchain.tools import BaseTool
+from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncRedisSaver
-from langgraph.graph.state import CompiledStateGraph
+from pydantic import BaseModel, Field
 from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -22,7 +24,13 @@ settings: BackendSettings = get_settings()
 logger: Logger = getLogger()
 
 
-async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker) -> LangGraphAgent:
+class StructuredAgentResponse(BaseModel):
+    response: str = Field(description="The final answer to the user's question.")
+    documents: list[dict[str, Any]] = Field(description="List of documents supporting the answer.")
+    proposals: list[dict[str, Any]] = Field(description="List of proposals related to the supporting documents.")
+
+
+async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
     """Build and return the RISKI agent."""
 
     # Build the chat model
@@ -57,12 +65,32 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
     # Configure the tools
     available_tools: list[BaseTool] = [retrieve_documents]
 
+    system_prompt: str = """
+        You are the RISKI Agent, an AI assistant designed to help users research and analyze documents and proposals from the City of Munich's Council Information System. 
+        Your goal is to provide accurate, concise, and relevant information based on the user's queries and the documents available to you.
+        
+        Tools:
+        You have access to the following tools to assist you in your tasks:
+        1. retrieve_documents: Use this tool to search for and retrieve documents relevant to the user's query.
+    """
+
     # Create the agent via the factory method
-    agent: CompiledStateGraph[Any, AgentContext, Any, Any] = create_agent(
+    agent = create_agent(
         model=chat_model,
+        system_prompt=system_prompt,
         tools=available_tools,
-        context_schema=AgentContext,
+        response_format=ProviderStrategy(StructuredAgentResponse),
+        context_schema=AgentContext,  # type: ignore
         checkpointer=checkpointer,
+    )
+
+    await agent.ainvoke(
+        input={"messages": [{"role": "user", "content": "Wird in München über eine Zweitwohnungssteuer diskutiert?"}]},
+        config={
+            "configurable": {"thread_id": 1},
+            "callbacks": callbacks,
+        },
+        context=AgentContext(vectorstore=vectorstore, db_sessionmaker=db_sessionmaker),
     )
 
     # Wrap the agent in a AG-UI LangGraphAgent
@@ -71,6 +99,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         description="Der RISKI Agent unterstützt bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen aus dem Rats-Informations-System der Stadt München.",
         graph=agent,  # type: ignore
         config={
-            "configurable": {"vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker}
+            "configurable": {"vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
+            "callbacks": callbacks,
         },  # Workaround as LangGraphAgent doesnt yet support context parameter
     )

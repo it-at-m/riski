@@ -83,11 +83,12 @@ async def retrieve_documents(
     """
     # Step 1: Perform similarity search in the vector store
     logger.info(f"Retrieving documents for query: {query}")
-    docs: list[Document] = await runtime.context.vectorstore.asimilarity_search(query=query, k=5)
+    logger.info(f"Using context: {runtime.context} of type {type(runtime.context)}")
+    docs: list[Document] = await runtime.context["vectorstore"].asimilarity_search(query=query, k=5)
     logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
     # Step 2: Fetch related proposals from the database
     logger.info("Get proposals for retrieved documents")
-    proposals: list[dict] = await get_proposals(docs, runtime.context.db_sessionmaker)
+    proposals: list[dict] = await get_proposals(docs, runtime.context["db_sessionmaker"])
     logger.debug(f"Retrieved {len(proposals)} proposals.")
     return RetrieveDocumentsOutput(documents=docs, proposals=proposals)
