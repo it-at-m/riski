@@ -1,10 +1,10 @@
 version: 1
 formatters:
   simple:
-    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   http:
-    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    datefmt: '%Y-%m-%d %H:%M:%S'
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    datefmt: "%Y-%m-%d %H:%M:%S"
   json:
     class: src.logtools.JsonFormatter
 handlers:
@@ -19,25 +19,25 @@ handlers:
     stream: ext://sys.stderr
 loggers:
   uvicorn.error:
-    level: INFO
-    handlers: [ console ]
+    level: DEBUG
+    handlers: [console]
     propagate: no
   dev:
     level: DEBUG
-    handlers: [ console ]
+    handlers: [console]
     propagate: no
   riski-document-pipeline:
-    level: INFO
-    handlers: [ console ]
+    level: DEBUG
+    handlers: [console]
     propagate: no
   httpx:
-    level: WARN
-    handlers: [ httpx ]
+    level: DEBUG
+    handlers: [httpx]
     propagate: no
   httpcore:
-    level: WARN
-    handlers: [ httpx ]
+    level: DEBUG
+    handlers: [httpx]
     propagate: no
 root:
   level: DEBUG
-  handlers: [ console ]
+  handlers: [console]
