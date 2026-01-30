@@ -53,5 +53,4 @@ addopts = [
 ]
 
 [tool.pytest_env]
-RISKI_VERSION = "0.1.0"
 RISKI_ENABLE_DOCS = "false"
