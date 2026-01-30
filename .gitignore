@@ -174,3 +174,4 @@ cython_debug/
 
 
 node_modules
+ca-bundle.crt

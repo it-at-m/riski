@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "pgvector<0.4",
     "langchain-openai>=1.1.7",
+    "truststore>=0.10.4",
 ]
 
 [build-system]
