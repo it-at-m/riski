@@ -332,14 +332,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain-openai", specifier = ">=1.1.7" },
-    { name = "pgvector", specifier = "<0.4" },
-    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
-    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
-    { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "sqlalchemy", specifier = ">=2.0.42" },
-    { name = "sqlmodel", specifier = ">=0.0.24" },
-    { name = "truststore", specifier = ">=0.10.4" },
+    { name = "langchain-openai", specifier = "==1.1.7" },
+    { name = "pgvector", specifier = "==0.3.6" },
+    { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.2" },
+    { name = "pydantic", extras = ["email"], specifier = "==2.12.5" },
+    { name = "pydantic-settings", specifier = "==2.12.0" },
+    { name = "sqlalchemy", specifier = "==2.0.46" },
+    { name = "sqlmodel", specifier = "==0.0.31" },
+    { name = "truststore", specifier = "==0.10.4" },
 ]
 
 [[package]]
@@ -604,18 +604,18 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", marker = "extra == 'pgvector'", specifier = "==0.30.0" },
-    { name = "bs4", specifier = ">=0.0.2" },
+    { name = "bs4", specifier = "==0.0.2" },
     { name = "core", directory = "../riski-core" },
-    { name = "gitpython", specifier = ">=3.1.45" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "langchain-postgres", marker = "extra == 'pgvector'", specifier = ">=0.0.15" },
-    { name = "legacy-cgi", specifier = ">=2.6.4" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "stamina", specifier = ">=25.1.0" },
+    { name = "gitpython", specifier = "==3.1.46" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-postgres", marker = "extra == 'pgvector'", specifier = "==0.0.16" },
+    { name = "legacy-cgi", specifier = "==2.6.4" },
+    { name = "pyyaml", specifier = "==6.0.3" },
+    { name = "stamina", specifier = "==25.2.0" },
     { name = "tokenizers", specifier = "==0.21.2" },
     { name = "torch", specifier = "==2.8.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torchvision", specifier = "==0.23.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "truststore", specifier = ">=0.10.4" },
+    { name = "truststore", specifier = "==0.10.4" },
 ]
 provides-extras = ["pgvector"]
 
@@ -623,14 +623,14 @@ provides-extras = ["pgvector"]
 dev = [
     { name = "faststream", extras = ["kafka"], specifier = "==0.6.1" },
     { name = "ipykernel", specifier = "==7.0.1" },
-    { name = "langchain", specifier = ">=0.3.27" },
-    { name = "langchain-community", specifier = ">=0.3.28" },
-    { name = "langchain-docling", specifier = ">=1.1.0" },
-    { name = "langchain-openai", specifier = ">=0.3.32" },
+    { name = "langchain", specifier = "==1.2.7" },
+    { name = "langchain-community", specifier = "==0.4.1" },
+    { name = "langchain-docling", specifier = "==2.0.0" },
+    { name = "langchain-openai", specifier = "==1.1.7" },
     { name = "pre-commit", specifier = "==4.3.0" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "ruff", specifier = ">=0.14.11" },
+    { name = "python-dotenv", specifier = "==1.2.1" },
+    { name = "ruff", specifier = "==0.14.14" },
     { name = "ty", specifier = "==0.0.1a23" },
 ]
 
