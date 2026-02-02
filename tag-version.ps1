@@ -203,6 +203,14 @@ $prefix = $serviceConfig[$Service].Prefix
 Write-Host "Finding latest version for $Service service..."
 Write-Host "Looking for tags with prefix: $prefix" -ForegroundColor Cyan
 
+# Fetch latest tags from remote
+Write-Host "Fetching latest tags from remote..." -ForegroundColor DarkGray
+git fetch --tags | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Failed to fetch remote tags. Aborting to avoid using stale tag data." -ForegroundColor Red
+    exit 1
+}
+
 # Get all tags as an array
 $allTags = @(git tag)
 # Filter tags that start with the prefix
