@@ -58,6 +58,7 @@ def _get_session_ctx():
     try:
         yield session
     finally:
+        session.expunge_all()
         session.close()
 
 
