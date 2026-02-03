@@ -13,7 +13,7 @@ authors = [
     { name = "Michael Jaumann", email = "michael.jaumann@muenchen.de" },
 ]
 maintainers = [
-   { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
+    { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
 ]
 
 dependencies = [
@@ -31,9 +31,10 @@ dependencies = [
     "core",
     "langchain-postgres==0.0.16",
     "langchain-openai==1.1.7",
-    "langchain-core==1.2.7",
+    "langchain-core==1.2.8",
     "langgraph==1.0.7",
-    "langgraph-checkpoint-redis==0.3.3",
+    "langgraph-checkpoint-redis==0.3.4",
+    "langchain==1.2.8",
 ]
 
 [dependency-groups]
@@ -44,6 +45,7 @@ dev = [
     "pytest-cov==7.0.0",
     "pytest-env==1.2.0",
     "ruff==0.14.14",
+    "ty==0.0.14",
 ]
 
 [tool.uv.sources]
@@ -56,10 +58,7 @@ add-bounds = "exact"
 pythonpath = ["."]
 testpaths = ["test"]
 asyncio_mode = "auto"
-addopts = [
-    "--cov=app",
-    "--cov-report=term-missing",
-]
+addopts = ["--cov=app", "--cov-report=term-missing"]
 
 [tool.pytest_env]
 RISKI_ENABLE_DOCS = "false"
