@@ -3,15 +3,17 @@ from typing import Any, TypedDict
 
 from app.utils.logging import getLogger
 from core.model.data_models import File
-from langchain.tools import ToolRuntime, tool
+from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
+from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlmodel import Column, select
+from sqlalchemy.orm import selectinload
+from sqlmodel import select
 
 from .types import AgentContext
 
-logger: Logger = getLogger(name=__name__)
+logger: Logger = getLogger()
 
 
 class RetrieveDocumentsArgs(BaseModel):
@@ -38,25 +40,29 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
     import asyncio
 
     logger.info("current loop id = %s", id(asyncio.get_running_loop()))
-
+    proposals = []
     async with db_sessionmaker() as db_session:
         logger.info("session created")
         result = await db_session.execute(
             # test with first file only
-            select(File).where(Column(File.db_id) == file_ids.pop()),
+            # select(File).where(Column(File.db_id) == "09ef9c43-d10b-4b04-bc97-b03321ec4bcc"), # file_ids.pop()),
             # actual needed query
-            # select(File).where(Column(File.db_id).in_(file_ids))
+            select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),
             execution_options={"timeout": 10},
         )
         logger.info("got result from db")
 
         files = result.scalars().all()
-    # files = []
-    logger.info(f"Look  for proposals in {len(files)} files from db.")
-    # TODO: for each file find related proposals if existing
-    proposals = [
-        {"identifier": p.reference, "name": p.name, "risUrl": p.id} for f in files for p in f.papers if p.paper_type == "Stadtratsantrag"
-    ]
+        # files = []
+        logger.info(f"Look  for proposals in {len(files)} files from db.")
+        # TODO: for each file find related proposals if existing
+        proposals = [
+            {"identifier": p.reference, "name": p.name, "risUrl": p.id}
+            for f in files
+            if f.papers
+            for p in f.papers
+            if p.paper_type == "Stadtratsantrag"
+        ]
     return proposals
 
 
@@ -67,10 +73,7 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
     parse_docstring=False,
     response_format="content",
 )
-async def retrieve_documents(
-    query: str,
-    runtime: ToolRuntime[AgentContext],
-) -> RetrieveDocumentsOutput:
+async def retrieve_documents(query: str, runtime: ToolRuntime[AgentContext], config: RunnableConfig) -> RetrieveDocumentsOutput:
     """
     Retrieve relevant documents and proposals based on a query.
 
@@ -81,14 +84,26 @@ async def retrieve_documents(
     Returns:
         RetrieveDocumentsOutput: A dictionary containing lists of retrieved documents and proposals.
     """
-    # Step 1: Perform similarity search in the vector store
-    logger.info(f"Retrieving documents for query: {query}")
-    logger.info(f"Using context: {runtime.context} of type {type(runtime.context)}")
-    docs: list[Document] = await runtime.context["vectorstore"].asimilarity_search(query=query, k=5)
-    logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
+    # raise ToolException("DB down - try again later.")
+    try:
+        logger.info(f"Retrieving documents for query: {query}")
+        if runtime.context is None:
+            vectorstore = config["configurable"]["vectorstore"]
+            db_sessionmaker = config["configurable"]["db_sessionmaker"]
+        # currently not supported in AG-UI langgraph agent - but future
+        else:
+            vectorstore = runtime.context["vectorstore"]
+            db_sessionmaker = runtime.context["db_sessionmaker"]
+            logger.info(f"Using context: {runtime.context} of type {type(runtime.context)}")
+        # Step 1: Perform similarity search in the vector store
+        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=5)
+        logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
-    # Step 2: Fetch related proposals from the database
-    logger.info("Get proposals for retrieved documents")
-    proposals: list[dict] = await get_proposals(docs, runtime.context["db_sessionmaker"])
-    logger.debug(f"Retrieved {len(proposals)} proposals.")
-    return RetrieveDocumentsOutput(documents=docs, proposals=proposals)
+        # Step 2: Fetch related proposals from the database
+        logger.info("Get proposals for retrieved documents")
+        proposals: list[dict] = await get_proposals(docs, db_sessionmaker)
+        logger.debug(f"Retrieved {len(proposals)} proposals.")
+        return RetrieveDocumentsOutput(documents=docs, proposals=proposals)
+    except Exception as e:
+        logger.error(f"Error in retrieve_documents tool: {e}")
+        raise ToolException("Failed to retrieve documents.")

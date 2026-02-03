@@ -1,3 +1,4 @@
+import os
 from logging import Logger
 
 from anyio.functools import lru_cache
@@ -12,13 +13,13 @@ logger: Logger = getLogger(__name__)
 def setup_langfuse() -> tuple[Langfuse, CallbackHandler]:
     langfuse = get_client()
     # Verify connection
-
-    try:
-        langfuse.auth_check()
-        logger.info("Langfuse auth check successful.")
-    except Exception as e:
-        logger.error(f"Langfuse auth check failed with the following error {e}. ")
-        raise e
+    if not os.getenv("LOCAL_DEBUG"):
+        try:
+            langfuse.auth_check()
+            logger.info("Langfuse auth check successful.")
+        except Exception as e:
+            logger.error(f"Langfuse auth check failed with the following error {e}. ")
+            raise e
 
     # Initialize Langfuse CallbackHandler for Tracing
     langfuse_handler = CallbackHandler()
