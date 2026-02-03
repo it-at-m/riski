@@ -31,6 +31,8 @@ Find information in munich's political information system RIS with the help of a
 
 [![Extractor][extractor-version-shield]][extractor-container]
 [![Backend][backend-version-shield]][backend-container]
+[![Document Pipeline][document-pipeline-version-shield]][document-pipeline-container]
+[![Frontend][frontend-version-shield]][frontend-container]
 
 <!-- ABOUT THE PROJECT -->
 
@@ -45,10 +47,15 @@ Find information in munich's political information system RIS with the help of a
 [langgraph-shield]: https://img.shields.io/badge/LangGraph-blue?&style=for-the-badge&logo=langgraph&logoColor=white
 [extractor-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=extractor*&label=riski-extractor&style=for-the-badge&color=blue
 [backend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=backend*&label=riski-backend&style=for-the-badge&color=blue
+[document-pipeline-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=document-pipeline*&label=riski-document-pipeline&style=for-the-badge&color=blue
+[frontend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=riski-frontend*&label=riski-frontend&style=for-the-badge&color=blue
 [backend-tests-shield]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml/badge.svg
 [backend-tests]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml
 [extractor-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-extractor
 [backend-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-backend
+[document-pipeline-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-document-pipeline
+[frontend-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-frontend
+
 [itm-opensource]: https://opensource.muenchen.de/
 [license]: https://github.com/it-at-m/riski/blob/main/LICENSE
 [uv]: https://github.com/astral-sh/uv
@@ -57,14 +64,58 @@ Find information in munich's political information system RIS with the help of a
 [langgraph]: https://langchain-ai.github.io/langgraph/
 [vue]: https://vuejs.org/
 
+## Getting started
+
+The quickest way to try RIS-KI locally is to start the shared database with Compose, seed it with example data via the extractor, and (optionally) run the document pipeline.
+
+### Prerequisites
+
+- Docker or Podman (the repo ships a root-level `compose.yaml`)
+- Python toolchain (we recommend [`uv`](https://github.com/astral-sh/uv))
+- A populated `.env` in the repo root (see `.env.example` for the variables used by all services)
+
+### 1) Start the stack via Compose
+
+One-time setup (required before the first backend start) to create the Kafka topics:
+
+```powershell
+podman compose --profile init up topic-init
+```
+
+From the repository root you can start everything (DB, Adminer, Kafka, backend, gateway, frontend) with:
+
+```powershell
+podman compose up -d
+```
+
+Defaults for Postgres (from `compose.yaml`): user `postgres`, password `password`, database `example_db`, exposed on `5432`.
+
+### 2) (Optional) Seed with sample data
+
+To populate the database with sample data from Munich's RIS and process documents with OCR, run the initialization services:
+
+```powershell
+podman compose --profile init up
+```
+
+This will:
+
+- Create necessary Kafka topics
+- Extract sample entities and files from the configured RIS endpoint (honors your `.env`, e.g., date range and base URL)  
+- Run OCR on documents and store extracted markdown (configure OCR variables like `RISKI__DOCUMENTS__MAX_DOCUMENTS_TO_PROCESS` and `RISKI__DOCUMENTS__OCR_MODEL_NAME` in your `.env`)
+
+### 3) Access the application
+
+Once the stack is running, visit:
+
+- **Frontend**: [http://localhost:8083/](http://localhost:8083/) (via the refarch gateway)
+- **Database UI**: [http://localhost:8080](http://localhost:8080) (Adminer for inspecting database contents)
+
 ## Roadmap
 
 See the [open issues](https://github.com/it-at-m/riski/issues) for a full list of proposed features (and known issues).
 
-## Set up
-
-_How to get started with this project_
-
+>>>>>>>
 ## Documentation
 
 ### Development
@@ -72,17 +123,16 @@ _How to get started with this project_
 #### Releasing backend or extractor images
 
 Use the `tag-version.ps1` helper to create semantic tags that trigger the
-GitHub Actions workflows responsible for building the `riski-backend` and
-`riski-extractor` container images.
+GitHub Actions workflows responsible for building the container images.
 
 ```powershell
 ./tag-version.ps1
 ```
 
-1. Select the service (`backend` or `extractor`).
+1. Select the service (`backend`, `extractor`, `frontend`, or `document-pipeline`).
 2. Choose the version bump (`major`, `minor`, or `patch`).
-3. When prompted, decide whether the script should also bump the detected manifest (for example `riski-backend/pyproject.toml` or a `package.json`) to the same version. This keeps the package metadata, container tags, and badges in sync.
-4. Confirm the suggested tag (for example `backend-1.2.0`).
+3. When prompted, decide whether the script should also bump the detected manifest (for example `riski-backend/pyproject.toml`, `riski-extractor/pyproject.toml`, `riski-document-pipeline/pyproject.toml`, or `riski-frontend/package.json`) to the same version. This keeps the package metadata, container tags, and badges in sync.
+4. Confirm the suggested tag (for example `backend-1.2.0`, `extractor-1.2.0`, `document-pipeline-1.2.0`, or `riski-frontend-1.2.0`).
 5. Confirm pushing the tag to `origin` to start the corresponding Docker release workflow.
 
 After a successful push, the workflow builds and publishes the image to GitHub Container Registry.
@@ -98,6 +148,7 @@ uv sync --reinstall-package core
 
 Run the command from the respective service folder (for example `riski-backend`) so `uv` picks up the correct `pyproject.toml`.
 
+>>>>>>>
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
