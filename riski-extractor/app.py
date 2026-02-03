@@ -1,11 +1,10 @@
-import os
+import gc
 import sys
 from logging import Logger
 
 from config.config import Config, get_config
 from core.db.db import create_db_and_tables, init_db
 from core.db.db_access import update_or_insert_objects_to_database
-from core.model.data_models import ExtractArtifact
 from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
@@ -41,6 +40,8 @@ def main():
     logger.info(f"Extracted {len(extracted_faction_list)} factions")
     logger.debug([obj.name for obj in extracted_faction_list])
     update_or_insert_objects_to_database(extracted_faction_list)
+    extracted_faction_list = []
+    gc.collect()
 
     logger.info("Extracting meetings")
     meeting_extractor = CityCouncilMeetingExtractor()
@@ -48,6 +49,8 @@ def main():
     logger.info(f"Extracted {len(extracted_meeting_list)} meetings")
     logger.debug([obj.name for obj in extracted_meeting_list])
     update_or_insert_objects_to_database(extracted_meeting_list)
+    extracted_meeting_list = []
+    gc.collect()
 
     logger.info("Extracting Heads of Departments")
     head_of_department_extractor = HeadOfDepartmentExtractor()
@@ -55,6 +58,8 @@ def main():
     logger.info(f"Extracted {len(extracted_head_of_department_list)} Heads of Departments")
     logger.debug([hod.name for hod in extracted_head_of_department_list])
     update_or_insert_objects_to_database(extracted_head_of_department_list)
+    extracted_head_of_department_list = []
+    gc.collect()
 
     logger.info("Extracting City Council Members")
     city_council_member_extractor = CityCouncilMemberExtractor()
@@ -62,6 +67,8 @@ def main():
     logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Members")
     logger.debug([ccm.name for ccm in extracted_city_council_member_list])
     update_or_insert_objects_to_database(extracted_city_council_member_list)
+    extracted_city_council_member_list = []
+    gc.collect()
 
     logger.info("Extracting City Council Meeting Templates")
     city_council_meeting_template_extractor = CityCouncilMeetingTemplateExtractor()
@@ -69,6 +76,8 @@ def main():
     logger.info(f"Extracted {len(extracted_city_council_meeting_template_list)} City Council Meeting Templates")
     logger.debug([template.name for template in extracted_city_council_meeting_template_list])
     update_or_insert_objects_to_database(extracted_city_council_meeting_template_list)
+    extracted_city_council_meeting_template_list = []
+    gc.collect()
 
     logger.info("Extracting City Council Motions")
     city_council_motion_extractor = CityCouncilMotionExtractor()
@@ -76,26 +85,14 @@ def main():
     logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motions")
     logger.debug([obj.name for obj in extracted_city_council_motion_list])
     update_or_insert_objects_to_database(extracted_city_council_motion_list)
+    extracted_city_council_motion_list = []
+    gc.collect()
 
     filehandler = Filehandler()
     filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
-
-    if config.json_export:
-        logger.info("Dumping extraction artifact to 'artifacts/extract.json'")
-        extraction_artifact = ExtractArtifact(
-            meetings=extracted_meeting_list,
-            heads_of_departments=extracted_head_of_department_list,
-            city_council_members=extracted_city_council_member_list,
-            city_council_meeting_template=extracted_city_council_meeting_template_list,
-            factions=extracted_faction_list,
-            city_council_motions=extracted_city_council_motion_list,
-        )
-        os.makedirs("artifacts", exist_ok=True)
-        with open("artifacts/extract.json", "w", encoding="utf-8") as file:
-            file.write(extraction_artifact.model_dump_json(indent=4))
 
     logger.info("Extraction process finished")
     # TODO: Transform
