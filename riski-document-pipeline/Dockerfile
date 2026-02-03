@@ -1,9 +1,11 @@
 # Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-micro:latest
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:67aafc6c9c44374e1baf340110d4c835457d59a0444c068ba9ac6431a6d9e7ac
+
+RUN microdnf install -y postgresql-libs zlib && microdnf clean all
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-ENV UV_PROJECT_ENVIRONMENT=system
+ENV UV_PROJECT_ENVIRONMENT=/app/document-pipeline/.venv
 
 # Install the project into `/app`
 WORKDIR /app/document-pipeline
@@ -39,7 +41,7 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
     org.opencontainers.image.created="$IMAGE_CREATED" \
     org.opencontainers.image.revision="$IMAGE_REVISION" \
     org.opencontainers.image.version="$IMAGE_VERSION" \
-    org.opencontainers.image.url='https://github.com/it-at-m/riski/pkgs/container/riski-document-pipeline' \
+    org.opencontainers.image.url='https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-document-pipeline' \
     org.opencontainers.image.documentation='https://github.com/it-at-m/riski/README.md' \
     org.opencontainers.image.source='https://github.com/it-at-m/riski' \
     org.opencontainers.image.licenses='MIT' \
@@ -51,7 +53,7 @@ LABEL org.opencontainers.image.authors='Landeshauptstadt München <opensource@mu
 RUN chown -R root:0 /app && chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
-ENV PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/document-pipeline/.venv/bin:$PATH"
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1
@@ -63,4 +65,4 @@ ENV PYTHONWARNINGS="ignore"
 ENV APP_VERSION=${IMAGE_VERSION}
 
 # Reset the entrypoint, don't invoke `uv`
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["/app/document-pipeline/.venv/bin/python", "main.py"]
