@@ -1,6 +1,7 @@
 import type Document from "@/types/Document";
 import type Proposal from "@/types/Proposal";
 import type RiskiAnswer from "@/types/RiskiAnswer";
+import type { ExecutionStep, ToolCallInfo } from "@/types/RiskiAnswer";
 import type { AgentSubscriber } from "@ag-ui/client";
 import type { Message } from "@ag-ui/core";
 
@@ -202,12 +203,58 @@ const createAbortController = (signal: AbortSignal): AbortController => {
   return controller;
 };
 
-const buildAnswer = (text: string, state: RiskiAgentState): RiskiAnswer => {
+const buildAnswer = (
+  text: string,
+  state: RiskiAgentState,
+  status?: string,
+  steps?: ExecutionStep[]
+): RiskiAnswer => {
+  try {
+    const json = JSON.parse(text);
+    if (isRecord(json)) {
+      const response = typeof json.response === "string" ? json.response : "";
+      const documents = Array.isArray(json.documents)
+        ? json.documents.filter(isRecord).map(mapDocument)
+        : [];
+      const proposals = Array.isArray(json.proposals)
+        ? json.proposals.filter(isRecord).map(mapProposal)
+        : [];
+
+      return {
+        response: response || "Unsere KI konnte keine Antwort generieren.",
+        documents,
+        proposals,
+        status,
+        steps,
+      };
+    }
+  } catch {
+    // Attempt to extract partial response if it looks like a JSON stream
+    if (text.trimStart().startsWith("{")) {
+      const match = text.match(/"response"\s*:\s*"((?:[^"\\]|\\.)*)(?:"|$)/);
+      if (match && typeof match[1] === "string") {
+        const response = match[1]
+          .replace(/\\"/g, '"')
+          .replace(/\\n/g, "\n")
+          .replace(/\\\\/g, "\\");
+        return {
+          response: response,
+          documents: [],
+          proposals: [],
+          status,
+          steps,
+        };
+      }
+    }
+  }
+
   const { documents, proposals } = extractAnswerFromState(state);
   return {
     response: text || "Unsere KI konnte keine Antwort generieren.",
     documents,
     proposals,
+    status,
+    steps,
   };
 };
 
@@ -232,6 +279,8 @@ export default class AgUiAgentClient {
     const abortController = createAbortController(signal);
     let latestText = "";
     let latestState: RiskiAgentState = {};
+    let latestStatus = "Initialisiere...";
+    let latestSteps: ExecutionStep[] = [];
 
     const emitProgress = () => {
       if (!onProgress || signal.aborted || abortController.signal.aborted) {
@@ -239,7 +288,9 @@ export default class AgUiAgentClient {
       }
       const answer = buildAnswer(
         latestText || extractAssistantResponse(agent.messages),
-        latestState
+        latestState,
+        latestStatus,
+        latestSteps
       );
       onProgress(answer);
     };
@@ -247,6 +298,17 @@ export default class AgUiAgentClient {
     const subscriber: AgentSubscriber = {
       onTextMessageContentEvent: ({ textMessageBuffer }) => {
         latestText = textMessageBuffer;
+        // Update content of current running step if it exists
+        const currentStep = latestSteps.find(
+          (step) => step.status === "running"
+        );
+        if (currentStep) {
+          currentStep.content = textMessageBuffer;
+          // If we are receiving text content, we are definitely generating the answer now
+          if (currentStep.name === "model") {
+            latestStatus = "Generiere Antwort...";
+          }
+        }
         emitProgress();
       },
       onStateDeltaEvent: ({ state }) => {
@@ -258,11 +320,105 @@ export default class AgUiAgentClient {
         emitProgress();
       },
       onRunFinishedEvent: () => {
+        latestStatus = "";
+        // Finish any running steps
+        latestSteps.forEach((step) => {
+          if (step.status === "running") step.status = "completed";
+          // Also complete any running tool calls
+          step.toolCalls?.forEach((tc) => {
+            if (tc.status === "running") tc.status = "completed";
+          });
+        });
         latestState = (agent.state as RiskiAgentState) || latestState;
         latestText = extractAssistantResponse(agent.messages) || latestText;
         emitProgress();
       },
       onRunErrorEvent: () => {
+        latestStatus = "Fehler aufgetreten.";
+        // Fail any running steps
+        latestSteps.forEach((step) => {
+          if (step.status === "running") step.status = "failed";
+        });
+        emitProgress();
+      },
+      onRunStartedEvent: () => {
+        latestSteps = [];
+        emitProgress();
+      },
+      onStepStartedEvent: ({ event }) => {
+        if (event.stepName === "model") {
+          latestStatus = "Denke nach...";
+        } else if (event.stepName === "tools") {
+          latestStatus = "Verwende Werkzeuge...";
+        } else if (event.stepName === "retrieve_documents") {
+          latestStatus = "Suche Dokumente...";
+        } else {
+          latestStatus = `Verarbeite Schritt: ${event.stepName}`;
+        }
+        latestSteps.push({
+          name: event.stepName,
+          status: "running",
+          content: "",
+          toolCalls: [],
+        });
+        emitProgress();
+      },
+      onStepFinishedEvent: ({ event }) => {
+        const step = latestSteps
+          .slice()
+          .reverse()
+          .find((s) => s.name === event.stepName && s.status === "running");
+        if (step) {
+          step.status = "completed";
+        }
+        emitProgress();
+      },
+      onToolCallResultEvent: () => {
+        // Could be specific about what tool finished
+        latestStatus = "Werkzeug ausgeführt.";
+        emitProgress();
+      },
+      onToolCallStartEvent: ({ event }) => {
+        const currentStep = latestSteps.find(
+          (step) => step.status === "running"
+        );
+        if (currentStep) {
+          if (!currentStep.toolCalls) currentStep.toolCalls = [];
+
+          let toolArgs = "";
+          // Check for RAW event data structure which might contain input args
+          if ("rawEvent" in event) {
+            const raw = event.rawEvent as any;
+            if (raw?.event?.data?.input?.query) {
+              toolArgs = raw.event.data.input.query;
+            }
+          }
+
+          currentStep.toolCalls.push({
+            id: event.toolCallId,
+            name: event.toolCallName,
+            args: toolArgs,
+            status: "running",
+          });
+          // Check if we are in the 'model' step, which proposes tool calls (thinking)
+          if (currentStep.name === "model") {
+            latestStatus = `Entscheide für Werkzeug: ${event.toolCallName}...`;
+          }
+        }
+        emitProgress();
+      },
+      onToolCallEndEvent: ({ event }) => {
+        const currentStep = latestSteps.find(
+          (step) => step.status === "running"
+        );
+        if (currentStep && currentStep.toolCalls) {
+          const toolCall = currentStep.toolCalls.find(
+            (tc) => tc.id === event.toolCallId
+          );
+          if (toolCall) {
+            toolCall.status = "completed";
+          }
+        }
         emitProgress();
       },
     };
@@ -279,13 +435,15 @@ export default class AgUiAgentClient {
       const responseText =
         latestText || extractAssistantResponse(agent.messages);
 
-      return buildAnswer(responseText, latestState);
+      return buildAnswer(responseText, latestState, latestStatus, latestSteps);
     } catch (error) {
       console.error("Agent execution failed:", error);
       // Return a user-friendly error response
       return buildAnswer(
         "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten.",
-        latestState
+        latestState,
+        "Fehler",
+        latestSteps
       );
     } finally {
       abortController.abort();
