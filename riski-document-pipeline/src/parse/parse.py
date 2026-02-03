@@ -32,8 +32,8 @@ def run_ocr_for_documents(settings):
                 max_docs,
             )
         while True:
-            if batch_size + offset > max_docs:
-                limit = max_docs
+            if max_docs is not None and batch_size + offset > max_docs:
+                limit = max_docs - offset
             else:
                 limit = batch_size
             docs_to_process: list[File] = request_batch(File, offset=offset, limit=limit)
