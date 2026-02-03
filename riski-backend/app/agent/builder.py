@@ -1,6 +1,5 @@
 from logging import Logger
 from typing import Any
-from uuid import uuid4
 
 from ag_ui_langgraph import LangGraphAgent
 from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_settings
@@ -85,16 +84,17 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         checkpointer=checkpointer,
     )
 
-    agent_result = await agent.ainvoke(
-        input={"messages": [{"role": "user", "content": "Wird in München über eine Zweitwohnungssteuer diskutiert?"}]},
-        config={
-            "configurable": {"thread_id": uuid4()},
-            "callbacks": callbacks,
-        },
-        context=AgentContext(vectorstore=vectorstore, db_sessionmaker=db_sessionmaker),
-    )
+    # Context usage probably supported in future LangGraphAgent versions
+    # agent_result = await agent.ainvoke(
+    #     input={"messages": [{"role": "user", "content": "Wird in München über eine Zweitwohnungssteuer diskutiert?"}]},
+    #     config={
+    #         "configurable": {"thread_id": uuid4(), "vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
+    #         "callbacks": callbacks,
+    #     },
+    #     # context=AgentContext(vectorstore=vectorstore, db_sessionmaker=db_sessionmaker),
+    # )
 
-    logger.info(f"Agent test invocation result: {agent_result}")
+    # logger.info(f"Agent test invocation result: {agent_result}")
 
     # Wrap the agent in a AG-UI LangGraphAgent
     return LangGraphAgent(

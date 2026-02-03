@@ -5,6 +5,7 @@ from app.utils.logging import getLogger
 from core.model.data_models import File
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
+from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
@@ -72,10 +73,7 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
     parse_docstring=False,
     response_format="content",
 )
-async def retrieve_documents(
-    query: str,
-    runtime: ToolRuntime[AgentContext],
-) -> RetrieveDocumentsOutput:
+async def retrieve_documents(query: str, runtime: ToolRuntime[AgentContext], config: RunnableConfig) -> RetrieveDocumentsOutput:
     """
     Retrieve relevant documents and proposals based on a query.
 
@@ -88,15 +86,22 @@ async def retrieve_documents(
     """
     # raise ToolException("DB down - try again later.")
     try:
-        # Step 1: Perform similarity search in the vector store
         logger.info(f"Retrieving documents for query: {query}")
-        logger.info(f"Using context: {runtime.context} of type {type(runtime.context)}")
-        docs: list[Document] = await runtime.context["vectorstore"].asimilarity_search(query=query, k=5)
+        if runtime.context is None:
+            vectorstore = config["configurable"]["vectorstore"]
+            db_sessionmaker = config["configurable"]["db_sessionmaker"]
+        # currently not supported in AG-UI langgraph agent - but future
+        else:
+            vectorstore = runtime.context["vectorstore"]
+            db_sessionmaker = runtime.context["db_sessionmaker"]
+            logger.info(f"Using context: {runtime.context} of type {type(runtime.context)}")
+        # Step 1: Perform similarity search in the vector store
+        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=5)
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
         # Step 2: Fetch related proposals from the database
         logger.info("Get proposals for retrieved documents")
-        proposals: list[dict] = await get_proposals(docs, runtime.context["db_sessionmaker"])
+        proposals: list[dict] = await get_proposals(docs, db_sessionmaker)
         logger.debug(f"Retrieved {len(proposals)} proposals.")
         return RetrieveDocumentsOutput(documents=docs, proposals=proposals)
     except Exception as e:
