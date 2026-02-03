@@ -22,7 +22,7 @@ services:
     image: adminer@sha256:07a2ed7fde0362826b1df5a589ae07fc5003575b44578a06bc7da717d8547562
     restart: always
     ports:
-      - 8081:8080
+      - 8084:8080
   kafka:
     image: apache/kafka:4.1.1@sha256:0bc1bb2478f45b6cea78864df86acdc11e8df2c5172477819a4d12942cbe5d40
     ports:
