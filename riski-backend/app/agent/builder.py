@@ -63,7 +63,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         raise ValueError("Unsupported checkpointer configuration")
 
     # Configure the tools
-    available_tools: list[BaseTool] = [retrieve_documents, get_weather]
+    available_tools: list[BaseTool] = [retrieve_documents]
 
     system_prompt: str = """
         You are the RISKI Agent, an AI assistant designed to help users research and analyze documents and proposals from the City of Munich's Council Information System. 
