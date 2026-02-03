@@ -18,7 +18,7 @@ def run_ocr_for_documents(settings):
     client = Mistral(api_key=api_key, server_url=server_url)
     ocr_model = settings.ocr_model_name
     max_docs = settings.max_documents_to_process
-    batch_size = settings.max_documents_to_process
+    batch_size = settings.ocr_batch_size
 
     if max_docs is not None and max_docs <= 0:
         logger.info("max_documents_to_process is %s; skipping OCR run.", max_docs)
