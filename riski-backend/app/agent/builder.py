@@ -6,7 +6,7 @@ from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_se
 from app.utils.logging import getLogger
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ProviderStrategy
-from langchain.tools import BaseTool
+from langchain.tools import BaseTool, tool
 from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
@@ -63,7 +63,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         raise ValueError("Unsupported checkpointer configuration")
 
     # Configure the tools
-    available_tools: list[BaseTool] = [retrieve_documents]
+    available_tools: list[BaseTool] = [retrieve_documents, get_weather]
 
     system_prompt: str = """
         You are the RISKI Agent, an AI assistant designed to help users research and analyze documents and proposals from the City of Munich's Council Information System. 

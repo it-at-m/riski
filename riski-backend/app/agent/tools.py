@@ -68,7 +68,6 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
 
 @tool(
     description="Retrieve relevant documents and proposals based on a query.",
-    return_direct=True,
     args_schema=RetrieveDocumentsArgs,
     parse_docstring=False,
     response_format="content",
@@ -105,5 +104,5 @@ async def retrieve_documents(query: str, runtime: ToolRuntime[AgentContext], con
         logger.debug(f"Retrieved {len(proposals)} proposals.")
         return RetrieveDocumentsOutput(documents=docs, proposals=proposals)
     except Exception as e:
-        logger.error(f"Error in retrieve_documents tool: {e}")
-        raise ToolException("Failed to retrieve documents.")
+        logger.error(f"Error in retrieve_documents tool: {e}", exc_info=True)
+        raise ToolException(f"Failed to retrieve documents: {str(e)}")
