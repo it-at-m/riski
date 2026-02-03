@@ -118,8 +118,8 @@ services:
 
   backend:
     build:
-      context: riski-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: riski-backend/Dockerfile
       args:
         - HTTPS_PROXY=${HTTPS_PROXY}
     env_file:

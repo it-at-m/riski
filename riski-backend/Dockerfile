@@ -14,14 +14,16 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
 # Leverage layer cache
-COPY pyproject.toml uv.lock ./
+COPY riski-backend/pyproject.toml riski-backend/uv.lock ./
+COPY riski-core /app/riski-core/
 
 # Install the transitive dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked --no-install-project
 
 # Copy the application files
-COPY . /app/backend
+COPY riski-backend /app/backend
+COPY riski-core /app/riski-core
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
