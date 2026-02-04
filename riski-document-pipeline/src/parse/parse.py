@@ -31,7 +31,7 @@ def run_ocr_for_documents(settings):
                 "Processing up to %s documents",
                 max_docs,
             )
-        logger.info("Start processing.", max_docs)
+        logger.info("Start processing.")
         while True:
             if max_docs is not None and batch_size + offset > max_docs:
                 limit = max_docs - offset
