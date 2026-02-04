@@ -1,4 +1,3 @@
-import gc
 import time
 from contextlib import contextmanager
 from functools import wraps
@@ -59,9 +58,7 @@ def _get_session_ctx():
     try:
         yield session
     finally:
-        session.expunge_all()
         session.close()
-        gc.collect()
 
 
 @contextmanager

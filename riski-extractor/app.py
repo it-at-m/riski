@@ -1,10 +1,8 @@
-import gc
 import sys
 from logging import Logger
 
 from config.config import Config, get_config
 from core.db.db import create_db_and_tables, init_db
-from core.db.db_access import update_or_insert_objects_to_database
 from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
@@ -36,57 +34,33 @@ def main():
 
     logger.info("Extracting City Council Factions")
     faction_extractor = CityCouncilFactionExtractor()
-    extracted_faction_list = faction_extractor.run()
-    logger.info(f"Extracted {len(extracted_faction_list)} factions")
-    logger.debug([obj.name for obj in extracted_faction_list])
-    update_or_insert_objects_to_database(extracted_faction_list)
-    extracted_faction_list = []
-    gc.collect()
+    faction_extractor.run()
+    logger.info("Extracted factions")
 
     logger.info("Extracting meetings")
     meeting_extractor = CityCouncilMeetingExtractor()
-    extracted_meeting_list = meeting_extractor.run()
-    logger.info(f"Extracted {len(extracted_meeting_list)} meetings")
-    logger.debug([obj.name for obj in extracted_meeting_list])
-    update_or_insert_objects_to_database(extracted_meeting_list)
-    extracted_meeting_list = []
-    gc.collect()
+    meeting_extractor.run()
+    logger.info("Extracted meetings")
 
     logger.info("Extracting Heads of Departments")
     head_of_department_extractor = HeadOfDepartmentExtractor()
-    extracted_head_of_department_list = head_of_department_extractor.run()
-    logger.info(f"Extracted {len(extracted_head_of_department_list)} Heads of Departments")
-    logger.debug([hod.name for hod in extracted_head_of_department_list])
-    update_or_insert_objects_to_database(extracted_head_of_department_list)
-    extracted_head_of_department_list = []
-    gc.collect()
+    head_of_department_extractor.run()
+    logger.info("Extracted Heads of Departments")
 
     logger.info("Extracting City Council Members")
     city_council_member_extractor = CityCouncilMemberExtractor()
-    extracted_city_council_member_list = city_council_member_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_member_list)} City Council Members")
-    logger.debug([ccm.name for ccm in extracted_city_council_member_list])
-    update_or_insert_objects_to_database(extracted_city_council_member_list)
-    extracted_city_council_member_list = []
-    gc.collect()
+    city_council_member_extractor.run()
+    logger.info("Extracted City Council Members")
 
     logger.info("Extracting City Council Meeting Templates")
     city_council_meeting_template_extractor = CityCouncilMeetingTemplateExtractor()
-    extracted_city_council_meeting_template_list = city_council_meeting_template_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_meeting_template_list)} City Council Meeting Templates")
-    logger.debug([template.name for template in extracted_city_council_meeting_template_list])
-    update_or_insert_objects_to_database(extracted_city_council_meeting_template_list)
-    extracted_city_council_meeting_template_list = []
-    gc.collect()
+    city_council_meeting_template_extractor.run()
+    logger.info("Extracted City Council Meeting Templates")
 
     logger.info("Extracting City Council Motions")
     city_council_motion_extractor = CityCouncilMotionExtractor()
-    extracted_city_council_motion_list = city_council_motion_extractor.run()
-    logger.info(f"Extracted {len(extracted_city_council_motion_list)} City Council Motions")
-    logger.debug([obj.name for obj in extracted_city_council_motion_list])
-    update_or_insert_objects_to_database(extracted_city_council_motion_list)
-    extracted_city_council_motion_list = []
-    gc.collect()
+    city_council_motion_extractor.run()
+    logger.info("Extracted City Council Motions")
 
     filehandler = Filehandler()
     filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)

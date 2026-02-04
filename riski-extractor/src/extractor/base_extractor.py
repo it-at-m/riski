@@ -7,6 +7,7 @@ import httpx
 import stamina
 from bs4 import BeautifulSoup
 from config.config import Config, get_config
+from core.db.db_access import update_or_insert_objects_to_database
 from httpx import Client
 
 from src.logtools import getLogger
@@ -86,7 +87,6 @@ class BaseExtractor(ABC, Generic[T]):
             results_per_page_redirect_path = self._set_results_per_page(filter_redirect_path)
 
             # Request and process all extractable objects
-            extracted_objects = []
             access_denied = False
             while not access_denied:
                 current_page_text = self._get_current_page_text(results_per_page_redirect_path)
@@ -95,7 +95,7 @@ class BaseExtractor(ABC, Generic[T]):
                 if not object_links:
                     self.logger.warning("No objects found on the overview page.")
                 else:
-                    extracted_objects.extend(self._parse_objects_from_links(object_links))
+                    update_or_insert_objects_to_database(self._parse_objects_from_links(object_links))
 
                 nav_top_next_link = self._get_next_page_path(current_page_text)
 
@@ -105,11 +105,8 @@ class BaseExtractor(ABC, Generic[T]):
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
-
-            return extracted_objects
         except Exception:
             self.logger.exception("Error extracting objects")
-            return []
 
     def _parse_objects_from_links(self, object_links: list[str]) -> list[T]:
         extracted_objects = []
