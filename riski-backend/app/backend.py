@@ -76,7 +76,7 @@ def create_app() -> FastAPI:
 
 
 def get_pgengine(settings) -> PGEngine:
-    pg_engine = PGEngine.from_connection_string(url=str(settings.core.db.async_database_url))
+    pg_engine = PGEngine.from_connection_string(url=settings.core.db.async_database_url.encoded_string())
     return pg_engine
 
 

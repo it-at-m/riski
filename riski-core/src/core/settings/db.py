@@ -1,6 +1,4 @@
-from urllib.parse import quote
-
-from pydantic import BaseModel, Field, PostgresDsn
+from pydantic import BaseModel, Field, PostgresDsn, SecretStr
 
 
 class DatabaseSettings(BaseModel):
@@ -17,9 +15,8 @@ class DatabaseSettings(BaseModel):
         description="Postgres username",
         default="postgres",
     )
-    password: str = Field(
+    password: SecretStr = Field(
         description="Postgres password",
-        default="<your-password-here>",
     )
     hostname: str = Field(
         description="Postgres host",
@@ -43,7 +40,7 @@ class DatabaseSettings(BaseModel):
             # use psycopg version 3
             scheme="postgresql+psycopg",
             username=self.user,
-            password=quote(self.password, safe=""),
+            password=self.password.get_secret_value(),
             host=self.hostname,
             port=self.port,
             path=self.name,
@@ -58,7 +55,7 @@ class DatabaseSettings(BaseModel):
             # use asyncpg
             scheme="postgresql+asyncpg",
             username=self.user,
-            password=self.password,
+            password=self.password.get_secret_value(),
             host=self.hostname,
             port=self.port,
             path=self.name,

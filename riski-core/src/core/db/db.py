@@ -24,7 +24,7 @@ def init_db(db_url: PostgresDsn) -> None:
         logger.info(
             f"########## Initializing DB connection: {db_url.scheme}://<user><pw>@{urlsplit(str(db_url)).hostname}:{urlsplit(str(db_url)).port}{db_url.path} ##########"
         )
-        _engine = create_engine(str(db_url), echo=False)
+        _engine = create_engine(db_url.encoded_string(), echo=False)
         _SessionLocal = sessionmaker(bind=_engine, class_=Session, expire_on_commit=False)
 
 
