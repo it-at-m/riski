@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from langchain_core.documents import Document
 from app.backend import backend
 from fastapi.testclient import TestClient
+from langchain_core.documents import Document
 
 
 def _build_document_candidates(*args, **kwargs) -> list[Document]:
@@ -19,7 +19,7 @@ def test_ag_ui_riskiagent_endpoint_streams_mock_answer() -> None:
 
     # Create a mock agent that simulates the run method
     mock_agent = AsyncMock()
-    
+
     async def mock_agent_run(*args, **kwargs):
         mock_event = MagicMock()
         # Mocking ProcessedEvents structure
@@ -27,12 +27,14 @@ def test_ag_ui_riskiagent_endpoint_streams_mock_answer() -> None:
         mock_event.event = {"event": "on_chat_model_stream", "tags": []}
         mock_event.content = "Riski answer chunk"
         yield mock_event
-    
+
     # Configure the mock agent's run method to return the async generator
     mock_agent.run.side_effect = mock_agent_run
 
-    with patch("app.backend.build_vectorstore", return_value=(mock_vectorstore, mock_engine)), \
-         patch("app.backend.build_agent", return_value=mock_agent):
+    with (
+        patch("app.backend.build_vectorstore", return_value=(mock_vectorstore, mock_engine)),
+        patch("app.backend.build_agent", return_value=mock_agent),
+    ):
         with TestClient(backend) as client:
             payload = {
                 "threadId": "test-thread",
