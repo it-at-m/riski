@@ -31,6 +31,7 @@ def run_ocr_for_documents(settings):
                 "Processing up to %s documents",
                 max_docs,
             )
+        logger.info("Start processing.", max_docs)
         while True:
             if max_docs is not None and batch_size + offset > max_docs:
                 limit = max_docs - offset
@@ -39,6 +40,7 @@ def run_ocr_for_documents(settings):
             docs_to_process: list[File] = request_batch(File, offset=offset, limit=limit)
 
             if not docs_to_process:
+                logger.info("Processed all available documents.")
                 break
 
             for doc in docs_to_process:
@@ -67,8 +69,10 @@ def run_ocr_for_documents(settings):
                 session.commit()
 
             if max_docs is not None and offset + batch_size >= max_docs:
+                logger.info("Processed mac documents ({}).", max_docs)
                 break
 
+            logger.info("Processed Files {} - {}.", offset, offset + batch_size)
             offset += batch_size
 
 
