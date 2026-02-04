@@ -95,7 +95,7 @@ class BaseExtractor(ABC, Generic[T]):
                 if not object_links:
                     self.logger.warning("No objects found on the overview page.")
                 else:
-                    update_or_insert_objects_to_database(self._parse_objects_from_links(object_links))
+                    self._parse_objects_from_links(object_links)
 
                 nav_top_next_link = self._get_next_page_path(current_page_text)
 
@@ -108,8 +108,7 @@ class BaseExtractor(ABC, Generic[T]):
         except Exception:
             self.logger.exception("Error extracting objects")
 
-    def _parse_objects_from_links(self, object_links: list[str]) -> list[T]:
-        extracted_objects = []
+    def _parse_objects_from_links(self, object_links: list[str]):
         for link in object_links:
             try:
                 response = self._get_object_html(link)
@@ -117,10 +116,9 @@ class BaseExtractor(ABC, Generic[T]):
                 if extracted_object is None:
                     self.logger.warning(f"No object parsed for {link}")
                     continue
-                extracted_objects.append(extracted_object)
+                update_or_insert_objects_to_database([extracted_object])
             except Exception:
                 self.logger.exception(f"Error parsing {link}")
-        return extracted_objects
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _filter(self) -> str:
