@@ -86,7 +86,7 @@ function formatStepName(name: string) {
       <ul>
         <li v-for="proposal in proposals" :key="proposal.identifier">
           {{ proposal.identifier }} - {{ proposal.name }}
-          <a :href="proposal.risUrl" target="_blank">{{ proposal.risUrl }}</a>
+          <a :href="proposal.risUrl" target="_blank" rel="noopener noreferrer">{{ proposal.risUrl }}</a>
         </li>
       </ul>
     </div>
@@ -98,7 +98,7 @@ function formatStepName(name: string) {
       <ul>
         <li v-for="document in documents" :key="document.risUrl">
           {{ document.name }} ({{ fileSizeAsString(document.size) }})
-          <a :href="document.risUrl" target="_blank">{{ document.risUrl }}</a>
+          <a :href="document.risUrl" target="_blank" rel="noopener noreferrer">{{ document.risUrl }}</a>
         </li>
       </ul>
     </div>

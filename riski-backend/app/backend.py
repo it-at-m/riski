@@ -32,9 +32,7 @@ def create_app() -> FastAPI:
             pool_timeout=10,
             connect_args={"timeout": 30},
         )
-        import asyncio
 
-        logger.info("current loop id = %s", id(asyncio.get_running_loop()))
         db_sessionmaker: async_sessionmaker[AsyncSession] = async_sessionmaker(
             bind=db_engine,
             expire_on_commit=False,

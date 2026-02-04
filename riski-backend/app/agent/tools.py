@@ -35,34 +35,28 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
     Returns:
         list[dict[str, Any]]: A list of proposals related to the documents.
     """
-    file_ids = {doc.id for doc in documents}
-    logger.info(f"Fetching proposals for file IDs: {file_ids}")
-    import asyncio
-
-    logger.info("current loop id = %s", id(asyncio.get_running_loop()))
     proposals = []
-    async with db_sessionmaker() as db_session:
-        logger.info("session created")
-        result = await db_session.execute(
-            # test with first file only
-            # select(File).where(Column(File.db_id) == "09ef9c43-d10b-4b04-bc97-b03321ec4bcc"), # file_ids.pop()),
-            # actual needed query
-            select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),
-            execution_options={"timeout": 10},
-        )
-        logger.info("got result from db")
+    if documents:
+        file_ids = {doc.id for doc in documents}
+        logger.debug(f"Fetching proposals for file IDs: {file_ids}")
 
-        files = result.scalars().all()
-        # files = []
-        logger.info(f"Look  for proposals in {len(files)} files from db.")
-        # TODO: for each file find related proposals if existing
-        proposals = [
-            {"identifier": p.reference, "name": p.name, "risUrl": p.id}
-            for f in files
-            if f.papers
-            for p in f.papers
-            if p.paper_type == "Stadtratsantrag"
-        ]
+        async with db_sessionmaker() as db_session:
+            result = await db_session.execute(
+                select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),
+                execution_options={"timeout": 10},
+            )
+
+            files = result.scalars().all()
+            # files = []
+            logger.debug(f"Look for proposals in {len(files)} files from db.")
+            # for each file find related proposals if existing
+            proposals = [
+                {"identifier": p.reference, "name": p.name, "risUrl": p.id}
+                for f in files
+                if f.papers
+                for p in f.papers
+                if p.paper_type == "Stadtratsantrag"
+            ]
     return proposals
 
 
@@ -93,7 +87,7 @@ async def retrieve_documents(query: str, runtime: ToolRuntime[AgentContext], con
         else:
             vectorstore = runtime.context["vectorstore"]
             db_sessionmaker = runtime.context["db_sessionmaker"]
-            logger.info(f"Using context: {runtime.context} of type {type(runtime.context)}")
+            logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
         # Step 1: Perform similarity search in the vector store
         docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=5)
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
