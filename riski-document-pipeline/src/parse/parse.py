@@ -66,7 +66,7 @@ def run_ocr_for_documents(settings):
                 session.add(doc)
                 session.commit()
 
-            if offset + batch_size >= max_docs:
+            if max_docs is not None and offset + batch_size >= max_docs:
                 break
 
             offset += batch_size
