@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator
+from typing import AsyncGenerator
 
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder

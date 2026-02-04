@@ -6,7 +6,7 @@ from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_se
 from app.utils.logging import getLogger
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ProviderStrategy
-from langchain.tools import BaseTool, tool
+from langchain.tools import BaseTool
 from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
