@@ -43,7 +43,9 @@ def run_ocr_for_documents(settings):
                 logger.info("Processed all available documents.")
                 break
 
-            for doc in docs_to_process:
+            docs_without_content = [doc for doc in docs_to_process if doc.content is not None and doc.text is None]
+
+            for doc in docs_without_content:
                 logger.debug(f"Processing doc id={doc.id}")
                 pages_text = []
                 for pdf_chunk in chunk_pdf_into_max_page_blocks(doc.content, chunk_size=30):
