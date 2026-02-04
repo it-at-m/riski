@@ -1,43 +1,20 @@
+from abc import ABC
 from functools import lru_cache
+from pathlib import Path
 
-from pydantic import Field, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field, RedisDsn, SecretStr
+from pydantic_settings import SettingsConfigDict
+
+from core.settings.base import AppBaseSettings
 
 
-class Settings(BaseSettings):
+class BackendSettings(AppBaseSettings):
     """
     Application settings for the riski-backend.
     """
 
     version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
-
-    # === LLM Settings ===
-    llm_api_key: SecretStr = Field(
-        default="DUMMY FOR GITHUBACTION",
-        validation_alias="OPENAI_API_KEY",
-        description="API key for OpenAI",
-    )
-    llm_api_base: str | None = Field(
-        default=None,
-        validation_alias="OPENAI_API_BASE",
-        description="Base URL for OpenAI API",
-    )
-    llm_api_version: str | None = Field(
-        default=None,
-        validation_alias="OPENAI_API_VERSION",
-        description="Version of the OpenAI API to use",
-    )
-    tiktoken_cache_dir: str = Field(
-        default="tiktoken_cache",
-        validation_alias="TIKTOKEN_CACHE_DIR",
-        description="Directory to store tiktoken cache",
-    )
-    riski_llm_embedding_model: str = Field(
-        default="text-embedding-3-large",
-        validation_alias="RISKI_OPENAI_EMBEDDING_MODEL",
-        description="OpenAI embedding model to use",
-    )
 
     # === Langfuse Settings ===
     langfuse_secret_key: SecretStr | None = Field(
@@ -56,27 +33,25 @@ class Settings(BaseSettings):
         description="Langfuse host",
     )
 
-    # === Mock Langfuse Agent Settings ===
-    mock_retrieval_delay_seconds: float = Field(
-        default=0.4,
-        validation_alias="MOCK_RETRIEVAL_DELAY_SECONDS",
+    # === Agent Settings ===
+    checkpointer: "BaseCheckpointerSettings | None" = Field(
+        description="Settings for agent checkpointer",
+        default_factory=lambda: RedisCheckpointerSettings(),
     )
-    mock_response_delay_seconds: float = Field(
-        default=0.6,
-        validation_alias="MOCK_RESPONSE_DELAY_SECONDS",
+
+    # === Server Settings ===
+    server_host: str = Field(
+        default="localhost",
+        description="The host for the riski-backend server to bind to.",
     )
-    mock_retrieval_node: str = Field(
-        default="RETRIEVAL",
-        validation_alias="MOCK_RETRIEVAL_NODE",
-    )
-    mock_generate_node: str = Field(
-        default="GENERATE",
-        validation_alias="MOCK_GENERATE_NODE",
+    server_port: int = Field(
+        default=8080,
+        description="The port for the riski-backend server to bind to.",
     )
 
     model_config = SettingsConfigDict(
-        env_prefix="RISKI_BACKEND_",
-        env_file=".env",
+        env_prefix="RISKI_BACKEND__",
+        env_file=str(Path(__file__).resolve().parents[3] / ".env"),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         env_nested_delimiter="__",
@@ -87,7 +62,52 @@ class Settings(BaseSettings):
     )
 
 
+class BaseCheckpointerSettings(BaseModel, ABC):
+    """Base settings for agent checkpointers."""
+
+    pass
+
+
+class RedisCheckpointerSettings(BaseCheckpointerSettings):
+    host: str = Field(
+        default="localhost",
+        description="Redis host for checkpointer",
+    )
+    port: int = Field(
+        default=6379,
+        description="Redis port for checkpointer",
+    )
+    db: int = Field(
+        default=0,
+        description="Redis database number for checkpointer",
+    )
+    password: SecretStr | None = Field(
+        default=None,
+        description="Redis password for checkpointer",
+    )
+    secure: bool = Field(
+        default=False,
+        description="Use SSL/TLS for Redis connection",
+    )
+    ttl_minutes: int = Field(
+        default=720,
+        description="TTL for checkpoints in minutes",
+    )
+
+    @property
+    def redis_url(self) -> RedisDsn:
+        """Construct the Redis DSN URL."""
+        return RedisDsn.build(
+            scheme="rediss" if self.secure else "redis",
+            username=None,
+            password=self.password.get_secret_value() if self.password else None,
+            host=self.host,
+            port=self.port,
+            path=f"/{self.db}",
+        )
+
+
 @lru_cache(maxsize=1)
-def get_settings() -> Settings:
+def get_settings() -> BackendSettings:
     """Get cached application settings."""
-    return Settings()  # type: ignore
+    return BackendSettings()

@@ -83,10 +83,7 @@ const submitQuery = (query: string) => {
 </script>
 
 <template>
-  <link
-    href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css"
-    rel="stylesheet"
-  />
+  <link href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css" rel="stylesheet" />
   <main>
     <div>
       <div v-html="mucIconsSprite" />
@@ -94,30 +91,22 @@ const submitQuery = (query: string) => {
       <div v-html="riskiIconsSprite" />
 
       <riski-intro>
-        <riski-searchbar
-          id="riski-searchbar"
-          :submit-query="submitQuery"
-          :query="searchquery"
-          :on-clear="resetInitialState"
-        />
+        <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
+          :on-clear="resetInitialState" />
       </riski-intro>
 
       <div class="container">
         <div class="m-component__grid">
           <div class="main-body-container">
             <div>
-              <div
-                v-if="
-                  loading == false &&
-                  found_answer == undefined &&
-                  initial == false &&
-                  fehler == ''
-                "
-              >
+              <div v-if="
+                loading == false &&
+                found_answer == undefined &&
+                initial == false &&
+                fehler == ''
+              ">
                 <muc-callout type="warning">
-                  <template #header
-                    >Wir haben leider keine Antwort gefunden.</template
-                  >
+                  <template #header>Wir haben leider keine Antwort gefunden.</template>
                   <template #content>
                     Entschuldigung. Für ihre Frage konnte unsere Künstliche
                     Intelligenz leider kein passendes Ergebnis finden.
@@ -126,16 +115,11 @@ const submitQuery = (query: string) => {
                   </template>
                 </muc-callout>
               </div>
-              <div v-else-if="found_answer != undefined && !loading">
-                <riski-response-card
-                  :riski-answer="found_answer"
-                ></riski-response-card>
+              <div v-else-if="found_answer != undefined">
+                <riski-response-card :riski-answer="found_answer"></riski-response-card>
               </div>
               <div v-if="fehler != ''">
-                <muc-callout
-                  title="Fehler"
-                  type="error"
-                >
+                <muc-callout title="Fehler" type="error">
                   <template #header>Ein Fehler ist aufgetreten.</template>
                   <template #content>
                     {{ fehler }}
@@ -143,18 +127,11 @@ const submitQuery = (query: string) => {
                 </muc-callout>
               </div>
               <div class="progress-container">
-                <riski-progress
-                  v-if="loading"
-                  :progress="40"
-                ></riski-progress>
+                <riski-progress v-if="loading && found_answer == undefined" :progress="40"></riski-progress>
               </div>
             </div>
             <div style="height: 48px"></div>
-            <muc-callout
-              title="Disclaimer"
-              type="info"
-              class="heading disclaimer-callout"
-            >
+            <muc-callout title="Disclaimer" type="info" class="heading disclaimer-callout">
               <template #header>Rechtliche Hinweise</template>
               <template #content>
                 Die von diesem System bereitgestellten Informationen dienen als

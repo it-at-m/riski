@@ -8,6 +8,7 @@ Find information in munich's political information system RIS with the help of a
 [![GitHub license][license-shield]][license]
 
 <!-- Tech Stack -->
+
 ### Technology Stack
 
 ![Supported python versions][python-versions-shield]
@@ -19,11 +20,13 @@ Find information in munich's political information system RIS with the help of a
 [![LangGraph][langgraph-shield]][langgraph]
 
 <!-- CI -->
+
 ### Build Status
 
 [![Backend tests][backend-tests-shield]][backend-tests]
 
 <!-- Container Images -->
+
 ### Container Images
 
 [![Extractor][extractor-version-shield]][extractor-container]
@@ -47,7 +50,6 @@ Find information in munich's political information system RIS with the help of a
 [document-pipeline-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=document-pipeline*&label=riski-document-pipeline&style=for-the-badge&color=blue
 [frontend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=riski-frontend*&label=riski-frontend&style=for-the-badge&color=blue
 [backend-tests-shield]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml/badge.svg
-
 [backend-tests]: https://github.com/it-at-m/riski/actions/workflows/backend-tests.yml
 [extractor-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-extractor
 [backend-container]: https://github.com/it-at-m/riski/pkgs/container/riski%2Friski-backend
@@ -113,6 +115,7 @@ Once the stack is running, visit:
 
 See the [open issues](https://github.com/it-at-m/riski/issues) for a full list of proposed features (and known issues).
 
+>>>>>>>
 ## Documentation
 
 ### Development
@@ -134,6 +137,18 @@ GitHub Actions workflows responsible for building the container images.
 
 After a successful push, the workflow builds and publishes the image to GitHub Container Registry.
 
+#### Syncing `riski-core` changes into other services
+
+The Python services (`riski-backend`, `riski-document-pipeline`, `riski-extractor`) import the local `riski-core` package via path dependencies.
+Whenever you change `riski-core`, rerun the dependency install inside each consumer so uv rebuilds the local package:
+
+```powershell
+uv sync --reinstall-package core
+```
+
+Run the command from the respective service folder (for example `riski-backend`) so `uv` picks up the correct `pyproject.toml`.
+
+>>>>>>>
 ## Contributing
 
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
