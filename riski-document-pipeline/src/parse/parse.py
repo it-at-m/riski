@@ -69,7 +69,7 @@ def run_ocr_for_documents(settings):
                 session.commit()
 
             if max_docs is not None and offset + batch_size >= max_docs:
-                logger.info("Processed mac documents (%d).", max_docs)
+                logger.info("Processed max documents (%d).", max_docs)
                 break
 
             logger.info("Processed Files %d - %d.", offset, offset + batch_size)
