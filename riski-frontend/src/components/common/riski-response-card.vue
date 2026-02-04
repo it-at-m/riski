@@ -47,7 +47,7 @@ function formatStepName(name: string) {
   </div>
 
   <div v-if="steps.length > 0" class="steps-container">
-    <div v-for="(step, index) in steps" :key="index" class="step-item">
+    <div v-for="(step, index) in steps" :key="step.name" class="step-item">
       <div class="step-header">
         <span class="step-status-icon">
           <template v-if="step.status === 'running'">⏳</template>
