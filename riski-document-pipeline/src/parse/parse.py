@@ -67,6 +67,7 @@ def run_ocr_for_documents(settings):
                 doc.text = full_markdown
                 session.add(doc)
                 session.commit()
+                session.expunge(doc)
 
             if max_docs is not None and offset + batch_size >= max_docs:
                 logger.info("Processed max documents (%d).", max_docs)
