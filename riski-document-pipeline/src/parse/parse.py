@@ -19,6 +19,8 @@ def run_ocr_for_documents(settings):
     ocr_model = settings.ocr_model_name
     max_docs = settings.max_documents_to_process
     batch_size = settings.ocr_batch_size
+    if not batch_size:
+        batch_size = 0
 
     if max_docs is not None and max_docs <= 0:
         logger.info("max_documents_to_process is %s; skipping OCR run.", max_docs)
@@ -40,7 +42,7 @@ def run_ocr_for_documents(settings):
             docs_to_process: list[File] = request_batch(File, offset=offset, limit=limit)
 
             if not docs_to_process:
-                logger.info("Processed all available documents.")
+                logger.info("Processed all available documents. (Parsing)")
                 break
 
             docs_without_content = [doc for doc in docs_to_process if doc.content is not None and doc.text is None]
@@ -63,12 +65,15 @@ def run_ocr_for_documents(settings):
                         logger.error(f"Error processing OCR for doc id={doc.id}: {e}")
                         continue
 
-                # Combine all pages' markdown into one text blob
-                full_markdown = "\n\n".join(pages_text)
+                full_markdown = None
+                if len(pages_text) > 0:
+                    # Combine all pages' markdown into one text blob
+                    full_markdown = "\n\n".join(pages_text)
+
                 # Save to db object
                 doc.text = full_markdown
                 session.add(doc)
-                session.commit()
+            session.commit()
             session.expunge_all()
 
             if max_docs is not None and offset + batch_size >= max_docs:
