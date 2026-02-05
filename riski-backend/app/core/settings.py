@@ -36,7 +36,7 @@ class BackendSettings(AppBaseSettings):
     # === Agent Settings ===
     checkpointer: "BaseCheckpointerSettings | None" = Field(
         description="Settings for agent checkpointer",
-        default_factory=lambda: RedisCheckpointerSettings(),
+        default_factory=None,
     )
 
     # === Server Settings ===
