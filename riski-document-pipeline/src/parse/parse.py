@@ -15,7 +15,7 @@ logger = getLogger()
 def run_ocr_for_documents(settings):
     api_key = settings.openai_api_key
     server_url = settings.openai_api_base
-    client = Mistral(api_key=api_key, server_url=server_url)
+    client = Mistral(api_key=api_key.get_secret_value(), server_url=server_url)
     ocr_model = settings.ocr_model_name
     max_docs = settings.max_documents_to_process
     batch_size = settings.ocr_batch_size
