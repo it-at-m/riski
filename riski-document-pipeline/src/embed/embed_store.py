@@ -36,6 +36,7 @@ def embed_documents(settings):
                 session.add(doc)
                 session.commit()
             session.expunge_all()
+            logger.info("Embedded Files %d - %d.", offset, offset + batch_size)
             offset += batch_size
 
 

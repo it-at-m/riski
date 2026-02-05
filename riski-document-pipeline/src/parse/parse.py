@@ -75,7 +75,7 @@ def run_ocr_for_documents(settings):
                 logger.info("Processed max documents (%d).", max_docs)
                 break
 
-            logger.info("Processed Files %d - %d.", offset, offset + batch_size)
+            logger.info("Parsed Files %d - %d.", offset, offset + batch_size)
             offset += batch_size
 
 
