@@ -32,6 +32,10 @@ class DatabaseSettings(BaseModel):
         description="Batch size for database operations",
         default=100,
     )
+    schema: str = Field(
+        description="Postgres schema used for vectorstore",
+        default="public",
+    )
 
     @property
     def database_url(self) -> PostgresDsn:
