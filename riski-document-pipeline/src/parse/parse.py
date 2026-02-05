@@ -65,10 +65,11 @@ def run_ocr_for_documents(settings):
                         logger.error(f"Error processing OCR for doc id={doc.id}: {e}")
                         continue
 
-                full_markdown = None
-                if len(pages_text) > 0:
-                    # Combine all pages' markdown into one text blob
-                    full_markdown = "\n\n".join(pages_text)
+                # Combine all pages' markdown into one text blob
+                full_markdown = "\n\n".join(pages_text)
+
+                if not full_markdown or not full_markdown.strip():
+                    full_markdown = None
 
                 # Save to db object
                 doc.text = full_markdown
