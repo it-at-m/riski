@@ -62,3 +62,8 @@ addopts = ["--cov=app", "--cov-report=term-missing"]
 
 [tool.pytest_env]
 RISKI_ENABLE_DOCS = "false"
+OPENAI_API_KEY = "test-key"
+RISKI__DB__PASSWORD = "pw"
+SSL_CERT_FILE = ""
+REQUESTS_CA_BUNDLE = ""
+RISKI__CONFIG = ""

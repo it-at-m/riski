@@ -4,6 +4,9 @@ services:
   db:
     image: docker.io/pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
     container_name: pgvector-db
+    networks:
+      - default
+      - internal
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -61,6 +64,8 @@ services:
         source: redis_config
     ports:
       - "6379:6379"
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 5s
