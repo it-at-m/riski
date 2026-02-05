@@ -1,7 +1,7 @@
 from os import getenv
 
 from core.settings.core import CoreSettings
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import (
     BaseSettings,
     CliSettingsSource,
@@ -13,7 +13,10 @@ from truststore import inject_into_ssl
 
 
 class AppBaseSettings(BaseSettings):
-    core: CoreSettings = Field(default_factory=lambda: CoreSettings(), validation_alias="RISKI")
+    core: CoreSettings = Field(
+        default_factory=lambda: CoreSettings(),
+        validation_alias="RISKI",
+    )
 
     # === General Settings ===
     debug: bool = Field(
@@ -38,7 +41,7 @@ class AppBaseSettings(BaseSettings):
     )
 
     # === OpenAI Settings ===
-    openai_api_key: str = Field(
+    openai_api_key: SecretStr = Field(
         ...,
         validation_alias=AliasChoices("OPENAI_API_KEY"),
         description="API key for OpenAI",

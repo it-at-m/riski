@@ -1,5 +1,5 @@
 from core.db.db_access import _get_session_ctx, request_batch
-from core.lm.helper import create_embedding_model
+from core.genai import create_embedding_model
 from core.model.data_models import File
 from langchain_text_splitters import TokenTextSplitter
 

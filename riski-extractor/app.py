@@ -69,7 +69,7 @@ def main():
     confidential_file_deleter.delete_confidential_files()
 
     logger.info("Extraction process finished")
-    # TODO: Transform
+
     logger.info("RIS Indexer completed successfully")
     return 0
 

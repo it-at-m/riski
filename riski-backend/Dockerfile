@@ -1,5 +1,5 @@
-# Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-micro:latest@sha256:fc8e116afac12a9164be775e21483da7b6e86f91d8e9e6e79dee23afe4e58468
+# Small ubi10 image
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:f8c05e3c6d15fea32e59635477c0f690e6d4b88a81924e8619f369e57306b701
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
@@ -14,14 +14,16 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
 # Leverage layer cache
-COPY pyproject.toml uv.lock ./
+COPY riski-backend/pyproject.toml riski-backend/uv.lock ./
+COPY riski-core /app/riski-core/
 
 # Install the transitive dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked --no-install-project
 
 # Copy the application files
-COPY . /app/backend
+COPY riski-backend /app/backend
+COPY riski-core /app/riski-core
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
