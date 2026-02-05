@@ -1,6 +1,6 @@
 [project]
 name = "core"
-version = "0.1.0"
+version = "0.1.1"
 description = "Riski core for shared functionality like data model, db access, etc."
 readme = "README.md"
 requires-python = "==3.13.9"
