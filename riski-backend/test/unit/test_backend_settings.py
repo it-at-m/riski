@@ -89,6 +89,6 @@ def test_checkpointer_secure_overrides(monkeypatch: pytest.MonkeyPatch):
 
     url = cp.redis_url.encoded_string()
     assert url.startswith("rediss://")
-    assert cp.redis_url.host == "redis"
+    assert cp.redis_url.host == "localhost"
     assert cp.redis_url.port == 6380
     assert cp.redis_url.path.strip("/") == "5"
