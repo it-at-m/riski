@@ -1,6 +1,8 @@
+from typing import AsyncGenerator
+
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder
-from app.agent import get_riski_agent
+from ag_ui_langgraph.agent import ProcessedEvents
 from app.utils.logging import getLogger
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -11,9 +13,8 @@ logger = getLogger()
 
 
 @observe(name="ag-ui-agent-run")
-async def run_agent_traced(input_data):
-    _agent = get_riski_agent()
-    async for event in _agent.run(input_data):
+async def run_agent_traced(input_data: RunAgentInput, request: Request) -> AsyncGenerator[ProcessedEvents, None]:
+    async for event in request.app.state.agent.run(input_data):
         yield event
 
 
@@ -21,11 +22,14 @@ async def run_agent_traced(input_data):
 async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> StreamingResponse:
     """Stream LangGraph events back to AG-UI clients."""
 
-    encoder = EventEncoder(accept=request.headers.get("accept"))
+    encoder = EventEncoder(accept=request.headers.get("accept", ""))
 
-    async def event_generator():
-        async for event in run_agent_traced(input_data):
-            logger.debug(event)
+    async def event_generator() -> AsyncGenerator[bytes, None]:
+        async for event in run_agent_traced(input_data, request):
+            raw_event = getattr(event, "event", None)
+            event_name = raw_event.get("event") if isinstance(raw_event, dict) else None
+            tags = raw_event.get("tags") if isinstance(raw_event, dict) else None
+            logger.debug("type=%s event=%s tags=%s", event.type, event_name, tags)
             yield encoder.encode(event)
 
     return StreamingResponse(event_generator(), media_type=encoder.get_content_type())
