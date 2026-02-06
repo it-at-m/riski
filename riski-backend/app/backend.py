@@ -97,3 +97,9 @@ async def build_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
 
 
 backend = create_app()
+
+
+def get_backend() -> FastAPI:
+    """Return the initialized FastAPI application instance."""
+
+    return backend
