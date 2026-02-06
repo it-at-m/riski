@@ -1,12 +1,24 @@
 from abc import ABC
 from functools import lru_cache
+from os import environ
 from pathlib import Path
-from typing import Any
 
-from pydantic import BaseModel, Field, RedisDsn, SecretStr, model_validator
+from pydantic import BaseModel, Field, RedisDsn, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
+
+
+def _checkpointer_default() -> "RedisCheckpointerSettings | None":
+    """Return a RedisCheckpointerSettings instance if env vars are present, otherwise None.
+
+    Pydantic V2 Settings does not automatically instantiate Optional nested models
+    from environment variables when the field defaults to None.
+    """
+    prefix = "RISKI_BACKEND__CHECKPOINTER__"
+    if any(k.upper().startswith(prefix) for k in environ):
+        return RedisCheckpointerSettings()
+    return None
 
 
 class BackendSettings(AppBaseSettings):
@@ -37,7 +49,7 @@ class BackendSettings(AppBaseSettings):
     # === Agent Settings ===
     checkpointer: "RedisCheckpointerSettings | None" = Field(
         description="Settings for agent checkpointer",
-        default=None,
+        default_factory=_checkpointer_default,
     )
 
     # === Server Settings ===
@@ -49,38 +61,6 @@ class BackendSettings(AppBaseSettings):
         default=8080,
         description="The port for the riski-backend server to bind to.",
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_checkpointer_env(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            # If checkpointer is implicitly initialized via env vars (nested dict),
-            # but currently remains None because Pydantic V2 optional behavior might prefer None default,
-            # we check os.environ for relevant keys to force initialization.
-            if "checkpointer" not in data or data.get("checkpointer") is None:
-                import os
-
-                # Check for any env var starting with RISKI_BACKEND__CHECKPOINTER__
-                # (Ignoring case as Windows env is case-insensitive, but Linux is sensitive.
-                # Pydantic Settings is configured with cli_kebab_case=True but env_prefix usually upper).
-                prefix = "RISKI_BACKEND__CHECKPOINTER__"
-                has_env = any(k.upper().startswith(prefix) for k in os.environ.keys())
-
-                if has_env:
-                    # Pydantic V2 Settings does not automatically instantiate nested models from environment variables
-                    # if the field defaults to None. We manually check for the environment variable prefix and
-                    # build the dictionary to force instantiation.
-                    checkpointer_data = {}
-                    for field in ["host", "port", "db", "secure", "password", "ttl_minutes"]:
-                        env_key = f"{prefix}{field.upper()}"
-                        val = os.getenv(env_key)
-                        if val is not None:
-                            checkpointer_data[field] = val
-
-                    if checkpointer_data:
-                        data["checkpointer"] = checkpointer_data
-
-        return data
 
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
