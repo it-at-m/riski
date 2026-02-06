@@ -24,15 +24,14 @@ def _base_env(monkeypatch: pytest.MonkeyPatch, *, host_env: str | None = None):
 
 
 @pytest.mark.usefixtures("clear_settings_cache")
-def test_checkpointer_default_host_is_redis(monkeypatch: pytest.MonkeyPatch):
-    """Default checkpointer host should match the model default (localhost)."""
+def test_checkpointer_default_is_none(monkeypatch: pytest.MonkeyPatch):
+    """Default checkpointer settings should be None when no env vars are present."""
 
     _base_env(monkeypatch, host_env=None)
 
     settings = get_settings()
 
-    assert settings.checkpointer.host == "localhost"
-    assert settings.checkpointer.redis_url.encoded_string().startswith("redis://localhost:6379/")
+    assert settings.checkpointer is None
 
 
 @pytest.mark.usefixtures("clear_settings_cache")
