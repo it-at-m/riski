@@ -2,23 +2,12 @@ from abc import ABC
 from functools import lru_cache
 from os import environ
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel, Field, RedisDsn, SecretStr
+from pydantic import BaseModel, Field, RedisDsn, SecretStr, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
-
-
-def _checkpointer_default() -> "RedisCheckpointerSettings | None":
-    """Return a RedisCheckpointerSettings instance if env vars are present, otherwise None.
-
-    Pydantic V2 Settings does not automatically instantiate Optional nested models
-    from environment variables when the field defaults to None.
-    """
-    prefix = "RISKI_BACKEND__CHECKPOINTER__"
-    if any(k.upper().startswith(prefix) for k in environ):
-        return RedisCheckpointerSettings()
-    return None
 
 
 class BackendSettings(AppBaseSettings):
@@ -49,7 +38,7 @@ class BackendSettings(AppBaseSettings):
     # === Agent Settings ===
     checkpointer: "RedisCheckpointerSettings | None" = Field(
         description="Settings for agent checkpointer",
-        default_factory=_checkpointer_default,
+        default=None,
     )
 
     # === Server Settings ===
@@ -61,6 +50,22 @@ class BackendSettings(AppBaseSettings):
         default=8080,
         description="The port for the riski-backend server to bind to.",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_checkpointer_env(cls, data: Any) -> Any:
+        """Pydantic V2 Settings does not auto-instantiate Optional nested models from env vars
+        when the field defaults to None. Detect the env prefix and build the dict manually."""
+        if isinstance(data, dict) and ("checkpointer" not in data or data.get("checkpointer") is None):
+            prefix = "RISKI_BACKEND__CHECKPOINTER__"
+            env_data = {
+                field: val
+                for field in ("host", "port", "db", "secure", "password", "ttl_minutes")
+                if (val := environ.get(f"{prefix}{field.upper()}")) is not None
+            }
+            if env_data:
+                data["checkpointer"] = env_data
+        return data
 
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
