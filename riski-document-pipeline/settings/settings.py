@@ -23,6 +23,11 @@ class DocPipelineSettings(AppBaseSettings):
         description="OCR model identifier to use for document processing",
     )
 
+    ocr_batch_size: int = Field(
+        default=100,
+        description="Batch size for OCR handling",
+    )
+
 
 @lru_cache
 def get_settings() -> DocPipelineSettings:
