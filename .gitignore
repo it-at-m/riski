@@ -304,6 +304,8 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+.vscode/
+
 # yarn v3
 .pnp.*
 .yarn/*
@@ -319,6 +321,5 @@ vite.config.ts.timestamp-*
 .vite/
 
 ### Custom ###
-**/tiktoken_cache/
 node_modules
 ca-bundle.crt

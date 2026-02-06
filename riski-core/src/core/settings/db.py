@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from pydantic import BaseModel, Field, PostgresDsn, SecretStr
 
 
@@ -30,6 +32,10 @@ class DatabaseSettings(BaseModel):
         description="Batch size for database operations",
         default=100,
     )
+    schema: str = Field(
+        description="Postgres schema used for vectorstore",
+        default="public",
+    )
 
     @property
     def database_url(self) -> PostgresDsn:
@@ -40,7 +46,7 @@ class DatabaseSettings(BaseModel):
             # use psycopg version 3
             scheme="postgresql+psycopg",
             username=self.user,
-            password=self.password.get_secret_value(),
+            password=quote(self.password.get_secret_value()),
             host=self.hostname,
             port=self.port,
             path=self.name,
@@ -55,7 +61,7 @@ class DatabaseSettings(BaseModel):
             # use asyncpg
             scheme="postgresql+asyncpg",
             username=self.user,
-            password=self.password.get_secret_value(),
+            password=quote(self.password.get_secret_value()),
             host=self.hostname,
             port=self.port,
             path=self.name,
