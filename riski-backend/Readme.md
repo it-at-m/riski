@@ -11,7 +11,7 @@
 2. **Copy the local config template**
 
     ```powershell
-    Copy-Item .\local.config.yaml .\config.yaml -Force
+    Copy-Item .\.env.example .\.env -Force
     ```
 
 3. **Run the application**

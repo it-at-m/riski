@@ -1,54 +1,113 @@
+from abc import ABC
 from functools import lru_cache
+from pathlib import Path
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict, YamlConfigSettingsSource
+from pydantic import BaseModel, Field, RedisDsn, SecretStr
+from pydantic_settings import SettingsConfigDict
+
+from core.settings.base import AppBaseSettings
 
 
-class Settings(BaseSettings):
+class BackendSettings(AppBaseSettings):
     """
-    Application settings for the  riski-backend.
+    Application settings for the riski-backend.
     """
 
-    version: str = Field(description="The version of the riski backend.")
+    version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
 
+    # === Langfuse Settings ===
+    langfuse_secret_key: SecretStr | None = Field(
+        default=None,
+        validation_alias="LANGFUSE_SECRET_KEY",
+        description="Secret Key for Langfuse",
+    )
+    langfuse_public_key: SecretStr | None = Field(
+        default=None,
+        validation_alias="LANGFUSE_PUBLIC_KEY",
+        description="Public Key for Langfuse",
+    )
+    langfuse_host: str | None = Field(
+        default=None,
+        validation_alias="LANGFUSE_HOST",
+        description="Langfuse host",
+    )
+
+    # === Agent Settings ===
+    checkpointer: "BaseCheckpointerSettings | None" = Field(
+        description="Settings for agent checkpointer",
+        default=None,
+    )
+
+    # === Server Settings ===
+    server_host: str = Field(
+        default="localhost",
+        description="The host for the riski-backend server to bind to.",
+    )
+    server_port: int = Field(
+        default=8080,
+        description="The port for the riski-backend server to bind to.",
+    )
+
     model_config = SettingsConfigDict(
-        env_prefix="RISKI_",
-        env_file=".env",
+        env_prefix="RISKI_BACKEND__",
+        env_file=str(Path(__file__).resolve().parents[3] / ".env"),
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         env_nested_delimiter="__",
         nested_model_default_partial_update=True,
-        yaml_file="config.yaml",
-        yaml_file_encoding="utf-8",
         cli_parse_args=False,
         cli_kebab_case=True,
         cli_prog_name="riski",
     )
 
-    # Reorder settings sources to prioritize YAML config
-    @classmethod
-    def settings_customise_sources(
-        cls,
-        settings_cls: type[BaseSettings],  # type: ignore
-        init_settings: PydanticBaseSettingsSource,
-        env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
-        file_secret_settings: PydanticBaseSettingsSource,
-    ) -> tuple[PydanticBaseSettingsSource, ...]:
-        return (
-            init_settings,
-            env_settings,
-            YamlConfigSettingsSource(settings_cls),
-            dotenv_settings,
+
+class BaseCheckpointerSettings(BaseModel, ABC):
+    """Base settings for agent checkpointers."""
+
+    pass
+
+
+class RedisCheckpointerSettings(BaseCheckpointerSettings):
+    host: str = Field(
+        default="localhost",
+        description="Redis host for checkpointer",
+    )
+    port: int = Field(
+        default=6379,
+        description="Redis port for checkpointer",
+    )
+    db: int = Field(
+        default=0,
+        description="Redis database number for checkpointer",
+    )
+    password: SecretStr | None = Field(
+        default=None,
+        description="Redis password for checkpointer",
+    )
+    secure: bool = Field(
+        default=False,
+        description="Use SSL/TLS for Redis connection",
+    )
+    ttl_minutes: int = Field(
+        default=720,
+        description="TTL for checkpoints in minutes",
+    )
+
+    @property
+    def redis_url(self) -> RedisDsn:
+        """Construct the Redis DSN URL."""
+        return RedisDsn.build(
+            scheme="rediss" if self.secure else "redis",
+            username=None,
+            password=self.password.get_secret_value() if self.password else None,
+            host=self.host,
+            port=self.port,
+            path=f"/{self.db}",
         )
 
 
 @lru_cache(maxsize=1)
-def get_settings() -> Settings:
-    """Get cached application settings.
-
-    Returns:
-        Settings: The application settings.
-    """
-    return Settings()  # type: ignore
+def get_settings() -> BackendSettings:
+    """Get cached application settings."""
+    return BackendSettings()

@@ -1,0 +1,100 @@
+# Root level .dockerignore for builds with context: "." (root directory)
+# This applies to riski-extractor and riski-document-pipeline builds
+
+# Python virtual environments and caches
+**/.venv/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.Python
+**/*.so
+**/.tox/
+**/.coverage
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Development and testing files
+**/test/
+**/tests/
+**/notebooks/
+**/*.ipynb
+**/*_test.py
+**/test_*.py
+**/conftest.py
+**/*.log
+
+# Documentation and development files (but keep README.md for packages that need them)
+docs/
+**/.gitignore
+**/.git/
+**/.github/
+# Exclude LICENSE files except for packages that need them
+LICENSE
+riski-document-pipeline/LICENSE
+riski-backend/LICENSE
+riski-frontend/LICENSE
+# Keep riski-core/LICENSE and riski-extractor/LICENSE as they're needed for package builds
+
+# Exclude README.md only from specific locations, not all
+README.md
+riski-document-pipeline/README.md
+riski-backend/README.md
+riski-frontend/README.md
+# Keep riski-core/README.md and riski-extractor/README.md as they're needed for package builds
+
+
+# OS generated files
+**/.DS_Store
+**/.DS_Store?
+**/._*
+**/.Spotlight-V100
+**/.Trashes
+**/ehthumbs.db
+**/Thumbs.db
+
+# Development artifacts and temporary files
+**/artifacts/
+**/pgdata/
+**/*.tmp
+**/*.temp
+**/.env
+**/.env.*
+
+# Specific project exclusions - apply to all subdirectories
+**/src/docling/
+**/src/docling/docs/
+**/src/docling/test_file/
+
+# Python packaging
+**/build/
+**/dist/
+**/*.egg-info/
+**/.eggs/
+
+# Docker related
+**/.dockerignore
+**/Dockerfile*
+
+# UV/pip related
+**/.uv-cache/
+**/pip-log.txt
+
+
+# Exclude services that use different build contexts (not needed for root context builds)
+# riski-backend/ and riski-frontend/ use their own build contexts so they're not copied anyway
+# Only exclude top-level development files
+.git/
+.github/
+.vscode/
+.ruff_cache/
+renovate.json5
+tag-version.ps1
+CODE_OF_CONDUCT.md
+.gitignore
+.pre-commit-config.yaml
+.env
+.env.example
+.coderabbit.yaml
+ruff.toml

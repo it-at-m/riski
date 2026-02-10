@@ -9,7 +9,8 @@ from pydantic_settings import SettingsConfigDict
 class DocPipelineSettings(AppBaseSettings):
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[2] / ".env"),
-        env_prefix="RISKI__DOCUMENTS__",  # only applies to doc-pipeline-related fields
+        env_prefix="RISKI_DOCUMENTS__",  # only applies to doc-pipeline-related fields
+        extra="ignore",
     )
 
     max_documents_to_process: int | None = Field(
