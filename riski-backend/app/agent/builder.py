@@ -31,7 +31,22 @@ class StructuredAgentResponse(BaseModel):
 
 
 async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
-    """Build and return the RISKI agent."""
+    """
+    Constructs and returns a configured RISKI LangGraphAgent for document research and analysis.
+    
+    Builds the chat model, configures a checkpoint saver according to application settings (in-memory or Redis-backed), registers the document retrieval tool, and wraps the resulting agent into a LangGraphAgent ready for use.
+    
+    Parameters:
+        vectorstore (PGVectorStore): Vector store used for semantic search and retrieval by the agent.
+        db_sessionmaker (async_sessionmaker): Async SQLAlchemy session factory for database access within agent context.
+        callbacks (Callbacks): Callback handlers to attach to the agent's execution.
+    
+    Returns:
+        LangGraphAgent: A LangGraphAgent configured with the RISKI agent graph, metadata, and provided configurable components.
+    
+    Raises:
+        ValueError: If the configured checkpointer type is unsupported.
+    """
 
     # Build the chat model
     chat_model: ChatOpenAI = ChatOpenAI(
