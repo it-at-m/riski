@@ -1,11 +1,17 @@
 import type Document from "@/types/Document.ts";
 import type Proposal from "@/types/Proposal.ts";
 
+export interface ToolCallResult {
+  documents?: Document[];
+  proposals?: Proposal[];
+}
+
 export interface ToolCallInfo {
   id: string;
   name: string;
   args?: string;
   status: "running" | "completed";
+  result?: ToolCallResult;
 }
 
 export interface ExecutionStep {

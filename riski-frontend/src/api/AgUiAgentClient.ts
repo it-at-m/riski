@@ -111,7 +111,9 @@ const mapDocument = (document: AgUiDocument): Document => {
     metadata?.risUrl,
     metadata?.source,
     document.risUrl,
-    document.source
+    document.source,
+    metadata?.id,
+    document.id
   );
   const size =
     typeof metadata?.size === "number"
@@ -203,6 +205,23 @@ const createAbortController = (signal: AbortSignal): AbortController => {
   return controller;
 };
 
+const attachResultsToToolCalls = (
+  steps: ExecutionStep[] | undefined,
+  documents: Document[],
+  proposals: Proposal[]
+): void => {
+  if (!steps || (documents.length === 0 && proposals.length === 0)) return;
+
+  for (const step of steps) {
+    if (!step.toolCalls) continue;
+    for (const toolCall of step.toolCalls) {
+      if (toolCall.name === "retrieve_documents" && !toolCall.result) {
+        toolCall.result = { documents, proposals };
+      }
+    }
+  }
+};
+
 const buildAnswer = (
   text: string,
   state: RiskiAgentState,
@@ -220,6 +239,7 @@ const buildAnswer = (
         ? json.proposals.filter(isRecord).map(mapProposal)
         : [];
 
+      attachResultsToToolCalls(steps, documents, proposals);
       return {
         response: response || "Unsere KI konnte keine Antwort generieren.",
         documents,
@@ -249,6 +269,7 @@ const buildAnswer = (
   }
 
   const { documents, proposals } = extractAnswerFromState(state);
+  attachResultsToToolCalls(steps, documents, proposals);
   return {
     response: text || "Unsere KI konnte keine Antwort generieren.",
     documents,
@@ -286,11 +307,13 @@ export default class AgUiAgentClient {
       if (!onProgress || signal.aborted || abortController.signal.aborted) {
         return;
       }
+      // Deep-clone steps so Vue detects the change (same array reference won't trigger reactivity)
+      const stepsSnapshot = structuredClone(latestSteps);
       const answer = buildAnswer(
         latestText || extractAssistantResponse(agent.messages),
         latestState,
         latestStatus,
-        latestSteps
+        stepsSnapshot
       );
       onProgress(answer);
     };
@@ -420,6 +443,54 @@ export default class AgUiAgentClient {
           }
         }
         emitProgress();
+      },
+      onRawEvent: ({ event }) => {
+        const raw = event.event as Record<string, unknown> | undefined;
+        if (!raw || typeof raw !== "object") return;
+
+        const eventName = raw.event as string | undefined;
+        const data = raw.data as Record<string, unknown> | undefined;
+        const toolName = raw.name as string | undefined;
+        const runId = raw.run_id as string | undefined;
+
+        if (eventName === "on_tool_start") {
+          const currentStep = latestSteps.find(
+            (step) => step.status === "running"
+          );
+          if (currentStep) {
+            if (!currentStep.toolCalls) currentStep.toolCalls = [];
+
+            const input = data?.input as Record<string, unknown> | undefined;
+            const toolArgs =
+              typeof input?.query === "string" ? input.query : "";
+
+            currentStep.toolCalls.push({
+              id: runId || generateId(),
+              name: toolName || "unknown",
+              args: toolArgs,
+              status: "running",
+            });
+
+            latestStatus = `Verwende Werkzeug: ${toolName || "unknown"}...`;
+          }
+          emitProgress();
+        } else if (eventName === "on_tool_end") {
+          const currentStep = latestSteps.find(
+            (step) => step.status === "running"
+          );
+          if (currentStep && currentStep.toolCalls) {
+            const toolCall = currentStep.toolCalls.find(
+              (tc) =>
+                tc.status === "running" &&
+                (tc.id === runId || tc.name === toolName)
+            );
+            if (toolCall) {
+              toolCall.status = "completed";
+            }
+          }
+          latestStatus = "Werkzeug ausgeführt.";
+          emitProgress();
+        }
       },
     };
 
