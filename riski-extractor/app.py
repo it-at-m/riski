@@ -106,7 +106,7 @@ async def main():
             file.write(extraction_artifact.model_dump_json(indent=4))
 
     logger.info("Extraction process finished")
-    # TODO: Transform
+
     logger.info("RIS Indexer completed successfully")
     return 0
 

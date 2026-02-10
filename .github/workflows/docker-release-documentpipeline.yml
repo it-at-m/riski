@@ -1,20 +1,20 @@
-name: Build and Release Extractor Docker Image
+name: Build and Release Documentpipeline Docker Image
 permissions:
   contents: read
 
 on:
   push:
     tags:
-      - "extractor-*" # Triggers only on extractor tags
+      - "document-pipeline-*" # Triggers only on document-pipeline tags
   workflow_dispatch: # Allows manual triggering of the workflow
     inputs:
       tag:
-        description: "Extractor tag to release (e.g., extractor-1.0.0)"
+        description: "Documentpipeline tag to release (e.g., document-pipeline-1.0.0)"
         required: true
-        default: "extractor-latest"
+        default: "document-pipeline-latest"
 
 jobs:
-  build-and-push-extractor:
+  build-and-push-document-pipeline:
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -36,7 +36,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Extract version from extractor tag
+      - name: Extract version from document-pipeline tag
         id: vars
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -45,11 +45,11 @@ jobs:
             FULL_TAG=${GITHUB_REF#refs/tags/}
           fi
 
-          # Extract version from extractor-* tag (e.g., extractor-1.0.0 -> 1.0.0)
-          if [[ "$FULL_TAG" =~ ^extractor-(.+)$ ]]; then
+          # Extract version from document-pipeline-* tag (e.g., document-pipeline-1.0.0 -> 1.0.0)
+          if [[ "$FULL_TAG" =~ ^document-pipeline-(.+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
           else
-            echo "Error: Tag must start with 'extractor-'"
+            echo "Error: Tag must start with 'document-pipeline-'"
             exit 1
           fi
 
@@ -59,17 +59,17 @@ jobs:
       - name: Set build timestamp
         id: build_ts
         run: echo "BUILD_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
-      - name: Build and push riski-extractor Docker image
+      - name: Build and push riski-document-pipeline Docker image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
-          file: ./riski-extractor/Dockerfile
+          file: ./riski-document-pipeline/Dockerfile
           push: true
           sbom: true
           provenance: true
           tags: |
-            ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-extractor:${{ steps.vars.outputs.version }}
-            ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-extractor:latest
+            ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-document-pipeline:${{ steps.vars.outputs.version }}
+            ghcr.io/${{ steps.vars.outputs.repo_lowercase }}/riski-document-pipeline:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -78,6 +78,6 @@ jobs:
             IMAGE_VERSION=${{ steps.vars.outputs.version }}
       - name: Image digest
         run: |
-          echo "riski-extractor image built and pushed:"
-          echo "  ghcr.io/${{ github.repository }}/riski-extractor:${{ steps.vars.outputs.version }}"
-          echo "  ghcr.io/${{ github.repository }}/riski-extractor:latest"
+          echo "riski-document-pipeline image built and pushed:"
+          echo "  ghcr.io/${{ github.repository }}/riski-document-pipeline:${{ steps.vars.outputs.version }}"
+          echo "  ghcr.io/${{ github.repository }}/riski-document-pipeline:latest"
