@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.redis import AsyncRedisSaver
+from langgraph.checkpoint.redis import AsyncShallowRedisSaver
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -50,7 +50,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         async_redis: AsyncRedis = AsyncRedis.from_url(
             url=settings.checkpointer.redis_url.encoded_string(),
         )
-        checkpointer = AsyncRedisSaver(
+        checkpointer = AsyncShallowRedisSaver(
             redis_client=async_redis,
             ttl={
                 "default_ttl": settings.checkpointer.ttl_minutes,
