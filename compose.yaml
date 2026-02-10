@@ -2,7 +2,7 @@ volumes:
   riskidata:
 services:
   db:
-    image: docker.io/pgvector/pgvector:pg17@sha256:1a5ea285a159bed991c74a9c4751b6eadc536b3c3263f3f95ec3865885a62b69
+    image: docker.io/pgvector/pgvector:pg17@sha256:1a20228d87a48db9587caebaecfdff065268ebe248dafa5f8b447ce3dc96e594
     container_name: pgvector-db
     networks:
       - default
@@ -22,7 +22,7 @@ services:
       timeout: 5s
       retries: 5
   adminer:
-    image: adminer@sha256:07a2ed7fde0362826b1df5a589ae07fc5003575b44578a06bc7da717d8547562
+    image: adminer@sha256:d9498e31999e5622e640b2fe64425099ffbecd3304486b7f343e13ec7c38e7dd
     restart: always
     ports:
       - 8084:8080
