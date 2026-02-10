@@ -46,7 +46,6 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         checkpointer = InMemorySaver()
     elif isinstance(settings.checkpointer, RedisCheckpointerSettings):
         # Instantiate Redis client and saver directly
-        logger.info(f"{settings.checkpointer.redis_url.encoded_string()=}")
         async_redis: AsyncRedis = AsyncRedis.from_url(
             url=settings.checkpointer.redis_url.encoded_string(),
         )
@@ -58,7 +57,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
             },
         )
         # Setup the checkpointer inside an async context
-        await checkpointer.setup()
+        await checkpointer.asetup()
     else:
         raise ValueError("Unsupported checkpointer configuration")
 
