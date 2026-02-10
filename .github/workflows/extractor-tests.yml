@@ -43,6 +43,8 @@ jobs:
       RISKI_EXTRACTOR__TEST__DB_PASSWORD: password
       RISKI_EXTRACTOR__TEST__DB_HOSTNAME: 127.0.0.1
       RISKI_EXTRACTOR__TEST__DB_PORT: 5432
+      RISKI__KAFKA__SERVER: <no-server>
+      RISKI__KAFKA__SECURITY: false
 
     defaults:
       run:
