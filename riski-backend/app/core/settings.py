@@ -4,6 +4,7 @@ from os import environ
 from pathlib import Path
 from typing import Any
 
+from dotenv import dotenv_values
 from pydantic import BaseModel, Field, RedisDsn, SecretStr, model_validator
 from pydantic_settings import SettingsConfigDict
 
@@ -58,11 +59,25 @@ class BackendSettings(AppBaseSettings):
         when the field defaults to None. Detect the env prefix and build the dict manually."""
         if isinstance(data, dict) and ("checkpointer" not in data or data.get("checkpointer") is None):
             prefix = "RISKI_BACKEND__CHECKPOINTER__"
-            env_data = {
-                field: val
-                for field in ("host", "port", "db", "secure", "password", "ttl_minutes")
-                if (val := environ.get(f"{prefix}{field.upper()}")) is not None
-            }
+
+            # Load .env values manually to include them in the check, respecting model_config
+            env_file = cls.model_config.get("env_file") if hasattr(cls, "model_config") else None
+
+            file_values = {}
+            if env_file and isinstance(env_file, str) and Path(env_file).exists():
+                file_values = dotenv_values(env_file)
+
+            env_data = {}
+            for field in ("host", "port", "db", "secure", "password", "ttl_minutes"):
+                key = f"{prefix}{field.upper()}"
+                # check os.environ first, then .env file
+                val = environ.get(key)
+                if val is None:
+                    val = file_values.get(key)
+
+                if val is not None:
+                    env_data[field] = val
+
             if env_data:
                 data["checkpointer"] = env_data
         return data
