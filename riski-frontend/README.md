@@ -1,4 +1,4 @@
-## DLF Frontend
+## Riski Frontend
 
 Builds a custom webcomponent that can be used. Build with:
 
