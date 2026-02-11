@@ -11,7 +11,7 @@ import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
 import riskiIntro from "@/components/riski-intro.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
-import { EXAMPLE_QUESTIONS } from "@/util/constants"
+import { EXAMPLE_QUESTIONS } from "@/util/constants";
 
 let abortController = new AbortController();
 
@@ -94,7 +94,10 @@ const submitQuery = (query: string) => {
 </script>
 
 <template>
-  <link href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css" rel="stylesheet" />
+  <link
+    href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css"
+    rel="stylesheet"
+  />
   <main>
     <div>
       <div v-html="mucIconsSprite" />
@@ -102,11 +105,25 @@ const submitQuery = (query: string) => {
       <div v-html="riskiIconsSprite" />
 
       <riski-intro>
-        <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
-          :on-clear="resetInitialState" />
-        <div v-if="initial" class="example-chips" role="list" aria-label="Beispielfragen">
-          <button v-for="question in EXAMPLE_QUESTIONS" :key="question" class="example-chip" role="listitem"
-            @click="submitQuery(question)">
+        <riski-searchbar
+          id="riski-searchbar"
+          :submit-query="submitQuery"
+          :query="searchquery"
+          :on-clear="resetInitialState"
+        />
+        <div
+          v-if="initial"
+          class="example-chips"
+          role="list"
+          aria-label="Beispielfragen"
+        >
+          <button
+            v-for="question in EXAMPLE_QUESTIONS"
+            :key="question"
+            class="example-chip"
+            role="listitem"
+            @click="submitQuery(question)"
+          >
             {{ question }}
           </button>
         </div>
@@ -115,15 +132,25 @@ const submitQuery = (query: string) => {
       <div class="container">
         <div class="m-component__grid">
           <div class="main-body-container">
-            <div ref="resultsArea" role="region" aria-label="Suchergebnisse" :aria-busy="loading" aria-live="polite">
-              <div v-if="
-                loading == false &&
-                found_answer == undefined &&
-                initial == false &&
-                fehler == ''
-              ">
+            <div
+              ref="resultsArea"
+              role="region"
+              aria-label="Suchergebnisse"
+              :aria-busy="loading"
+              aria-live="polite"
+            >
+              <div
+                v-if="
+                  loading == false &&
+                  found_answer == undefined &&
+                  initial == false &&
+                  fehler == ''
+                "
+              >
                 <muc-callout type="warning">
-                  <template #header>Wir haben leider keine Antwort gefunden.</template>
+                  <template #header
+                    >Wir haben leider keine Antwort gefunden.</template
+                  >
                   <template #content>
                     Entschuldigung. Für ihre Frage konnte unsere Künstliche
                     Intelligenz leider kein passendes Ergebnis finden.
@@ -133,10 +160,16 @@ const submitQuery = (query: string) => {
                 </muc-callout>
               </div>
               <div v-if="found_answer != undefined || loading">
-                <riski-response-card :riski-answer="found_answer" :is-streaming="loading"></riski-response-card>
+                <riski-response-card
+                  :riski-answer="found_answer"
+                  :is-streaming="loading"
+                ></riski-response-card>
               </div>
               <div v-if="fehler != ''">
-                <muc-callout title="Fehler" type="error">
+                <muc-callout
+                  title="Fehler"
+                  type="error"
+                >
                   <template #header>Ein Fehler ist aufgetreten.</template>
                   <template #content>
                     {{ fehler }}
@@ -145,7 +178,11 @@ const submitQuery = (query: string) => {
               </div>
             </div>
             <div style="height: 48px"></div>
-            <muc-callout title="Disclaimer" type="info" class="heading disclaimer-callout">
+            <muc-callout
+              title="Disclaimer"
+              type="info"
+              class="heading disclaimer-callout"
+            >
               <template #header>Rechtliche Hinweise</template>
               <template #content>
                 Die von diesem System bereitgestellten Informationen dienen als
@@ -195,7 +232,10 @@ const submitQuery = (query: string) => {
   color: #005a9f;
   font-size: 0.88em;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
   white-space: nowrap;
 }
 
