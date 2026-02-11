@@ -15,15 +15,17 @@
             <input :id="'input-' + id" class="m-input autocomplete-input unset-border-right muc-input" :type="type"
                 v-model="modelValue" :aria-describedby="hint ? 'input-hint-' + id : undefined"
                 :placeholder="placeholder" :required="required"></input>
-            <button v-if="modelValue" type="button" class="m-input__suffix  unset-border-left"  @click="handleClearClick" >
+            <button v-if="modelValue" type="button" class="m-input__suffix  unset-border-left" @click="handleClearClick"
+                aria-label="Eingabe löschen">
                 <svg aria-hidden="true" class="icon">
                     <use xlink:href="#icon-close"></use>
                 </svg>
-                <span class="visually-hidden">Clear</span>
+                <span class="visually-hidden">Eingabe löschen</span>
             </button>
             <ul v-if="isSearch && currentAvalOptions.length !== 0"
-                class="autocomplete-result-list autocomplete-result-list--location">
-                <li class="autocomplete-result" v-for="option in currentAvalOptions" :key="option"
+                class="autocomplete-result-list autocomplete-result-list--location" role="listbox"
+                :aria-label="'Vorschläge'">
+                <li class="autocomplete-result" role="option" v-for="option in currentAvalOptions" :key="option"
                     @click="handleOptionSelection(option)">
                     {{ option }}
                 </li>
@@ -173,11 +175,11 @@ const handleClearClick = () => {
     border-right: unset;
 }
 
-.muc-input{
-   line-height: 24px; 
-   font-weight: 400;
-   line-height: 24px;
-   word-wrap: break-word;
-   font-size: 18px;
+.muc-input {
+    line-height: 24px;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    font-size: 18px;
 }
 </style>

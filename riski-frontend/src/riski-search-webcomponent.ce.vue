@@ -4,18 +4,18 @@ import type RiskiAnswer from "@/types/RiskiAnswer";
 import { MucCallout } from "@muenchen/muc-patternlab-vue";
 import customIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/custom-icons.svg?raw";
 import mucIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/muc-icons.svg?raw";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 
 import SearchService from "@/api/SearchService";
 import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
 import riskiIntro from "@/components/riski-intro.vue";
-import RiskiProgress from "@/components/riski-progress.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
 
 let abortController = new AbortController();
 
 const found_answer = ref<RiskiAnswer>();
+const resultsArea = ref<HTMLElement | null>(null);
 
 const loading = ref<boolean>(false);
 const initial = ref<boolean>(true);
@@ -24,11 +24,20 @@ const searchquery = ref<string>("");
 
 /**
  * Callback function for a successfully processed document with the answer chain.
+ * Called progressively as streaming data arrives.
  *
- * @param {RiskiAnswer} answer - The processed document.
+ * @param {RiskiAnswer} answer - The processed document (may be partial).
  */
 const onProcessedCallback = (answer: RiskiAnswer) => {
+  const isFirstResult = found_answer.value == undefined;
   found_answer.value = answer;
+
+  // Scroll results into view on first partial result
+  if (isFirstResult) {
+    nextTick(() => {
+      resultsArea.value?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 };
 
 /**
@@ -53,6 +62,7 @@ const resetInitialState = () => {
 };
 
 const resetLoadingState = () => {
+  found_answer.value = undefined;
   loading.value = true;
   fehler.value = "";
 };
@@ -98,7 +108,7 @@ const submitQuery = (query: string) => {
       <div class="container">
         <div class="m-component__grid">
           <div class="main-body-container">
-            <div>
+            <div ref="resultsArea" role="region" aria-label="Suchergebnisse" :aria-busy="loading" aria-live="polite">
               <div v-if="
                 loading == false &&
                 found_answer == undefined &&
@@ -115,8 +125,8 @@ const submitQuery = (query: string) => {
                   </template>
                 </muc-callout>
               </div>
-              <div v-else-if="found_answer != undefined">
-                <riski-response-card :riski-answer="found_answer"></riski-response-card>
+              <div v-if="found_answer != undefined || loading">
+                <riski-response-card :riski-answer="found_answer" :is-streaming="loading"></riski-response-card>
               </div>
               <div v-if="fehler != ''">
                 <muc-callout title="Fehler" type="error">
@@ -125,9 +135,6 @@ const submitQuery = (query: string) => {
                     {{ fehler }}
                   </template>
                 </muc-callout>
-              </div>
-              <div class="progress-container">
-                <riski-progress v-if="loading && found_answer == undefined" :progress="40"></riski-progress>
               </div>
             </div>
             <div style="height: 48px"></div>
@@ -162,11 +169,6 @@ const submitQuery = (query: string) => {
 .disclaimer-callout {
   margin-left: 0.375rem;
   margin-right: 0.375rem;
-}
-
-.progress-container {
-  display: flex;
-  justify-content: center;
 }
 
 .main-body-container {

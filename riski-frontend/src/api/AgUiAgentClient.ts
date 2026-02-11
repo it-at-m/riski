@@ -1,7 +1,7 @@
 import type Document from "@/types/Document";
 import type Proposal from "@/types/Proposal";
 import type RiskiAnswer from "@/types/RiskiAnswer";
-import type { ExecutionStep, ToolCallInfo } from "@/types/RiskiAnswer";
+import type { ExecutionStep } from "@/types/RiskiAnswer";
 import type { AgentSubscriber } from "@ag-ui/client";
 import type { Message } from "@ag-ui/core";
 
@@ -194,6 +194,93 @@ const extractAnswerFromState = (
   };
 };
 
+/**
+ * Turn a Python repr-style dict string into a (best-effort) JSON string.
+ * Handles single → double quote conversion and converts Python keywords
+ * None / True / False.
+ */
+const pythonDictToJson = (s: string): string =>
+  s
+    .replace(/'/g, '"')
+    .replace(/\bNone\b/g, "null")
+    .replace(/\bTrue\b/g, "true")
+    .replace(/\bFalse\b/g, "false");
+
+/**
+ * Extract documents and proposals from the Python repr string returned by
+ * the LangGraph backend in tool-output events.
+ *
+ * The string looks like:
+ *   {'documents': [Document(id='…', metadata={…}, page_content='…'), …],
+ *    'proposals': [{'identifier': '…', …}, …]}
+ *
+ * Because `Document(…)` is a Python constructor call (not valid JSON), we
+ * extract each Document with a regex and parse its `metadata` dict, which
+ * contains the fields the UI actually needs (id/risUrl, name, size).
+ * Proposals are plain Python dicts so we can parse them after quote
+ * conversion.
+ */
+const extractToolOutputIntoState = (
+  data: Record<string, unknown> | undefined,
+  state: RiskiAgentState
+): void => {
+  if (!data) return;
+
+  const output = data.output as Record<string, unknown> | undefined;
+  if (!output || typeof output !== "object") return;
+
+  const content = output.content as string | undefined;
+  if (typeof content !== "string") return;
+
+  try {
+    // ── Documents ──────────────────────────────────────────────────────
+    // Each document appears as  Document(id='…', metadata={…}, page_content='…')
+    // We only need id + metadata (the UI does not render page_content).
+    // The metadata dict is flat: {'id': '…', 'name': '…', 'size': 123}
+    const docRegex = /Document\(id='([^']*)',\s*metadata=(\{[^}]*\})/g;
+    let match: RegExpExecArray | null;
+    const docs: AgUiDocument[] = [];
+
+    while ((match = docRegex.exec(content)) !== null) {
+      const docId = match[1];
+      const metadataRaw = match[2]; // e.g. {'id': '…', 'name': '…', 'size': 123}
+      try {
+        const metadata = JSON.parse(pythonDictToJson(metadataRaw ?? "{}"));
+        docs.push({ id: docId, metadata });
+      } catch {
+        // Metadata not parseable – skip this document
+      }
+    }
+
+    if (docs.length > 0) {
+      state.documents = [...(state.documents || []), ...docs];
+    }
+
+    // ── Proposals ──────────────────────────────────────────────────────
+    // Proposals are plain Python dicts inside 'proposals': [{…}, …]
+    // Extract the array substring and parse it.
+    const proposalsMatch = content.match(/'proposals':\s*(\[[\s\S]*\])\s*\}/);
+    if (proposalsMatch) {
+      try {
+        const proposals = JSON.parse(
+          pythonDictToJson(proposalsMatch[1] ?? "[]")
+        );
+        if (Array.isArray(proposals)) {
+          const props = proposals.filter(isRecord) as AgUiDocument[];
+          if (props.length > 0) {
+            state.proposals = [...(state.proposals || []), ...props];
+          }
+        }
+      } catch {
+        // Proposals not parseable
+      }
+    }
+  } catch {
+    // Content is not parseable – that's fine, we'll get the data from the
+    // final state snapshot instead.
+  }
+};
+
 const createAbortController = (signal: AbortSignal): AbortController => {
   const controller = new AbortController();
   const abortListener = () => controller.abort(signal.reason);
@@ -241,7 +328,9 @@ const buildAnswer = (
 
       attachResultsToToolCalls(steps, documents, proposals);
       return {
-        response: response || "Unsere KI konnte keine Antwort generieren.",
+        response:
+          response ||
+          (status ? "" : "Unsere KI konnte keine Antwort generieren."),
         documents,
         proposals,
         status,
@@ -257,10 +346,14 @@ const buildAnswer = (
           .replace(/\\"/g, '"')
           .replace(/\\n/g, "\n")
           .replace(/\\\\/g, "\\");
+
+        // Use documents/proposals from state even during partial JSON streaming
+        const { documents, proposals } = extractAnswerFromState(state);
+        attachResultsToToolCalls(steps, documents, proposals);
         return {
           response: response,
-          documents: [],
-          proposals: [],
+          documents,
+          proposals,
           status,
           steps,
         };
@@ -271,7 +364,8 @@ const buildAnswer = (
   const { documents, proposals } = extractAnswerFromState(state);
   attachResultsToToolCalls(steps, documents, proposals);
   return {
-    response: text || "Unsere KI konnte keine Antwort generieren.",
+    response:
+      text || (status ? "" : "Unsere KI konnte keine Antwort generieren."),
     documents,
     proposals,
     status,
@@ -315,6 +409,7 @@ export default class AgUiAgentClient {
         latestStatus,
         stepsSnapshot
       );
+
       onProgress(answer);
     };
 
@@ -399,52 +494,16 @@ export default class AgUiAgentClient {
         emitProgress();
       },
       onToolCallResultEvent: () => {
-        // Could be specific about what tool finished
-        latestStatus = "Werkzeug ausgeführt.";
-        emitProgress();
+        // Tool results are handled by onRawEvent("on_tool_end") which has
+        // richer data (output.content with documents/proposals).
       },
-      onToolCallStartEvent: ({ event }) => {
-        const currentStep = latestSteps.find(
-          (step) => step.status === "running"
-        );
-        if (currentStep) {
-          if (!currentStep.toolCalls) currentStep.toolCalls = [];
-
-          let toolArgs = "";
-          // Check for RAW event data structure which might contain input args
-          if ("rawEvent" in event) {
-            const raw = event.rawEvent as any;
-            if (raw?.event?.data?.input?.query) {
-              toolArgs = raw.event.data.input.query;
-            }
-          }
-
-          currentStep.toolCalls.push({
-            id: event.toolCallId,
-            name: event.toolCallName,
-            args: toolArgs,
-            status: "running",
-          });
-          // Check if we are in the 'model' step, which proposes tool calls (thinking)
-          if (currentStep.name === "model") {
-            latestStatus = `Entscheide für Werkzeug: ${event.toolCallName}...`;
-          }
-        }
-        emitProgress();
+      onToolCallStartEvent: () => {
+        // Tool call starts are handled by onRawEvent("on_tool_start") which
+        // provides the input query via data.input.query.
       },
-      onToolCallEndEvent: ({ event }) => {
-        const currentStep = latestSteps.find(
-          (step) => step.status === "running"
-        );
-        if (currentStep && currentStep.toolCalls) {
-          const toolCall = currentStep.toolCalls.find(
-            (tc) => tc.id === event.toolCallId
-          );
-          if (toolCall) {
-            toolCall.status = "completed";
-          }
-        }
-        emitProgress();
+      onToolCallEndEvent: () => {
+        // Tool call ends are handled by onRawEvent("on_tool_end") which
+        // also extracts documents/proposals from the output.
       },
       onRawEvent: ({ event }) => {
         const raw = event.event as Record<string, unknown> | undefined;
@@ -490,6 +549,11 @@ export default class AgUiAgentClient {
               toolCall.status = "completed";
             }
           }
+
+          // Extract documents/proposals from tool output and merge into latestState
+          // so they appear immediately, without waiting for the final RUN_FINISHED state.
+          extractToolOutputIntoState(data, latestState);
+
           latestStatus = "Werkzeug ausgeführt.";
           emitProgress();
         }
