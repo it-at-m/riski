@@ -11,6 +11,7 @@ import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
 import riskiIntro from "@/components/riski-intro.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
+import { EXAMPLE_QUESTIONS } from "@/util/constants"
 
 let abortController = new AbortController();
 
@@ -103,6 +104,12 @@ const submitQuery = (query: string) => {
       <riski-intro>
         <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
           :on-clear="resetInitialState" />
+        <div v-if="initial" class="example-chips" role="list" aria-label="Beispielfragen">
+          <button v-for="question in EXAMPLE_QUESTIONS" :key="question" class="example-chip" role="listitem"
+            @click="submitQuery(question)">
+            {{ question }}
+          </button>
+        </div>
       </riski-intro>
 
       <div class="container">
@@ -169,6 +176,42 @@ const submitQuery = (query: string) => {
 .disclaimer-callout {
   margin-left: 0.375rem;
   margin-right: 0.375rem;
+}
+
+.example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.example-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid #c0d0e0;
+  border-radius: 20px;
+  background: #fff;
+  color: #005a9f;
+  font-size: 0.88em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.example-chip:hover {
+  background-color: #e5eef5;
+  border-color: #005a9f;
+}
+
+.example-chip:focus-visible {
+  outline: 2px solid #005a9f;
+  outline-offset: 2px;
+}
+
+.example-chip:active {
+  background-color: #d0e0f0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .main-body-container {
