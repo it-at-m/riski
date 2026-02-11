@@ -25,6 +25,7 @@ def _base_env(monkeypatch: pytest.MonkeyPatch):
         "LANGFUSE_PUBLIC_KEY",
         "LANGFUSE_SECRET_KEY",
         "LANGFUSE_HOST",
+        "RISKI_BACKEND__CHECKPOINTER__TYPE",
         "RISKI_BACKEND__CHECKPOINTER__HOST",
         "RISKI_BACKEND__CHECKPOINTER__SECURE",
         "RISKI_BACKEND__CHECKPOINTER__PORT",
@@ -72,6 +73,7 @@ def test_checkpointer_secure_overrides(monkeypatch: pytest.MonkeyPatch):
     """Secure Redis settings should be applied and reflected in the DSN."""
 
     _base_env(monkeypatch)
+    monkeypatch.setenv("RISKI_BACKEND__CHECKPOINTER__TYPE", "redis")
     monkeypatch.setenv("RISKI_BACKEND__CHECKPOINTER__SECURE", "true")
     monkeypatch.setenv("RISKI_BACKEND__CHECKPOINTER__PORT", "6380")
     monkeypatch.setenv("RISKI_BACKEND__CHECKPOINTER__DB", "5")
