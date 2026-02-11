@@ -2,13 +2,18 @@
 import type RiskiAnswer from "@/types/RiskiAnswer.ts";
 
 import StepProgress from "@/components/common/step-progress.vue";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
 import { computed } from "vue";
 
 const props = defineProps<{
   riskiAnswer?: RiskiAnswer;
 }>();
 
-const aiResponse = computed(() => props.riskiAnswer?.response || "");
+const aiResponse = computed(() => {
+  const raw = props.riskiAnswer?.response || "";
+  return DOMPurify.sanitize(marked.parse(raw) as string);
+});
 const proposals = computed(() => props.riskiAnswer?.proposals || []);
 const documents = computed(() => props.riskiAnswer?.documents || []);
 const steps = computed(() => props.riskiAnswer?.steps || []);
@@ -32,9 +37,7 @@ function fileSizeAsString(fileSize: number) {
 
   <div>
     <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
-    <div class="marked_text m-dataset-item__text ai_response">
-      {{ aiResponse }}
-    </div>
+    <div class="marked_text m-dataset-item__text ai_response" v-html="aiResponse"></div>
   </div>
   <br />
   <div v-if="proposals.length > 0">

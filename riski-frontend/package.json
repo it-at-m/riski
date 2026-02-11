@@ -4,12 +4,15 @@
     "@ag-ui/core": "0.0.43",
     "@muenchen/muc-patternlab-vue": "6.1.0",
     "@vueuse/core": "14.0.0",
+    "dompurify": "^3.3.1",
+    "marked": "^17.0.1",
     "vue": "3.5.27"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "4.1.2",
     "@muenchen/prettier-codeformat": "1.0.2",
     "@tsconfig/node-lts": "22.0.4",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "22.19.0",
     "@vitejs/plugin-vue": "6.0.3",
     "@vue/eslint-config-prettier": "10.2.0",
