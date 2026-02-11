@@ -12,5 +12,5 @@ export const RISKI_AGENT_ENDPOINT = "/api/ag-ui/riskiagent";
 export const EXAMPLE_QUESTIONS = [
   "Welche Anträge gibt es zum Thema Radverkehr?",
   "Was wurde zum Thema Schulbau beschlossen?",
-  "Gibt macht die Stadt in Richtung KI?",
+  "Was macht die Stadt in Richtung KI?",
 ];
