@@ -1,14 +1,17 @@
-from abc import ABC
-from functools import lru_cache
-from os import environ
-from pathlib import Path
-from typing import Any
+from __future__ import annotations
 
-from dotenv import dotenv_values
-from pydantic import BaseModel, Field, RedisDsn, SecretStr, model_validator
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel, Field, RedisDsn, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
+
+
+class InMemoryCheckpointerSettings(BaseModel):
+    type: Literal["in_memory"] = "in_memory"
 
 
 class BackendSettings(AppBaseSettings):
@@ -37,9 +40,10 @@ class BackendSettings(AppBaseSettings):
     )
 
     # === Agent Settings ===
-    checkpointer: "RedisCheckpointerSettings | None" = Field(
+    checkpointer: InMemoryCheckpointerSettings | RedisCheckpointerSettings = Field(
         description="Settings for agent checkpointer",
-        default=None,
+        default_factory=InMemoryCheckpointerSettings,
+        discriminator="type",
     )
 
     # === Server Settings ===
@@ -51,36 +55,6 @@ class BackendSettings(AppBaseSettings):
         default=8080,
         description="The port for the riski-backend server to bind to.",
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_checkpointer_env(cls, data: Any) -> Any:
-        """Pydantic V2 Settings does not auto-instantiate Optional nested models from env vars
-        when the field defaults to None. Detect the env prefix and build the dict manually."""
-        if isinstance(data, dict) and ("checkpointer" not in data or data.get("checkpointer") is None):
-            prefix = "RISKI_BACKEND__CHECKPOINTER__"
-
-            # Load .env values manually to include them in the check, respecting model_config
-            env_file = cls.model_config.get("env_file") if hasattr(cls, "model_config") else None
-
-            file_values = {}
-            if env_file and isinstance(env_file, str) and Path(env_file).exists():
-                file_values = dotenv_values(env_file)
-
-            env_data = {}
-            for field in ("host", "port", "db", "secure", "password", "ttl_minutes"):
-                key = f"{prefix}{field.upper()}"
-                # check os.environ first, then .env file
-                val = environ.get(key)
-                if val is None:
-                    val = file_values.get(key)
-
-                if val is not None:
-                    env_data[field] = val
-
-            if env_data:
-                data["checkpointer"] = env_data
-        return data
 
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
@@ -95,13 +69,8 @@ class BackendSettings(AppBaseSettings):
     )
 
 
-class BaseCheckpointerSettings(BaseModel, ABC):
-    """Base settings for agent checkpointers."""
-
-    pass
-
-
-class RedisCheckpointerSettings(BaseCheckpointerSettings):
+class RedisCheckpointerSettings(BaseModel):
+    type: Literal["redis"] = "redis"
     host: str = Field(
         default="localhost",
         description="Redis host for checkpointer",
