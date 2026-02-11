@@ -125,19 +125,7 @@ class PersonParser(BaseParser[Person]):
             existing_person = None
 
         if existing_person and any(s not in existing_person.status for s in status):
-            person = Person(
-                id=existing_person.id,
-                familyName=existing_person.familyName,
-                givenName=existing_person.givenName,
-                name=existing_person.name,
-                formOfAddress=existing_person.formOfAddress,
-                life=existing_person.life,
-                lifeSource=existing_person.lifeSource,
-                status=existing_person.status,
-                title=existing_person.title,
-                web=existing_person.web,
-                deleted=existing_person.deleted,
-            )
+            person = existing_person
             if not existing_person.name and name:
                 person.name = name
             if not existing_person.formOfAddress and form_of_address:
