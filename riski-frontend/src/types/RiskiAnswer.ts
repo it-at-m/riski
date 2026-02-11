@@ -16,6 +16,8 @@ export interface ToolCallInfo {
 
 export interface ExecutionStep {
   name: string;
+  /** Optional override for the displayed label (e.g. "Denke nach…" vs "Antwort generieren") */
+  displayName?: string;
   status: "running" | "completed" | "failed";
   content?: string;
   toolCalls?: ToolCallInfo[];

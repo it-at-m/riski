@@ -38,7 +38,7 @@ function truncate(text: string, maxLength: number = 60): string {
                     <template v-else-if="step.status === 'completed'">✅</template>
                     <template v-else-if="step.status === 'failed'">❌</template>
                 </span>
-                <span class="step-name">{{ formatStepName(step.name) }}</span>
+                <span class="step-name">{{ step.displayName || formatStepName(step.name) }}</span>
                 <span v-if="step.status === 'running'" class="step-running-hint">läuft…</span>
             </div>
 

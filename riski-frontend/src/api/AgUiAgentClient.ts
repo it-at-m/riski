@@ -327,8 +327,9 @@ export default class AgUiAgentClient {
         );
         if (currentStep) {
           currentStep.content = textMessageBuffer;
-          // If we are receiving text content, we are definitely generating the answer now
+          // If we are receiving text content in a model step, it's generating the answer (not just thinking)
           if (currentStep.name === "model") {
+            currentStep.displayName = "Antwort generieren";
             latestStatus = "Generiere Antwort...";
           }
         }
@@ -380,6 +381,7 @@ export default class AgUiAgentClient {
         }
         latestSteps.push({
           name: event.stepName,
+          displayName: event.stepName === "model" ? "Denke nach" : undefined,
           status: "running",
           content: "",
           toolCalls: [],
