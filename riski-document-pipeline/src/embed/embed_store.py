@@ -1,8 +1,7 @@
-from core.db.db_access import _get_session_ctx
+from core.db.db_access import _get_session_ctx, request_batch
 from core.genai import create_embedding_model
 from core.model.data_models import File
 from langchain_text_splitters import TokenTextSplitter
-from sqlmodel import select
 
 from src.logtools import getLogger
 
@@ -11,21 +10,36 @@ logger = getLogger()
 
 def embed_documents(settings):
     embedding_model = create_embedding_model(settings)
+    batch_size = settings.ocr_batch_size
+    if not batch_size:
+        batch_size = 0
+    offset = 0
 
     with _get_session_ctx() as session:
         # TODO: add chunking
         # find in file_chunk table
         # docs = session.exec(select(File).where(File.chunks != None)).all()  # noqa: E711
-        docs = session.exec(select(File).where(File.embed == None, File.text != None)).all()  # noqa: E711
-        logger.info(f"Found {len(docs)} documents to process.")
-        for doc in docs:
-            try:
-                doc.embed = embedding_model.embed_documents([temp_chunk(doc.text)])[0]
-            except Exception as e:
-                logger.error(f"Error embedding doc id={doc.id}: {e}")
-                continue
-            session.add(doc)
+        logger.info("Start embedding")
+        while True:
+            docs_to_process: list[File] = request_batch(File, offset=offset, limit=batch_size)
+
+            if not docs_to_process:
+                logger.info("Processed all available documents. (Embedding)")
+                break
+
+            docs_without_embedding = [doc for doc in docs_to_process if doc.embed is None and doc.text is not None]
+
+            for doc in docs_without_embedding:
+                try:
+                    doc.embed = embedding_model.embed_documents([temp_chunk(doc.text)])[0]
+                except Exception as e:
+                    logger.error(f"Error embedding doc id={doc.id}: {e}")
+                    continue
+                session.add(doc)
             session.commit()
+            session.expunge_all()
+            logger.info("Embedded Files %d - %d.", offset, offset + batch_size)
+            offset += batch_size
 
 
 def temp_chunk(text: str):
