@@ -45,7 +45,7 @@ Find information in munich's political information system RIS with the help of a
 [vue-shield]: https://shields.io/badge/Vue.js-blue?logo=vuedotjs&style=for-the-badge&logoColor=white
 [postgres-shield]: https://img.shields.io/badge/postgres-blue?&style=for-the-badge&logo=postgresql&logoColor=white
 [langgraph-shield]: https://img.shields.io/badge/LangGraph-blue?&style=for-the-badge&logo=langgraph&logoColor=white
-[extractor-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=extractor*&label=riski-extractor&style=for-the-badge&color=blue
+[extractor-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=extractor*&label=riski-ext🚜&style=for-the-badge&color=blue
 [backend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=backend*&label=riski-backend&style=for-the-badge&color=blue
 [document-pipeline-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=document-pipeline*&label=riski-document-pipeline&style=for-the-badge&color=blue
 [frontend-version-shield]: https://img.shields.io/github/v/tag/it-at-m/riski?filter=riski-frontend*&label=riski-frontend&style=for-the-badge&color=blue

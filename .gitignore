@@ -321,6 +321,5 @@ vite.config.ts.timestamp-*
 .vite/
 
 ### Custom ###
-**/tiktoken_cache/
 node_modules
 ca-bundle.crt

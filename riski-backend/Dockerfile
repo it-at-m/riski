@@ -1,7 +1,7 @@
 # Small ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:f8c05e3c6d15fea32e59635477c0f690e6d4b88a81924e8619f369e57306b701
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:a74a7a92d3069bfac09c6882087771fc7db59fa9d8e16f14f4e012fe7288554c
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest@sha256:94a23af2d50e97b87b522d3cea24aaf8a1faedec1344c952767434f69585cbf9 /uv /uvx /bin/
 
 ENV UV_PROJECT_ENVIRONMENT=/app/backend/.venv
 
@@ -24,6 +24,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Copy the application files
 COPY riski-backend /app/backend
 COPY riski-core /app/riski-core
+
+# Copy the tiktoken cache to make encoding files available offline
+COPY riski-backend/tiktoken_cache /app/backend/tiktoken_cache
 
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -51,6 +54,9 @@ RUN chown -R root:0 /app && chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/backend/.venv/bin:$PATH"
+
+# Ensure tiktoken uses the bundled cache (avoid network fetches)
+ENV TIKTOKEN_CACHE_DIR=/app/backend/tiktoken_cache
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1

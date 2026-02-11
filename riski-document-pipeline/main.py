@@ -1,3 +1,10 @@
+# ruff: noqa: E402
+from dotenv import load_dotenv
+from truststore import inject_into_ssl
+
+load_dotenv()
+inject_into_ssl()
+
 from core.db.db import init_db
 
 from settings.settings import DocPipelineSettings, get_settings
