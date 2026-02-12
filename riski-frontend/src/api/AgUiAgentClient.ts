@@ -327,7 +327,29 @@ const extractToolOutputIntoState = (
         if (Array.isArray(proposals)) {
           const props = proposals.filter(isRecord) as AgUiDocument[];
           if (props.length > 0) {
-            state.proposals = [...(state.proposals || []), ...props];
+            // Deduplicate: filter out ids already in state.proposals
+            const existingIds = new Set(
+              (state.proposals || []).map((p) => p.id as string)
+            );
+            const uniqueProps = props.filter(
+              (p) => !existingIds.has(p.id as string)
+            );
+
+            // Also ensure no duplicates within the new batch itself
+            const finalProps: AgUiDocument[] = [];
+            const newIds = new Set<string>();
+
+            for (const p of uniqueProps) {
+              const pid = p.id as string;
+              if (!newIds.has(pid)) {
+                newIds.add(pid);
+                finalProps.push(p);
+              }
+            }
+
+            if (finalProps.length > 0) {
+              state.proposals = [...(state.proposals || []), ...finalProps];
+            }
           }
         }
       } catch {
