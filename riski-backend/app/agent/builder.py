@@ -2,7 +2,7 @@ from logging import Logger
 from typing import Any
 
 from ag_ui_langgraph import LangGraphAgent
-from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_settings
+from app.core.settings import BackendSettings, InMemoryCheckpointerSettings, RedisCheckpointerSettings, get_settings
 from app.utils.logging import getLogger
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ProviderStrategy
@@ -12,7 +12,7 @@ from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.redis import AsyncRedisSaver
+from langgraph.checkpoint.redis import AsyncShallowRedisSaver
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -31,7 +31,22 @@ class StructuredAgentResponse(BaseModel):
 
 
 async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
-    """Build and return the RISKI agent."""
+    """
+    Constructs and returns a configured RISKI LangGraphAgent for document research and analysis.
+    
+    Builds the chat model, configures a checkpoint saver according to application settings (in-memory or Redis-backed), registers the document retrieval tool, and wraps the resulting agent into a LangGraphAgent ready for use.
+    
+    Parameters:
+        vectorstore (PGVectorStore): Vector store used for semantic search and retrieval by the agent.
+        db_sessionmaker (async_sessionmaker): Async SQLAlchemy session factory for database access within agent context.
+        callbacks (Callbacks): Callback handlers to attach to the agent's execution.
+    
+    Returns:
+        LangGraphAgent: A LangGraphAgent configured with the RISKI agent graph, metadata, and provided configurable components.
+    
+    Raises:
+        ValueError: If the configured checkpointer type is unsupported.
+    """
 
     # Build the chat model
     chat_model: ChatOpenAI = ChatOpenAI(
@@ -42,15 +57,14 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
 
     # Configure the checkpointer
     checkpointer: BaseCheckpointSaver
-    if settings.checkpointer is None:
+    if isinstance(settings.checkpointer, InMemoryCheckpointerSettings):
         checkpointer = InMemorySaver()
     elif isinstance(settings.checkpointer, RedisCheckpointerSettings):
         # Instantiate Redis client and saver directly
-        logger.info(f"{settings.checkpointer.redis_url.encoded_string()=}")
         async_redis: AsyncRedis = AsyncRedis.from_url(
             url=settings.checkpointer.redis_url.encoded_string(),
         )
-        checkpointer = AsyncRedisSaver(
+        checkpointer = AsyncShallowRedisSaver(
             redis_client=async_redis,
             ttl={
                 "default_ttl": settings.checkpointer.ttl_minutes,
@@ -58,7 +72,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
             },
         )
         # Setup the checkpointer inside an async context
-        await checkpointer.setup()
+        await checkpointer.asetup()
     else:
         raise ValueError("Unsupported checkpointer configuration")
 
