@@ -85,7 +85,7 @@ async def build_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
     embedding_model = create_embedding_model(settings)
     vectorstore = await PGVectorStore.create(
         engine=pg_engine,
-        schema_name=settings.core.db.schema,
+        schema_name=settings.core.db.schemaname,
         table_name="file",
         embedding_service=embedding_model,
         id_column="db_id",
