@@ -248,28 +248,49 @@ const extractToolOutputIntoState = (
       // Advance search position
       startIndex = foundIndex + docKeyword.length;
 
+      // Find the end of this Document(...) block by balancing parentheses.
+      // startIndex points right after the opening "(" in "Document(".
+      let parenBalance = 1;
+      let docEnd = -1;
+      for (let i = startIndex; i < content.length; i++) {
+        if (content[i] === "(") {
+          parenBalance++;
+        } else if (content[i] === ")") {
+          parenBalance--;
+          if (parenBalance === 0) {
+            docEnd = i; // index of closing ')'
+            break;
+          }
+        }
+      }
+      if (docEnd === -1) continue; // malformed Document block – skip
+
+      // Work only within the bounded substring of this Document block
+      const docBlock = content.slice(startIndex, docEnd);
+
       // 1. Extract ID: look for id='...'
-      // We look within a short window to ensure we match the ID of *this* Document call
-      const chunk = content.slice(startIndex, startIndex + 200);
-      const idMatch = chunk.match(/id='([^']*)'/);
+      const idMatch = docBlock.match(/id='([^']*)'/);
       if (!idMatch) continue;
 
       const docId = idMatch[1];
 
-      // 2. Extract Metadata: look for metadata={...}
-      // We search from startIndex (just after "Document(") so we find *argument* `metadata=`
+      // 2. Extract Metadata: look for metadata={...} within docBlock only
       const metaMarker = "metadata=";
-      const metaIndex = content.indexOf(metaMarker, startIndex);
-      if (metaIndex === -1) continue;
+      const metaLocalIndex = docBlock.indexOf(metaMarker);
+      if (metaLocalIndex === -1) continue;
 
-      // The dict starts at the first '{' after "metadata="
-      const braceStart = content.indexOf("{", metaIndex);
-      if (braceStart === -1) continue;
+      // The dict starts at the first '{' after "metadata=" inside docBlock
+      const braceLocalStart = docBlock.indexOf("{", metaLocalIndex);
+      if (braceLocalStart === -1) continue;
 
-      // Balance braces (stack-based) to extract the full dict string
+      // Translate to absolute position for brace-balancing
+      const braceStart = startIndex + braceLocalStart;
+
+      // Balance braces (stack-based) to extract the full dict string,
+      // but never search past docEnd (the closing ')' of this Document).
       let balance = 0;
       let braceEnd = -1;
-      for (let i = braceStart; i < content.length; i++) {
+      for (let i = braceStart; i <= docEnd; i++) {
         if (content[i] === "{") {
           balance++;
         } else if (content[i] === "}") {
@@ -327,22 +348,27 @@ const extractToolOutputIntoState = (
         if (Array.isArray(proposals)) {
           const props = proposals.filter(isRecord) as AgUiDocument[];
           if (props.length > 0) {
-            // Deduplicate: filter out ids already in state.proposals
+            // Use an identifier field if present, otherwise fall back to id.
             const existingIds = new Set(
-              (state.proposals || []).map((p) => p.id as string)
+              (state.proposals || []).map(
+                (p) => (p.identifier || p.id || "") as string
+              )
             );
-            const uniqueProps = props.filter(
-              (p) => !existingIds.has(p.id as string)
-            );
+
+            // Filter out incoming proposals that already exist by identifier/id
+            const uniqueProps = props.filter((p) => {
+              const key = (p.identifier || p.id || "") as string;
+              return key && !existingIds.has(key);
+            });
 
             // Also ensure no duplicates within the new batch itself
             const finalProps: AgUiDocument[] = [];
             const newIds = new Set<string>();
 
             for (const p of uniqueProps) {
-              const pid = p.id as string;
-              if (!newIds.has(pid)) {
-                newIds.add(pid);
+              const key = (p.identifier || p.id || "") as string;
+              if (key && !newIds.has(key)) {
+                newIds.add(key);
                 finalProps.push(p);
               }
             }
@@ -621,11 +647,16 @@ export default class AgUiAgentClient {
             (step) => step.status === "running"
           );
           if (currentStep && currentStep.toolCalls) {
-            const toolCall = currentStep.toolCalls.find(
-              (tc) =>
-                tc.status === "running" &&
-                (tc.id === runId || tc.name === toolName)
-            );
+            const toolCall = currentStep.toolCalls.find((tc) => {
+              if (tc.status !== "running") return false;
+              // Prefer matching by runId when available. Only fall back to
+              // name-based matching when runId is absent (to avoid false
+              // matches when multiple tool calls share the same name).
+              if (runId) {
+                return tc.id === runId;
+              }
+              return tc.name === toolName;
+            });
             if (toolCall) {
               toolCall.status = "completed";
             }

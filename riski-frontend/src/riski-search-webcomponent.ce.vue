@@ -125,7 +125,7 @@ const submitQuery = (query: string) => {
               <div class="sr-status" aria-atomic="true" :aria-live="loading ? 'off' : 'polite'"
                 style="position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;">
                 <!-- Announce when results are ready -->
-                <span v-if="!loading && found_answer != undefined">
+                <span v-if="!loading && found_answer !== undefined">
                   Ergebnisse gefunden
                 </span>
               </div>
