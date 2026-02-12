@@ -1,11 +1,17 @@
-from abc import ABC
+from __future__ import annotations
+
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, Field, RedisDsn, SecretStr
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
+
+
+class InMemoryCheckpointerSettings(BaseModel):
+    type: Literal["in_memory"] = "in_memory"
 
 
 class BackendSettings(AppBaseSettings):
@@ -34,9 +40,10 @@ class BackendSettings(AppBaseSettings):
     )
 
     # === Agent Settings ===
-    checkpointer: "BaseCheckpointerSettings | None" = Field(
+    checkpointer: InMemoryCheckpointerSettings | RedisCheckpointerSettings = Field(
         description="Settings for agent checkpointer",
-        default=None,
+        default_factory=InMemoryCheckpointerSettings,
+        discriminator="type",
     )
 
     # === Server Settings ===
@@ -62,13 +69,8 @@ class BackendSettings(AppBaseSettings):
     )
 
 
-class BaseCheckpointerSettings(BaseModel, ABC):
-    """Base settings for agent checkpointers."""
-
-    pass
-
-
-class RedisCheckpointerSettings(BaseCheckpointerSettings):
+class RedisCheckpointerSettings(BaseModel):
+    type: Literal["redis"] = "redis"
     host: str = Field(
         default="localhost",
         description="Redis host for checkpointer",
