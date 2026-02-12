@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ExecutionStep } from "@/types/RiskiAnswer.ts";
+import ToolResultList from "./ToolResultList.vue";
 
 defineProps<{
   steps: ExecutionStep[];
@@ -20,10 +21,6 @@ function formatToolName(name: string): string {
     retrieve_documents: "Dokumentensuche",
   };
   return map[name] || name;
-}
-
-function truncate(text: string, maxLength: number = 60): string {
-  return text.length > maxLength ? text.slice(0, maxLength) + "…" : text;
 }
 </script>
 
@@ -54,30 +51,9 @@ function truncate(text: string, maxLength: number = 60): string {
           </div>
 
           <!-- Show retrieved documents & proposals from tool result (live) -->
-          <div v-if="tool.result && ((tool.result.proposals.length > 0) || (tool.result.documents.length > 0))"
-            class="tool-results">
-            <div v-if="tool.result.proposals.length > 0" class="result-group">
-              <span class="result-label">{{ tool.result.proposals.length }} Anträge gefunden</span>
-              <ul class="result-list">
-                <li v-for="proposal in tool.result.proposals" :key="proposal.identifier">
-                  <a v-if="proposal.risUrl" :href="proposal.risUrl" target="_blank" rel="noopener noreferrer"
-                    class="result-link" :title="proposal.name">{{ proposal.identifier }} – {{ truncate(proposal.name)
-                    }}</a>
-                  <span v-else>{{ proposal.identifier }} – {{ truncate(proposal.name) }}</span>
-                </li>
-              </ul>
-            </div>
-            <div v-if="tool.result.documents.length > 0" class="result-group">
-              <span class="result-label">{{ tool.result.documents.length }} Dokumente gefunden</span>
-              <ul class="result-list">
-                <li v-for="doc in tool.result.documents" :key="doc.risUrl || doc.name">
-                  <a v-if="doc.risUrl" :href="doc.risUrl" target="_blank" rel="noopener noreferrer" class="result-link"
-                    :title="doc.name">{{ truncate(doc.name) }}</a>
-                  <span v-else>{{ truncate(doc.name) }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
+          <ToolResultList
+            v-if="tool.result && ((tool.result.proposals && tool.result.proposals.length > 0) || (tool.result.documents && tool.result.documents.length > 0))"
+            :result="tool.result" />
         </div>
       </div>
     </div>
@@ -154,41 +130,5 @@ function truncate(text: string, maxLength: number = 60): string {
 .tool-args {
   color: #888;
   font-style: italic;
-}
-
-.tool-results {
-  margin-top: 6px;
-  padding-left: 24px;
-  font-size: 0.88em;
-}
-
-.result-group {
-  margin-bottom: 6px;
-}
-
-.result-label {
-  font-weight: 500;
-  color: #555;
-  font-size: 0.92em;
-}
-
-.result-list {
-  margin: 2px 0 0 16px;
-  padding: 0;
-  list-style: disc;
-}
-
-.result-list li {
-  margin-bottom: 2px;
-}
-
-.result-link {
-  color: #005a9f;
-  text-decoration: none;
-}
-
-.result-link:hover {
-  text-decoration: underline;
-  color: #003d6e;
 }
 </style>
