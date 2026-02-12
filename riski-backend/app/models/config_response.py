@@ -7,3 +7,4 @@ class ConfigResponse(BaseModel):
     version: str = Field(description="The version of the backend.")
     frontend_version: str = Field(description="The version of the frontend.")
     title: str = Field(description="The title of the application.")
+    documentation_url: str = Field(description="The URL to the documentation.")

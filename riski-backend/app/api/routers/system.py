@@ -21,4 +21,5 @@ def get_config() -> ConfigResponse:
         version=settings.version,
         frontend_version=settings.frontend_version,
         title=settings.title,
+        documentation_url=settings.documentation_url,
     )

@@ -26,6 +26,7 @@ const searchquery = ref<string>("");
 const title = ref("RIS KI Suche (Beta-Version)");
 const version = ref("unknown");
 const frontendVersion = ref("unknown");
+const documentationUrl = ref("https://ki.muenchen.de");
 
 onMounted(async () => {
   try {
@@ -33,6 +34,7 @@ onMounted(async () => {
     title.value = config.title;
     version.value = config.version;
     frontendVersion.value = config.frontend_version;
+    documentationUrl.value = config.documentation_url;
   } catch (error) {
     console.error("Failed to load config", error);
   }
@@ -163,7 +165,7 @@ const submitQuery = (query: string) => {
           </div>
         </div>
       </div>
-      <riski-outro :version="version" :frontend-version="frontendVersion" />
+      <riski-outro :version="version" :frontend-version="frontendVersion" :documentation-url="documentationUrl" />
     </div>
   </main>
 </template>

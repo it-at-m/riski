@@ -10,6 +10,7 @@ export default class SystemClient {
         version: "0.1.0-dev",
         frontend_version: "0.1.0-dev",
         title: "RIS KI Suche (Beta-Version)",
+        documentation_url: "https://ki.muenchen.de",
       };
     }
 

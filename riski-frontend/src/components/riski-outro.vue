@@ -4,10 +4,11 @@ import { MucButton } from "@muenchen/muc-patternlab-vue";
 defineProps<{
     frontendVersion: string;
     version: string;
+    documentationUrl: string;
 }>();
 
-const openKIMuenchen = () => {
-    window.open("https://ki.muenchen.de", "_blank")?.focus();
+const openKIMuenchen = (url: string) => {
+    window.open(url, "_blank")?.focus();
 };
 </script>
 
@@ -30,7 +31,7 @@ const openKIMuenchen = () => {
                                         erklären wir Ihnen auf unserer Dokumentations-Webseite.
                                     </p>
                                     <muc-button variant="secondary" class="open-extern-button" icon="ext-link"
-                                        @click="openKIMuenchen()">
+                                        @click="openKIMuenchen(documentationUrl)">
                                         ki.muenchen.de besuchen
                                     </muc-button>
                                     <div class="version-row">
