@@ -4,12 +4,14 @@ import type RiskiAnswer from "@/types/RiskiAnswer";
 import { MucCallout } from "@muenchen/muc-patternlab-vue";
 import customIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/custom-icons.svg?raw";
 import mucIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/muc-icons.svg?raw";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 
 import SearchService from "@/api/SearchService";
+import SystemClient from "@/api/SystemClient";
 import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
 import riskiIntro from "@/components/riski-intro.vue";
+import riskiOutro from "@/components/riski-outro.vue";
 import RiskiProgress from "@/components/riski-progress.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
 
@@ -21,6 +23,21 @@ const loading = ref<boolean>(false);
 const initial = ref<boolean>(true);
 const fehler = ref<string>("");
 const searchquery = ref<string>("");
+const title = ref("RIS KI Suche (Beta-Version)");
+const version = ref("unknown");
+const frontendVersion = ref("unknown");
+
+onMounted(async () => {
+  try {
+    const config = await SystemClient.getConfig();
+    title.value = config.title;
+    version.value = config.version;
+    frontendVersion.value = config.frontend_version;
+  } catch (error) {
+    console.error("Failed to load config", error);
+  }
+});
+
 
 /**
  * Callback function for a successfully processed document with the answer chain.
@@ -90,7 +107,7 @@ const submitQuery = (query: string) => {
       <div v-html="customIconsSprite" />
       <div v-html="riskiIconsSprite" />
 
-      <riski-intro>
+      <riski-intro :title="title">
         <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
           :on-clear="resetInitialState" />
       </riski-intro>
@@ -146,6 +163,7 @@ const submitQuery = (query: string) => {
           </div>
         </div>
       </div>
+      <riski-outro :version="version" :frontend-version="frontendVersion" />
     </div>
   </main>
 </template>
