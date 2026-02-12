@@ -9,9 +9,9 @@ defineProps<{
 
 function formatStepName(name: string): string {
   const map: Record<string, string> = {
-    retrieve_documents: "Dokumente suchen",
-    model: "Antwort generieren",
-    tools: "Werkzeuge verwenden",
+    retrieve_documents: "Dokumente durchsuchen",
+    model: "Antwort formulieren",
+    tools: "Informationen beschaffen",
     __start__: "Start",
   };
   return map[name] || name;
