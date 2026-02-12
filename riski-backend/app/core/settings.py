@@ -33,12 +33,6 @@ class BackendSettings(AppBaseSettings):
         description="Langfuse host",
     )
 
-    # === Agent Settings ===
-    checkpointer: "BaseCheckpointerSettings | None" = Field(
-        description="Settings for agent checkpointer",
-        default=None,
-    )
-
     # === Server Settings ===
     server_host: str = Field(
         default="localhost",
@@ -47,6 +41,12 @@ class BackendSettings(AppBaseSettings):
     server_port: int = Field(
         default=8080,
         description="The port for the riski-backend server to bind to.",
+    )
+
+    # === Agent Settings ===
+    checkpointer: "BaseCheckpointerSettings | None" = Field(
+        description="Settings for agent checkpointer",
+        default=None,
     )
 
     model_config = SettingsConfigDict(

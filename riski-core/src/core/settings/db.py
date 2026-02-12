@@ -17,9 +17,7 @@ class DatabaseSettings(BaseModel):
         description="Postgres username",
         default="postgres",
     )
-    password: SecretStr = Field(
-        description="Postgres password",
-    )
+    password: SecretStr = Field(description="Postgres password", default=SecretStr("password"))
     hostname: str = Field(
         description="Postgres host",
         default="localhost",

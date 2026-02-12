@@ -17,7 +17,6 @@ class AppBaseSettings(BaseSettings):
         default_factory=lambda: CoreSettings(),
         validation_alias="RISKI",
     )
-
     # === General Settings ===
     debug: bool = Field(
         default=False,

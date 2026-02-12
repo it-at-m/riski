@@ -7,7 +7,6 @@ from core.settings.base import AppBaseSettings
 from pydantic import Field, HttpUrl, model_validator
 from pydantic_settings import SettingsConfigDict
 
-from config.test import TestSettings
 from src.logtools import getLogger
 
 logger: Logger
@@ -23,23 +22,10 @@ class Config(AppBaseSettings):
     - YAML config files (e.g., config.yaml)
     """
 
-    test: TestSettings = Field(
-        default_factory=lambda: TestSettings(),
-        description="Testing related settings",
-    )
-
     # === Scraper / Extractor Settings ===
     base_url: HttpUrl = Field(
         default=HttpUrl("https://risi.muenchen.de/risi"),
         description="Main target URL or domain to scrape",
-    )
-    allowed_domains: list[str] = Field(
-        default_factory=list,
-        description="Domains that the scraper is allowed to follow",
-    )
-    start_paths: list[str] = Field(
-        default_factory=list,
-        description="Initial paths to begin scraping from (relative to base_url)",
     )
     start_date: str = Field(
         default=datetime.date.today().isoformat(),
@@ -49,12 +35,6 @@ class Config(AppBaseSettings):
         default=None,
         description="End date for scraping (ISO format YYYY-MM-DD)",
     )
-
-    json_export: bool = Field(
-        default=False,
-        description="Export the extraction result as JSON to artifacts/extract.json",
-    )
-
     user_agent: str = Field(
         default="Mozilla/5.0 (compatible; ScraperBot/1.0)",
         description="User-Agent header for requests",
