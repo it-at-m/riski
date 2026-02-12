@@ -77,7 +77,14 @@ const mapDocument = (raw: Record<string, unknown>): Document => {
   return {
     name:
       pickString(m?.title, m?.name, raw.title, raw.name, raw.id) || "Dokument",
-    risUrl: pickString(m?.risUrl, m?.source, raw.risUrl, raw.source, raw.id),
+    risUrl: pickString(
+      m?.risUrl,
+      m?.source, // Sometimes source is the URL
+      m?.id, // Sometimes metadata.id is the URL (e.g. from retrieval)
+      raw.risUrl,
+      raw.source,
+      raw.id
+    ),
     size:
       typeof m?.size === "number"
         ? m.size
