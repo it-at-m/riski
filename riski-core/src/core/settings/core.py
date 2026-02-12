@@ -1,6 +1,6 @@
 from core.settings.db import DatabaseSettings
 from core.settings.genai import GenAISettings
-from core.settings.test_db import TestDBSettings
+from core.settings.testdb import TestDBSettings
 from pydantic import BaseModel, Field
 
 
