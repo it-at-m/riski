@@ -1,3 +1,4 @@
+import asyncio
 import sys
 from logging import Logger
 
@@ -19,7 +20,7 @@ config: Config
 logger: Logger
 
 
-def main():
+async def main():
     config = get_config()
     config.print_config()
     logger = getLogger()
@@ -62,8 +63,8 @@ def main():
     city_council_motion_extractor.run()
     logger.info("Extracted City Council Motions")
 
-    filehandler = Filehandler()
-    filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
+    async with Filehandler() as filehandler:
+        await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
@@ -75,4 +76,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(asyncio.run(main()))
