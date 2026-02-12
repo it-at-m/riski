@@ -236,24 +236,83 @@ const extractToolOutputIntoState = (
     // ── Documents ──────────────────────────────────────────────────────
     // Each document appears as  Document(id='…', metadata={…}, page_content='…')
     // We only need id + metadata (the UI does not render page_content).
-    // The metadata dict is flat: {'id': '…', 'name': '…', 'size': 123}
-    const docRegex = /Document\(id='([^']*)',\s*metadata=(\{[^}]*\})/g;
-    let match: RegExpExecArray | null;
+    // The metadata dict can be nested, so we use a small manual parser instead of regex.
     const docs: AgUiDocument[] = [];
+    const docKeyword = "Document(";
+    let startIndex = 0;
 
-    while ((match = docRegex.exec(content)) !== null) {
-      const docId = match[1];
-      const metadataRaw = match[2]; // e.g. {'id': '…', 'name': '…', 'size': 123}
-      try {
-        const metadata = JSON.parse(pythonDictToJson(metadataRaw ?? "{}"));
-        docs.push({ id: docId, metadata });
-      } catch {
-        // Metadata not parseable – skip this document
+    while (true) {
+      const foundIndex = content.indexOf(docKeyword, startIndex);
+      if (foundIndex === -1) break;
+
+      // Advance search position
+      startIndex = foundIndex + docKeyword.length;
+
+      // 1. Extract ID: look for id='...'
+      // We look within a short window to ensure we match the ID of *this* Document call
+      const chunk = content.slice(startIndex, startIndex + 200);
+      const idMatch = chunk.match(/id='([^']*)'/);
+      if (!idMatch) continue;
+
+      const docId = idMatch[1];
+
+      // 2. Extract Metadata: look for metadata={...}
+      // We search from startIndex (just after "Document(") so we find *argument* `metadata=`
+      const metaMarker = "metadata=";
+      const metaIndex = content.indexOf(metaMarker, startIndex);
+      if (metaIndex === -1) continue;
+
+      // The dict starts at the first '{' after "metadata="
+      const braceStart = content.indexOf("{", metaIndex);
+      if (braceStart === -1) continue;
+
+      // Balance braces (stack-based) to extract the full dict string
+      let balance = 0;
+      let braceEnd = -1;
+      for (let i = braceStart; i < content.length; i++) {
+        if (content[i] === "{") {
+          balance++;
+        } else if (content[i] === "}") {
+          balance--;
+          if (balance === 0) {
+            braceEnd = i + 1; // include closing brace
+            break;
+          }
+        }
+      }
+
+      if (braceEnd !== -1) {
+        const metadataRaw = content.substring(braceStart, braceEnd);
+        try {
+          const metadata = JSON.parse(pythonDictToJson(metadataRaw));
+          docs.push({ id: docId, metadata });
+        } catch (err) {
+          console.warn(`Failed to parse metadata for docId ${docId}`, err);
+        }
       }
     }
 
     if (docs.length > 0) {
-      state.documents = [...(state.documents || []), ...docs];
+      // Deduplicate: filter out ids already in state.documents
+      const existingIds = new Set(
+        (state.documents || []).map((d) => d.id as string)
+      );
+      const uniqueDocs = docs.filter((d) => !existingIds.has(d.id as string));
+      // Also ensure no duplicates within the new batch itself
+      const finalDocs: AgUiDocument[] = [];
+      const newIds = new Set<string>();
+
+      for (const d of uniqueDocs) {
+        const did = d.id as string;
+        if (!newIds.has(did)) {
+          newIds.add(did);
+          finalDocs.push(d);
+        }
+      }
+
+      if (finalDocs.length > 0) {
+        state.documents = [...(state.documents || []), ...finalDocs];
+      }
     }
 
     // ── Proposals ──────────────────────────────────────────────────────
