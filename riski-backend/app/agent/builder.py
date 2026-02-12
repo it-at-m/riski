@@ -2,7 +2,7 @@ from logging import Logger
 from typing import Any
 
 from ag_ui_langgraph import LangGraphAgent
-from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_settings
+from app.core.settings import BackendSettings, InMemoryCheckpointerSettings, RedisCheckpointerSettings, get_settings
 from app.utils.logging import getLogger
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ProviderStrategy
@@ -57,7 +57,7 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
 
     # Configure the checkpointer
     checkpointer: BaseCheckpointSaver
-    if settings.checkpointer is None:
+    if isinstance(settings.checkpointer, InMemoryCheckpointerSettings):
         checkpointer = InMemorySaver()
     elif isinstance(settings.checkpointer, RedisCheckpointerSettings):
         # Instantiate Redis client and saver directly
