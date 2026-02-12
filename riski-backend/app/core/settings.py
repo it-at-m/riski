@@ -56,12 +56,6 @@ class BackendSettings(AppBaseSettings):
         description="The port for the riski-backend server to bind to.",
     )
 
-    # === Agent Settings ===
-    checkpointer: "BaseCheckpointerSettings | None" = Field(
-        description="Settings for agent checkpointer",
-        default=None,
-    )
-
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
         env_file=str(Path(__file__).resolve().parents[3] / ".env"),
