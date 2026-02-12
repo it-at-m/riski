@@ -20,7 +20,7 @@ def filehandler_instance():
 
 @pytest.mark.asyncio
 async def test_download_and_persist_file_updates_filename(filehandler_instance, mock_file):
-    mock_response = AsyncMock()
+    mock_response = MagicMock()
     mock_response.content = b"test content"
     mock_response.headers = {"content-disposition": 'inline; filename="test_file.txt"'}
 
@@ -34,7 +34,7 @@ async def test_download_and_persist_file_updates_filename(filehandler_instance, 
 
 @pytest.mark.asyncio
 async def test_download_and_persist_file_updates_filename_urlencoding(filehandler_instance, mock_file):
-    mock_response = AsyncMock()
+    mock_response = MagicMock()
     mock_response.content = b"test content"
     mock_response.headers = {"content-disposition": 'inline; filename="test%20file.txt"'}
 
@@ -47,7 +47,7 @@ async def test_download_and_persist_file_updates_filename_urlencoding(filehandle
 
 @pytest.mark.asyncio
 async def test_download_and_persist_file_not_updates_filename_when_unchanged_file(filehandler_instance, mock_file):
-    mock_response = AsyncMock()
+    mock_response = MagicMock()
     mock_response.content = b"test"
     mock_response.headers = {"content-disposition": 'inline; filename="test_file.txt"'}
 
