@@ -82,6 +82,6 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
                     logger.info("Unrecognized event type: %s", event.type)
         except Exception as e:
             logger.error("Error in agent run: %s", e, exc_info=True)
-            yield encode(encoder=encoder, event=RunErrorEvent(message=str(e)))
+            yield encode(encoder=encoder, event=RunErrorEvent(message="Ein interner Fehler ist aufgetreten."))
 
     return StreamingResponse(event_generator(), media_type=encoder.get_content_type())

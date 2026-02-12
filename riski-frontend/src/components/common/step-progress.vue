@@ -32,7 +32,7 @@ function truncate(text: unknown, maxLength: number = 60): string {
 
 <template>
   <div v-if="steps.length > 0" class="steps-container">
-    <div v-for="step in steps" :key="step.name" class="step-item">
+    <div v-for="(step, index) in steps" :key="index" class="step-item">
       <div class="step-header">
         <span class="step-status-icon">
           <template v-if="step.status === 'running'">⏳</template>
@@ -41,7 +41,7 @@ function truncate(text: unknown, maxLength: number = 60): string {
         </span>
         <span class="step-name">{{
           step.displayName || formatStepName(step.name)
-          }}</span>
+        }}</span>
         <span v-if="step.status === 'running'" class="step-running-hint">läuft…</span>
       </div>
 
@@ -73,7 +73,7 @@ function truncate(text: unknown, maxLength: number = 60): string {
             <div v-if="tool.result?.proposals && tool.result.proposals.length > 0" class="tool-results">
               <span class="result-label">Gefundene Anträge ({{ tool.result.proposals.length }}):</span>
               <ul class="result-list">
-                <li v-for="proposal in tool.result.proposals" :key="proposal.identifier">
+                <li v-for="(proposal, idx) in tool.result.proposals" :key="`${proposal.identifier}-${idx}`">
                   <a v-if="proposal.risUrl" :href="proposal.risUrl" target="_blank" rel="noopener noreferrer"
                     class="result-link" :title="proposal.name">{{ proposal.identifier }} –
                     {{ truncate(proposal.name) }}</a>

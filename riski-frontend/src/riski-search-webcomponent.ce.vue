@@ -104,12 +104,13 @@ const submitQuery = (query: string) => {
       <riski-intro>
         <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
           :on-clear="resetInitialState" />
-        <div v-if="initial" class="example-chips" role="list" aria-label="Beispielfragen">
-          <button v-for="question in EXAMPLE_QUESTIONS" :key="question" class="example-chip" role="listitem"
-            @click="submitQuery(question)">
-            {{ question }}
-          </button>
-        </div>
+        <ul v-if="initial" class="example-chips" role="list" aria-label="Beispielfragen">
+          <li v-for="question in EXAMPLE_QUESTIONS" :key="question">
+            <button class="example-chip" @click="submitQuery(question)">
+              {{ question }}
+            </button>
+          </li>
+        </ul>
       </riski-intro>
 
       <div class="container">
@@ -195,7 +196,12 @@ const submitQuery = (query: string) => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  list-style: none;
+  /* remove bullets */
+  margin: 12px 0 0 0;
+  /* keep top spacing, remove default list margins */
+  padding: 0;
+  /* remove default list padding */
 }
 
 .example-chip {
