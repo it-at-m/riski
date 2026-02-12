@@ -2,8 +2,8 @@ import type Document from "@/types/Document.ts";
 import type Proposal from "@/types/Proposal.ts";
 
 export interface ToolCallResult {
-  documents?: Document[];
-  proposals?: Proposal[];
+  documents: Document[];
+  proposals: Proposal[];
 }
 
 export interface ToolCallInfo {
@@ -19,7 +19,6 @@ export interface ExecutionStep {
   /** Optional override for the displayed label (e.g. "Denke nach…" vs "Antwort generieren") */
   displayName?: string;
   status: "running" | "completed" | "failed";
-  content?: string;
   toolCalls?: ToolCallInfo[];
 }
 

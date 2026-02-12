@@ -67,55 +67,27 @@ function fileSizeAsString(fileSize: number) {
   <div class="response-section">
     <div class="response-header">
       <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
-      <button
-        v-if="aiResponse && !isStreaming"
-        class="copy-button"
-        :class="{ 'copy-success': copySuccess }"
-        @click="copyAnswer"
-        :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'"
-        :title="
-          copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
-        "
-      >
-        <svg
-          v-if="!copySuccess"
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-        >
+      <button v-if="aiResponse && !isStreaming" class="copy-button" :class="{ 'copy-success': copySuccess }"
+        @click="copyAnswer" :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'" :title="copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
+          ">
+        <svg v-if="!copySuccess" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path
-            d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6z"
-          />
+            d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6z" />
           <path
-            d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"
-          />
+            d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z" />
         </svg>
-        <svg
-          v-else
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-        >
+        <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <path
-            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"
-          />
+            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
         </svg>
         <span class="copy-label">{{
           copySuccess ? "Kopiert!" : "Kopieren"
-        }}</span>
+          }}</span>
       </button>
     </div>
 
     <!-- Skeleton placeholder while waiting for first content -->
-    <div
-      v-if="isStreaming && !aiResponse"
-      class="ai_response ai_response--skeleton"
-      aria-label="Antwort wird geladen"
-    >
+    <div v-if="isStreaming && !aiResponse" class="ai_response ai_response--skeleton" aria-label="Antwort wird geladen">
       <div class="skeleton-line skeleton-line--long"></div>
       <div class="skeleton-line skeleton-line--medium"></div>
       <div class="skeleton-line skeleton-line--short"></div>
@@ -127,18 +99,10 @@ function fileSizeAsString(fileSize: number) {
     </div>
 
     <!-- Actual AI response content -->
-    <div
-      v-else-if="aiResponse"
-      class="marked_text m-dataset-item__text ai_response"
-      v-html="aiResponse"
-    ></div>
+    <div v-else-if="aiResponse" class="marked_text m-dataset-item__text ai_response" v-html="aiResponse"></div>
 
     <!-- Streaming indicator while text is still arriving -->
-    <div
-      v-if="isStreaming && aiResponse"
-      class="streaming-indicator"
-      aria-label="Antwort wird generiert"
-    >
+    <div v-if="isStreaming && aiResponse" class="streaming-indicator" aria-label="Antwort wird generiert">
       <span class="streaming-dot"></span>
       <span class="streaming-dot"></span>
       <span class="streaming-dot"></span>
@@ -147,52 +111,25 @@ function fileSizeAsString(fileSize: number) {
   <br />
   <div class="source-section">
     <h3 class="m-dataset-item__headline headline">Anträge</h3>
-    <ul
-      v-if="proposals.length > 0"
-      class="source-list"
-    >
-      <li
-        v-for="proposal in proposals"
-        :key="proposal.identifier"
-        class="source-item"
-      >
+    <ul v-if="proposals.length > 0" class="source-list">
+      <li v-for="proposal in proposals" :key="proposal.identifier" class="source-item">
         <div class="source-item-content">
           <span class="source-identifier">{{ proposal.identifier }}</span>
-          <a
-            :href="proposal.risUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="source-link"
-          >
+          <a :href="proposal.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
             {{ proposal.name }}
-            <svg
-              aria-hidden="true"
-              width="12"
-              height="12"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              class="external-icon"
-            >
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
+              class="external-icon">
               <path
-                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"
-              />
+                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
               <path
-                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"
-              />
+                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
             </svg>
           </a>
         </div>
       </li>
     </ul>
-    <div
-      v-else-if="isStreaming"
-      class="source-skeleton"
-    >
-      <div
-        class="source-item source-item--skeleton"
-        v-for="n in 2"
-        :key="n"
-      >
+    <div v-else-if="isStreaming" class="source-skeleton">
+      <div class="source-item source-item--skeleton" v-for="n in 2" :key="n">
         <div class="source-item-content">
           <span class="skeleton-line skeleton-line--tag"></span>
           <span class="skeleton-line skeleton-line--medium"></span>
@@ -203,54 +140,27 @@ function fileSizeAsString(fileSize: number) {
   <br />
   <div class="source-section">
     <h3 class="m-dataset-item__headline headline">Dokumente</h3>
-    <ul
-      v-if="documents.length > 0"
-      class="source-list"
-    >
-      <li
-        v-for="document in documents"
-        :key="document.risUrl"
-        class="source-item"
-      >
+    <ul v-if="documents.length > 0" class="source-list">
+      <li v-for="document in documents" :key="document.risUrl" class="source-item">
         <div class="source-item-content">
-          <a
-            :href="document.risUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="source-link"
-          >
+          <a :href="document.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
             {{ document.name }}
-            <svg
-              aria-hidden="true"
-              width="12"
-              height="12"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              class="external-icon"
-            >
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
+              class="external-icon">
               <path
-                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"
-              />
+                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
               <path
-                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"
-              />
+                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
             </svg>
           </a>
           <span class="source-filesize">{{
             fileSizeAsString(document.size)
-          }}</span>
+            }}</span>
         </div>
       </li>
     </ul>
-    <div
-      v-else-if="isStreaming"
-      class="source-skeleton"
-    >
-      <div
-        class="source-item source-item--skeleton"
-        v-for="n in 3"
-        :key="n"
-      >
+    <div v-else-if="isStreaming" class="source-skeleton">
+      <div class="source-item source-item--skeleton" v-for="n in 3" :key="n">
         <div class="source-item-content">
           <span class="skeleton-line skeleton-line--long"></span>
           <span class="skeleton-line skeleton-line--tag"></span>
@@ -376,6 +286,7 @@ function fileSizeAsString(fileSize: number) {
 }
 
 @keyframes streaming-bounce {
+
   0%,
   80%,
   100% {
