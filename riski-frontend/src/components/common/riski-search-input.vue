@@ -178,7 +178,6 @@ const handleClearClick = () => {
 .muc-input {
     line-height: 24px;
     font-weight: 400;
-    line-height: 24px;
     word-wrap: break-word;
     font-size: 18px;
 }
