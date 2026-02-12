@@ -48,6 +48,7 @@ def create_app() -> FastAPI:
             vectorstore=vectorstore,
             db_sessionmaker=db_sessionmaker,
             callbacks=[lf_callback_handler],
+            lf_client=lf_client,
         )
         logger.info("Agent setup complete")
 

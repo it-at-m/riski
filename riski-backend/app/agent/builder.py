@@ -10,6 +10,8 @@ from langchain.tools import BaseTool
 from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
+from langfuse import Langfuse
+from langfuse.model import TextPromptClient
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncShallowRedisSaver
@@ -30,20 +32,22 @@ class StructuredAgentResponse(BaseModel):
     proposals: list[dict[str, Any]] = Field(description="List of proposals related to the supporting documents.")
 
 
-async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
+async def build_agent(
+    vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks, lf_client: Langfuse
+) -> LangGraphAgent:
     """
     Constructs and returns a configured RISKI LangGraphAgent for document research and analysis.
-    
+
     Builds the chat model, configures a checkpoint saver according to application settings (in-memory or Redis-backed), registers the document retrieval tool, and wraps the resulting agent into a LangGraphAgent ready for use.
-    
+
     Parameters:
         vectorstore (PGVectorStore): Vector store used for semantic search and retrieval by the agent.
         db_sessionmaker (async_sessionmaker): Async SQLAlchemy session factory for database access within agent context.
         callbacks (Callbacks): Callback handlers to attach to the agent's execution.
-    
+
     Returns:
         LangGraphAgent: A LangGraphAgent configured with the RISKI agent graph, metadata, and provided configurable components.
-    
+
     Raises:
         ValueError: If the configured checkpointer type is unsupported.
     """
@@ -79,14 +83,8 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
     # Configure the tools
     available_tools: list[BaseTool] = [retrieve_documents]
 
-    system_prompt: str = """
-        You are the RISKI Agent, an AI assistant designed to help users research and analyze documents and proposals from the City of Munich's Council Information System. 
-        Your goal is to provide accurate, concise, and relevant information based on the user's queries and the documents available to you.
-        
-        Tools:
-        You have access to the following tools to assist you in your tasks:
-        1. retrieve_documents: Use this tool to search for and retrieve documents relevant to the user's query.
-    """
+    system_prompt_template: TextPromptClient = lf_client.get_prompt(name="system", label="production")
+    system_prompt = system_prompt_template.compile()
 
     # Create the agent via the factory method
     agent = create_agent(
