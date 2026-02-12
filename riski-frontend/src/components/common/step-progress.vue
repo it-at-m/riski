@@ -35,8 +35,8 @@ function truncate(text: string, maxLength: number = 60): string {
     class="steps-container"
   >
     <div
-      v-for="step in steps"
-      :key="step.name"
+      v-for="(step, index) in steps"
+      :key="index"
       class="step-item"
     >
       <div class="step-header">
