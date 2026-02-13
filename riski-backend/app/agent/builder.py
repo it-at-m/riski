@@ -1,3 +1,4 @@
+from datetime import datetime
 from logging import Logger
 from typing import Any
 
@@ -44,6 +45,7 @@ async def build_agent(
         vectorstore (PGVectorStore): Vector store used for semantic search and retrieval by the agent.
         db_sessionmaker (async_sessionmaker): Async SQLAlchemy session factory for database access within agent context.
         callbacks (Callbacks): Callback handlers to attach to the agent's execution.
+        lf_client (Langfuse): Langfuse client instance for fetching prompts.
 
     Returns:
         LangGraphAgent: A LangGraphAgent configured with the RISKI agent graph, metadata, and provided configurable components.
@@ -82,9 +84,20 @@ async def build_agent(
 
     # Configure the tools
     available_tools: list[BaseTool] = [retrieve_documents]
-
-    system_prompt_template: TextPromptClient = lf_client.get_prompt(name="system", label="production")
-    system_prompt = system_prompt_template.compile()
+    try:
+        system_prompt_template: TextPromptClient = lf_client.get_prompt(
+            name=settings.langfuse_system_prompt_name, label=settings.langfuse_system_prompt_label
+        )
+        system_prompt = system_prompt_template.compile(
+            date_written=datetime.now().strftime("%A, %d %B %Y - %H:%M"),
+            date_isoformat=datetime.now().isoformat(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch system prompt from Langfuse: {e}")
+        raise ValueError(
+            f"Could not retrieve the {settings.langfuse_system_prompt_name} prompt (label={settings.langfuse_system_prompt_label}) from Langfuse. "
+            "Ensure the prompt exists and Langfuse is reachable."
+        )
 
     # Create the agent via the factory method
     agent = create_agent(
