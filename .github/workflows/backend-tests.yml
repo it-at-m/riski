@@ -35,8 +35,4 @@ jobs:
       - name: Run backend tests
         run: uv run pytest
     env:
-      RISKI__DB__NAME: dummyname
-      RISKI__DB__PASSWORD: dummypassword
-      RISKI__DB__USER: dummyuser
-      RISKI__DB__HOSTNAME: dummyhost
       OPENAI_API_KEY: dummykey

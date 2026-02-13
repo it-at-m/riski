@@ -28,21 +28,15 @@ jobs:
           --health-timeout=5s
           --health-retries=20
     env:
-      RISKI__DB__NAME: test_db
-      RISKI__DB__USER: postgres
-      RISKI__DB__PASSWORD: password
-      RISKI__DB__HOSTNAME: localhost
-      RISKI__DB__PORT: 5432
+      RISKI__TESTDB__NAME: test_db
+      RISKI__TESTDB__USER: postgres
+      RISKI__TESTDB__PASSWORD: password
+      RISKI__TESTDB__HOSTNAME: localhost
+      RISKI__TESTDB__PORT: 5432
+
       OPENAI_API_KEY: example
       OPENAI_API_BASE: https://example.de
       OPENAI_API_VERSION: 2024-08-01-preview
-      TIKTOKEN_CACHE_DIR: tiktoken_cache
-      RISKI_OPENAI_EMBEDDING_MODEL: text-embedding-3-large
-      RISKI_EXTRACTOR__TEST__DB_NAME: test_db
-      RISKI_EXTRACTOR__TEST__DB_USER: postgres
-      RISKI_EXTRACTOR__TEST__DB_PASSWORD: password
-      RISKI_EXTRACTOR__TEST__DB_HOSTNAME: 127.0.0.1
-      RISKI_EXTRACTOR__TEST__DB_PORT: 5432
 
     defaults:
       run:
