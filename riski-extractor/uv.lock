@@ -332,14 +332,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain-openai", specifier = ">=1.1.7" },
-    { name = "pgvector", specifier = "<0.4" },
-    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
-    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
-    { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "sqlalchemy", specifier = ">=2.0.42" },
-    { name = "sqlmodel", specifier = ">=0.0.24" },
-    { name = "truststore", specifier = ">=0.10.4" },
+    { name = "langchain-openai", specifier = "==1.1.7" },
+    { name = "pgvector", specifier = "==0.3.6" },
+    { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.2" },
+    { name = "pydantic", extras = ["email"], specifier = "==2.12.5" },
+    { name = "pydantic-settings", specifier = "==2.12.0" },
+    { name = "sqlalchemy", specifier = "==2.0.46" },
+    { name = "sqlmodel", specifier = "==0.0.32" },
+    { name = "truststore", specifier = "==0.10.4" },
 ]
 
 [[package]]
@@ -605,19 +605,19 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg", marker = "extra == 'pgvector'", specifier = "==0.30.0" },
-    { name = "bs4", specifier = ">=0.0.2" },
+    { name = "bs4", specifier = "==0.0.2" },
     { name = "core", directory = "../riski-core" },
-    { name = "gitpython", specifier = ">=3.1.45" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "langchain-postgres", marker = "extra == 'pgvector'", specifier = ">=0.0.15" },
-    { name = "legacy-cgi", specifier = ">=2.6.4" },
-    { name = "pytest-asyncio", specifier = ">=1.3.0" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "stamina", specifier = ">=25.1.0" },
+    { name = "gitpython", specifier = "==3.1.46" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "langchain-postgres", marker = "extra == 'pgvector'", specifier = "==0.0.16" },
+    { name = "legacy-cgi", specifier = "==2.6.4" },
+    { name = "pytest-asyncio", specifier = "==1.3.0" },
+    { name = "pyyaml", specifier = "==6.0.3" },
+    { name = "stamina", specifier = "==25.2.0" },
     { name = "tokenizers", specifier = "==0.21.2" },
     { name = "torch", specifier = "==2.8.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torchvision", specifier = "==0.23.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "truststore", specifier = ">=0.10.4" },
+    { name = "truststore", specifier = "==0.10.4" },
 ]
 provides-extras = ["pgvector"]
 
@@ -625,14 +625,14 @@ provides-extras = ["pgvector"]
 dev = [
     { name = "faststream", extras = ["kafka"], specifier = "==0.6.1" },
     { name = "ipykernel", specifier = "==7.0.1" },
-    { name = "langchain", specifier = ">=0.3.27" },
-    { name = "langchain-community", specifier = ">=0.3.28" },
-    { name = "langchain-docling", specifier = ">=1.1.0" },
-    { name = "langchain-openai", specifier = ">=0.3.32" },
+    { name = "langchain", specifier = "==1.2.7" },
+    { name = "langchain-community", specifier = "==0.4.1" },
+    { name = "langchain-docling", specifier = "==2.0.0" },
+    { name = "langchain-openai", specifier = "==1.1.7" },
     { name = "pre-commit", specifier = "==4.3.0" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "ruff", specifier = ">=0.14.11" },
+    { name = "python-dotenv", specifier = "==1.2.1" },
+    { name = "ruff", specifier = "==0.14.14" },
     { name = "ty", specifier = "==0.0.1a23" },
 ]
 
@@ -2726,15 +2726,15 @@ asyncio = [
 
 [[package]]
 name = "sqlmodel"
-version = "0.0.31"
+version = "0.0.32"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "sqlalchemy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/56/b8/e7cd6def4a773f25d6e29ffce63ccbfd6cf9488b804ab6fb9b80d334b39d/sqlmodel-0.0.31.tar.gz", hash = "sha256:2d41a8a9ee05e40736e2f9db8ea28cbfe9b5d4e5a18dd139e80605025e0c516c", size = 94952, upload-time = "2025-12-28T12:35:01.436Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/89/67f8964f3b2ed073fa4e95201e708291935d00e3600f36f09c1be3e279fe/sqlmodel-0.0.32.tar.gz", hash = "sha256:48e8fe4c8c3d7d8bf8468db17fa92ca680421e86cfec8b352217ef40736767be", size = 94140, upload-time = "2026-02-01T18:19:14.752Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/72/5aa5be921800f6418a949a73c9bb7054890881143e6bc604a93d228a95a3/sqlmodel-0.0.31-py3-none-any.whl", hash = "sha256:6d946d56cac4c2db296ba1541357cee2e795d68174e2043cd138b916794b1513", size = 27093, upload-time = "2025-12-28T12:35:00.108Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/de/d9b40ed2c570fd612c2abd57e4d9084a9d8eb1797447e2ce897b77b1c4b2/sqlmodel-0.0.32-py3-none-any.whl", hash = "sha256:d62f0702599592046c1a136d3512feab3d5a80e2988642ef0ed2c89b9b8b297b", size = 27416, upload-time = "2026-02-01T18:19:15.992Z" },
 ]
 
 [[package]]
