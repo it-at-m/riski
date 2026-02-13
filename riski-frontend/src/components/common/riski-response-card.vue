@@ -1,106 +1,171 @@
 <script setup lang="ts">
-import type Document from "@/types/Document.ts";
-import type Proposal from "@/types/Proposal.ts";
 import type RiskiAnswer from "@/types/RiskiAnswer.ts";
 
-import { computed } from "vue";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
+import { computed, ref } from "vue";
+
+import StepProgress from "@/components/common/step-progress.vue";
 
 const props = defineProps<{
   riskiAnswer?: RiskiAnswer;
+  isStreaming?: boolean;
 }>();
 
-const aiResponse = computed(() => props.riskiAnswer?.response || "");
+const aiResponse = computed(() => {
+  const raw = props.riskiAnswer?.response || "";
+  return DOMPurify.sanitize(marked.parse(raw) as string);
+});
 const proposals = computed(() => props.riskiAnswer?.proposals || []);
 const documents = computed(() => props.riskiAnswer?.documents || []);
 const steps = computed(() => props.riskiAnswer?.steps || []);
-const status = computed(() => props.riskiAnswer?.status || "");
+
+const copySuccess = ref(false);
+
+async function copyAnswer() {
+  const raw = props.riskiAnswer?.response || "";
+  try {
+    await navigator.clipboard.writeText(raw);
+    copySuccess.value = true;
+    setTimeout(() => {
+      copySuccess.value = false;
+    }, 2000);
+  } catch {
+    // Fallback for environments without clipboard API
+    const textarea = document.createElement("textarea");
+    textarea.value = raw;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+    copySuccess.value = true;
+    setTimeout(() => {
+      copySuccess.value = false;
+    }, 2000);
+  }
+}
 
 function fileSizeAsString(fileSize: number) {
   const units = ["B", "kB", "MB", "GB", "TB"];
   let unitIndex = 0;
   let size = fileSize;
 
-  // Convert to the next higher unit until the size is smaller then 1000
   while (size >= 1000 && unitIndex < units.length - 1) {
     size /= 1000;
     unitIndex++;
   }
 
-  // Format the string to two digits after the decimal point
   return `${size.toFixed(2)} ${units[unitIndex]}`;
-}
-
-function formatStepName(name: string) {
-  const map: Record<string, string> = {
-    retrieve_documents: "Dokumente suchen",
-    model: "Antwort generieren",
-    tools: "Werkzeuge verwenden",
-    __start__: "Start",
-  };
-  return map[name] || name;
 }
 </script>
 
 <template>
-  <div v-if="status" class="status-container">
-    <div class="status-message">Status: {{ status }}</div>
-  </div>
+  <StepProgress :steps="steps" />
 
-  <div v-if="steps.length > 0" class="steps-container">
-    <div v-for="(step, index) in steps" :key="step.name" class="step-item">
-      <div class="step-header">
-        <span class="step-status-icon">
-          <template v-if="step.status === 'running'">⏳</template>
-          <template v-else-if="step.status === 'completed'">✅</template>
-          <template v-else-if="step.status === 'failed'">❌</template>
-        </span>
-        <span class="step-name">{{ formatStepName(step.name) }}</span>
-      </div>
-      <div v-if="step.toolCalls && step.toolCalls.length > 0" class="step-details">
-        <details>
-          <summary>
-            Geplante Werkzeuge ({{ step.toolCalls.length }})
-          </summary>
-          <ul>
-            <li v-for="tool in step.toolCalls" :key="tool.id">
-              {{ tool.name }} <span v-if="tool.args">({{ tool.args }})</span>
-              <span v-if="tool.status === 'running'">...</span>
-            </li>
-          </ul>
-        </details>
+  <div class="response-section">
+    <div class="response-header">
+      <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
+      <button v-if="aiResponse && !isStreaming" class="copy-button" :class="{ 'copy-success': copySuccess }"
+        @click="copyAnswer" :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'" :title="copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
+          ">
+        <svg v-if="!copySuccess" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path
+            d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6z" />
+          <path
+            d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z" />
+        </svg>
+        <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path
+            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+        </svg>
+        <span class="copy-label">{{
+          copySuccess ? "Kopiert!" : "Kopieren"
+          }}</span>
+      </button>
+    </div>
+
+    <!-- Skeleton placeholder while waiting for first content -->
+    <div v-if="isStreaming && !aiResponse" class="ai_response ai_response--skeleton" aria-label="Antwort wird geladen">
+      <div class="skeleton-line skeleton-line--long"></div>
+      <div class="skeleton-line skeleton-line--medium"></div>
+      <div class="skeleton-line skeleton-line--short"></div>
+      <div class="streaming-indicator">
+        <span class="streaming-dot"></span>
+        <span class="streaming-dot"></span>
+        <span class="streaming-dot"></span>
       </div>
     </div>
-  </div>
-  <br v-if="steps.length > 0" />
 
-  <div>
-    <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
-    <div class="marked_text m-dataset-item__text ai_response">
-      {{ aiResponse }}
+    <!-- Actual AI response content -->
+    <div v-else-if="aiResponse" class="marked_text m-dataset-item__text ai_response" v-html="aiResponse"></div>
+
+    <!-- Streaming indicator while text is still arriving -->
+    <div v-if="isStreaming && aiResponse" class="streaming-indicator" aria-label="Antwort wird generiert">
+      <span class="streaming-dot"></span>
+      <span class="streaming-dot"></span>
+      <span class="streaming-dot"></span>
     </div>
   </div>
   <br />
-  <div v-if="proposals.length > 0">
+  <div class="source-section">
     <h3 class="m-dataset-item__headline headline">Anträge</h3>
-    <div class="marked_text m-dataset-item__text ai_response">
-      <ul>
-        <li v-for="proposal in proposals" :key="proposal.identifier">
-          {{ proposal.identifier }} - {{ proposal.name }}
-          <a :href="proposal.risUrl" target="_blank" rel="noopener noreferrer">{{ proposal.risUrl }}</a>
-        </li>
-      </ul>
+    <ul v-if="proposals.length > 0" class="source-list">
+      <li v-for="proposal in proposals" :key="proposal.identifier" class="source-item">
+        <div class="source-item-content">
+          <span class="source-identifier">{{ proposal.identifier }}</span>
+          <a :href="proposal.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
+            {{ proposal.name }}
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
+              class="external-icon">
+              <path
+                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
+              <path
+                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
+            </svg>
+          </a>
+        </div>
+      </li>
+    </ul>
+    <div v-else-if="isStreaming" class="source-skeleton">
+      <div class="source-item source-item--skeleton" v-for="n in 2" :key="n">
+        <div class="source-item-content">
+          <span class="skeleton-line skeleton-line--tag"></span>
+          <span class="skeleton-line skeleton-line--medium"></span>
+        </div>
+      </div>
     </div>
   </div>
-  <br v-if="proposals.length > 0" />
-  <div v-if="documents.length > 0">
+  <br />
+  <div class="source-section">
     <h3 class="m-dataset-item__headline headline">Dokumente</h3>
-    <div class="marked_text m-dataset-item__text ai_response">
-      <ul>
-        <li v-for="document in documents" :key="document.risUrl">
-          {{ document.name }} ({{ fileSizeAsString(document.size) }})
-          <a :href="document.risUrl" target="_blank" rel="noopener noreferrer">{{ document.risUrl }}</a>
-        </li>
-      </ul>
+    <ul v-if="documents.length > 0" class="source-list">
+      <li v-for="document in documents" :key="document.risUrl" class="source-item">
+        <div class="source-item-content">
+          <a :href="document.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
+            {{ document.name }}
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
+              class="external-icon">
+              <path
+                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
+              <path
+                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
+            </svg>
+          </a>
+          <span class="source-filesize">{{
+            fileSizeAsString(document.size)
+            }}</span>
+        </div>
+      </li>
+    </ul>
+    <div v-else-if="isStreaming" class="source-skeleton">
+      <div class="source-item source-item--skeleton" v-for="n in 3" :key="n">
+        <div class="source-item-content">
+          <span class="skeleton-line skeleton-line--long"></span>
+          <span class="skeleton-line skeleton-line--tag"></span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -114,36 +179,257 @@ function formatStepName(name: string) {
   width: 100%;
 }
 
-.status-container {
-  margin-bottom: 10px;
-  padding: 8px;
-  background-color: #f0f0f0;
+/* Markdown content styling inside AI response */
+.ai_response :deep(h1),
+.ai_response :deep(h2),
+.ai_response :deep(h3),
+.ai_response :deep(h4) {
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
+}
+
+.ai_response :deep(ul),
+.ai_response :deep(ol) {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.ai_response :deep(p) {
+  margin: 0.5em 0;
+}
+
+.ai_response :deep(p:first-child) {
+  margin-top: 0;
+}
+
+.ai_response :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.ai_response :deep(code) {
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 0.15em 0.4em;
   border-radius: 4px;
+  font-size: 0.9em;
 }
 
-.steps-container {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 20px;
+.ai_response :deep(blockquote) {
+  border-left: 3px solid #005a9f;
+  padding-left: 12px;
+  margin: 0.5em 0;
+  color: #555;
 }
 
-.step-item {
+/* Response header with copy button */
+.response-header {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 4px;
+  justify-content: space-between;
 }
 
-.step-status-icon {
-  margin-right: 8px;
-  min-width: 20px;
-  text-align: center;
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  font-size: 0.82em;
+  transition: all 0.2s ease;
 }
 
-.step-name {
+.copy-button:hover {
+  background: #f0f0f0;
+  border-color: #999;
+  color: #333;
+}
+
+.copy-button:focus-visible {
+  outline: 2px solid #005a9f;
+  outline-offset: 2px;
+}
+
+.copy-button.copy-success {
+  border-color: #2e7d32;
+  color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.copy-label {
+  white-space: nowrap;
+}
+
+/* Streaming indicator dots */
+.streaming-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+}
+
+.streaming-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #005a9f;
+  animation: streaming-bounce 1.4s ease-in-out infinite;
+}
+
+.streaming-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.streaming-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes streaming-bounce {
+
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Skeleton loading placeholders */
+.ai_response--skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 16px;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #d8e4ef 25%, #e8f0f7 50%, #d8e4ef 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-line--long {
+  width: 90%;
+}
+
+.skeleton-line--medium {
+  width: 65%;
+}
+
+.skeleton-line--short {
+  width: 40%;
+}
+
+.skeleton-line--tag {
+  width: 80px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.source-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.source-item--skeleton {
+  opacity: 0.6;
+}
+
+.source-item--skeleton .source-item-content {
+  gap: 10px;
+}
+
+/* Source list styling */
+.source-section {
+  margin-bottom: 4px;
+}
+
+.source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.source-item {
+  background-color: #f5f8fb;
+  border: 1px solid #e0e7ef;
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.source-item:hover {
+  background-color: #e5eef5;
+  border-color: #c0d0e0;
+}
+
+.source-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.source-identifier {
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  font-size: 0.92em;
+}
+
+.source-link {
+  color: #005a9f;
+  text-decoration: none;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+  color: #003d6e;
+}
+
+.source-link:focus-visible {
+  outline: 2px solid #005a9f;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.external-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.source-filesize {
+  font-size: 0.82em;
+  color: #777;
+  white-space: nowrap;
+  margin-left: auto;
 }
 </style>
