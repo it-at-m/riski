@@ -30,7 +30,7 @@ class DatabaseSettings(BaseModel):
         description="Batch size for database operations",
         default=100,
     )
-    schema: str = Field(
+    schemaname: str = Field(
         description="Postgres schema used for vectorstore",
         default="public",
     )
