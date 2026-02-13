@@ -38,6 +38,16 @@ class BackendSettings(AppBaseSettings):
         validation_alias="LANGFUSE_HOST",
         description="Langfuse host",
     )
+    langfuse_system_prompt_name: str = Field(
+        default="system",
+        validation_alias="LANGFUSE_SYSTEM_PROMPT_NAME",
+        description="Langfuse system prompt name",
+    )
+    langfuse_system_prompt_label: str = Field(
+        default="production",
+        validation_alias="LANGFUSE_SYSTEM_PROMPT_LABEL",
+        description="Langfuse system prompt label",
+    )
 
     # === Agent Settings ===
     checkpointer: InMemoryCheckpointerSettings | RedisCheckpointerSettings = Field(
