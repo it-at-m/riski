@@ -19,6 +19,41 @@ const aiResponse = computed(() => {
 const proposals = computed(() => props.riskiAnswer?.proposals || []);
 const documents = computed(() => props.riskiAnswer?.documents || []);
 const steps = computed(() => props.riskiAnswer?.steps || []);
+const visibleSteps = computed(() =>
+  steps.value.filter(
+    (step) => step.name !== "collect_results" && step.name !== "guard",
+  ),
+);
+
+const showStepDetails = ref(false);
+const hasProgress = computed(() => visibleSteps.value.length > 0);
+const progressSummary = computed(() => {
+  const total = visibleSteps.value.length;
+  if (!total) return "";
+
+  const completed = visibleSteps.value.filter(
+    (step) => step.status === "completed",
+  ).length;
+  const hasFailed = visibleSteps.value.some((step) => step.status === "failed");
+  const isRunning = visibleSteps.value.some(
+    (step) => step.status === "running",
+  );
+
+  if (hasFailed) {
+    return `Recherche mit Fehlern (${completed}/${total} Schritte)`;
+  }
+  if (isRunning) {
+    return `Recherche läuft (${completed}/${total} Schritte)`;
+  }
+  return `Recherche abgeschlossen (${completed}/${total} Schritte)`;
+});
+
+const progressStatusIcon = computed(() => {
+  if (!hasProgress.value) return "";
+  if (visibleSteps.value.some((step) => step.status === "failed")) return "❌";
+  if (visibleSteps.value.some((step) => step.status === "running")) return "⏳";
+  return "✅";
+});
 
 const copySuccess = ref(false);
 
@@ -62,11 +97,10 @@ function fileSizeAsString(fileSize: number) {
 </script>
 
 <template>
-  <StepProgress :steps="steps" />
-
   <div class="response-section">
     <div class="response-header">
       <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
+      <span v-if="isStreaming" class="answer-status">Wird generiert…</span>
       <button v-if="aiResponse && !isStreaming" class="copy-button" :class="{ 'copy-success': copySuccess }"
         @click="copyAnswer" :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'" :title="copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
           ">
@@ -82,7 +116,7 @@ function fileSizeAsString(fileSize: number) {
         </svg>
         <span class="copy-label">{{
           copySuccess ? "Kopiert!" : "Kopieren"
-          }}</span>
+        }}</span>
       </button>
     </div>
 
@@ -109,61 +143,79 @@ function fileSizeAsString(fileSize: number) {
     </div>
   </div>
   <br />
-  <div class="source-section">
-    <h3 class="m-dataset-item__headline headline">Anträge</h3>
-    <ul v-if="proposals.length > 0" class="source-list">
-      <li v-for="proposal in proposals" :key="proposal.identifier" class="source-item">
-        <div class="source-item-content">
-          <span class="source-identifier">{{ proposal.identifier }}</span>
-          <a :href="proposal.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
-            {{ proposal.name }}
-            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
-              class="external-icon">
-              <path
-                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
-              <path
-                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
-            </svg>
-          </a>
-        </div>
-      </li>
-    </ul>
-    <div v-else-if="isStreaming" class="source-skeleton">
-      <div class="source-item source-item--skeleton" v-for="n in 2" :key="n">
-        <div class="source-item-content">
-          <span class="skeleton-line skeleton-line--tag"></span>
-          <span class="skeleton-line skeleton-line--medium"></span>
-        </div>
-      </div>
+  <div v-if="hasProgress" class="progress-section">
+    <div class="progress-header">
+      <h3 class="m-dataset-item__headline headline">Recherchefortschritt</h3>
+      <button class="progress-toggle" type="button" @click="showStepDetails = !showStepDetails">
+        {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
+      </button>
+    </div>
+    <div class="progress-summary">
+      <span class="progress-status-icon">{{ progressStatusIcon }}</span>
+      <span>{{ progressSummary }}</span>
+    </div>
+    <div v-if="showStepDetails" class="progress-details">
+      <StepProgress :steps="steps" />
     </div>
   </div>
   <br />
-  <div class="source-section">
-    <h3 class="m-dataset-item__headline headline">Dokumente</h3>
-    <ul v-if="documents.length > 0" class="source-list">
-      <li v-for="document in documents" :key="document.risUrl" class="source-item">
-        <div class="source-item-content">
-          <a :href="document.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
-            {{ document.name }}
-            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
-              class="external-icon">
-              <path
-                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
-              <path
-                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
-            </svg>
-          </a>
-          <span class="source-filesize">{{
-            fileSizeAsString(document.size)
-            }}</span>
+  <div class="data-section">
+    <h3 class="m-dataset-item__headline headline">Daten</h3>
+    <div class="source-section">
+      <h4 class="source-subheading">Anträge</h4>
+      <ul v-if="proposals.length > 0" class="source-list">
+        <li v-for="proposal in proposals" :key="proposal.identifier" class="source-item">
+          <div class="source-item-content">
+            <span class="source-identifier">{{ proposal.identifier }}</span>
+            <a :href="proposal.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
+              {{ proposal.name }}
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
+                class="external-icon">
+                <path
+                  d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
+                <path
+                  d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
+              </svg>
+            </a>
+          </div>
+        </li>
+      </ul>
+      <div v-else-if="isStreaming" class="source-skeleton">
+        <div class="source-item source-item--skeleton" v-for="n in 2" :key="n">
+          <div class="source-item-content">
+            <span class="skeleton-line skeleton-line--tag"></span>
+            <span class="skeleton-line skeleton-line--medium"></span>
+          </div>
         </div>
-      </li>
-    </ul>
-    <div v-else-if="isStreaming" class="source-skeleton">
-      <div class="source-item source-item--skeleton" v-for="n in 3" :key="n">
-        <div class="source-item-content">
-          <span class="skeleton-line skeleton-line--long"></span>
-          <span class="skeleton-line skeleton-line--tag"></span>
+      </div>
+    </div>
+    <div class="source-section">
+      <h4 class="source-subheading">Dokumente</h4>
+      <ul v-if="documents.length > 0" class="source-list">
+        <li v-for="document in documents" :key="document.risUrl" class="source-item">
+          <div class="source-item-content">
+            <a :href="document.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
+              {{ document.name }}
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 16 16" fill="currentColor"
+                class="external-icon">
+                <path
+                  d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
+                <path
+                  d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
+              </svg>
+            </a>
+            <span class="source-filesize">{{
+              fileSizeAsString(document.size)
+            }}</span>
+          </div>
+        </li>
+      </ul>
+      <div v-else-if="isStreaming" class="source-skeleton">
+        <div class="source-item source-item--skeleton" v-for="n in 3" :key="n">
+          <div class="source-item-content">
+            <span class="skeleton-line skeleton-line--long"></span>
+            <span class="skeleton-line skeleton-line--tag"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -173,9 +225,10 @@ function fileSizeAsString(fileSize: number) {
 <style scoped>
 .ai_response {
   margin: 0;
-  padding: 16px;
-  background-color: #e5eef5;
-  border-radius: 10px;
+  padding: 14px 16px;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 6px;
   width: 100%;
 }
 
@@ -225,6 +278,13 @@ function fileSizeAsString(fileSize: number) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.answer-status {
+  font-size: 0.85em;
+  color: #666;
+  margin-left: auto;
 }
 
 .copy-button {
@@ -260,6 +320,51 @@ function fileSizeAsString(fileSize: number) {
 
 .copy-label {
   white-space: nowrap;
+}
+
+.progress-section {
+  background: #f9fafb;
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.progress-toggle {
+  border: none;
+  background: none;
+  color: #005a9f;
+  font-size: 0.85em;
+  cursor: pointer;
+  padding: 0;
+}
+
+.progress-toggle:hover {
+  text-decoration: underline;
+}
+
+.progress-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: #444;
+}
+
+.progress-status-icon {
+  min-width: 18px;
+  text-align: center;
+}
+
+.progress-details {
+  margin-top: 8px;
 }
 
 /* Streaming indicator dots */
@@ -360,7 +465,21 @@ function fileSizeAsString(fileSize: number) {
 
 /* Source list styling */
 .source-section {
-  margin-bottom: 4px;
+  margin-bottom: 10px;
+}
+
+.data-section {
+  background: #fff;
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  padding: 12px 14px 8px;
+}
+
+.source-subheading {
+  margin: 4px 0 6px;
+  font-size: 0.92em;
+  font-weight: 600;
+  color: #555;
 }
 
 .source-list {

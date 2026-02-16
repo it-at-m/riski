@@ -29,6 +29,11 @@ const hasReasoning = computed(() =>
   ),
 );
 
+const allChecksFailed = (step: ExecutionStep): boolean => {
+  if (!step.documentChecks || step.documentChecks.length === 0) return false;
+  return step.documentChecks.every((check) => check.relevant === false);
+};
+
 const resolveDocUrl = (name: string): string | undefined =>
   documentUrlMap.value.get(name);
 
@@ -145,7 +150,12 @@ function formatToolName(name: string): string {
 
 <template>
   <div v-if="visibleSteps.length > 0" class="steps-container">
-    <div v-for="step in visibleSteps" :key="step.name" class="step-item">
+    <div
+      v-for="step in visibleSteps"
+      :key="step.name"
+      class="step-item"
+      :class="{ 'step-item--zoom': allChecksFailed(step) }"
+    >
       <div class="step-header">
         <span class="step-status-icon">
           <template v-if="step.status === 'running'">⏳</template>
@@ -234,6 +244,14 @@ function formatToolName(name: string): string {
   background-color: #f9f9f9;
   border: 1px solid #eee;
   border-radius: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.step-item--zoom {
+  transform: scale(1.02);
+  box-shadow: 0 6px 14px rgba(0, 90, 159, 0.12);
+  border-color: #c7d7ea;
+  background-color: #f3f7fb;
 }
 
 .step-header {
