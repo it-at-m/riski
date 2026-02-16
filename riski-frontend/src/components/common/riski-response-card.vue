@@ -28,7 +28,7 @@ const visibleSteps = computed(() =>
   ),
 );
 
-const showStepDetails = ref(false);
+const showStepDetails = ref(true);
 const hasProgress = computed(() => visibleSteps.value.length > 0);
 const progressSummary = computed(() => {
   const total = visibleSteps.value.length;
@@ -148,9 +148,9 @@ function fileSizeAsString(fileSize: number) {
   <br />
   <div v-if="hasData" class="data-section">
     <h3 class="m-dataset-item__headline headline">Daten</h3>
-    <div class="source-section">
+    <div v-if="proposals.length > 0" class="source-section">
       <h4 class="source-subheading">Anträge</h4>
-      <ul v-if="proposals.length > 0" class="source-list">
+      <ul class="source-list">
         <li v-for="proposal in proposals" :key="proposal.identifier" class="source-item">
           <div class="source-item-content">
             <span class="source-identifier">{{ proposal.identifier }}</span>
@@ -168,9 +168,9 @@ function fileSizeAsString(fileSize: number) {
         </li>
       </ul>
     </div>
-    <div class="source-section">
+    <div v-if="documents.length > 0" class="source-section">
       <h4 class="source-subheading">Dokumente</h4>
-      <ul v-if="documents.length > 0" class="source-list">
+      <ul class="source-list">
         <li v-for="document in documents" :key="document.risUrl" class="source-item">
           <div class="source-item-content">
             <a :href="document.risUrl" target="_blank" rel="noopener noreferrer" class="source-link">
@@ -204,7 +204,7 @@ function fileSizeAsString(fileSize: number) {
       <span>{{ progressSummary }}</span>
     </div>
     <div v-if="showStepDetails" class="progress-details">
-      <StepProgress :steps="steps" />
+      <StepProgress :steps="visibleSteps" />
     </div>
   </div>
 </template>
