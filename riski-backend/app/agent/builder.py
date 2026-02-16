@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from .riski_agent import build_riski_graph
 from .tools import retrieve_documents
+from .types import CHECK_DOCUMENT_PROMPT_TEMPLATE
 
 settings: BackendSettings = get_settings()
 logger: Logger = getLogger()
@@ -63,10 +64,22 @@ async def build_agent(
             "Ensure the prompt exists and Langfuse is reachable."
         )
 
+    try:
+        check_document_prompt_template: TextPromptClient | str = lf_client.get_prompt(
+            name=settings.langfuse_check_document_prompt_name, label=settings.langfuse_check_document_prompt_label
+        )
+    except Exception as e:
+        logger.warning(
+            "Failed to fetch check-document prompt from Langfuse, using local template: %s",
+            e,
+        )
+        check_document_prompt_template = CHECK_DOCUMENT_PROMPT_TEMPLATE
+
     graph = build_riski_graph(
         chat_model=chat_model,
         tools=tools,
         system_prompt=system_prompt,
+        check_document_prompt_template=check_document_prompt_template,
     )
 
     # -- Configure checkpointer --

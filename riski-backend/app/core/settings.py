@@ -61,6 +61,16 @@ class BackendSettings(AppBaseSettings):
         validation_alias="LANGFUSE_SYSTEM_PROMPT_LABEL",
         description="Langfuse system prompt label",
     )
+    langfuse_check_document_prompt_name: str = Field(
+        default="check_document",
+        validation_alias="LANGFUSE_CHECK_DOCUMENT_PROMPT_NAME",
+        description="Langfuse check document prompt name",
+    )
+    langfuse_check_document_prompt_label: str = Field(
+        default="production",
+        validation_alias="LANGFUSE_CHECK_DOCUMENT_PROMPT_LABEL",
+        description="Langfuse check document prompt label",
+    )
 
     # === Agent Settings ===
     checkpointer: InMemoryCheckpointerSettings | RedisCheckpointerSettings = Field(

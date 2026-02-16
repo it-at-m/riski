@@ -5,6 +5,7 @@ from typing import Any, Iterable
 from app.utils.logging import getLogger
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
+from langfuse.model import TextPromptClient
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Send
@@ -57,7 +58,10 @@ def _route_after_collect(state: RiskiAgentState) -> str:
     return NODE_MODEL
 
 
-def build_guard_nodes(chat_model: ChatOpenAI):
+def build_guard_nodes(
+    chat_model: ChatOpenAI,
+    check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
+):
     """Build and return the three guard-related node functions + fan-out router.
 
     Returns
@@ -153,11 +157,18 @@ def build_guard_nodes(chat_model: ChatOpenAI):
         page_content: str = doc.get("page_content", "")
         snippet = page_content[:2000]
 
-        check_prompt = CHECK_DOCUMENT_PROMPT_TEMPLATE.format(
-            user_query=user_query,
-            doc_name=doc_name,
-            snippet=snippet,
-        )
+        if isinstance(check_document_prompt_template, TextPromptClient):
+            check_prompt = check_document_prompt_template.compile(
+                user_query=user_query,
+                doc_name=doc_name,
+                snippet=snippet,
+            )
+        else:
+            check_prompt = check_document_prompt_template.format(
+                user_query=user_query,
+                doc_name=doc_name,
+                snippet=snippet,
+            )
 
         relevance_model = chat_model.with_structured_output(DocumentRelevanceVerdict)
         try:
@@ -234,6 +245,7 @@ def build_riski_graph(
     chat_model: ChatOpenAI,
     tools: Iterable[Any],
     system_prompt: str = SYSTEM_PROMPT,
+    check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
 ) -> StateGraph:
     """Build the RISKI agent graph with core nodes and guard pipeline."""
     tools = list(tools)
@@ -336,7 +348,10 @@ def build_riski_graph(
         return state_update
 
     # -- Build the guard nodes --
-    guard, fan_out_checks, check_document, collect_results = build_guard_nodes(chat_model)
+    guard, fan_out_checks, check_document, collect_results = build_guard_nodes(
+        chat_model,
+        check_document_prompt_template=check_document_prompt_template,
+    )
 
     graph = StateGraph(RiskiAgentState)
 
