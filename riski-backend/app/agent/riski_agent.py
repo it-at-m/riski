@@ -287,11 +287,36 @@ def build_riski_graph(
 
             messages = [system_message, *base_messages, synthetic_context, docs_message]
             structured_model = chat_model.with_structured_output(StructuredAgentResponse)
-            response = await structured_model.ainvoke(messages)
-            if isinstance(response, StructuredAgentResponse):
-                ai_msg = AIMessage(content=json.dumps(response.model_dump()))
-            else:
-                ai_msg = AIMessage(content=json.dumps(response))
+            try:
+                response = await structured_model.ainvoke(messages)
+                try:
+                    if isinstance(response, StructuredAgentResponse):
+                        content = json.dumps(response.model_dump())
+                    elif isinstance(response, dict):
+                        content = json.dumps(response)
+                    elif isinstance(response, str):
+                        content = response
+                    else:
+                        content = json.dumps({"response": str(response)})
+                except (TypeError, ValueError):
+                    logger.warning(
+                        "Structured generation parse failed, returning raw response.",
+                        exc_info=True,
+                    )
+                    content = str(response)
+            except Exception:
+                logger.warning(
+                    "Structured generation failed, returning safe response.",
+                    exc_info=True,
+                )
+                content = json.dumps(
+                    {
+                        "error": "structured_generation_failed",
+                        "response": "Antwort konnte nicht strukturiert erzeugt werden.",
+                    }
+                )
+
+            ai_msg = AIMessage(content=content)
             return {"messages": [ai_msg]}
 
         # -- First pass: extract user query and let the model decide which tool(s) to call --
