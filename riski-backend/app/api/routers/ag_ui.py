@@ -4,7 +4,7 @@ from ag_ui.core import RunErrorEvent
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder
 from ag_ui_langgraph.agent import ProcessedEvents
-from app.agent.state import RelevanceUpdate, TrackedDocument, TrackedProposal
+from app.agent.state import ErrorInfo, RelevanceUpdate, TrackedDocument, TrackedProposal
 from app.utils.logging import getLogger
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
@@ -92,11 +92,20 @@ class SnapshotStripper:
         # -- tracked_proposals pass through as model_dump() (already lightweight)
         tracked_proposals: list[TrackedProposal] = snapshot.get("tracked_proposals", [])
 
+        # -- error_info pass through (None when no error)
+        error_info_raw = snapshot.get("error_info")
+        error_info_dict: dict[str, Any] | None = None
+        if isinstance(error_info_raw, ErrorInfo):
+            error_info_dict = error_info_raw.model_dump()
+        elif isinstance(error_info_raw, dict):
+            error_info_dict = error_info_raw
+
         event.snapshot = {
             "messages": slim_messages,
             "tracked_documents": slim_docs,
             "tracked_proposals": [p.model_dump() for p in tracked_proposals],
             "user_query": snapshot.get("user_query", ""),
+            "error_info": error_info_dict,
         }
         return event
 

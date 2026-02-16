@@ -12,6 +12,7 @@ from langgraph.types import Send
 
 from .state import (
     DocumentCheckInput,
+    ErrorInfo,
     RelevanceUpdate,
     RiskiAgentState,
     RiskiAgentStateUpdate,
@@ -20,7 +21,6 @@ from .state import (
 )
 from .types import (
     CHECK_DOCUMENT_PROMPT_TEMPLATE,
-    NO_RESULTS_RESPONSE,
     SYSTEM_PROMPT,
     DocumentRelevanceVerdict,
     StructuredAgentResponse,
@@ -77,8 +77,7 @@ def _route_after_model(state: RiskiAgentState) -> str:
 
 def _route_after_collect(state: RiskiAgentState) -> str:
     """Route after collect_results: back to model if relevant docs exist, else end."""
-    last_message = state["messages"][-1] if state["messages"] else None
-    if isinstance(last_message, AIMessage) and last_message.additional_kwargs.get("__guard_terminal"):
+    if state.has_error:
         return END
     return NODE_MODEL
 
@@ -111,12 +110,10 @@ def build_guard_nodes(
         if not has_any_tool_call:
             logger.warning("Guard: Model did not call any tool. Returning no-results response.")
             return {
-                "messages": [
-                    AIMessage(
-                        content=NO_RESULTS_RESPONSE,
-                        additional_kwargs={"__guard_terminal": True},
-                    )
-                ],
+                "error_info": ErrorInfo(
+                    error_type="no_tool_call",
+                    message="Das Modell hat kein Werkzeug aufgerufen. Bitte versuchen Sie es mit einer konkreteren Frage.",
+                ),
             }
 
         # Extract user query from state (preferred) or from messages (fallback)
@@ -130,12 +127,10 @@ def build_guard_nodes(
         if not state.tracked_documents:
             logger.info("Guard: Tool returned no documents. Returning no-results response.")
             return {
-                "messages": [
-                    AIMessage(
-                        content=NO_RESULTS_RESPONSE,
-                        additional_kwargs={"__guard_terminal": True},
-                    )
-                ],
+                "error_info": ErrorInfo(
+                    error_type="no_documents_found",
+                    message="Es wurden leider keine Dokumente zu Ihrer Anfrage gefunden. Versuchen Sie es mit anderen Suchbegriffen.",
+                ),
             }
 
         return {
@@ -147,11 +142,10 @@ def build_guard_nodes(
     def fan_out_checks(state: RiskiAgentState) -> list[Send]:
         """Create a ``Send`` per tracked document for parallel relevance checking.
 
-        If the guard already emitted a terminal AIMessage (no docs / no tool
-        call), skip the fan-out and go straight to collect_results.
+        If the guard already set error_info (no docs / no tool call),
+        skip the fan-out and go straight to collect_results.
         """
-        last = state["messages"][-1] if state["messages"] else None
-        if isinstance(last, AIMessage) and last.additional_kwargs.get("__guard_terminal"):
+        if state.has_error:
             return [Send(NODE_COLLECT_RESULTS, state)]
 
         return [
@@ -240,8 +234,7 @@ def build_guard_nodes(
         convenience properties.
         """
         # If the guard already short-circuited, just pass through
-        last = state["messages"][-1] if state["messages"] else None
-        if isinstance(last, AIMessage) and last.additional_kwargs.get("__guard_terminal"):
+        if state.has_error:
             return {}
 
         total = len(state.tracked_documents)
@@ -250,13 +243,21 @@ def build_guard_nodes(
 
         if not relevant:
             logger.info("Guard: No documents survived relevance check. Returning no-results response.")
+            # Collect per-document rejection reasons for the frontend
+            rejection_reasons = [
+                {"name": d.metadata.get("name", d.metadata.get("title", d.id or "Dokument")), "reason": d.relevance_reason}
+                for d in state.tracked_documents
+                if d.is_checked and not d.is_relevant
+            ]
             return {
-                "messages": [
-                    AIMessage(
-                        content=NO_RESULTS_RESPONSE,
-                        additional_kwargs={"__guard_terminal": True},
-                    )
-                ]
+                "error_info": ErrorInfo(
+                    error_type="no_relevant_documents",
+                    message="Es wurden Dokumente gefunden, aber keines davon war für Ihre Anfrage relevant. Versuchen Sie es mit einer präziseren Frage.",
+                    details={
+                        "total_checked": total,
+                        "reasons": rejection_reasons,
+                    },
+                ),
             }
 
         filtered_proposals = filter_tracked_proposals(state.tracked_proposals, relevant)

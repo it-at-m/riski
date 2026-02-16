@@ -46,6 +46,36 @@ class TrackedProposal(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Structured error info – propagated to the frontend via state snapshots
+# ---------------------------------------------------------------------------
+
+
+class ErrorInfo(BaseModel):
+    """Structured error information written to state when the agent cannot generate a response.
+
+    The frontend can use ``error_type`` to display specific messages, suggestions,
+    or UI actions instead of a generic "no answer" fallback.
+    """
+
+    error_type: str = Field(
+        description=(
+            "Machine-readable error category. Known values:\n"
+            "  • ``no_tool_call`` – the model did not invoke any tool.\n"
+            "  • ``no_documents_found`` – the tool ran but returned zero documents.\n"
+            "  • ``no_relevant_documents`` – documents were found but none passed the relevance check."
+        )
+    )
+    message: str = Field(description="Human-readable message (German) suitable for direct display.")
+    details: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Optional extra context. For ``no_relevant_documents`` this may include "
+            "``total_checked`` and ``reasons`` (list of per-document rejection reasons)."
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Input type for the per-document relevance check (used with Send)
 # ---------------------------------------------------------------------------
 
@@ -135,6 +165,9 @@ class RiskiAgentState(BaseModel):
     tracked_documents: Annotated[list[TrackedDocument], _merge_tracked_documents] = Field(default_factory=list)
     tracked_proposals: list[TrackedProposal] = Field(default_factory=list)
 
+    # -- Error info (set when the agent cannot generate a response) --
+    error_info: ErrorInfo | None = Field(default=None, description="Structured error info when the pipeline terminates early.")
+
     # Pydantic Config
     model_config = {"arbitrary_types_allowed": True}
 
@@ -161,6 +194,11 @@ class RiskiAgentState(BaseModel):
         """True once every tracked document has been relevance-checked."""
         return bool(self.tracked_documents) and all(d.is_checked for d in self.tracked_documents)
 
+    @property
+    def has_error(self) -> bool:
+        """True if the pipeline has set an error (early termination)."""
+        return self.error_info is not None
+
 
 # ---------------------------------------------------------------------------
 # State update type for graph nodes
@@ -175,3 +213,4 @@ class RiskiAgentStateUpdate(TypedDict, total=False):
     initial_question: str
     tracked_documents: list[TrackedDocument]
     tracked_proposals: list[TrackedProposal]
+    error_info: ErrorInfo | None

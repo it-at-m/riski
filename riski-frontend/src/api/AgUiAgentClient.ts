@@ -1,7 +1,11 @@
 import type Document from "@/types/Document";
 import type Proposal from "@/types/Proposal";
 import type RiskiAnswer from "@/types/RiskiAnswer";
-import type { ExecutionStep, ToolCallResult } from "@/types/RiskiAnswer";
+import type {
+  ErrorInfo,
+  ExecutionStep,
+  ToolCallResult,
+} from "@/types/RiskiAnswer";
 import type { AgentSubscriber } from "@ag-ui/client";
 import type { Message, StateSnapshotEvent } from "@ag-ui/core";
 
@@ -162,7 +166,8 @@ const createAbortController = (signal: AbortSignal): AbortController => {
 const buildAnswer = (
   text: string,
   status: string | undefined,
-  steps: ExecutionStep[]
+  steps: ExecutionStep[],
+  errorInfo?: ErrorInfo
 ): RiskiAnswer => {
   const { response, documents, proposals } = parseResponseText(text);
   return {
@@ -172,6 +177,7 @@ const buildAnswer = (
     proposals,
     status,
     steps,
+    errorInfo,
   };
 };
 
@@ -217,6 +223,11 @@ interface AgentStateSnapshot {
   tracked_proposals: TrackedProposalSnapshot[];
   user_query: string;
   messages: unknown[];
+  error_info?: {
+    error_type: string;
+    message: string;
+    details?: Record<string, unknown>;
+  } | null;
 }
 
 // -- Main client --------------------------------------------------------------
@@ -243,6 +254,7 @@ export default class AgUiAgentClient {
     let latestText = "";
     let latestStatus = "Initialisiere...";
     let steps: ExecutionStep[] = [];
+    let latestErrorInfo: ErrorInfo | undefined;
 
     // -- Previous snapshot for diffing ----------------------------------------
     let prevDocs: TrackedDocumentSnapshot[] = [];
@@ -258,7 +270,8 @@ export default class AgUiAgentClient {
         buildAnswer(
           latestText || extractAssistantResponse(agent.messages),
           latestStatus,
-          structuredClone(steps)
+          structuredClone(steps),
+          latestErrorInfo ? structuredClone(latestErrorInfo) : undefined
         )
       );
     };
@@ -276,6 +289,7 @@ export default class AgUiAgentClient {
         prevDocs = [];
         prevProposals = [];
         prevUserQuery = "";
+        latestErrorInfo = undefined;
         emitProgress();
       },
 
@@ -415,6 +429,18 @@ export default class AgUiAgentClient {
           changed = true;
         }
 
+        // -- Detect error_info from the backend state -------------------------
+        if (snap.error_info && !latestErrorInfo) {
+          const ei = snap.error_info;
+          latestErrorInfo = {
+            errorType: ei.error_type,
+            message: ei.message,
+            details: ei.details,
+          };
+          latestStatus = ei.message;
+          changed = true;
+        }
+
         // Update previous snapshot for next diff
         prevDocs = docs;
         prevProposals = proposals;
@@ -455,13 +481,14 @@ export default class AgUiAgentClient {
       await agent.runAgent({ abortController }, subscriber);
       const responseText =
         latestText || extractAssistantResponse(agent.messages);
-      return buildAnswer(responseText, latestStatus, steps);
+      return buildAnswer(responseText, latestStatus, steps, latestErrorInfo);
     } catch (error) {
       console.error("Agent execution failed:", error);
       return buildAnswer(
         "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten.",
         "Fehler",
-        steps
+        steps,
+        latestErrorInfo
       );
     } finally {
       abortController.abort();
