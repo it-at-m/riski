@@ -41,7 +41,7 @@ def _route_after_model(state: RiskiAgentState) -> str:
     - tracked documents already checked & relevant → END (final answer done)
     - no tool calls and no prior results → "guard" (will emit no-results)
     """
-    last_message = state["messages"][-1]
+    last_message = state["messages"][-1] if state["messages"] else None
     if isinstance(last_message, AIMessage) and last_message.tool_calls:
         return NODE_TOOLS
     if state.has_documents and state.all_checked:
