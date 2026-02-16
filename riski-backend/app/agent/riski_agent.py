@@ -28,6 +28,31 @@ from .types import (
 
 logger: Logger = getLogger()
 
+
+def filter_tracked_proposals(
+    proposals: list[TrackedProposal],
+    relevant_docs: list[TrackedDocument],
+) -> list[TrackedProposal]:
+    """Filter proposals to those linked to relevant documents.
+
+    Proposals without ``source_document_ids`` are kept by default.
+    """
+    if not proposals:
+        return []
+
+    relevant_ids = {doc.id for doc in relevant_docs if doc.id}
+    if not relevant_ids:
+        return []
+
+    filtered: list[TrackedProposal] = []
+    for proposal in proposals:
+        source_ids = proposal.source_document_ids
+        if not source_ids or any(doc_id in relevant_ids for doc_id in source_ids):
+            filtered.append(proposal)
+
+    return filtered
+
+
 NODE_MODEL = "model"
 NODE_TOOLS = "tools"
 NODE_GUARD = "guard"
@@ -233,6 +258,10 @@ def build_guard_nodes(
                     )
                 ]
             }
+
+        filtered_proposals = filter_tracked_proposals(state.tracked_proposals, relevant)
+        if filtered_proposals != state.tracked_proposals:
+            return {"tracked_proposals": filtered_proposals}
 
         # State already contains the updated tracked_documents with
         # is_checked/is_relevant flags – nothing else to write.

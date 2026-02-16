@@ -39,7 +39,7 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
     Returns:
         list[TrackedProposal]: A list of proposals related to the documents.
     """
-    proposals: list[TrackedProposal] = []
+    proposals_by_key: dict[tuple[str, str], TrackedProposal] = {}
     if documents:
         file_ids = {doc.id for doc in documents}
         logger.debug(f"Fetching proposals for file IDs: {file_ids}")
@@ -52,14 +52,26 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
 
             files = result.scalars().all()
             logger.debug(f"Look for proposals in {len(files)} files from db.")
-            proposals = [
-                TrackedProposal(identifier=p.reference, name=p.name, risUrl=p.id)
-                for f in files
-                if f.papers
-                for p in f.papers
-                if p.paper_type == "Stadtratsantrag"
-            ]
-    return proposals
+            for f in files:
+                if not f.papers:
+                    continue
+                file_id = str(f.db_id)
+                for p in f.papers:
+                    if p.paper_type != "Stadtratsantrag":
+                        continue
+                    key = (str(p.reference or ""), str(p.id or ""))
+                    existing = proposals_by_key.get(key)
+                    if existing:
+                        if file_id not in existing.source_document_ids:
+                            existing.source_document_ids.append(file_id)
+                    else:
+                        proposals_by_key[key] = TrackedProposal(
+                            identifier=str(p.reference or ""),
+                            name=str(p.name or ""),
+                            risUrl=str(p.id or ""),
+                            source_document_ids=[file_id],
+                        )
+    return list(proposals_by_key.values())
 
 
 @tool(

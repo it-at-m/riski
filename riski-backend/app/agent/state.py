@@ -39,6 +39,10 @@ class TrackedProposal(BaseModel):
     identifier: str = Field(default="", description="Reference identifier of the proposal.")
     name: str = Field(default="", description="Name / title of the proposal.")
     risUrl: str = Field(default="", description="URL in the RIS system.")
+    source_document_ids: list[str] = Field(
+        default_factory=list,
+        description="Document IDs (File.db_id) that caused this proposal to be retrieved.",
+    )
 
 
 # ---------------------------------------------------------------------------
