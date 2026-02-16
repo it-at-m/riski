@@ -19,6 +19,9 @@ const aiResponse = computed(() => {
 const proposals = computed(() => props.riskiAnswer?.proposals || []);
 const documents = computed(() => props.riskiAnswer?.documents || []);
 const steps = computed(() => props.riskiAnswer?.steps || []);
+const hasData = computed(
+  () => proposals.value.length > 0 || documents.value.length > 0,
+);
 const visibleSteps = computed(() =>
   steps.value.filter(
     (step) => step.name !== "collect_results" && step.name !== "guard",
@@ -143,23 +146,7 @@ function fileSizeAsString(fileSize: number) {
     </div>
   </div>
   <br />
-  <div v-if="hasProgress" class="progress-section">
-    <div class="progress-header">
-      <h3 class="m-dataset-item__headline headline">Recherchefortschritt</h3>
-      <button class="progress-toggle" type="button" @click="showStepDetails = !showStepDetails">
-        {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
-      </button>
-    </div>
-    <div class="progress-summary">
-      <span class="progress-status-icon">{{ progressStatusIcon }}</span>
-      <span>{{ progressSummary }}</span>
-    </div>
-    <div v-if="showStepDetails" class="progress-details">
-      <StepProgress :steps="steps" />
-    </div>
-  </div>
-  <br />
-  <div class="data-section">
+  <div v-if="hasData" class="data-section">
     <h3 class="m-dataset-item__headline headline">Daten</h3>
     <div class="source-section">
       <h4 class="source-subheading">Anträge</h4>
@@ -180,14 +167,6 @@ function fileSizeAsString(fileSize: number) {
           </div>
         </li>
       </ul>
-      <div v-else-if="isStreaming" class="source-skeleton">
-        <div class="source-item source-item--skeleton" v-for="n in 2" :key="n">
-          <div class="source-item-content">
-            <span class="skeleton-line skeleton-line--tag"></span>
-            <span class="skeleton-line skeleton-line--medium"></span>
-          </div>
-        </div>
-      </div>
     </div>
     <div class="source-section">
       <h4 class="source-subheading">Dokumente</h4>
@@ -210,14 +189,22 @@ function fileSizeAsString(fileSize: number) {
           </div>
         </li>
       </ul>
-      <div v-else-if="isStreaming" class="source-skeleton">
-        <div class="source-item source-item--skeleton" v-for="n in 3" :key="n">
-          <div class="source-item-content">
-            <span class="skeleton-line skeleton-line--long"></span>
-            <span class="skeleton-line skeleton-line--tag"></span>
-          </div>
-        </div>
-      </div>
+    </div>
+  </div>
+  <br />
+  <div v-if="hasProgress" class="progress-section">
+    <div class="progress-header">
+      <h3 class="m-dataset-item__headline headline">Recherchefortschritt</h3>
+      <button class="progress-toggle" type="button" @click="showStepDetails = !showStepDetails">
+        {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
+      </button>
+    </div>
+    <div class="progress-summary">
+      <span class="progress-status-icon">{{ progressStatusIcon }}</span>
+      <span>{{ progressSummary }}</span>
+    </div>
+    <div v-if="showStepDetails" class="progress-details">
+      <StepProgress :steps="steps" />
     </div>
   </div>
 </template>
