@@ -1,3 +1,4 @@
+from datetime import datetime
 from logging import Logger
 
 from ag_ui_langgraph import LangGraphAgent
@@ -6,6 +7,8 @@ from app.utils.logging import getLogger
 from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
+from langfuse import Langfuse
+from langfuse.model import TextPromptClient
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncShallowRedisSaver
@@ -14,7 +17,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from .riski_agent import build_riski_graph
 from .tools import retrieve_documents
-from .types import SYSTEM_PROMPT
 
 settings: BackendSettings = get_settings()
 logger: Logger = getLogger()
@@ -25,7 +27,9 @@ logger: Logger = getLogger()
 # ---------------------------------------------------------------------------
 
 
-async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
+async def build_agent(
+    vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks, lf_client: Langfuse
+) -> LangGraphAgent:
     """
     Constructs and returns a configured RISKI LangGraphAgent with a custom graph.
 
@@ -44,10 +48,25 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
 
     # Bind tools so the model knows about them
     tools = [retrieve_documents]
+    try:
+        system_prompt_template: TextPromptClient = lf_client.get_prompt(
+            name=settings.langfuse_system_prompt_name, label=settings.langfuse_system_prompt_label
+        )
+        system_prompt = system_prompt_template.compile(
+            date_written=datetime.now().strftime("%A, %d %B %Y - %H:%M"),
+            date_isoformat=datetime.now().isoformat(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch system prompt from Langfuse: {e}")
+        raise ValueError(
+            f"Could not retrieve the {settings.langfuse_system_prompt_name} prompt (label={settings.langfuse_system_prompt_label}) from Langfuse. "
+            "Ensure the prompt exists and Langfuse is reachable."
+        )
+
     graph = build_riski_graph(
         chat_model=chat_model,
         tools=tools,
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=system_prompt,
     )
 
     # -- Configure checkpointer --

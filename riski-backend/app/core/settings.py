@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, RedisDsn, SecretStr
+from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
@@ -20,6 +20,19 @@ class BackendSettings(AppBaseSettings):
     """
 
     version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
+    frontend_version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski frontend.")
+    title: str = Field(default="RIS KI Suche (Beta-Version)", description="The title of the application.")
+    documentation_url: str = Field(default="https://ki.muenchen.de", description="The URL to the documentation.")
+
+    @field_validator("version", "frontend_version", mode="before")
+    @staticmethod
+    def parse_version(value: str) -> str:
+        """Parse version string to extract only the version number before @sha256."""
+        if not isinstance(value, str):
+            return value
+        # Split by '@' and take the first part to remove the sha256 hash
+        return value.split("@")[0]
+
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
 
     # === Langfuse Settings ===
@@ -37,6 +50,16 @@ class BackendSettings(AppBaseSettings):
         default=None,
         validation_alias="LANGFUSE_HOST",
         description="Langfuse host",
+    )
+    langfuse_system_prompt_name: str = Field(
+        default="system",
+        validation_alias="LANGFUSE_SYSTEM_PROMPT_NAME",
+        description="Langfuse system prompt name",
+    )
+    langfuse_system_prompt_label: str = Field(
+        default="production",
+        validation_alias="LANGFUSE_SYSTEM_PROMPT_LABEL",
+        description="Langfuse system prompt label",
     )
 
     # === Agent Settings ===
