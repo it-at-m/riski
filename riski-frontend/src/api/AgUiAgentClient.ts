@@ -3,7 +3,7 @@ import type Proposal from "@/types/Proposal";
 import type RiskiAnswer from "@/types/RiskiAnswer";
 import type { ExecutionStep, ToolCallResult } from "@/types/RiskiAnswer";
 import type { AgentSubscriber } from "@ag-ui/client";
-import type { Message } from "@ag-ui/core";
+import type { Message, StateSnapshotEvent } from "@ag-ui/core";
 
 import { HttpAgent } from "@ag-ui/client";
 
@@ -79,8 +79,8 @@ const mapDocument = (raw: Record<string, unknown>): Document => {
       pickString(m?.title, m?.name, raw.title, raw.name, raw.id) || "Dokument",
     risUrl: pickString(
       m?.risUrl,
-      m?.source, // Sometimes source is the URL
-      m?.id, // Sometimes metadata.id is the URL (e.g. from retrieval)
+      m?.source,
+      m?.id,
       raw.risUrl,
       raw.source,
       raw.id
@@ -104,39 +104,6 @@ const mapProposal = (raw: Record<string, unknown>): Proposal => {
     identifier: pickString(m?.identifier, m?.id, raw.identifier, raw.id),
     risUrl: pickString(m?.risUrl, m?.source, raw.risUrl, raw.source),
   };
-};
-
-// -- Extract documents/proposals from on_tool_end event data ------------------
-
-/**
- * Extract documents and proposals from the `on_tool_end` event data.
- *
- * The backend's `strip_tool_end_payload` replaces the raw tool output with a
- * lightweight JSON-serialisable summary shaped like:
- *   { documents: [{ id, metadata }], proposals: [{ identifier, name, risUrl }] }
- */
-const parseToolOutput = (
-  data: Record<string, unknown> | undefined
-): ToolCallResult | undefined => {
-  const output = data?.output;
-  if (!isRecord(output)) return undefined;
-
-  const documents: Document[] = [];
-  const proposals: Proposal[] = [];
-
-  if (Array.isArray(output.documents)) {
-    for (const d of output.documents) {
-      if (isRecord(d)) documents.push(mapDocument(d));
-    }
-  }
-  if (Array.isArray(output.proposals)) {
-    for (const p of output.proposals) {
-      if (isRecord(p)) proposals.push(mapProposal(p));
-    }
-  }
-
-  if (documents.length === 0 && proposals.length === 0) return undefined;
-  return { documents, proposals };
 };
 
 /**
@@ -214,6 +181,7 @@ const statusLabelForStep = (stepName: string): string => {
   const labels: Record<string, string> = {
     model: "Denke nach...",
     tools: "Verwende Werkzeuge...",
+    guard: "Prüfe Ergebnisse...",
     retrieve_documents: "Suche Dokumente...",
   };
   return labels[stepName] ?? `Verarbeite Schritt: ${stepName}`;
@@ -221,8 +189,35 @@ const statusLabelForStep = (stepName: string): string => {
 
 const displayNameForStep = (stepName: string): string | undefined => {
   if (stepName === "model") return "Denke nach";
+  if (stepName === "guard") return "Ergebnisse prüfen";
   return undefined;
 };
+
+// -- Tracked-state snapshot types (mirrors backend slim shapes) ---------------
+
+/** Slim TrackedDocument as sent by the backend (page_content stripped). */
+interface TrackedDocumentSnapshot {
+  id: string;
+  metadata: Record<string, unknown>;
+  is_checked: boolean;
+  is_relevant: boolean;
+  relevance_reason: string;
+}
+
+/** TrackedProposal as sent by the backend. */
+interface TrackedProposalSnapshot {
+  identifier: string;
+  name: string;
+  risUrl: string;
+}
+
+/** The shape of snapshot.snapshot after backend stripping. */
+interface AgentStateSnapshot {
+  tracked_documents: TrackedDocumentSnapshot[];
+  tracked_proposals: TrackedProposalSnapshot[];
+  user_query: string;
+  messages: unknown[];
+}
 
 // -- Main client --------------------------------------------------------------
 
@@ -249,6 +244,11 @@ export default class AgUiAgentClient {
     let latestStatus = "Initialisiere...";
     let steps: ExecutionStep[] = [];
 
+    // -- Previous snapshot for diffing ----------------------------------------
+    let prevDocs: TrackedDocumentSnapshot[] = [];
+    let prevProposals: TrackedProposalSnapshot[] = [];
+    let prevUserQuery = "";
+
     // -- Progress emission ----------------------------------------------------
 
     const emitProgress = () => {
@@ -268,21 +268,14 @@ export default class AgUiAgentClient {
     const currentStep = (): ExecutionStep | undefined =>
       steps.find((s) => s.status === "running");
 
-    const findToolCall = (
-      step: ExecutionStep,
-      runId: string | undefined,
-      toolName: string | undefined
-    ) =>
-      step.toolCalls?.find((tc) => {
-        if (tc.status !== "running") return false;
-        return runId ? tc.id === runId : tc.name === toolName;
-      });
-
     // -- AG-UI subscriber -----------------------------------------------------
 
     const subscriber: AgentSubscriber = {
       onRunStartedEvent: () => {
         steps = [];
+        prevDocs = [];
+        prevProposals = [];
+        prevUserQuery = "";
         emitProgress();
       },
 
@@ -312,47 +305,121 @@ export default class AgUiAgentClient {
         if (step?.name === "model") {
           step.displayName = "Antwort generieren";
           latestStatus = "Generiere Antwort...";
+        } else if (step?.name === "guard") {
+          step.displayName = "Ergebnisse prüfen";
+          latestStatus = "Prüfe Ergebnisse...";
         }
         emitProgress();
       },
 
-      onRawEvent: ({ event }) => {
-        const raw = event.event as Record<string, unknown> | undefined;
-        if (!raw || typeof raw !== "object") return;
+      // -- Derive tool calls & document checks from state snapshot diffs ------
+      onStateSnapshotEvent: ({ event }: { event: StateSnapshotEvent }) => {
+        const snap = event.snapshot as AgentStateSnapshot | undefined;
+        if (!snap) return;
 
-        const eventName = raw.event as string | undefined;
-        const data = raw.data as Record<string, unknown> | undefined;
-        const toolName = raw.name as string | undefined;
-        const runId = raw.run_id as string | undefined;
+        const docs: TrackedDocumentSnapshot[] = snap.tracked_documents ?? [];
+        const proposals: TrackedProposalSnapshot[] =
+          snap.tracked_proposals ?? [];
+        const userQuery = snap.user_query ?? "";
 
-        if (eventName === "on_tool_start") {
-          const step = currentStep();
-          if (step) {
-            if (!step.toolCalls) step.toolCalls = [];
-            const input = data?.input as Record<string, unknown> | undefined;
-            step.toolCalls.push({
-              id: runId || generateId(),
-              name: toolName || "unknown",
-              args: typeof input?.query === "string" ? input.query : undefined,
-              status: "running",
-            });
-            latestStatus = `Verwende Werkzeug: ${toolName || "unknown"}...`;
-          }
-          emitProgress();
-        } else if (eventName === "on_tool_end") {
-          const step = currentStep();
-          if (step) {
-            const tc = findToolCall(step, runId, toolName);
-            if (tc) {
-              tc.status = "completed";
-              // Extract documents/proposals from tool output immediately
-              const result = parseToolOutput(data);
-              if (result) tc.result = result;
-            }
-          }
-          latestStatus = "Werkzeug ausgeführt.";
-          emitProgress();
+        const step = currentStep();
+        let changed = false;
+
+        // -- user_query changed -----------------------------------------------
+        if (userQuery && userQuery !== prevUserQuery) {
+          prevUserQuery = userQuery;
+          changed = true;
         }
+
+        // -- Detect newly appeared documents (tool result) --------------------
+        const prevDocIds = new Set(prevDocs.map((d) => d.id));
+        const newDocs = docs.filter((d) => d.id && !prevDocIds.has(d.id));
+
+        if (newDocs.length > 0 && step) {
+          const result: ToolCallResult = {
+            documents: newDocs.map((d) =>
+              mapDocument(d as unknown as Record<string, unknown>)
+            ),
+            proposals: proposals.map((p) =>
+              mapProposal(p as unknown as Record<string, unknown>)
+            ),
+          };
+
+          if (!step.toolCalls) step.toolCalls = [];
+          const runningTc = step.toolCalls.find(
+            (tc) => tc.status === "running"
+          );
+          if (runningTc) {
+            runningTc.result = result;
+            runningTc.status = "completed";
+          } else {
+            step.toolCalls.push({
+              id: generateId(),
+              name: "retrieve_documents",
+              status: "completed",
+              result,
+            });
+          }
+          latestStatus = "Dokumente gefunden.";
+          changed = true;
+        }
+
+        // -- Detect relevance changes (is_checked / is_relevant flipped) ------
+        for (const doc of docs) {
+          const prev = prevDocs.find((p) => p.id === doc.id);
+
+          const prevChecked = prev?.is_checked ?? false;
+          const prevRelevant = prev?.is_relevant ?? false;
+
+          const relevanceChanged =
+            (doc.is_checked && !prevChecked) ||
+            (doc.is_relevant !== prevRelevant && prev !== undefined);
+
+          if (!relevanceChanged) continue;
+
+          if (step) {
+            if (!step.documentChecks) step.documentChecks = [];
+
+            const docName =
+              pickString(
+                (doc.metadata as Record<string, unknown>)?.name,
+                (doc.metadata as Record<string, unknown>)?.title,
+                doc.id
+              ) || "Dokument";
+
+            // Avoid duplicate entries for the same document in this step
+            const existing = step.documentChecks.find(
+              (c) => c.name === docName
+            );
+            if (existing) {
+              existing.relevant = doc.is_relevant;
+              existing.reason = doc.relevance_reason || "";
+            } else {
+              step.documentChecks.push({
+                name: docName,
+                relevant: doc.is_relevant,
+                reason: doc.relevance_reason || "",
+              });
+            }
+            latestStatus = `Prüfe: ${docName}…`;
+          }
+          changed = true;
+        }
+
+        // -- Detect newly appeared proposals (without new docs) ---------------
+        if (
+          !changed &&
+          proposals.length > 0 &&
+          proposals.length !== prevProposals.length
+        ) {
+          changed = true;
+        }
+
+        // Update previous snapshot for next diff
+        prevDocs = docs;
+        prevProposals = proposals;
+
+        if (changed) emitProgress();
       },
 
       onRunFinishedEvent: () => {
@@ -377,7 +444,6 @@ export default class AgUiAgentClient {
 
       // Unused AG-UI lifecycle hooks
       onStateDeltaEvent: () => {},
-      onStateSnapshotEvent: () => {},
       onToolCallStartEvent: () => {},
       onToolCallEndEvent: () => {},
       onToolCallResultEvent: () => {},

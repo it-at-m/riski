@@ -1,51 +1,38 @@
 from logging import Logger
-from typing import Any
 
 from ag_ui_langgraph import LangGraphAgent
 from app.core.settings import BackendSettings, InMemoryCheckpointerSettings, RedisCheckpointerSettings, get_settings
 from app.utils.logging import getLogger
-from langchain.agents import create_agent
-from langchain.agents.structured_output import ProviderStrategy
-from langchain.tools import BaseTool
 from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.redis import AsyncShallowRedisSaver
-from pydantic import BaseModel, Field
 from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from .riski_agent import build_riski_graph
 from .tools import retrieve_documents
-from .types import AgentContext
+from .types import SYSTEM_PROMPT
 
 settings: BackendSettings = get_settings()
 logger: Logger = getLogger()
 
 
-class StructuredAgentResponse(BaseModel):
-    response: str = Field(description="The final answer to the user's question.")
-    documents: list[dict[str, Any]] = Field(description="List of documents supporting the answer.")
-    proposals: list[dict[str, Any]] = Field(description="List of proposals related to the supporting documents.")
+# ---------------------------------------------------------------------------
+# Agent builder
+# ---------------------------------------------------------------------------
 
 
 async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
     """
-    Constructs and returns a configured RISKI LangGraphAgent for document research and analysis.
-    
-    Builds the chat model, configures a checkpoint saver according to application settings (in-memory or Redis-backed), registers the document retrieval tool, and wraps the resulting agent into a LangGraphAgent ready for use.
-    
-    Parameters:
-        vectorstore (PGVectorStore): Vector store used for semantic search and retrieval by the agent.
-        db_sessionmaker (async_sessionmaker): Async SQLAlchemy session factory for database access within agent context.
-        callbacks (Callbacks): Callback handlers to attach to the agent's execution.
-    
-    Returns:
-        LangGraphAgent: A LangGraphAgent configured with the RISKI agent graph, metadata, and provided configurable components.
-    
-    Raises:
-        ValueError: If the configured checkpointer type is unsupported.
+    Constructs and returns a configured RISKI LangGraphAgent with a custom graph.
+
+    The graph enforces that the ``retrieve_documents`` tool is called and
+    returns non-empty results **before** the model generates its final answer.
+    If the tool is not called or returns no results, the agent deterministically
+    responds with a fixed "no results" message — no LLM generation happens.
     """
 
     # Build the chat model
@@ -55,12 +42,19 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
         max_retries=settings.core.genai.chat_max_retries,
     )
 
-    # Configure the checkpointer
+    # Bind tools so the model knows about them
+    tools = [retrieve_documents]
+    graph = build_riski_graph(
+        chat_model=chat_model,
+        tools=tools,
+        system_prompt=SYSTEM_PROMPT,
+    )
+
+    # -- Configure checkpointer --
     checkpointer: BaseCheckpointSaver
     if isinstance(settings.checkpointer, InMemoryCheckpointerSettings):
         checkpointer = InMemorySaver()
     elif isinstance(settings.checkpointer, RedisCheckpointerSettings):
-        # Instantiate Redis client and saver directly
         async_redis: AsyncRedis = AsyncRedis.from_url(
             url=settings.checkpointer.redis_url.encoded_string(),
         )
@@ -71,52 +65,19 @@ async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_session
                 "refresh_on_read": True,
             },
         )
-        # Setup the checkpointer inside an async context
         await checkpointer.asetup()
     else:
         raise ValueError("Unsupported checkpointer configuration")
 
-    # Configure the tools
-    available_tools: list[BaseTool] = [retrieve_documents]
+    compiled = graph.compile(checkpointer=checkpointer)
 
-    system_prompt: str = """
-        You are the RISKI Agent, an AI assistant designed to help users research and analyze documents and proposals from the City of Munich's Council Information System. 
-        Your goal is to provide accurate, concise, and relevant information based on the user's queries and the documents available to you.
-        
-        Tools:
-        You have access to the following tools to assist you in your tasks:
-        1. retrieve_documents: Use this tool to search for and retrieve documents relevant to the user's query.
-    """
-
-    # Create the agent via the factory method
-    agent = create_agent(
-        model=chat_model,
-        system_prompt=system_prompt,
-        tools=available_tools,
-        response_format=ProviderStrategy(StructuredAgentResponse),
-        context_schema=AgentContext,  # type: ignore
-        checkpointer=checkpointer,
-    )
-
-    # Context usage probably supported in future LangGraphAgent versions
-    # agent_result = await agent.ainvoke(
-    #     input={"messages": [{"role": "user", "content": "Wird in München über eine Zweitwohnungssteuer diskutiert?"}]},
-    #     config={
-    #         "configurable": {"thread_id": uuid4(), "vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
-    #         "callbacks": callbacks,
-    #     },
-    #     # context=AgentContext(vectorstore=vectorstore, db_sessionmaker=db_sessionmaker),
-    # )
-
-    # logger.info(f"Agent test invocation result: {agent_result}")
-
-    # Wrap the agent in a AG-UI LangGraphAgent
+    # Wrap in AG-UI LangGraphAgent
     return LangGraphAgent(
         name="RISKI Agent",
         description="Der RISKI Agent unterstützt bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen aus dem Rats-Informations-System der Stadt München.",
-        graph=agent,  # type: ignore
+        graph=compiled,
         config={
             "configurable": {"vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
             "callbacks": callbacks,
-        },  # Workaround as LangGraphAgent doesnt yet support context parameter
+        },
     )
