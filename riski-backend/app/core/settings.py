@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
-
-
-class InMemoryCheckpointerSettings(BaseModel):
-    type: Literal["in_memory"] = "in_memory"
 
 
 class BackendSettings(AppBaseSettings):
@@ -73,10 +69,9 @@ class BackendSettings(AppBaseSettings):
     )
 
     # === Agent Settings ===
-    checkpointer: InMemoryCheckpointerSettings | RedisCheckpointerSettings = Field(
-        description="Settings for agent checkpointer",
-        default_factory=InMemoryCheckpointerSettings,
-        discriminator="type",
+    checkpointer: "CheckpointerSettings" = Field(
+        description="Settings for the agent's checkpointer, which manages the state of ongoing interactions.",
+        default={"type": "in_memory"},  # type: ignore
     )
 
     # === Server Settings ===
@@ -100,6 +95,16 @@ class BackendSettings(AppBaseSettings):
         cli_kebab_case=True,
         cli_prog_name="riski",
     )
+
+
+CheckpointerSettings = Annotated[
+    Union["InMemoryCheckpointerSettings", "RedisCheckpointerSettings"],
+    Field(discriminator="type"),
+]
+
+
+class InMemoryCheckpointerSettings(BaseModel):
+    type: Literal["in_memory"] = "in_memory"
 
 
 class RedisCheckpointerSettings(BaseModel):
