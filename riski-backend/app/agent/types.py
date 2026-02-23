@@ -63,7 +63,13 @@ AGENT_CAPABILITIES_PROMPT: str = (
 class DocumentReference(BaseModel):
     name: str = Field(description="The name or title of the document.")
     risUrl: str = Field(description="The URL of the document in the RIS system.")
-    size: int = Field(default=0, description="The file size in bytes.")
+    size: int = Field(
+        default=0,
+        description=(
+            "File size in bytes. Copy the value from the document's metadata 'size' field. "
+            "Use 0 if the metadata does not contain a 'size' entry. Do NOT invent a value."
+        ),
+    )
     identifier: str = Field(default="", description="An optional identifier for the document.")
 
 

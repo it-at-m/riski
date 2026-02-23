@@ -67,6 +67,14 @@ NODE_CHECK_DOCUMENT = "check_document"
 NODE_COLLECT_RESULTS = "collect_results"
 
 
+def _extract_user_query(messages: list[AnyMessage]) -> str:
+    """Return the content of the first HumanMessage in *messages*, or an empty string."""
+    for msg in messages:
+        if isinstance(msg, HumanMessage):
+            return msg.content if isinstance(msg.content, str) else str(msg.content)
+    return ""
+
+
 def _is_capabilities_answer(messages: list[AnyMessage]) -> bool:
     """Return True if the last AIMessage was generated in response to get_agent_capabilities."""
     # Walk backwards: skip the last AIMessage (the answer), then look for the
@@ -137,8 +145,20 @@ def _route_after_tools(state: RiskiAgentState) -> str:
 def build_guard_nodes(
     chat_model: ChatOpenAI,
     check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
+    snippet_size: int = 10_000,
 ):
     """Build and return the three guard-related node functions + fan-out router.
+
+    Parameters
+    ----------
+    chat_model:
+        The LLM to use for relevance checking and suggestion generation.
+    check_document_prompt_template:
+        Prompt template (str or Langfuse ``TextPromptClient``) for the
+        per-document relevance check.
+    snippet_size:
+        Maximum number of characters from ``page_content`` to include in
+        the relevance-check prompt.  Defaults to 10 000 characters.
 
     Returns
     -------
@@ -208,12 +228,7 @@ def build_guard_nodes(
             return {}
 
         # Extract user query early – needed for suggestions in all error branches
-        user_query = state.get("user_query", "") or state.get("initial_question", "")
-        if not user_query:
-            for msg in messages:
-                if isinstance(msg, HumanMessage):
-                    user_query = msg.content if isinstance(msg.content, str) else str(msg.content)
-                    break
+        user_query = state.get("user_query", "") or state.get("initial_question", "") or _extract_user_query(messages)
 
         if not has_any_tool_call:
             logger.warning("Guard: Model did not call any tool. Returning no-results response.")
@@ -278,7 +293,7 @@ def build_guard_nodes(
         metadata: dict = doc.get("metadata", {})
         doc_name: str = metadata.get("name", metadata.get("title", doc_id or "Dokument"))
         page_content: str = doc.get("page_content", "")
-        snippet = page_content[:2000]
+        snippet = page_content[:snippet_size]
 
         if isinstance(check_document_prompt_template, TextPromptClient):
             check_prompt = check_document_prompt_template.compile(
@@ -421,6 +436,7 @@ def build_riski_graph(
     tools: Iterable[Any],
     system_prompt: str = SYSTEM_PROMPT,
     check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
+    snippet_size: int = 10_000,
 ) -> StateGraph:
     """Build the RISKI agent graph with core nodes and guard pipeline."""
     tools = list(tools)
@@ -443,7 +459,10 @@ def build_riski_graph(
         # sequence that OpenAI expects.
         last_message = state["messages"][-1] if state["messages"] else None
         if isinstance(last_message, ToolMessage) and last_message.name == get_agent_capabilities.name:
-            caps_messages: list[AnyMessage] = [system_message, *state["messages"]]
+            # The capabilities ToolMessage is already in state["messages"] (added by run_tools via
+            # add_messages).  _sanitize_messages ensures no orphan tool-call pairs exist before
+            # we hand the history to the LLM.
+            caps_messages: list[AnyMessage] = [system_message, *_sanitize_messages(state["messages"])]
             logger.debug(
                 "Capabilities pass message sequence: %s",
                 [type(m).__name__ for m in caps_messages],
@@ -467,9 +486,13 @@ def build_riski_graph(
 
             # Strip AIMessage(tool_calls)/ToolMessage pairs — they are no longer
             # meaningful and would make the sequence invalid for the generation call.
+            # _sanitize_messages is applied first to remove any orphan tool-call pairs
+            # (e.g. from multi-turn conversations stored in the checkpointer), then we
+            # additionally drop all ToolMessages and AIMessages that still carry tool_calls
+            # so the generation prompt is a clean human/assistant dialogue.
             base_messages = [
                 msg
-                for msg in state["messages"]
+                for msg in _sanitize_messages(state["messages"])
                 if not isinstance(msg, (ToolMessage, AIMessage)) or (isinstance(msg, AIMessage) and not msg.tool_calls)
             ]
 
@@ -508,12 +531,7 @@ def build_riski_graph(
             return {"messages": [ai_msg]}
 
         # -- First pass: extract user query and let the model decide which tool(s) to call --
-        user_query = state.get("user_query", "") or state.get("initial_question", "")
-        if not user_query:
-            for msg in state["messages"]:
-                if isinstance(msg, HumanMessage):
-                    user_query = msg.content if isinstance(msg.content, str) else str(msg.content)
-                    break
+        user_query = state.get("user_query", "") or state.get("initial_question", "") or _extract_user_query(state["messages"])
 
         messages = [system_message, *_sanitize_messages(state["messages"])]
         try:
@@ -588,6 +606,7 @@ def build_riski_graph(
     guard, fan_out_checks, check_document, collect_results = build_guard_nodes(
         chat_model,
         check_document_prompt_template=check_document_prompt_template,
+        snippet_size=snippet_size,
     )
 
     graph = StateGraph(RiskiAgentState)
