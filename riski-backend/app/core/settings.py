@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal, Union
 
-from pydantic import BaseModel, Field, RedisDsn, SecretStr
+from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
-
-
-class InMemoryCheckpointerSettings(BaseModel):
-    type: Literal["in_memory"] = "in_memory"
 
 
 class BackendSettings(AppBaseSettings):
@@ -20,6 +16,19 @@ class BackendSettings(AppBaseSettings):
     """
 
     version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
+    frontend_version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski frontend.")
+    title: str = Field(default="RIS KI Suche (Beta-Version)", description="The title of the application.")
+    documentation_url: str = Field(default="https://ki.muenchen.de", description="The URL to the documentation.")
+
+    @field_validator("version", "frontend_version", mode="before")
+    @staticmethod
+    def parse_version(value: str) -> str:
+        """Parse version string to extract only the version number before @sha256."""
+        if not isinstance(value, str):
+            return value
+        # Split by '@' and take the first part to remove the sha256 hash
+        return value.split("@")[0]
+
     enable_docs: bool = Field(default=False, description="Is the OpenAPI docs endpoint enabled.")
 
     # === Langfuse Settings ===
@@ -38,12 +47,31 @@ class BackendSettings(AppBaseSettings):
         validation_alias="LANGFUSE_HOST",
         description="Langfuse host",
     )
+    langfuse_system_prompt_name: str = Field(
+        default="system",
+        validation_alias="LANGFUSE_SYSTEM_PROMPT_NAME",
+        description="Langfuse system prompt name",
+    )
+    langfuse_system_prompt_label: str = Field(
+        default="production",
+        validation_alias="LANGFUSE_SYSTEM_PROMPT_LABEL",
+        description="Langfuse system prompt label",
+    )
+    langfuse_check_document_prompt_name: str = Field(
+        default="check_document",
+        validation_alias="LANGFUSE_CHECK_DOCUMENT_PROMPT_NAME",
+        description="Langfuse check document prompt name",
+    )
+    langfuse_check_document_prompt_label: str = Field(
+        default="production",
+        validation_alias="LANGFUSE_CHECK_DOCUMENT_PROMPT_LABEL",
+        description="Langfuse check document prompt label",
+    )
 
     # === Agent Settings ===
-    checkpointer: InMemoryCheckpointerSettings | RedisCheckpointerSettings = Field(
-        description="Settings for agent checkpointer",
-        default_factory=InMemoryCheckpointerSettings,
-        discriminator="type",
+    checkpointer: "CheckpointerSettings" = Field(
+        description="Settings for the agent's checkpointer, which manages the state of ongoing interactions.",
+        default={"type": "in_memory"},  # type: ignore
     )
 
     # === Server Settings ===
@@ -67,6 +95,16 @@ class BackendSettings(AppBaseSettings):
         cli_kebab_case=True,
         cli_prog_name="riski",
     )
+
+
+CheckpointerSettings = Annotated[
+    Union["InMemoryCheckpointerSettings", "RedisCheckpointerSettings"],
+    Field(discriminator="type"),
+]
+
+
+class InMemoryCheckpointerSettings(BaseModel):
+    type: Literal["in_memory"] = "in_memory"
 
 
 class RedisCheckpointerSettings(BaseModel):

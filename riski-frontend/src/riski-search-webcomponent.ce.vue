@@ -4,12 +4,14 @@ import type RiskiAnswer from "@/types/RiskiAnswer";
 import { MucCallout } from "@muenchen/muc-patternlab-vue";
 import customIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/custom-icons.svg?raw";
 import mucIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/muc-icons.svg?raw";
-import { nextTick, ref } from "vue";
+import { onMounted, nextTick, ref } from "vue";
 
 import SearchService from "@/api/SearchService";
+import SystemClient from "@/api/SystemClient";
 import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
 import riskiIntro from "@/components/riski-intro.vue";
+import riskiOutro from "@/components/riski-outro.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
 import { EXAMPLE_QUESTIONS } from "@/util/constants";
 
@@ -22,6 +24,23 @@ const loading = ref<boolean>(false);
 const initial = ref<boolean>(true);
 const fehler = ref<string>("");
 const searchquery = ref<string>("");
+const title = ref("RIS KI Suche (Beta-Version)");
+const version = ref("unknown");
+const frontendVersion = ref("unknown");
+const documentationUrl = ref("https://ki.muenchen.de");
+
+onMounted(async () => {
+  try {
+    const config = await SystemClient.getConfig();
+    title.value = config.title;
+    version.value = config.version;
+    frontendVersion.value = config.frontend_version;
+    documentationUrl.value = config.documentation_url;
+  } catch (error) {
+    console.error("Failed to load config", error);
+  }
+});
+
 
 /**
  * Callback function for a successfully processed document with the answer chain.
@@ -101,7 +120,7 @@ const submitQuery = (query: string) => {
       <div v-html="customIconsSprite" />
       <div v-html="riskiIconsSprite" />
 
-      <riski-intro>
+      <riski-intro :title="title">
         <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
           :on-clear="resetInitialState" />
         <ul v-if="initial" class="example-chips" role="list" aria-label="Beispielfragen">
@@ -173,6 +192,7 @@ const submitQuery = (query: string) => {
           </div>
         </div>
       </div>
+      <riski-outro :version="version" :frontend-version="frontendVersion" :documentation-url="documentationUrl" />
     </div>
   </main>
 </template>

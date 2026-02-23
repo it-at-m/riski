@@ -1,4 +1,5 @@
 import type RiskiAnswer from "@/types/RiskiAnswer";
+import type { DocumentCheckResult, ExecutionStep } from "@/types/RiskiAnswer";
 
 import AgUiAgentClient from "@/api/AgUiAgentClient";
 
@@ -49,9 +50,8 @@ export default class SearchService {
     const isMockMode = import.meta.env.MODE === "development";
 
     if (isMockMode) {
-      return SearchService.localExampleAnswer()
-        .then((answer) => {
-          if (answer) onProcessed(answer);
+      return SearchService.localExampleAnswer(query, onProcessed)
+        .then(() => {
           onComplete();
         })
         .catch((err: any) => {
@@ -76,39 +76,127 @@ export default class SearchService {
     }
   }
 
-  private static async localExampleAnswer() {
-    const secondsToWait = Math.floor(Math.random() * 7) + 3;
-    await new Promise((r) => setTimeout(r, secondsToWait * 1000));
+  private static async localExampleAnswer(
+    query: string,
+    onProcessed: Callback<RiskiAnswer>
+  ) {
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    const documents = [
+      { name: "Haushaltsbericht 2024", size: 64000, risUrl: "url1" },
+      { name: "Stadtratsvorlage Finanzen", size: 6423000, risUrl: "url2" },
+      { name: "Protokoll Finanzausschuss", size: 240000, risUrl: "url3" },
+    ];
+    const proposals = [
+      { name: "Antrag Haushalt 2025", identifier: "A1029", risUrl: "url4" },
+      { name: "Antrag Nachtragshaushalt", identifier: "A2024", risUrl: "url5" },
+      { name: "Antrag Konsolidierung", identifier: "A3023", risUrl: "url6" },
+    ];
 
     const ai_response =
       "Hier steht dann die Zusammenfassung der KI. Zum Beispiel, dass in den letztem 2 Jahren 27 Anfragen zu Haushaltsfragen im Stadtrat eingebracht wurden. Außerdem die Aufteilung auf die Fraktionen und die zentralen Ergebnisse der Anfragen.";
 
-    let answer: RiskiAnswer = {
+    const steps: ExecutionStep[] = [];
+
+    const emit = (status?: string) =>
+      onProcessed({
+        response: "",
+        documents: [],
+        proposals: [],
+        status,
+        steps: structuredClone(steps),
+      });
+
+    // Step 1: model (decides to call tool)
+    steps.push({ name: "model", displayName: "Denke nach", status: "running" });
+    emit("Denke nach...");
+    await delay(800);
+    steps[0]!.status = "completed";
+    emit("Denke nach...");
+
+    // Step 2: tools (executes retrieve_documents)
+    steps.push({
+      name: "tools",
+      displayName: undefined,
+      status: "running",
+      toolCalls: [
+        {
+          id: "tc-mock-1",
+          name: "retrieve_documents",
+          args: query,
+          status: "running",
+        },
+      ],
+    });
+    emit("Verwende Werkzeuge...");
+    await delay(1500);
+
+    // Tool completes with results
+    steps[1]!.toolCalls![0]!.status = "completed";
+    steps[1]!.toolCalls![0]!.result = { documents, proposals };
+    steps[1]!.status = "completed";
+    emit("Werkzeug ausgeführt.");
+
+    // Step 3: guard (checks each document individually)
+    steps.push({
+      name: "guard",
+      displayName: "Ergebnisse prüfen",
+      status: "running",
+      documentChecks: [],
+    });
+    emit("Prüfe Ergebnisse...");
+    await delay(400);
+
+    // Simulate per-document checks
+    const docChecks: DocumentCheckResult[] = [
+      {
+        name: "Haushaltsbericht 2024",
+        relevant: true,
+        reason: "Betrifft direkt die angefragte Haushaltsplanung.",
+      },
+      {
+        name: "Stadtratsvorlage Finanzen",
+        relevant: true,
+        reason: "Enthält relevante Finanzinformationen zum Thema.",
+      },
+      {
+        name: "Protokoll Finanzausschuss",
+        relevant: false,
+        reason: "Behandelt ein anderes Thema aus dem Finanzausschuss.",
+      },
+    ];
+
+    for (const check of docChecks) {
+      steps[2]!.documentChecks!.push(check);
+      emit(`Prüfe: ${check.name}…`);
+      await delay(600);
+    }
+
+    steps[2]!.status = "completed";
+    emit("Prüfe Ergebnisse...");
+
+    // Filter documents based on checks (remove irrelevant ones)
+    const filteredDocuments = documents.filter(
+      (_, i) => docChecks[i]?.relevant
+    );
+
+    // Step 4: model again (generates final answer)
+    steps.push({
+      name: "model",
+      displayName: "Antwort generieren",
+      status: "running",
+    });
+    emit("Generiere Antwort...");
+    await delay(1200);
+    steps[3]!.status = "completed";
+
+    // Final answer
+    onProcessed({
       response: ai_response,
-      proposals: [],
-      documents: [],
-    };
-
-    answer.proposals.push({
-      name: "Name 1",
-      identifier: "A1029",
-      risUrl: "url4",
+      documents: filteredDocuments,
+      proposals,
+      status: "",
+      steps: structuredClone(steps),
     });
-    answer.proposals.push({
-      name: "Name 2",
-      identifier: "A2024",
-      risUrl: "url5",
-    });
-    answer.proposals.push({
-      name: "Name 3",
-      identifier: "A3023",
-      risUrl: "url6",
-    });
-
-    answer.documents.push({ name: "Name 1", size: 64000, risUrl: "url1" });
-    answer.documents.push({ name: "Name 2", size: 6423000, risUrl: "url2" });
-    answer.documents.push({ name: "Name 3", size: 240000, risUrl: "url3" });
-
-    return Promise.resolve(answer);
   }
 }
