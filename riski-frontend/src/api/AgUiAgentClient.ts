@@ -228,6 +228,7 @@ interface AgentStateSnapshot {
   error_info?: {
     error_type: string;
     message: string;
+    suggestions?: string[];
     details?: Record<string, unknown>;
   } | null;
 }
@@ -465,6 +466,9 @@ export default class AgUiAgentClient {
           latestErrorInfo = {
             errorType: ei.error_type,
             message: ei.message,
+            suggestions: Array.isArray(ei.suggestions)
+              ? ei.suggestions
+              : undefined,
             details: ei.details,
           };
           latestStatus = ei.message;
@@ -490,10 +494,18 @@ export default class AgUiAgentClient {
         emitProgress();
       },
 
-      onRunErrorEvent: () => {
+      onRunErrorEvent: ({ event }) => {
         latestStatus = "Fehler aufgetreten.";
         for (const step of steps) {
           if (step.status === "running") step.status = "failed";
+        }
+        if (!latestErrorInfo) {
+          latestErrorInfo = {
+            errorType: "server_error",
+            message:
+              (typeof event.message === "string" && event.message) ||
+              "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+          };
         }
         emitProgress();
       },
@@ -556,12 +568,17 @@ export default class AgUiAgentClient {
       return buildAnswer(responseText, latestStatus, steps, latestErrorInfo);
     } catch (error) {
       console.error("Agent execution failed:", error);
-      return buildAnswer(
-        "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten.",
-        "Fehler",
-        steps,
-        latestErrorInfo
-      );
+      for (const step of steps) {
+        if (step.status === "running") step.status = "failed";
+      }
+      if (!latestErrorInfo) {
+        latestErrorInfo = {
+          errorType: "server_error",
+          message:
+            "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten. Bitte versuchen Sie es später erneut.",
+        };
+      }
+      return buildAnswer("", "Fehler", steps, latestErrorInfo);
     } finally {
       abortController.abort();
     }

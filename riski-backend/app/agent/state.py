@@ -67,6 +67,10 @@ class ErrorInfo(BaseModel):
         )
     )
     message: str = Field(description="Human-readable message (German) suitable for direct display.")
+    suggestions: list[str] = Field(
+        default_factory=list,
+        description="Optional list of alternative search queries suggested by the LLM.",
+    )
     details: dict[str, Any] = Field(
         default_factory=dict,
         description=(

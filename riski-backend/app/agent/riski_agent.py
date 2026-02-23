@@ -4,11 +4,13 @@ from typing import Any, Iterable
 
 from app.utils.logging import getLogger
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from langfuse.model import TextPromptClient
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Send
+from openai import BadRequestError
 
 from .state import (
     DocumentCheckInput,
@@ -23,10 +25,12 @@ from .tools import (
     get_agent_capabilities,
 )
 from .types import (
+    AGENT_CAPABILITIES_PROMPT,
     CHECK_DOCUMENT_PROMPT_TEMPLATE,
     SYSTEM_PROMPT,
     DocumentRelevanceVerdict,
     StructuredAgentResponse,
+    SuggestionsResponse,
 )
 
 logger: Logger = getLogger()
@@ -78,14 +82,29 @@ def _is_capabilities_answer(messages: list[AnyMessage]) -> bool:
     return False
 
 
+def _is_content_filter_error(exc: BadRequestError) -> bool:
+    """Return True if a BadRequestError was caused by Azure's content filter."""
+    try:
+        body: dict[str, Any] = exc.body if isinstance(exc.body, dict) else {}  # type: ignore[assignment]
+        inner: dict[str, Any] = body.get("innererror") or {}
+        if inner.get("code") == "ResponsibleAIPolicyViolation":
+            return True
+    except Exception:
+        pass
+    return "ResponsibleAIPolicyViolation" in str(exc) or "content_filter" in str(exc)
+
+
 def _route_after_model(state: RiskiAgentState) -> str:
     """Route after the model node.
 
+    - error_info set (e.g. content filter) → END immediately
     - tool_calls present → "tools"
     - model just answered a capabilities question → END
     - tracked documents already checked & relevant → END  (final answer done)
     - no tool calls and no prior results → "guard" (will emit no-results)
     """
+    if state.has_error:
+        return END
     last_message = state["messages"][-1] if state["messages"] else None
     if isinstance(last_message, AIMessage) and last_message.tool_calls:
         return NODE_TOOLS
@@ -127,8 +146,47 @@ def build_guard_nodes(
         Ready to be wired into the main ``StateGraph``.
     """
 
+    # ----- LLM-based suggestion generator -----------------------------------
+    async def _generate_suggestions(user_query: str, config: RunnableConfig) -> list[str]:
+        """Ask the LLM to suggest 2–3 alternative search queries.
+
+        Uses structured output so the result is a clean list without any
+        prompt-engineering needed for list parsing.  The capabilities text
+        from the runnable config is included so suggestions stay within the
+        agent's actual knowledge scope.
+        Returns an empty list on any failure so callers never have to handle errors.
+        """
+        try:
+            capabilities_text: str = config.get("configurable", {}).get("agent_capabilities", AGENT_CAPABILITIES_PROMPT)
+            suggestion_model = chat_model.with_structured_output(SuggestionsResponse)
+            response = await suggestion_model.ainvoke(
+                [
+                    SystemMessage(
+                        content=(
+                            "Du hilfst Nutzern des Rats-Informations-Systems (RIS) der Stadt München "
+                            "bessere Suchanfragen zu formulieren. "
+                            "Schlage 2 bis 3 alternative, konkretere Suchbegriffe oder Umformulierungen vor, "
+                            "die im RIS der Stadt München erfolgreich sein könnten. "
+                            "Halte dich dabei strikt an die Fähigkeiten und die Wissensbasis des Agenten:\n\n"
+                            f"{capabilities_text}"
+                        )
+                    ),
+                    HumanMessage(
+                        content=(
+                            f'Die Suche nach "{user_query}" hat keine passenden Dokumente geliefert. Schlage alternative Suchanfragen vor.'
+                        )
+                    ),
+                ]
+            )
+            if isinstance(response, SuggestionsResponse):
+                return response.suggestions[:3]
+            return []
+        except Exception:
+            logger.warning("Could not generate query suggestions.", exc_info=True)
+            return []
+
     # ----- guard node: validate state and extract user query -----
-    async def guard(state: RiskiAgentState) -> dict[str, Any]:
+    async def guard(state: RiskiAgentState, config: RunnableConfig) -> dict[str, Any]:
         """Validate that tools were called and documents are present in state.
 
         ``tracked_documents`` and ``tracked_proposals`` are already written
@@ -149,16 +207,7 @@ def build_guard_nodes(
             logger.warning("Guard reached after get_agent_capabilities – this should not happen. Skipping.")
             return {}
 
-        if not has_any_tool_call:
-            logger.warning("Guard: Model did not call any tool. Returning no-results response.")
-            return {
-                "error_info": ErrorInfo(
-                    error_type="no_tool_call",
-                    message="Das Modell hat kein Werkzeug aufgerufen. Bitte versuchen Sie es mit einer konkreteren Frage.",
-                ),
-            }
-
-        # Extract user query from state (preferred) or from messages (fallback)
+        # Extract user query early – needed for suggestions in all error branches
         user_query = state.get("user_query", "") or state.get("initial_question", "")
         if not user_query:
             for msg in messages:
@@ -166,12 +215,25 @@ def build_guard_nodes(
                     user_query = msg.content if isinstance(msg.content, str) else str(msg.content)
                     break
 
+        if not has_any_tool_call:
+            logger.warning("Guard: Model did not call any tool. Returning no-results response.")
+            suggestions = await _generate_suggestions(user_query, config) if user_query else []
+            return {
+                "error_info": ErrorInfo(
+                    error_type="no_tool_call",
+                    message="Das Modell hat kein Werkzeug aufgerufen. Bitte versuchen Sie es mit einer konkreteren Frage.",
+                    suggestions=suggestions,
+                ),
+            }
+
         if not state.tracked_documents:
             logger.info("Guard: Tool returned no documents. Returning no-results response.")
+            suggestions = await _generate_suggestions(user_query, config) if user_query else []
             return {
                 "error_info": ErrorInfo(
                     error_type="no_documents_found",
                     message="Es wurden leider keine Dokumente zu Ihrer Anfrage gefunden. Versuchen Sie es mit anderen Suchbegriffen.",
+                    suggestions=suggestions,
                 ),
             }
 
@@ -268,7 +330,7 @@ def build_guard_nodes(
         }
 
     # ----- collect_results node (convergence after fan-out) -----
-    async def collect_results(state: RiskiAgentState) -> dict[str, Any]:
+    async def collect_results(state: RiskiAgentState, config: RunnableConfig) -> dict[str, Any]:
         """Check tracked documents for relevance results and route accordingly.
 
         After the reducer has merged all ``RelevanceUpdate`` entries, this
@@ -285,16 +347,18 @@ def build_guard_nodes(
 
         if not relevant:
             logger.info("Guard: No documents survived relevance check. Returning no-results response.")
-            # Collect per-document rejection reasons for the frontend
             rejection_reasons = [
                 {"name": d.metadata.get("name", d.metadata.get("title", d.id or "Dokument")), "reason": d.relevance_reason}
                 for d in state.tracked_documents
                 if d.is_checked and not d.is_relevant
             ]
+            user_query = state.get("user_query", "") or state.get("initial_question", "")
+            suggestions = await _generate_suggestions(user_query, config)
             return {
                 "error_info": ErrorInfo(
                     error_type="no_relevant_documents",
                     message="Es wurden Dokumente gefunden, aber keines davon war für Ihre Anfrage relevant. Versuchen Sie es mit einer präziseren Frage.",
+                    suggestions=suggestions,
                     details={
                         "total_checked": total,
                         "reasons": rejection_reasons,
@@ -386,7 +450,6 @@ def build_riski_graph(
             )
             response = await chat_model.ainvoke(caps_messages)
             return {"messages": [response]}
-
         if relevant_docs:
             # -- Generation pass: we have guard-filtered documents --
             # Build a clean prompt: keep only non-ToolMessages from history
@@ -453,7 +516,21 @@ def build_riski_graph(
                     break
 
         messages = [system_message, *_sanitize_messages(state["messages"])]
-        response = await model_with_tools.ainvoke(messages)
+        try:
+            response = await model_with_tools.ainvoke(messages)
+        except BadRequestError as e:
+            if _is_content_filter_error(e):
+                logger.warning("Content policy violation for user query.", exc_info=True)
+                return {
+                    "error_info": ErrorInfo(
+                        error_type="content_policy_violation",
+                        message=(
+                            "Ihre Anfrage konnte aufgrund der Inhaltsrichtlinien nicht verarbeitet werden. "
+                            "Bitte stellen Sie eine andere Frage."
+                        ),
+                    )
+                }
+            raise
 
         result = RiskiAgentStateUpdate(messages=[response])
         if user_query:

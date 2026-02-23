@@ -12,7 +12,9 @@ const props = defineProps<{
   isStreaming?: boolean;
 }>();
 
-const aiResponse = computed(() => {
+const emit = defineEmits<{
+  suggest: [query: string];
+}>(); const aiResponse = computed(() => {
   const raw = props.riskiAnswer?.response || "";
   return DOMPurify.sanitize(marked.parse(raw) as string);
 });
@@ -37,11 +39,15 @@ const hasProgress = computed(() => visibleSteps.value.length > 0);
 const errorHeading = computed(() => {
   switch (errorInfo.value?.errorType) {
     case "no_tool_call":
-      return "Keine Suche durchgeführt";
+      return "Frage nicht verstanden";
     case "no_documents_found":
       return "Keine Dokumente gefunden";
     case "no_relevant_documents":
       return "Keine relevanten Dokumente";
+    case "content_policy_violation":
+      return "Anfrage nicht zulässig";
+    case "server_error":
+      return "Serverfehler";
     default:
       return "Kein Ergebnis";
   }
@@ -56,6 +62,10 @@ const errorHint = computed(() => {
       return "Versuchen Sie es mit anderen Suchbegriffen.";
     case "no_relevant_documents":
       return "Versuchen Sie es mit einer präziseren Fragestellung.";
+    case "content_policy_violation":
+      return "Ihre Anfrage verstößt gegen die Inhaltsrichtlinien. Bitte stellen Sie eine andere Frage.";
+    case "server_error":
+      return "Bitte versuchen Sie es später erneut oder wenden Sie sich an den Support.";
     default:
       return "Bitte versuchen Sie es erneut.";
   }
@@ -142,6 +152,18 @@ function fileSizeAsString(fileSize: number) {
       <div>
         <p class="error-heading">{{ errorHeading }}</p>
         <p class="error-hint">{{ errorHint }}</p>
+        <div
+          v-if="errorInfo?.suggestions && errorInfo.suggestions.length > 0 && errorInfo.errorType !== 'content_policy_violation' && errorInfo.errorType !== 'server_error'"
+          class="error-suggestions">
+          <p class="error-suggestions-label">Vielleicht meinen Sie:</p>
+          <ul class="suggestion-chips" role="list">
+            <li v-for="suggestion in errorInfo.suggestions" :key="suggestion">
+              <button class="suggestion-chip" @click="emit('suggest', suggestion)">
+                {{ suggestion }}
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -617,5 +639,49 @@ function fileSizeAsString(fileSize: number) {
   margin: 4px 0 0;
   font-size: 0.88em;
   color: #777;
+}
+
+.error-suggestions {
+  margin-top: 12px;
+}
+
+.error-suggestions-label {
+  margin: 0 0 6px;
+  font-size: 0.85em;
+  color: #666;
+  font-weight: 500;
+}
+
+.suggestion-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid #005a9f;
+  border-radius: 16px;
+  background: #fff;
+  color: #005a9f;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-align: left;
+}
+
+.suggestion-chip:hover {
+  background: #005a9f;
+  color: #fff;
+}
+
+.suggestion-chip:focus-visible {
+  outline: 2px solid #005a9f;
+  outline-offset: 2px;
 }
 </style>

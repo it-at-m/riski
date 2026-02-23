@@ -84,3 +84,17 @@ class DocumentRelevanceVerdict(BaseModel):
 
     relevant: bool = Field(description="True if the document is relevant to the user's query.")
     reason: str = Field(description="Brief reason for the relevance decision (1-2 sentences, in German).")
+
+
+class SuggestionsResponse(BaseModel):
+    """LLM-generated alternative search query suggestions."""
+
+    suggestions: list[str] = Field(
+        description=(
+            "2 to 3 alternative, more specific search queries or reformulations that are "
+            "likely to find relevant documents in the Munich RIS. Each entry is a short, "
+            "self-contained search phrase in the same language as the original query."
+        ),
+        min_length=0,
+        max_length=3,
+    )
