@@ -108,7 +108,7 @@ const mergeStepInto = (target: ExecutionStep, source: ExecutionStep) => {
 
 const visibleSteps = computed(() => {
   const filtered = props.steps.filter(
-    (step) => step.name !== "collect_results" && step.name !== "guard",
+    (step) => step.name !== "collect_results" && step.name !== "guard" && step.name !== "tools",
   );
 
   const mergedSteps: ExecutionStep[] = [];
@@ -131,8 +131,8 @@ const visibleSteps = computed(() => {
 function formatStepName(name: string): string {
   const map: Record<string, string> = {
     retrieve_documents: "Dokumente durchsuchen",
+    get_agent_capabilities: "Fähigkeiten abrufen",
     model: "Antwort formulieren",
-    tools: "Archive durchsuchen",
     guard: "Ergebnisse prüfen",
     check_document: "Ergebnisse prüfen",
     __start__: "Start",
@@ -143,6 +143,7 @@ function formatStepName(name: string): string {
 function formatToolName(name: string): string {
   const map: Record<string, string> = {
     retrieve_documents: "Dokumentensuche",
+    get_agent_capabilities: "Fähigkeiten abrufen",
   };
   return map[name] || name;
 }
@@ -150,12 +151,8 @@ function formatToolName(name: string): string {
 
 <template>
   <div v-if="visibleSteps.length > 0" class="steps-container">
-    <div
-      v-for="step in visibleSteps"
-      :key="step.name"
-      class="step-item"
-      :class="{ 'step-item--zoom': allChecksFailed(step) }"
-    >
+    <div v-for="step in visibleSteps" :key="step.name" class="step-item"
+      :class="{ 'step-item--zoom': allChecksFailed(step) }">
       <div class="step-header">
         <span class="step-status-icon">
           <template v-if="step.status === 'running'">⏳</template>

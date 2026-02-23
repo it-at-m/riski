@@ -175,6 +175,9 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
         "RUN_FINISHED",
         "STEP_STARTED",
         "STEP_FINISHED",
+        "TOOL_CALL_START",
+        "TOOL_CALL_ARGS",
+        "TOOL_CALL_END",
         "STATE_SNAPSHOT",
         "TEXT_MESSAGE_CONTENT",
         "TEXT_MESSAGE_START",
@@ -182,6 +185,7 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
         "RUN_ERROR",
     }
     text_message_types = {"TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_START", "TEXT_MESSAGE_END"}
+    strip_raw_event_types = {*text_message_types, "TOOL_CALL_ARGS"}
 
     snapshot_stripper = SnapshotStripper()
 
@@ -193,7 +197,7 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
                 if event.type in allowed_types:
                     if event.type == "STATE_SNAPSHOT":
                         event = snapshot_stripper.strip(event)
-                    if event.type in text_message_types:
+                    if event.type in strip_raw_event_types:
                         event.raw_event = None
                     yield encode(encoder=encoder, event=event)
                 else:

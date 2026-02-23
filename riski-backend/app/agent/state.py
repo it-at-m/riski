@@ -3,6 +3,7 @@
 from typing import Annotated, Any, TypedDict
 
 from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
@@ -155,7 +156,7 @@ class RiskiAgentState(BaseModel):
     """
 
     # -- Chat History --
-    messages: list[AnyMessage] = Field(default_factory=list)
+    messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
     # -- Query inputs --
     user_query: str = Field(default="", description="The latest user query.")

@@ -5,18 +5,19 @@ The RISKI Agent is a LangGraph-based retrieval-augmented generation (RAG) pipeli
 ## Graph Overview
 
 ```text
-START → model → tools → guard → check_document (×N) → collect_results → model → END
+START → model → tools ─┬─(retrieve_documents)──► guard → check_document (×N) → collect_results → model → END
+                        └─(get_agent_capabilities)──────────────────────────────────────────────► model → END
 ```
 
-The agent executes in two phases: **retrieval** (tool call + relevance guard) and **generation** (structured LLM answer). If any phase fails to produce usable results, the pipeline terminates early with a structured `ErrorInfo` instead of generating a hallucinated response.
+The agent executes in two phases for document queries: **retrieval** (tool call + relevance guard) and **generation** (structured LLM answer). For capability queries the guard is bypassed entirely — the model answers directly from the tool result. If any phase fails to produce usable results, the pipeline terminates early with a structured `ErrorInfo` instead of generating a hallucinated response.
 
 ## Nodes
 
 | Node | Description |
 |---|---|
-| **model** | Invokes the LLM. On the first call it decides which tool to use. On the second call (after the guard) it generates a structured answer from the filtered documents. |
-| **tools** | Executes the `retrieve_documents` tool via `ToolNode`. Extracts `TrackedDocument` and `TrackedProposal` entries from the tool artifact and writes them to state. |
-| **guard** | Validates that a tool was called and that documents were returned. Sets `error_info` on state if not. Extracts the `user_query` for downstream use. |
+| **model** | Invokes the LLM. On the first call it decides which tool to use. On the second call (after the guard, or directly after `get_agent_capabilities`) it generates the final answer. |
+| **tools** | Executes the bound tools via `ToolNode`. For `retrieve_documents` it also extracts `TrackedDocument` and `TrackedProposal` entries from the artifact and writes them to state. |
+| **guard** | Validates that a tool was called and that documents were returned. Sets `error_info` on state if not. Extracts the `user_query` for downstream use. Only reached after `retrieve_documents`. |
 | **check_document** | Runs once per document (fan-out via `Send`). Uses the LLM to judge whether a document is relevant to the user's query. Returns a `RelevanceUpdate` that the state reducer merges back. |
 | **collect_results** | Convergence node after the fan-out. Inspects the relevance flags and either routes back to model (with filtered docs) or sets `error_info` if no documents survived. |
 
@@ -24,11 +25,14 @@ The agent executes in two phases: **retrieval** (tool call + relevance guard) an
 
 ```text
 model
-  ├── tool_calls present       → tools
-  ├── documents already checked → END  (final answer was already generated)
-  └── otherwise                → guard
+  ├── tool_calls present              → tools
+  ├── documents already checked        → END  (final answer was already generated)
+  ├── get_agent_capabilities answered  → END  (capabilities answer done)
+  └── otherwise                        → guard
 
-tools → guard (always)
+tools
+  ├── last tool = get_agent_capabilities → model  (bypass guard)
+  └── last tool = retrieve_documents     → guard
 
 guard
   ├── error_info set    → collect_results (pass-through)
@@ -75,6 +79,8 @@ Instead of generating a response when no useful data is available, the agent wri
 | `no_documents_found` | The tool ran but returned 0 documents | "Versuchen Sie es mit anderen Suchbegriffen." |
 | `no_relevant_documents` | Documents were found but all failed the relevance check | "Versuchen Sie es mit einer präziseren Fragestellung." |
 
+> **Note:** The `get_agent_capabilities` tool bypasses error handling entirely — it always succeeds and never triggers the guard.
+
 The `error_info` is propagated to the frontend via AG-UI state snapshots. The frontend renders an appropriate message instead of the generic "Unsere KI konnte keine Antwort generieren" fallback.
 
 ## Frontend Integration (AG-UI)
@@ -94,5 +100,5 @@ The frontend `AgUiAgentClient` diffs consecutive snapshots to detect new documen
 | `builder.py` | Constructs the `LangGraphAgent` with model, tools, checkpointer, and prompts from Langfuse |
 | `riski_agent.py` | Graph definition: nodes, routing, guard logic |
 | `state.py` | Pydantic state models (`RiskiAgentState`, `TrackedDocument`, `ErrorInfo`, etc.) |
-| `tools.py` | `retrieve_documents` tool (vector search + proposal lookup) |
+| `tools.py` | `retrieve_documents` tool (vector search + proposal lookup) and `get_agent_capabilities` tool |
 | `types.py` | Prompt templates, response schemas, agent context type |

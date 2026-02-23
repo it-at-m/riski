@@ -9,6 +9,7 @@ from sqlalchemy.util.typing import TypedDict
 class AgentContext(TypedDict):
     vectorstore: PGVectorStore
     db_sessionmaker: async_sessionmaker
+    agent_capabilities: str
 
 
 NO_RESULTS_RESPONSE: str = json.dumps(
@@ -36,6 +37,26 @@ CHECK_DOCUMENT_PROMPT_TEMPLATE: str = (
     "Dokumentname: {doc_name}\n"
     "Dokumentinhalt (Auszug):\n{snippet}\n\n"
     "Ist dieses Dokument relevant für die Anfrage?"
+)
+
+AGENT_CAPABILITIES_PROMPT: str = (
+    "Der RISKI Agent hilft bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen "
+    "aus dem Rats-Informations-System (RIS) der Stadt München.\n\n"
+    "Fähigkeiten:\n"
+    "- Suche nach relevanten Dokumenten und Beschlussvorlagen der Stadtverwaltung, des Stadtrats "
+    "und der Bezirksausschüsse über eine semantische Ähnlichkeitssuche.\n"
+    "- Beantwortung von inhaltlichen Fragen zu Stadtratsanträgen, Beschlüssen, Sitzungsprotokollen "
+    "und anderen öffentlichen Dokumenten aus dem RIS.\n"
+    "- Antworten in der Sprache der jeweiligen Nutzerfrage (Deutsch, Englisch, Französisch u.\u202fa.).\n\n"
+    "Wissensbasis:\n"
+    "- Ausschließlich öffentliche Dokumente der Stadt München aus dem Zeitraum 2020 bis heute "
+    "(aktuelle Legislaturperiode).\n"
+    "- Keine Dokumente aus früheren Legislaturperioden oder externen Quellen.\n\n"
+    "Grenzen:\n"
+    "- Keine statistischen Auswertungen möglich (z.\u202fB. 'Wie viele Dokumente gibt es zum Thema X?').\n"
+    "- Keine Echtzeitdaten oder Informationen außerhalb des RIS.\n"
+    "- Keine allgemeinen Anfragen ohne Bezug zur Münchner Stadtverwaltung, zum Stadtrat "
+    "oder zu den Bezirksausschüssen (z.\u202fB. Code schreiben, Gedichte verfassen, Mathe-Aufgaben lösen)."
 )
 
 
