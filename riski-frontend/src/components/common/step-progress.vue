@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
 import type { ExecutionStep } from "@/types/RiskiAnswer.ts";
+
+import { computed, ref } from "vue";
+
 import ToolResultList from "./ToolResultList.vue";
 
 const props = defineProps<{
@@ -25,8 +27,8 @@ const documentUrlMap = computed(() => {
 
 const hasReasoning = computed(() =>
   props.steps.some((step) =>
-    step.documentChecks?.some((check) => check.reason && check.reason !== ""),
-  ),
+    step.documentChecks?.some((check) => check.reason && check.reason !== "")
+  )
 );
 
 const allChecksFailed = (step: ExecutionStep): boolean => {
@@ -43,14 +45,14 @@ const cloneStep = (step: ExecutionStep): ExecutionStep => ({
   status: step.status,
   toolCalls: step.toolCalls
     ? step.toolCalls.map((toolCall) => ({
-      ...toolCall,
-      result: toolCall.result
-        ? {
-          documents: [...toolCall.result.documents],
-          proposals: [...toolCall.result.proposals],
-        }
-        : undefined,
-    }))
+        ...toolCall,
+        result: toolCall.result
+          ? {
+              documents: [...toolCall.result.documents],
+              proposals: [...toolCall.result.proposals],
+            }
+          : undefined,
+      }))
     : undefined,
   documentChecks: step.documentChecks
     ? step.documentChecks.map((check) => ({ ...check }))
@@ -74,7 +76,9 @@ const mergeStepInto = (target: ExecutionStep, source: ExecutionStep) => {
 
   if (source.toolCalls && source.toolCalls.length > 0) {
     if (!target.toolCalls) target.toolCalls = [];
-    const toolCallMap = new Map(target.toolCalls.map((tool) => [tool.id, tool]));
+    const toolCallMap = new Map(
+      target.toolCalls.map((tool) => [tool.id, tool])
+    );
     for (const tool of source.toolCalls) {
       const existing = toolCallMap.get(tool.id);
       if (existing) {
@@ -91,7 +95,7 @@ const mergeStepInto = (target: ExecutionStep, source: ExecutionStep) => {
   if (source.documentChecks && source.documentChecks.length > 0) {
     if (!target.documentChecks) target.documentChecks = [];
     const docMap = new Map(
-      target.documentChecks.map((check) => [check.name, check]),
+      target.documentChecks.map((check) => [check.name, check])
     );
     for (const check of source.documentChecks) {
       const existing = docMap.get(check.name);
@@ -108,7 +112,10 @@ const mergeStepInto = (target: ExecutionStep, source: ExecutionStep) => {
 
 const visibleSteps = computed(() => {
   const filtered = props.steps.filter(
-    (step) => step.name !== "collect_results" && step.name !== "guard" && step.name !== "tools",
+    (step) =>
+      step.name !== "collect_results" &&
+      step.name !== "guard" &&
+      step.name !== "tools"
   );
 
   const mergedSteps: ExecutionStep[] = [];
@@ -150,9 +157,16 @@ function formatToolName(name: string): string {
 </script>
 
 <template>
-  <div v-if="visibleSteps.length > 0" class="steps-container">
-    <div v-for="step in visibleSteps" :key="step.name" class="step-item"
-      :class="{ 'step-item--zoom': allChecksFailed(step) }">
+  <div
+    v-if="visibleSteps.length > 0"
+    class="steps-container"
+  >
+    <div
+      v-for="step in visibleSteps"
+      :key="step.name"
+      class="step-item"
+      :class="{ 'step-item--zoom': allChecksFailed(step) }"
+    >
       <div class="step-header">
         <span class="step-status-icon">
           <template v-if="step.status === 'running'">⏳</template>
@@ -162,63 +176,127 @@ function formatToolName(name: string): string {
         <span class="step-name">{{
           step.displayName || formatStepName(step.name)
         }}</span>
-        <span v-if="step.status === 'running'" class="step-running-hint">läuft…</span>
+        <span
+          v-if="step.status === 'running'"
+          class="step-running-hint"
+          >läuft…</span
+        >
       </div>
 
-      <div v-if="step.toolCalls && step.toolCalls.length > 0" class="step-tools">
-        <div v-for="tool in step.toolCalls" :key="tool.id" class="tool-call">
+      <div
+        v-if="step.toolCalls && step.toolCalls.length > 0"
+        class="step-tools"
+      >
+        <div
+          v-for="tool in step.toolCalls"
+          :key="tool.id"
+          class="tool-call"
+        >
           <div class="tool-summary">
             <span class="tool-status-icon">
               <template v-if="tool.status === 'running'">🔄</template>
               <template v-else>✔️</template>
             </span>
             {{ formatToolName(tool.name) }}
-            <span v-if="tool.args" class="tool-args">– „{{ tool.args }}"</span>
+            <span
+              v-if="tool.args"
+              class="tool-args"
+              >– „{{ tool.args }}"</span
+            >
           </div>
 
           <!-- Show retrieved documents & proposals from tool result (live) -->
           <ToolResultList
-            v-if="tool.result && ((tool.result.proposals && tool.result.proposals.length > 0) || (tool.result.documents && tool.result.documents.length > 0))"
-            :result="tool.result" />
+            v-if="
+              tool.result &&
+              ((tool.result.proposals && tool.result.proposals.length > 0) ||
+                (tool.result.documents && tool.result.documents.length > 0))
+            "
+            :result="tool.result"
+          />
         </div>
       </div>
 
       <!-- Per-document relevance checks (guard step) -->
-      <div v-if="step.documentChecks && step.documentChecks.length > 0" class="step-doc-checks">
+      <div
+        v-if="step.documentChecks && step.documentChecks.length > 0"
+        class="step-doc-checks"
+      >
         <div class="doc-checks-header-row">
           <span class="doc-checks-title">Dokumentprüfung</span>
-          <button v-if="hasReasoning" type="button" class="doc-checks-toggle" @click="showReasons = !showReasons">
+          <button
+            v-if="hasReasoning"
+            type="button"
+            class="doc-checks-toggle"
+            @click="showReasons = !showReasons"
+          >
             {{ showReasons ? "Begründung ausblenden" : "Begründung anzeigen" }}
           </button>
         </div>
-        <div class="doc-checks-grid" role="table">
-          <div class="doc-checks-header" role="row">
-            <div class="doc-checks-cell doc-checks-label" role="columnheader">
+        <div
+          class="doc-checks-grid"
+          role="table"
+        >
+          <div
+            class="doc-checks-header"
+            role="row"
+          >
+            <div
+              class="doc-checks-cell doc-checks-label"
+              role="columnheader"
+            >
               Dokument
             </div>
-            <div class="doc-checks-cell doc-checks-label" role="columnheader">
+            <div
+              class="doc-checks-cell doc-checks-label"
+              role="columnheader"
+            >
               Relevant
             </div>
-            <div v-if="showReasons" class="doc-checks-cell doc-checks-label" role="columnheader">
+            <div
+              v-if="showReasons"
+              class="doc-checks-cell doc-checks-label"
+              role="columnheader"
+            >
               Begründung
             </div>
           </div>
-          <div v-for="(check, ci) in step.documentChecks" :key="ci" class="doc-checks-row" role="row">
-            <div class="doc-checks-cell doc-check-name" role="cell">
-              <a v-if="resolveDocUrl(check.name)" :href="resolveDocUrl(check.name)" target="_blank"
-                rel="noopener noreferrer" class="doc-check-link">
+          <div
+            v-for="(check, ci) in step.documentChecks"
+            :key="ci"
+            class="doc-checks-row"
+            role="row"
+          >
+            <div
+              class="doc-checks-cell doc-check-name"
+              role="cell"
+            >
+              <a
+                v-if="resolveDocUrl(check.name)"
+                :href="resolveDocUrl(check.name)"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="doc-check-link"
+              >
                 {{ check.name }}
               </a>
               <span v-else>{{ check.name }}</span>
             </div>
-            <div class="doc-checks-cell doc-check-status" role="cell">
+            <div
+              class="doc-checks-cell doc-check-status"
+              role="cell"
+            >
               <span class="doc-check-icon">
                 <template v-if="check.relevant">✅</template>
                 <template v-else>❌</template>
               </span>
               <span>{{ check.relevant ? "Ja" : "Nein" }}</span>
             </div>
-            <div v-if="showReasons" class="doc-checks-cell doc-check-reason" role="cell">
+            <div
+              v-if="showReasons"
+              class="doc-checks-cell doc-check-reason"
+              role="cell"
+            >
               {{ check.reason || "–" }}
             </div>
           </div>
@@ -241,7 +319,9 @@ function formatToolName(name: string): string {
   background-color: #f9f9f9;
   border: 1px solid #eee;
   border-radius: 6px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .step-item--zoom {
@@ -274,7 +354,6 @@ function formatToolName(name: string): string {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;
@@ -350,7 +429,10 @@ function formatToolName(name: string): string {
 .doc-checks-header,
 .doc-checks-row {
   display: grid;
-  grid-template-columns: minmax(140px, 2fr) minmax(80px, 0.7fr) minmax(140px, 2fr);
+  grid-template-columns: minmax(140px, 2fr) minmax(80px, 0.7fr) minmax(
+      140px,
+      2fr
+    );
   align-items: center;
   gap: 6px;
   padding: 3px 6px;

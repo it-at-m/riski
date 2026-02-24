@@ -24,8 +24,20 @@ watch(
 </script>
 
 <template>
-  <form role="search" @submit.prevent="submitQuery(searchquery)" aria-label="RIS KI Suche">
-    <riski-search-input :id="id" v-model="searchquery" placeholder="Frage eingeben" suffix-icon="search" type="text"
-      aria-label="Frage eingeben" @suffix-click="submitQuery(searchquery)" @clear="onClear()" />
+  <form
+    role="search"
+    @submit.prevent="submitQuery(searchquery)"
+    aria-label="RIS KI Suche"
+  >
+    <riski-search-input
+      :id="id"
+      v-model="searchquery"
+      placeholder="Frage eingeben"
+      suffix-icon="search"
+      type="text"
+      aria-label="Frage eingeben"
+      @suffix-click="submitQuery(searchquery)"
+      @clear="onClear()"
+    />
   </form>
 </template>
