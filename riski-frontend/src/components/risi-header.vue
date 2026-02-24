@@ -25,6 +25,14 @@ import logo from "@/assets/mde-Logo_Sonne.svg";
           </div>
         </div>
       </div>
+      <div class="navbar-fullsize flex-shrink-0 d-flex ">
+        <div class="container sticky-nav d-flex justify-content-between">
+          <div class="d-flex text-white align-self-auto" style="height:38px;">
+            <div id="idc" hidden="" data-wicket-placeholder=""></div>
+            <div class="align-middle align-self-center"></div>
+          </div>
+        </div>
+      </div>
     </a>
   </header>
 </template>
