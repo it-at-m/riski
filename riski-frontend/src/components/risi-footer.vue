@@ -6,9 +6,9 @@
         <div class="row justify-content-between">
           <div class="col-12 col-md-6 col-lg-auto text-center text-lg-left">
             <ul class="footer-link-list list-group list-group-horizontal-lg list-group-flush list-unstyled">
-              <!-- TODO: Kontakt, Impressum & Barrierefreiheit korrekt hinterlegen -->
+              <!-- TODO: Kontakt & Barrierefreiheit korrekt hinterlegen -->
               <li><a target="_blank" rel="noopener" href="https://risi.muenchen.de/risi/service/kontakt">Kontakt</a></li>
-              <li><a href="./impressum">Impressum &amp; Datenschutz</a></li>
+              <li><a target="_blank" rel="noopener" href="https://risi.muenchen.de/risi/service/impressum">Impressum &amp; Datenschutz</a></li>
               <li><a href="./barrierefreiheit">Erklärung zur Barrierefreiheit</a></li>
             </ul>
           </div>
