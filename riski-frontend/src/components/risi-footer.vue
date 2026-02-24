@@ -1,5 +1,5 @@
 <template>
-  <footer class="header-sticky">
+  <footer>
     <div class="footer-bottom-fullsize flex-shrink-0">
       <div class="container" style="padding-top: 8px; padding-bottom:8px; ">
         <div class="row justify-content-between">
