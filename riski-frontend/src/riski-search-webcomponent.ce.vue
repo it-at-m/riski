@@ -203,10 +203,15 @@ const submitQuery = (query: string) => {
 </template>
 
 <style>
+@import url("https://assets.muenchen.de/mde/1.1.15/css/style.css");
 @import "@muenchen/muc-patternlab-vue/assets/css/custom-style.css";
 @import "@muenchen/muc-patternlab-vue/style.css";
 @import "@muenchen/muc-patternlab-vue/muc-patternlab-vue.css";
 @import "@/assets/bootstrap-risi.min.css";
+
+:host {
+  font-family: 'Open Sans', Arial, sans-serif;
+}
 
 .heading {
   margin-bottom: 0.5em;

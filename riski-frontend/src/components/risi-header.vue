@@ -34,12 +34,6 @@ import logo from "@/assets/mde-Logo_Sonne.svg";
 </template>
 
 <style scoped>
-@import "/fonts/fonts.css";
-
-:host {
-  font-family: 'Open Sans', Arial, sans-serif;
-}
-
 /* minimal local tweaks, global colors/fonts come from bootstrap-risi.css */
 .header-sticky {
   position: sticky;
