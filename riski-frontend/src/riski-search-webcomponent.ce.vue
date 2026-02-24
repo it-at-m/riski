@@ -4,12 +4,14 @@ import type RiskiAnswer from "@/types/RiskiAnswer";
 import { MucCallout } from "@muenchen/muc-patternlab-vue";
 import customIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/custom-icons.svg?raw";
 import mucIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/muc-icons.svg?raw";
-import { onMounted, nextTick, ref } from "vue";
+import { onMounted, nextTick, ref, defineCustomElement } from "vue";
 
 import SearchService from "@/api/SearchService";
 import SystemClient from "@/api/SystemClient";
 import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
+
+import RisiHeader from '@/components/risi-header.vue';
 import riskiIntro from "@/components/riski-intro.vue";
 import riskiOutro from "@/components/riski-outro.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
@@ -114,6 +116,7 @@ const submitQuery = (query: string) => {
 
 <template>
   <link href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css" rel="stylesheet" />
+  <risi-header />
   <main>
     <div>
       <div v-html="mucIconsSprite" />
@@ -201,6 +204,7 @@ const submitQuery = (query: string) => {
 @import "@muenchen/muc-patternlab-vue/assets/css/custom-style.css";
 @import "@muenchen/muc-patternlab-vue/style.css";
 @import "@muenchen/muc-patternlab-vue/muc-patternlab-vue.css";
+@import "@/assets/bootstrap-risi.min.css";
 
 .heading {
   margin-bottom: 0.5em;
