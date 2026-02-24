@@ -193,9 +193,9 @@ function fileSizeAsString(fileSize: number) {
   </div>
   <br />
   <div v-if="hasData" class="data-section">
-    <h3 class="m-dataset-item__headline headline">Daten</h3>
+    <h2 class="m-dataset-item__headline headline">Daten</h2>
     <div v-if="proposals.length > 0" class="source-section">
-      <h4 class="source-subheading">Anträge</h4>
+      <h3 class="source-subheading">Anträge</h3>
       <ul class="source-list">
         <li v-for="proposal in proposals" :key="proposal.identifier" class="source-item">
           <div class="source-item-content">
@@ -215,7 +215,7 @@ function fileSizeAsString(fileSize: number) {
       </ul>
     </div>
     <div v-if="documents.length > 0" class="source-section">
-      <h4 class="source-subheading">Dokumente</h4>
+      <h3 class="source-subheading">Dokumente</h3>
       <ul class="source-list">
         <li v-for="document in documents" :key="document.risUrl" class="source-item">
           <div class="source-item-content">
