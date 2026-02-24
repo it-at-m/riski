@@ -4,7 +4,7 @@ import type RiskiAnswer from "@/types/RiskiAnswer";
 import { MucCallout } from "@muenchen/muc-patternlab-vue";
 import customIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/custom-icons.svg?raw";
 import mucIconsSprite from "@muenchen/muc-patternlab-vue/assets/icons/muc-icons.svg?raw";
-import { onMounted, nextTick, ref, defineCustomElement } from "vue";
+import { onMounted, nextTick, ref } from "vue";
 
 import SearchService from "@/api/SearchService";
 import SystemClient from "@/api/SystemClient";
@@ -12,6 +12,7 @@ import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
 
 import RisiHeader from '@/components/risi-header.vue';
+import RisiFooter from '@/components/risi-footer.vue';
 import riskiIntro from "@/components/riski-intro.vue";
 import riskiOutro from "@/components/riski-outro.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
@@ -198,6 +199,7 @@ const submitQuery = (query: string) => {
       <riski-outro :version="version" :frontend-version="frontendVersion" :documentation-url="documentationUrl" />
     </div>
   </main>
+  <risi-footer />
 </template>
 
 <style>
