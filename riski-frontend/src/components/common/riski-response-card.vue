@@ -240,7 +240,7 @@ function fileSizeAsString(fileSize: number) {
   <br />
   <div v-if="hasProgress" class="progress-section">
     <div class="progress-header">
-      <h3 class="m-dataset-item__headline headline">Recherchefortschritt</h3>
+      <h2 class="m-dataset-item__headline headline">Recherchefortschritt</h2>
       <button class="progress-toggle" type="button" @click="showStepDetails = !showStepDetails">
         {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
       </button>
