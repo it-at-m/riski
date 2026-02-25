@@ -1,6 +1,6 @@
 [project]
 name = "extractor"
-version = "0.0.5"
+version = "0.0.9"
 description = "Python application for extracting information from munich's political information system RIS"
 readme = "README.md"
 requires-python = "==3.13.9"

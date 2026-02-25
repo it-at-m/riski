@@ -39,7 +39,7 @@ def pytest_addoption(parser):
 def engine(pytestconfig):
     db_url = pytestconfig.getoption("--db-url")
     if not db_url:
-        DB_URL = config.test.database_url
+        DB_URL = config.core.testdb.database_url
         if DB_URL:
             db_url = str(DB_URL)
     engine = create_engine(db_url, echo=True)

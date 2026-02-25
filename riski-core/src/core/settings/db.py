@@ -17,9 +17,7 @@ class DatabaseSettings(BaseModel):
         description="Postgres username",
         default="postgres",
     )
-    password: SecretStr = Field(
-        description="Postgres password",
-    )
+    password: SecretStr = Field(description="Postgres password", default=SecretStr("password"))
     hostname: str = Field(
         description="Postgres host",
         default="localhost",
@@ -46,7 +44,7 @@ class DatabaseSettings(BaseModel):
             # use psycopg version 3
             scheme="postgresql+psycopg",
             username=self.user,
-            password=quote(self.password.get_secret_value()),
+            password=quote(self.password.get_secret_value(), safe=""),
             host=self.hostname,
             port=self.port,
             path=self.name,
@@ -61,7 +59,7 @@ class DatabaseSettings(BaseModel):
             # use asyncpg
             scheme="postgresql+asyncpg",
             username=self.user,
-            password=quote(self.password.get_secret_value()),
+            password=quote(self.password.get_secret_value(), safe=""),
             host=self.hostname,
             port=self.port,
             path=self.name,

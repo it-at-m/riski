@@ -143,7 +143,7 @@ wheels = [
 
 [[package]]
 name = "core"
-version = "0.1.2"
+version = "0.1.4"
 source = { directory = "../riski-core" }
 dependencies = [
     { name = "langchain-openai" },
@@ -258,7 +258,7 @@ wheels = [
 
 [[package]]
 name = "document-pipeline"
-version = "0.1.4"
+version = "0.1.8"
 source = { virtual = "." }
 dependencies = [
     { name = "core" },
