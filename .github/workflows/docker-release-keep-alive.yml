@@ -5,7 +5,7 @@ permissions:
 on:
   push:
     tags:
-      - "keepalive-*" # Triggers only on extractor tags
+      - "keepalive-*" # Triggers only on kepalive tags
   workflow_dispatch: # Allows manual triggering of the workflow
     inputs:
       tag:
@@ -14,7 +14,7 @@ on:
         default: "keepalive-latest"
 
 jobs:
-  build-and-push-extractor:
+  build-and-push-kepalive:
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -49,7 +49,7 @@ jobs:
           if [[ "$FULL_TAG" =~ ^keepalive-(.+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
           else
-            echo "Error: Tag must start with 'extractor-'"
+            echo "Error: Tag must start with 'kepalive-'"
             exit 1
           fi
 
