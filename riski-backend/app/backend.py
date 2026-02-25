@@ -31,6 +31,7 @@ def create_app() -> FastAPI:
             echo=True,
             pool_timeout=10,
             connect_args={"timeout": 30},
+            pool_pre_ping=True,
         )
 
         db_sessionmaker: async_sessionmaker[AsyncSession] = async_sessionmaker(
