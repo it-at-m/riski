@@ -1,9 +1,9 @@
 import json
+from typing import TypedDict
 
 from langchain_postgres import PGVectorStore
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.util.typing import TypedDict
 
 
 class AgentContext(TypedDict):
