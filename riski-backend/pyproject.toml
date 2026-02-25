@@ -1,7 +1,7 @@
 [project]
 name = "riski-backend"
 license = "MIT"
-version = "0.3.9"
+version = "0.4.3"
 description = "Python backend for finding information in munich's political information system RIS"
 readme = "README.md"
 requires-python = "==3.13.9"
