@@ -35,37 +35,13 @@ import logo from "@/assets/mde-Logo_Sonne.svg";
 
 <style scoped>
 /* minimal local tweaks, global colors/fonts come from bootstrap-risi.css */
-.header-sticky {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  background-color: var(--color-white, #fff);
-  /* fallback if variable missing */
-}
-
 .header-link,
 .header-link:hover {
   text-decoration: none;
 }
 
-.header-big {
-  font-weight: bold;
-  font-size: 1.25rem;
-  /* match RIS */
-}
-
-.header-small {
-  font-size: 0.875rem;
-  /* match RIS */
-  line-height: 1;
-}
-
 .row {
   padding-left: 20%;
   padding-right: 20%;
-}
-
-.ml-3 {
-  margin-left: 1rem;
 }
 </style>
