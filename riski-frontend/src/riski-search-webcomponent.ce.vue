@@ -10,6 +10,9 @@ import SearchService from "@/api/SearchService";
 import SystemClient from "@/api/SystemClient";
 import riskiIconsSprite from "@/assets/custom-icons.svg?raw";
 import RiskiResponseCard from "@/components/common/riski-response-card.vue";
+
+import RisiHeader from '@/components/risi-header.vue';
+import RisiFooter from '@/components/risi-footer.vue';
 import riskiIntro from "@/components/riski-intro.vue";
 import riskiOutro from "@/components/riski-outro.vue";
 import riskiSearchbar from "@/components/riski-searchbar.vue";
@@ -114,6 +117,7 @@ const submitQuery = (query: string) => {
 
 <template>
   <link href="https://assets.muenchen.de/mde/1.0.6/css/muenchende-style.css" rel="stylesheet" />
+  <risi-header />
   <main>
     <div>
       <div v-html="mucIconsSprite" />
@@ -195,12 +199,19 @@ const submitQuery = (query: string) => {
       <riski-outro :version="version" :frontend-version="frontendVersion" :documentation-url="documentationUrl" />
     </div>
   </main>
+  <risi-footer />
 </template>
 
 <style>
+@import url("https://assets.muenchen.de/mde/1.1.15/css/style.css");
 @import "@muenchen/muc-patternlab-vue/assets/css/custom-style.css";
 @import "@muenchen/muc-patternlab-vue/style.css";
 @import "@muenchen/muc-patternlab-vue/muc-patternlab-vue.css";
+@import "@/assets/bootstrap-risi.min.css";
+
+:host {
+  font-family: 'Open Sans', Arial, sans-serif;
+}
 
 .heading {
   margin-bottom: 0.5em;
