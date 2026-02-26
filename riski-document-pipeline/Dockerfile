@@ -28,6 +28,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY riski-document-pipeline /app/document-pipeline/
 COPY riski-core /app/riski-core/
 
+# Copy the tiktoken cache to make encoding files available offline
+COPY riski-document-pipeline/tiktoken_cache /app/document-pipeline/tiktoken_cache
+
 # Install the project
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev --locked
@@ -54,6 +57,9 @@ RUN chown -R root:0 /app && chmod -R g=u /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/document-pipeline/.venv/bin:$PATH"
+
+# Ensure tiktoken uses the bundled cache (avoid network fetches)
+ENV TIKTOKEN_CACHE_DIR=/app/document-pipeline/tiktoken_cache
 
 # Disable tqdm for cleaner logs
 ENV TQDM_DISABLE=1

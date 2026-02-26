@@ -317,7 +317,7 @@ wheels = [
 
 [[package]]
 name = "core"
-version = "0.1.2"
+version = "0.1.4"
 source = { directory = "../riski-core" }
 dependencies = [
     { name = "langchain-openai" },
@@ -562,7 +562,7 @@ wheels = [
 
 [[package]]
 name = "extractor"
-version = "0.0.5"
+version = "0.0.9"
 source = { editable = "." }
 dependencies = [
     { name = "bs4" },

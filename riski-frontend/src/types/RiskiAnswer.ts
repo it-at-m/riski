@@ -37,6 +37,8 @@ export interface ErrorInfo {
   errorType: string;
   /** Human-readable message (German) suitable for display */
   message: string;
+  /** LLM-generated alternative search query suggestions */
+  suggestions?: string[];
   /** Optional extra context (e.g. rejection reasons per document) */
   details?: Record<string, unknown>;
 }

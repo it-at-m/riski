@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 class AgentContext(TypedDict):
     vectorstore: PGVectorStore
     db_sessionmaker: async_sessionmaker
+    agent_capabilities: str
 
 
 NO_RESULTS_RESPONSE: str = json.dumps(
@@ -38,11 +39,37 @@ CHECK_DOCUMENT_PROMPT_TEMPLATE: str = (
     "Ist dieses Dokument relevant für die Anfrage?"
 )
 
+AGENT_CAPABILITIES_PROMPT: str = (
+    "Der RISKI Agent hilft bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen "
+    "aus dem Rats-Informations-System (RIS) der Stadt München.\n\n"
+    "Fähigkeiten:\n"
+    "- Suche nach relevanten Dokumenten und Beschlussvorlagen der Stadtverwaltung, des Stadtrats "
+    "und der Bezirksausschüsse über eine semantische Ähnlichkeitssuche.\n"
+    "- Beantwortung von inhaltlichen Fragen zu Stadtratsanträgen, Beschlüssen, Sitzungsprotokollen "
+    "und anderen öffentlichen Dokumenten aus dem RIS.\n"
+    "- Antworten in der Sprache der jeweiligen Nutzerfrage (Deutsch, Englisch, Französisch u.\u202fa.).\n\n"
+    "Wissensbasis:\n"
+    "- Ausschließlich öffentliche Dokumente der Stadt München aus dem Zeitraum 2020 bis heute "
+    "(aktuelle Legislaturperiode).\n"
+    "- Keine Dokumente aus früheren Legislaturperioden oder externen Quellen.\n\n"
+    "Grenzen:\n"
+    "- Keine statistischen Auswertungen möglich (z.\u202fB. 'Wie viele Dokumente gibt es zum Thema X?').\n"
+    "- Keine Echtzeitdaten oder Informationen außerhalb des RIS.\n"
+    "- Keine allgemeinen Anfragen ohne Bezug zur Münchner Stadtverwaltung, zum Stadtrat "
+    "oder zu den Bezirksausschüssen (z.\u202fB. Code schreiben, Gedichte verfassen, Mathe-Aufgaben lösen)."
+)
+
 
 class DocumentReference(BaseModel):
     name: str = Field(description="The name or title of the document.")
     risUrl: str = Field(description="The URL of the document in the RIS system.")
-    size: int = Field(default=0, description="The file size in bytes.")
+    size: int = Field(
+        default=0,
+        description=(
+            "File size in bytes. Copy the value from the document's metadata 'size' field. "
+            "Use 0 if the metadata does not contain a 'size' entry. Do NOT invent a value."
+        ),
+    )
     identifier: str = Field(default="", description="An optional identifier for the document.")
 
 
@@ -63,3 +90,17 @@ class DocumentRelevanceVerdict(BaseModel):
 
     relevant: bool = Field(description="True if the document is relevant to the user's query.")
     reason: str = Field(description="Brief reason for the relevance decision (1-2 sentences, in German).")
+
+
+class SuggestionsResponse(BaseModel):
+    """LLM-generated alternative search query suggestions."""
+
+    suggestions: list[str] = Field(
+        description=(
+            "2 to 3 alternative, more specific search queries or reformulations that are "
+            "likely to find relevant documents in the Munich RIS. Each entry is a short, "
+            "self-contained search phrase in the same language as the original query."
+        ),
+        min_length=0,
+        max_length=3,
+    )

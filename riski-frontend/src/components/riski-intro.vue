@@ -5,7 +5,10 @@ defineProps<{
 </script>
 
 <template>
-  <div class="m-intro m-intro-static-image" style="background-color: var(--color-neutrals-blue-xlight)">
+  <div
+    class="m-intro pt-4 m-intro-static-image"
+    style="background-color: var(--color-neutrals-blue-xlight)"
+  >
     <div class="container">
       <div class="muc-intro-content padded-intro">
         <h1 class="m-intro-vertical__title">{{ title }}</h1>
@@ -55,6 +58,5 @@ defineProps<{
 .m-intro-static-image {
   padding-bottom: 0;
   margin-bottom: 0;
-  padding-top: 0;
 }
 </style>
