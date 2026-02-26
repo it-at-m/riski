@@ -206,7 +206,7 @@ function formatToolName(name: string): string {
           </div>
 
           <!-- Show retrieved documents & proposals from tool result (live) -->
-          <ToolResultList
+          <tool-result-list
             v-if="
               tool.result &&
               ((tool.result.proposals && tool.result.proposals.length > 0) ||

@@ -13,7 +13,7 @@ function toggle() {
   isOpen.value = !isOpen.value;
 }
 
-function truncate(text: string, maxLength: number = 60): string {
+function truncate(text: string, maxLength = 60): string {
   return text.length > maxLength ? text.slice(0, maxLength) + "…" : text;
 }
 </script>
@@ -21,9 +21,9 @@ function truncate(text: string, maxLength: number = 60): string {
 <template>
   <div class="tool-results">
     <button
-      @click="toggle"
       class="toggle-button"
       type="button"
+      @click="toggle"
     >
       <span class="toggle-icon">{{ isOpen ? "▼" : "▶" }}</span>
       <span class="summary-text">

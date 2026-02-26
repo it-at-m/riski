@@ -28,7 +28,10 @@ type AnswerUpdateCallback = (answer: RiskiAnswer) => void;
 
 // -- Extract assistant text from AG-UI messages -------------------------------
 
-type TextFragment = { type: string; text?: unknown };
+interface TextFragment {
+  type: string;
+  text?: unknown;
+}
 
 const isTextFragment = (v: unknown): v is TextFragment =>
   typeof v === "object" &&

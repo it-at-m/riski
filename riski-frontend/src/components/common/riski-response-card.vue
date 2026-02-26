@@ -175,7 +175,7 @@ function fileSizeAsString(fileSize: number) {
           "
           class="error-suggestions"
         >
-          <p class="error-suggestions-label">Vielleicht meinen Sie:</p>
+          <p class="error-suggestions-label">Alternative Suchvorschläge:</p>
           <ul
             class="suggestion-chips"
             role="list"
@@ -212,11 +212,11 @@ function fileSizeAsString(fileSize: number) {
         v-if="aiResponse && !isStreaming"
         class="copy-button"
         :class="{ 'copy-success': copySuccess }"
-        @click="copyAnswer"
         :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'"
         :title="
           copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
         "
+        @click="copyAnswer"
       >
         <svg
           v-if="!copySuccess"
@@ -397,7 +397,7 @@ function fileSizeAsString(fileSize: number) {
       v-if="showStepDetails"
       class="progress-details"
     >
-      <StepProgress :steps="visibleSteps" />
+      <step-progress :steps="visibleSteps" />
     </div>
   </div>
 </template>
