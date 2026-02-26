@@ -295,18 +295,54 @@ def build_guard_nodes(
         page_content: str = doc.get("page_content", "")
         snippet = page_content[:snippet_size]
 
-        if isinstance(check_document_prompt_template, TextPromptClient):
-            check_prompt = check_document_prompt_template.compile(
-                user_query=user_query,
-                doc_name=doc_name,
-                snippet=snippet,
+        try:
+            if isinstance(check_document_prompt_template, TextPromptClient):
+                check_prompt_raw = check_document_prompt_template.compile(
+                    user_query=user_query,
+                    doc_name=doc_name,
+                    snippet=snippet,
+                )
+            else:
+                check_prompt_raw = check_document_prompt_template.format(
+                    user_query=user_query,
+                    doc_name=doc_name,
+                    snippet=snippet,
+                )
+        except Exception:
+            logger.error(
+                "check_document: Failed to compile prompt for doc '%s' (id=%s). Template type: %s. user_query=%r, snippet_len=%d",
+                doc_name,
+                doc_id,
+                type(check_document_prompt_template).__name__,
+                user_query,
+                len(snippet),
+                exc_info=True,
             )
-        else:
-            check_prompt = check_document_prompt_template.format(
-                user_query=user_query,
-                doc_name=doc_name,
-                snippet=snippet,
+            return {
+                "tracked_documents": [
+                    RelevanceUpdate(
+                        doc_id=doc_id, is_relevant=True, reason="Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten."
+                    )
+                ]
+            }
+
+        if not isinstance(check_prompt_raw, str):
+            logger.error(
+                "check_document: Prompt compilation returned unexpected type %s for doc '%s' (id=%s). repr: %r. Template type: %s.",
+                type(check_prompt_raw).__name__,
+                doc_name,
+                doc_id,
+                check_prompt_raw,
+                type(check_document_prompt_template).__name__,
             )
+            return {
+                "tracked_documents": [
+                    RelevanceUpdate(
+                        doc_id=doc_id, is_relevant=True, reason="Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten."
+                    )
+                ]
+            }
+        check_prompt: str = check_prompt_raw
 
         relevance_model = chat_model.with_structured_output(DocumentRelevanceVerdict)
         try:
@@ -319,14 +355,34 @@ def build_guard_nodes(
             if isinstance(verdict_raw, DocumentRelevanceVerdict):
                 verdict = verdict_raw
             elif isinstance(verdict_raw, dict):
+                logger.debug(
+                    "check_document: verdict_raw was dict (not DocumentRelevanceVerdict) for doc '%s' (id=%s): %r",
+                    doc_name,
+                    doc_id,
+                    verdict_raw,
+                )
                 verdict = DocumentRelevanceVerdict(
                     relevant=bool(verdict_raw.get("relevant", True)),
                     reason=str(verdict_raw.get("reason", "Prüfung nicht eindeutig.")),
                 )
             else:
+                logger.warning(
+                    "check_document: Unexpected verdict_raw type %s for doc '%s' (id=%s): %r. Assuming relevant.",
+                    type(verdict_raw).__name__,
+                    doc_name,
+                    doc_id,
+                    verdict_raw,
+                )
                 verdict = DocumentRelevanceVerdict(relevant=True, reason="Prüfung nicht eindeutig.")
-        except Exception:
-            logger.warning("Guard: LLM relevance check failed for doc %s, assuming relevant.", doc_id, exc_info=True)
+        except Exception as exc:
+            logger.error(
+                "check_document: LLM relevance check failed for doc '%s' (id=%s). Exception type: %s, repr: %r. Assuming relevant.",
+                doc_name,
+                doc_id,
+                type(exc).__name__,
+                exc,
+                exc_info=True,
+            )
             verdict = DocumentRelevanceVerdict(relevant=True, reason="Prüfung fehlgeschlagen, Dokument wird beibehalten.")
 
         if verdict.relevant:

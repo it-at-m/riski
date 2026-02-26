@@ -128,5 +128,8 @@ async def build_agent(
                 "agent_capabilities": agent_capabilities,
             },
             "callbacks": callbacks,
+            # Cap parallel check_document fan-out branches to avoid overwhelming
+            # the LLM API with too many concurrent requests.
+            "max_concurrency": settings.check_document_max_concurrency,
         },
     )
