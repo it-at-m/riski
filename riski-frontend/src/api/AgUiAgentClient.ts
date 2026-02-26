@@ -110,6 +110,8 @@ const mapProposal = (raw: Record<string, unknown>): Proposal => {
     name: pickString(m?.title, m?.name, raw.title, raw.name) || "",
     identifier: pickString(m?.identifier, m?.id, raw.identifier, raw.id),
     risUrl: pickString(m?.risUrl, m?.source, raw.risUrl, raw.source),
+    subject: typeof raw.subject === "string" ? raw.subject : "",
+    date: typeof raw.date === "string" ? raw.date : null,
   };
 };
 
@@ -219,6 +221,8 @@ interface TrackedDocumentSnapshot {
 interface TrackedProposalSnapshot {
   identifier: string;
   name: string;
+  subject: string;
+  date: string | null;
   risUrl: string;
 }
 
@@ -436,17 +440,25 @@ export default class AgUiAgentClient {
                 doc.id
               ) || "Dokument";
 
+            const docUrl = pickString(
+              (doc.metadata as Record<string, unknown>)?.id,
+              (doc.metadata as Record<string, unknown>)?.risUrl,
+              (doc.metadata as Record<string, unknown>)?.source
+            );
+
             const existing = checkTargetStep.documentChecks.find(
               (c) => c.name === docName
             );
             if (existing) {
               existing.relevant = doc.is_relevant;
               existing.reason = doc.relevance_reason || "";
+              if (docUrl) existing.url = docUrl;
             } else {
               checkTargetStep.documentChecks.push({
                 name: docName,
                 relevant: doc.is_relevant,
                 reason: doc.relevance_reason || "",
+                url: docUrl || undefined,
               });
             }
             latestStatus = `Prüfe: ${docName}…`;

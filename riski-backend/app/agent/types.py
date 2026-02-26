@@ -76,6 +76,8 @@ class DocumentReference(BaseModel):
 class ProposalReference(BaseModel):
     identifier: str = Field(description="The reference identifier of the proposal.")
     name: str = Field(description="The name or title of the proposal.")
+    subject: str = Field(default="", description="The subject or description of the proposal.")
+    date: str | None = Field(default=None, description="The reference date of the proposal in ISO format.")
     risUrl: str = Field(description="The URL of the proposal in the RIS system.")
 
 

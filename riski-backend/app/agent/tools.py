@@ -68,6 +68,8 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
                         proposals_by_key[key] = TrackedProposal(
                             identifier=str(p.reference or ""),
                             name=str(p.name or ""),
+                            subject=str(p.subject or ""),
+                            date=p.date.isoformat() if p.date else None,
                             risUrl=str(p.id or ""),
                             source_document_ids=[file_id],
                         )
