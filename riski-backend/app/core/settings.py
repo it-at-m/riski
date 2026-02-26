@@ -100,6 +100,14 @@ class BackendSettings(AppBaseSettings):
         description="Number of documents to retrieve in corresponding tool",
     )
 
+    check_document_max_concurrency: int = Field(
+        default=1,
+        ge=1,
+        description="Maximum number of check_document fan-out branches that run concurrently. "
+        "Lower values reduce parallel LLM API load at the cost of higher latency.",
+        validation_alias="RISKI_BACKEND__CHECK_DOCUMENT_MAX_CONCURRENCY",
+    )
+
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
         env_file=str(Path(__file__).resolve().parents[3] / ".env"),
