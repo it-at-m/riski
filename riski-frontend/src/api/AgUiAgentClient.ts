@@ -28,7 +28,10 @@ type AnswerUpdateCallback = (answer: RiskiAnswer) => void;
 
 // -- Extract assistant text from AG-UI messages -------------------------------
 
-type TextFragment = { type: string; text?: unknown };
+interface TextFragment {
+  type: string;
+  text?: unknown;
+}
 
 const isTextFragment = (v: unknown): v is TextFragment =>
   typeof v === "object" &&
@@ -107,6 +110,8 @@ const mapProposal = (raw: Record<string, unknown>): Proposal => {
     name: pickString(m?.title, m?.name, raw.title, raw.name) || "",
     identifier: pickString(m?.identifier, m?.id, raw.identifier, raw.id),
     risUrl: pickString(m?.risUrl, m?.source, raw.risUrl, raw.source),
+    subject: typeof raw.subject === "string" ? raw.subject : "",
+    date: typeof raw.date === "string" ? raw.date : null,
   };
 };
 
@@ -186,9 +191,9 @@ const buildAnswer = (
 const statusLabelForStep = (stepName: string): string => {
   const labels: Record<string, string> = {
     model: "Denke nach...",
-    tools: "Verwende Werkzeuge...",
     guard: "Prüfe Ergebnisse...",
     retrieve_documents: "Suche Dokumente...",
+    get_agent_capabilities: "Lade Fähigkeiten...",
   };
   return labels[stepName] ?? `Verarbeite Schritt: ${stepName}`;
 };
@@ -196,6 +201,8 @@ const statusLabelForStep = (stepName: string): string => {
 const displayNameForStep = (stepName: string): string | undefined => {
   if (stepName === "model") return "Denke nach";
   if (stepName === "guard") return "Ergebnisse prüfen";
+  if (stepName === "get_agent_capabilities") return "Fähigkeiten abrufen";
+  if (stepName === "retrieve_documents") return "Dokumente suchen";
   return undefined;
 };
 
@@ -214,6 +221,8 @@ interface TrackedDocumentSnapshot {
 interface TrackedProposalSnapshot {
   identifier: string;
   name: string;
+  subject: string;
+  date: string | null;
   risUrl: string;
 }
 
@@ -226,6 +235,7 @@ interface AgentStateSnapshot {
   error_info?: {
     error_type: string;
     message: string;
+    suggestions?: string[];
     details?: Record<string, unknown>;
   } | null;
 }
@@ -281,6 +291,28 @@ export default class AgUiAgentClient {
     const currentStep = (): ExecutionStep | undefined =>
       steps.find((s) => s.status === "running");
 
+    /** Find the last running synthetic tool step (name = tool name). */
+    const currentToolStep = (): ExecutionStep | undefined =>
+      steps
+        .slice()
+        .reverse()
+        .find(
+          (s) =>
+            s.status === "running" &&
+            (s.name === "retrieve_documents" ||
+              s.name === "get_agent_capabilities")
+        );
+
+    /** Find the most recent retrieve_documents step (any status). */
+    const lastRetrieveStep = (): ExecutionStep | undefined =>
+      steps
+        .slice()
+        .reverse()
+        .find((s) => s.name === "retrieve_documents");
+
+    /** Track toolCallId → synthetic step name so onToolCallEndEvent can find it. */
+    const toolCallStepMap = new Map<string, string>();
+
     // -- AG-UI subscriber -----------------------------------------------------
 
     const subscriber: AgentSubscriber = {
@@ -290,6 +322,7 @@ export default class AgUiAgentClient {
         prevProposals = [];
         prevUserQuery = "";
         latestErrorInfo = undefined;
+        toolCallStepMap.clear();
         emitProgress();
       },
 
@@ -349,7 +382,7 @@ export default class AgUiAgentClient {
         const prevDocIds = new Set(prevDocs.map((d) => d.id));
         const newDocs = docs.filter((d) => d.id && !prevDocIds.has(d.id));
 
-        if (newDocs.length > 0 && step) {
+        if (newDocs.length > 0) {
           const result: ToolCallResult = {
             documents: newDocs.map((d) =>
               mapDocument(d as unknown as Record<string, unknown>)
@@ -359,20 +392,23 @@ export default class AgUiAgentClient {
             ),
           };
 
-          if (!step.toolCalls) step.toolCalls = [];
-          const runningTc = step.toolCalls.find(
-            (tc) => tc.status === "running"
-          );
-          if (runningTc) {
-            runningTc.result = result;
-            runningTc.status = "completed";
-          } else {
-            step.toolCalls.push({
-              id: generateId(),
-              name: "retrieve_documents",
-              status: "completed",
-              result,
-            });
+          // Attach to the running tool step (synthetic), not the model step
+          const toolStep = currentToolStep();
+          if (toolStep) {
+            if (!toolStep.toolCalls) toolStep.toolCalls = [];
+            const runningTc = toolStep.toolCalls.find(
+              (tc) => tc.status === "running"
+            );
+            if (runningTc) {
+              runningTc.result = result;
+            } else {
+              toolStep.toolCalls.push({
+                id: generateId(),
+                name: "retrieve_documents",
+                status: "running",
+                result,
+              });
+            }
           }
           latestStatus = "Dokumente gefunden.";
           changed = true;
@@ -391,8 +427,11 @@ export default class AgUiAgentClient {
 
           if (!relevanceChanged) continue;
 
-          if (step) {
-            if (!step.documentChecks) step.documentChecks = [];
+          // Attach document checks to the retrieve_documents step (may already be completed)
+          const checkTargetStep = lastRetrieveStep() ?? step;
+          if (checkTargetStep) {
+            if (!checkTargetStep.documentChecks)
+              checkTargetStep.documentChecks = [];
 
             const docName =
               pickString(
@@ -401,18 +440,25 @@ export default class AgUiAgentClient {
                 doc.id
               ) || "Dokument";
 
-            // Avoid duplicate entries for the same document in this step
-            const existing = step.documentChecks.find(
+            const docUrl = pickString(
+              (doc.metadata as Record<string, unknown>)?.id,
+              (doc.metadata as Record<string, unknown>)?.risUrl,
+              (doc.metadata as Record<string, unknown>)?.source
+            );
+
+            const existing = checkTargetStep.documentChecks.find(
               (c) => c.name === docName
             );
             if (existing) {
               existing.relevant = doc.is_relevant;
               existing.reason = doc.relevance_reason || "";
+              if (docUrl) existing.url = docUrl;
             } else {
-              step.documentChecks.push({
+              checkTargetStep.documentChecks.push({
                 name: docName,
                 relevant: doc.is_relevant,
                 reason: doc.relevance_reason || "",
+                url: docUrl || undefined,
               });
             }
             latestStatus = `Prüfe: ${docName}…`;
@@ -435,6 +481,9 @@ export default class AgUiAgentClient {
           latestErrorInfo = {
             errorType: ei.error_type,
             message: ei.message,
+            suggestions: Array.isArray(ei.suggestions)
+              ? ei.suggestions
+              : undefined,
             details: ei.details,
           };
           latestStatus = ei.message;
@@ -460,18 +509,68 @@ export default class AgUiAgentClient {
         emitProgress();
       },
 
-      onRunErrorEvent: () => {
+      onRunErrorEvent: ({ event }) => {
         latestStatus = "Fehler aufgetreten.";
         for (const step of steps) {
           if (step.status === "running") step.status = "failed";
+        }
+        if (!latestErrorInfo) {
+          latestErrorInfo = {
+            errorType: "server_error",
+            message:
+              (typeof event.message === "string" && event.message) ||
+              "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+          };
         }
         emitProgress();
       },
 
       // Unused AG-UI lifecycle hooks
       onStateDeltaEvent: () => {},
-      onToolCallStartEvent: () => {},
-      onToolCallEndEvent: () => {},
+      onToolCallStartEvent: ({ event }) => {
+        // Push a synthetic top-level step for the tool so it appears separately
+        const toolStepName = event.toolCallName;
+        toolCallStepMap.set(event.toolCallId, toolStepName);
+        latestStatus = statusLabelForStep(toolStepName);
+        steps.push({
+          name: toolStepName,
+          displayName: displayNameForStep(toolStepName) ?? toolStepName,
+          status: "running",
+          toolCalls: [
+            {
+              id: event.toolCallId,
+              name: toolStepName,
+              status: "running",
+            },
+          ],
+        });
+        emitProgress();
+      },
+      onToolCallEndEvent: ({ event, toolCallArgs }) => {
+        const stepName = toolCallStepMap.get(event.toolCallId);
+        const toolStep = stepName
+          ? steps
+              .slice()
+              .reverse()
+              .find((s) => s.name === stepName && s.status === "running")
+          : undefined;
+        if (toolStep) {
+          // Attach final args to the tool call entry
+          const tc = toolStep.toolCalls?.find((t) => t.id === event.toolCallId);
+          if (tc) {
+            const argsStr =
+              typeof toolCallArgs?.query === "string"
+                ? toolCallArgs.query
+                : Object.keys(toolCallArgs ?? {}).length > 0
+                  ? JSON.stringify(toolCallArgs)
+                  : undefined;
+            if (argsStr) tc.args = argsStr;
+            tc.status = "completed";
+          }
+          toolStep.status = "completed";
+          emitProgress();
+        }
+      },
       onToolCallResultEvent: () => {},
     };
 
@@ -484,12 +583,17 @@ export default class AgUiAgentClient {
       return buildAnswer(responseText, latestStatus, steps, latestErrorInfo);
     } catch (error) {
       console.error("Agent execution failed:", error);
-      return buildAnswer(
-        "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten.",
-        "Fehler",
-        steps,
-        latestErrorInfo
-      );
+      for (const step of steps) {
+        if (step.status === "running") step.status = "failed";
+      }
+      if (!latestErrorInfo) {
+        latestErrorInfo = {
+          errorType: "server_error",
+          message:
+            "Ein Fehler ist bei der Verarbeitung Ihrer Anfrage aufgetreten. Bitte versuchen Sie es später erneut.",
+        };
+      }
+      return buildAnswer("", "Fehler", steps, latestErrorInfo);
     } finally {
       abortController.abort();
     }

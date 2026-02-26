@@ -22,6 +22,8 @@ export interface DocumentCheckResult {
   relevant: boolean;
   /** Short reason for the decision */
   reason: string;
+  /** Optional URL to the document */
+  url?: string;
 }
 
 /**
@@ -37,6 +39,8 @@ export interface ErrorInfo {
   errorType: string;
   /** Human-readable message (German) suitable for display */
   message: string;
+  /** LLM-generated alternative search query suggestions */
+  suggestions?: string[];
   /** Optional extra context (e.g. rejection reasons per document) */
   details?: Record<string, unknown>;
 }

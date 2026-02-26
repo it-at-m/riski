@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
 from .state import TrackedDocument, TrackedProposal
-from .types import AgentContext
+from .types import AGENT_CAPABILITIES_PROMPT, AgentContext
 
 logger: Logger = getLogger()
 
@@ -68,6 +68,8 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
                         proposals_by_key[key] = TrackedProposal(
                             identifier=str(p.reference or ""),
                             name=str(p.name or ""),
+                            subject=str(p.subject or ""),
+                            date=p.date.isoformat() if p.date else None,
                             risUrl=str(p.id or ""),
                             source_document_ids=[file_id],
                         )
@@ -96,13 +98,15 @@ async def retrieve_documents(
         if runtime.context is None:
             vectorstore = config["configurable"]["vectorstore"]
             db_sessionmaker = config["configurable"]["db_sessionmaker"]
+            top_k_docs = config["configurable"]["top_k_docs"]
         else:
             vectorstore = runtime.context["vectorstore"]
             db_sessionmaker = runtime.context["db_sessionmaker"]
+            top_k_docs = runtime.context["top_k_docs"]
             logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
 
         # Step 1: Perform similarity search in the vector store
-        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=5)
+        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=top_k_docs)
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
         if not docs:
@@ -142,3 +146,34 @@ async def retrieve_documents(
     except Exception as e:
         logger.error(f"Error in retrieve_documents tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve documents: {str(e)}")
+
+
+class GetAgentCapabilitiesArgs(BaseModel):
+    """No arguments needed – the tool returns static capability information."""
+
+
+@tool(
+    description=(
+        "Return information about the RISKI agent's current knowledge base, capabilities, and the topics it can answer questions about."
+    ),
+    args_schema=GetAgentCapabilitiesArgs,
+    parse_docstring=False,
+    response_format="content_and_artifact",
+)
+async def get_agent_capabilities(config: RunnableConfig) -> tuple[str, dict]:
+    """
+    Return a description of the agent's knowledge and capabilities.
+
+    The content is sourced from a Langfuse prompt so it can be updated
+    without redeploying the service.  A plain-text fallback is used when
+    the prompt is not available via context.
+    """
+    try:
+        capabilities_text: str = config.get("configurable", {}).get("agent_capabilities", AGENT_CAPABILITIES_PROMPT)
+
+        logger.info("Returning agent capabilities.")
+        artifact: dict = {"capabilities": capabilities_text}
+        return capabilities_text, artifact
+    except Exception as e:
+        logger.error(f"Error in get_agent_capabilities tool: {e}", exc_info=True)
+        raise ToolException(f"Failed to retrieve agent capabilities: {str(e)}")

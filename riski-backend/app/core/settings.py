@@ -67,6 +67,16 @@ class BackendSettings(AppBaseSettings):
         validation_alias="LANGFUSE_CHECK_DOCUMENT_PROMPT_LABEL",
         description="Langfuse check document prompt label",
     )
+    langfuse_agent_capabilities_prompt_name: str = Field(
+        default="agent_capabilities",
+        validation_alias="LANGFUSE_AGENT_CAPABILITIES_PROMPT_NAME",
+        description="Langfuse prompt name for agent capabilities description",
+    )
+    langfuse_agent_capabilities_prompt_label: str = Field(
+        default="production",
+        validation_alias="LANGFUSE_AGENT_CAPABILITIES_PROMPT_LABEL",
+        description="Langfuse prompt label for agent capabilities description",
+    )
 
     # === Agent Settings ===
     checkpointer: "CheckpointerSettings" = Field(
@@ -82,6 +92,12 @@ class BackendSettings(AppBaseSettings):
     server_port: int = Field(
         default=8080,
         description="The port for the riski-backend server to bind to.",
+    )
+
+    top_k_docs: int = Field(
+        default=10,
+        ge=1,
+        description="Number of documents to retrieve in corresponding tool",
     )
 
     model_config = SettingsConfigDict(

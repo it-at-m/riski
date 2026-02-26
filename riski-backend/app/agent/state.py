@@ -3,6 +3,7 @@
 from typing import Annotated, Any, TypedDict
 
 from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
@@ -38,6 +39,8 @@ class TrackedProposal(BaseModel):
 
     identifier: str = Field(default="", description="Reference identifier of the proposal.")
     name: str = Field(default="", description="Name / title of the proposal.")
+    subject: str = Field(default="", description="Subject / description of the proposal.")
+    date: str | None = Field(default=None, description="Reference date of the proposal in ISO format.")
     risUrl: str = Field(default="", description="URL in the RIS system.")
     source_document_ids: list[str] = Field(
         default_factory=list,
@@ -66,6 +69,10 @@ class ErrorInfo(BaseModel):
         )
     )
     message: str = Field(description="Human-readable message (German) suitable for direct display.")
+    suggestions: list[str] = Field(
+        default_factory=list,
+        description="Optional list of alternative search queries suggested by the LLM.",
+    )
     details: dict[str, Any] = Field(
         default_factory=dict,
         description=(
@@ -155,7 +162,7 @@ class RiskiAgentState(BaseModel):
     """
 
     # -- Chat History --
-    messages: list[AnyMessage] = Field(default_factory=list)
+    messages: Annotated[list[AnyMessage], add_messages] = Field(default_factory=list)
 
     # -- Query inputs --
     user_query: str = Field(default="", description="The latest user query.")
