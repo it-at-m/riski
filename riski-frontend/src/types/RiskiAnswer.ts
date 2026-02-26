@@ -22,6 +22,8 @@ export interface DocumentCheckResult {
   relevant: boolean;
   /** Short reason for the decision */
   reason: string;
+  /** Optional URL to the document */
+  url?: string;
 }
 
 /**

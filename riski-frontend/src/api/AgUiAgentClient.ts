@@ -436,17 +436,25 @@ export default class AgUiAgentClient {
                 doc.id
               ) || "Dokument";
 
+            const docUrl = pickString(
+              (doc.metadata as Record<string, unknown>)?.id,
+              (doc.metadata as Record<string, unknown>)?.risUrl,
+              (doc.metadata as Record<string, unknown>)?.source
+            );
+
             const existing = checkTargetStep.documentChecks.find(
               (c) => c.name === docName
             );
             if (existing) {
               existing.relevant = doc.is_relevant;
               existing.reason = doc.relevance_reason || "";
+              if (docUrl) existing.url = docUrl;
             } else {
               checkTargetStep.documentChecks.push({
                 name: docName,
                 relevant: doc.is_relevant,
                 reason: doc.relevance_reason || "",
+                url: docUrl || undefined,
               });
             }
             latestStatus = `Prüfe: ${docName}…`;
