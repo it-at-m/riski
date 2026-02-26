@@ -45,9 +45,9 @@ def run_ocr_for_documents(settings):
                 logger.info("Processed all available documents. (Parsing)")
                 break
 
-            docs_without_content = [doc for doc in docs_to_process if doc.content is not None and doc.text is None]
+            docs_with_content = [doc for doc in docs_to_process if doc.content is not None and doc.text is None]
 
-            for doc in docs_without_content:
+            for doc in docs_with_content:
                 logger.debug(f"Processing doc id={doc.id}")
                 pages_text = []
                 try:
