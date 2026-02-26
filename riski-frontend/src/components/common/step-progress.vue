@@ -63,14 +63,14 @@ const cloneStep = (step: ExecutionStep): ExecutionStep => ({
   status: step.status,
   toolCalls: step.toolCalls
     ? step.toolCalls.map((toolCall) => ({
-      ...toolCall,
-      result: toolCall.result
-        ? {
-          documents: [...toolCall.result.documents],
-          proposals: [...toolCall.result.proposals],
-        }
-        : undefined,
-    }))
+        ...toolCall,
+        result: toolCall.result
+          ? {
+              documents: [...toolCall.result.documents],
+              proposals: [...toolCall.result.proposals],
+            }
+          : undefined,
+      }))
     : undefined,
   documentChecks: step.documentChecks
     ? step.documentChecks.map((check) => ({ ...check }))
@@ -175,9 +175,16 @@ function formatToolName(name: string): string {
 </script>
 
 <template>
-  <div v-if="visibleSteps.length > 0" class="steps-container">
-    <div v-for="step in visibleSteps" :key="step.name" class="step-item"
-      :class="{ 'step-item--zoom': allChecksFailed(step) }">
+  <div
+    v-if="visibleSteps.length > 0"
+    class="steps-container"
+  >
+    <div
+      v-for="step in visibleSteps"
+      :key="step.name"
+      class="step-item"
+      :class="{ 'step-item--zoom': allChecksFailed(step) }"
+    >
       <div class="step-header">
         <span class="step-status-icon">
           <template v-if="step.status === 'running'">⏳</template>
@@ -187,25 +194,43 @@ function formatToolName(name: string): string {
         <span class="step-name">{{
           step.displayName || formatStepName(step.name)
         }}</span>
-        <span v-if="step.status === 'running'" class="step-running-hint">läuft…</span>
+        <span
+          v-if="step.status === 'running'"
+          class="step-running-hint"
+          >läuft…</span
+        >
       </div>
 
-      <div v-if="step.toolCalls && step.toolCalls.length > 0" class="step-tools">
-        <div v-for="tool in step.toolCalls" :key="tool.id" class="tool-call">
+      <div
+        v-if="step.toolCalls && step.toolCalls.length > 0"
+        class="step-tools"
+      >
+        <div
+          v-for="tool in step.toolCalls"
+          :key="tool.id"
+          class="tool-call"
+        >
           <div class="tool-summary">
             <span class="tool-status-icon">
               <template v-if="tool.status === 'running'">🔄</template>
               <template v-else>✔️</template>
             </span>
             {{ formatToolName(tool.name) }}
-            <span v-if="tool.args" class="tool-args">– „{{ tool.args }}"</span>
+            <span
+              v-if="tool.args"
+              class="tool-args"
+              >– „{{ tool.args }}"</span
+            >
           </div>
         </div>
       </div>
 
       <!-- Per-document relevance checks (guard step) -->
-      <document-checks-table v-if="step.documentChecks && step.documentChecks.length > 0"
-        :document-checks="step.documentChecks" :document-url-map="documentCheckUrlMap" />
+      <document-checks-table
+        v-if="step.documentChecks && step.documentChecks.length > 0"
+        :document-checks="step.documentChecks"
+        :document-url-map="documentCheckUrlMap"
+      />
     </div>
   </div>
 </template>
@@ -258,7 +283,6 @@ function formatToolName(name: string): string {
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     opacity: 1;

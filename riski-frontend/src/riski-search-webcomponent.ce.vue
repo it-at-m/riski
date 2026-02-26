@@ -122,11 +122,26 @@ const submitQuery = (query: string) => {
       <div v-html="riskiIconsSprite" />
 
       <riski-intro :title="title">
-        <riski-searchbar id="riski-searchbar" :submit-query="submitQuery" :query="searchquery"
-          :on-clear="resetInitialState" />
-        <ul v-if="initial" class="example-chips" role="list" aria-label="Beispielfragen">
-          <li v-for="question in EXAMPLE_QUESTIONS" :key="question">
-            <button class="example-chip" @click="submitQuery(question)">
+        <riski-searchbar
+          id="riski-searchbar"
+          :submit-query="submitQuery"
+          :query="searchquery"
+          :on-clear="resetInitialState"
+        />
+        <ul
+          v-if="initial"
+          class="example-chips"
+          role="list"
+          aria-label="Beispielfragen"
+        >
+          <li
+            v-for="question in EXAMPLE_QUESTIONS"
+            :key="question"
+          >
+            <button
+              class="example-chip"
+              @click="submitQuery(question)"
+            >
               {{ question }}
             </button>
           </li>
@@ -136,32 +151,46 @@ const submitQuery = (query: string) => {
       <div class="container">
         <div class="m-component__grid">
           <div class="main-body-container">
-            <div ref="resultsArea" role="region" aria-label="Suchergebnisse" :aria-busy="loading">
+            <div
+              ref="resultsArea"
+              role="region"
+              aria-label="Suchergebnisse"
+              :aria-busy="loading"
+            >
               <!-- Accessibility: move aria-live to a small status element so
                    screen readers only announce milestones (e.g. when loading
                    completes) instead of every streaming update. Bind the
                    attribute so it's 'polite' only when loading transitions to
                    false; otherwise keep it 'off'. -->
-              <div class="sr-status" aria-atomic="true" :aria-live="loading ? 'off' : 'polite'" style="
+              <div
+                class="sr-status"
+                aria-atomic="true"
+                :aria-live="loading ? 'off' : 'polite'"
+                style="
                   position: absolute;
                   left: -9999px;
                   width: 1px;
                   height: 1px;
                   overflow: hidden;
-                ">
+                "
+              >
                 <!-- Announce when results are ready -->
                 <span v-if="!loading && found_answer !== undefined">
                   Ergebnisse gefunden
                 </span>
               </div>
-              <div v-if="
-                loading == false &&
-                found_answer == undefined &&
-                initial == false &&
-                fehler == ''
-              ">
+              <div
+                v-if="
+                  loading == false &&
+                  found_answer == undefined &&
+                  initial == false &&
+                  fehler == ''
+                "
+              >
                 <muc-callout type="warning">
-                  <template #header>Wir haben leider keine Antwort gefunden.</template>
+                  <template #header
+                    >Wir haben leider keine Antwort gefunden.</template
+                  >
                   <template #content>
                     Entschuldigung. Für ihre Frage konnte unsere Künstliche
                     Intelligenz leider kein passendes Ergebnis finden.
@@ -171,11 +200,17 @@ const submitQuery = (query: string) => {
                 </muc-callout>
               </div>
               <div v-if="found_answer != undefined || loading">
-                <riski-response-card :riski-answer="found_answer" :is-streaming="loading"
-                  @suggest="submitQuery"></riski-response-card>
+                <riski-response-card
+                  :riski-answer="found_answer"
+                  :is-streaming="loading"
+                  @suggest="submitQuery"
+                ></riski-response-card>
               </div>
               <div v-if="fehler != ''">
-                <muc-callout title="Fehler" type="error">
+                <muc-callout
+                  title="Fehler"
+                  type="error"
+                >
                   <template #header>Ein Fehler ist aufgetreten.</template>
                   <template #content>
                     {{ fehler }}
@@ -184,7 +219,11 @@ const submitQuery = (query: string) => {
               </div>
             </div>
             <div style="height: 48px"></div>
-            <muc-callout title="Disclaimer" type="info" class="heading disclaimer-callout">
+            <muc-callout
+              title="Disclaimer"
+              type="info"
+              class="heading disclaimer-callout"
+            >
               <template #header>Rechtliche Hinweise</template>
               <template #content>
                 Die von diesem System bereitgestellten Informationen dienen als
@@ -199,7 +238,11 @@ const submitQuery = (query: string) => {
           </div>
         </div>
       </div>
-      <riski-outro :version="version" :frontend-version="frontendVersion" :documentation-url="documentationUrl" />
+      <riski-outro
+        :version="version"
+        :frontend-version="frontendVersion"
+        :documentation-url="documentationUrl"
+      />
     </div>
   </main>
   <risi-footer />

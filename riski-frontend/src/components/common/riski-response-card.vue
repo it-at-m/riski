@@ -131,26 +131,51 @@ async function copyAnswer() {
 
 <template>
   <!-- Error state from agent pipeline -->
-  <div v-if="hasError && !isStreaming" class="error-section">
+  <div
+    v-if="hasError && !isStreaming"
+    class="error-section"
+  >
     <div class="error-content">
-      <svg class="error-icon" aria-hidden="true" width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+      <svg
+        class="error-icon"
+        aria-hidden="true"
+        width="18"
+        height="18"
+        viewBox="0 0 16 16"
+        fill="currentColor"
+      >
         <path
-          d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+          d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+        />
+        <path
+          d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"
+        />
       </svg>
       <div>
         <p class="error-heading">{{ errorHeading }}</p>
         <p class="error-hint">{{ errorHint }}</p>
-        <div v-if="
-          errorInfo?.suggestions &&
-          errorInfo.suggestions.length > 0 &&
-          errorInfo.errorType !== 'content_policy_violation' &&
-          errorInfo.errorType !== 'server_error'
-        " class="error-suggestions">
+        <div
+          v-if="
+            errorInfo?.suggestions &&
+            errorInfo.suggestions.length > 0 &&
+            errorInfo.errorType !== 'content_policy_violation' &&
+            errorInfo.errorType !== 'server_error'
+          "
+          class="error-suggestions"
+        >
           <p class="error-suggestions-label">Alternative Suchvorschläge:</p>
-          <ul class="suggestion-chips" role="list">
-            <li v-for="suggestion in errorInfo.suggestions" :key="suggestion">
-              <button class="suggestion-chip" @click="emit('suggest', suggestion)">
+          <ul
+            class="suggestion-chips"
+            role="list"
+          >
+            <li
+              v-for="suggestion in errorInfo.suggestions"
+              :key="suggestion"
+            >
+              <button
+                class="suggestion-chip"
+                @click="emit('suggest', suggestion)"
+              >
                 {{ suggestion }}
               </button>
             </li>
@@ -160,22 +185,53 @@ async function copyAnswer() {
     </div>
   </div>
 
-  <div v-if="!hasError" class="response-section">
+  <div
+    v-if="!hasError"
+    class="response-section"
+  >
     <div class="response-header">
       <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
-      <span v-if="isStreaming" class="answer-status">Wird generiert…</span>
-      <button v-if="aiResponse && !isStreaming" class="copy-button" :class="{ 'copy-success': copySuccess }"
-        :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'" :title="copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
-          " @click="copyAnswer">
-        <svg v-if="!copySuccess" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <span
+        v-if="isStreaming"
+        class="answer-status"
+        >Wird generiert…</span
+      >
+      <button
+        v-if="aiResponse && !isStreaming"
+        class="copy-button"
+        :class="{ 'copy-success': copySuccess }"
+        :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'"
+        :title="
+          copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
+        "
+        @click="copyAnswer"
+      >
+        <svg
+          v-if="!copySuccess"
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+        >
           <path
-            d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6z" />
+            d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6z"
+          />
           <path
-            d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z" />
+            d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"
+          />
         </svg>
-        <svg v-else aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <svg
+          v-else
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+        >
           <path
-            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
+            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"
+          />
         </svg>
         <span class="copy-label">{{
           copySuccess ? "Kopiert!" : "Kopieren"
@@ -184,7 +240,11 @@ async function copyAnswer() {
     </div>
 
     <!-- Skeleton placeholder while waiting for first content -->
-    <div v-if="isStreaming && !aiResponse" class="ai_response ai_response--skeleton" aria-label="Antwort wird geladen">
+    <div
+      v-if="isStreaming && !aiResponse"
+      class="ai_response ai_response--skeleton"
+      aria-label="Antwort wird geladen"
+    >
       <div class="skeleton-line skeleton-line--long"></div>
       <div class="skeleton-line skeleton-line--medium"></div>
       <div class="skeleton-line skeleton-line--short"></div>
@@ -196,22 +256,41 @@ async function copyAnswer() {
     </div>
 
     <!-- Actual AI response content -->
-    <div v-else-if="aiResponse" class="marked_text m-dataset-item__text ai_response" v-html="aiResponse"></div>
+    <div
+      v-else-if="aiResponse"
+      class="marked_text m-dataset-item__text ai_response"
+      v-html="aiResponse"
+    ></div>
 
     <!-- Streaming indicator while text is still arriving -->
-    <div v-if="isStreaming && aiResponse" class="streaming-indicator" aria-label="Antwort wird generiert">
+    <div
+      v-if="isStreaming && aiResponse"
+      class="streaming-indicator"
+      aria-label="Antwort wird generiert"
+    >
       <span class="streaming-dot"></span>
       <span class="streaming-dot"></span>
       <span class="streaming-dot"></span>
     </div>
   </div>
   <br />
-  <riski-data-section v-if="hasData" :proposals="proposals" :documents="documents" />
+  <riski-data-section
+    v-if="hasData"
+    :proposals="proposals"
+    :documents="documents"
+  />
   <br />
-  <div v-if="hasProgress" class="progress-section">
+  <div
+    v-if="hasProgress"
+    class="progress-section"
+  >
     <div class="progress-header">
       <h3 class="m-dataset-item__headline headline">Recherchefortschritt</h3>
-      <button class="progress-toggle" type="button" @click="showStepDetails = !showStepDetails">
+      <button
+        class="progress-toggle"
+        type="button"
+        @click="showStepDetails = !showStepDetails"
+      >
         {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
       </button>
     </div>
@@ -219,7 +298,10 @@ async function copyAnswer() {
       <span class="progress-status-icon">{{ progressStatusIcon }}</span>
       <span>{{ progressSummary }}</span>
     </div>
-    <div v-if="showStepDetails" class="progress-details">
+    <div
+      v-if="showStepDetails"
+      class="progress-details"
+    >
       <step-progress :steps="visibleSteps" />
     </div>
   </div>
@@ -394,7 +476,6 @@ async function copyAnswer() {
 }
 
 @keyframes streaming-bounce {
-
   0%,
   80%,
   100% {
