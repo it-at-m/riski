@@ -146,6 +146,17 @@ class SnapshotStripper:
             self._cached_docs = patched
 
 
+def _get_langgraph_node(event: Any) -> str | None:
+    """Return the ``langgraph_node`` metadata value for a raw event, or ``None``."""
+    raw_event = getattr(event, "raw_event", None)
+    if not isinstance(raw_event, dict):
+        return None
+    metadata = raw_event.get("metadata")
+    if not isinstance(metadata, dict):
+        return None
+    return metadata.get("langgraph_node")
+
+
 def _is_check_document_node(event: Any) -> bool:
     """Return True for non-snapshot events from check_document nodes.
 
@@ -156,13 +167,16 @@ def _is_check_document_node(event: Any) -> bool:
     """
     if getattr(event, "type", None) == "STATE_SNAPSHOT":
         return False
+    return _get_langgraph_node(event) == "check_document"
 
-    raw_event = getattr(event, "raw_event", None)
-    if not isinstance(raw_event, dict):
-        return False
 
-    metadata = raw_event.get("metadata")
-    return isinstance(metadata, dict) and metadata.get("langgraph_node") == "check_document"
+_TEXT_MESSAGE_TYPES = {"TEXT_MESSAGE_START", "TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_END"}
+
+# Only text messages from the ``model`` node after a tool call are meaningful.
+# - First model pass (no tool call yet): may stream text before routing to guard → suppress.
+# - Guard node (e.g. ``_generate_suggestions``): internal LLM call → suppress.
+# - Capabilities / final model pass after a tool call: real answer → allow.
+_TEXT_MESSAGE_ALLOWED_NODES = {"model"}
 
 
 @router.post("/riskiagent", response_class=StreamingResponse)
@@ -175,6 +189,9 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
         "RUN_FINISHED",
         "STEP_STARTED",
         "STEP_FINISHED",
+        "TOOL_CALL_START",
+        "TOOL_CALL_ARGS",
+        "TOOL_CALL_END",
         "STATE_SNAPSHOT",
         "TEXT_MESSAGE_CONTENT",
         "TEXT_MESSAGE_START",
@@ -182,18 +199,25 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
         "RUN_ERROR",
     }
     text_message_types = {"TEXT_MESSAGE_CONTENT", "TEXT_MESSAGE_START", "TEXT_MESSAGE_END"}
+    strip_raw_event_types = {*text_message_types, "TOOL_CALL_ARGS"}
 
     snapshot_stripper = SnapshotStripper()
 
     async def event_generator() -> AsyncGenerator[bytes, None]:
+        tool_call_seen = False
         try:
             async for event in run_agent_traced(input_data, request):
-                if _is_check_document_node(event):
+                if event.type == "TOOL_CALL_START":
+                    tool_call_seen = True
+                if _is_check_document_node(event) or (
+                    getattr(event, "type", None) in _TEXT_MESSAGE_TYPES
+                    and (not tool_call_seen or _get_langgraph_node(event) not in _TEXT_MESSAGE_ALLOWED_NODES)
+                ):
                     continue
                 if event.type in allowed_types:
                     if event.type == "STATE_SNAPSHOT":
                         event = snapshot_stripper.strip(event)
-                    if event.type in text_message_types:
+                    if event.type in strip_raw_event_types:
                         event.raw_event = None
                     yield encode(encoder=encoder, event=event)
                 else:

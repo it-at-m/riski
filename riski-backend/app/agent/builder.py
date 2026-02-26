@@ -16,8 +16,8 @@ from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from .riski_agent import build_riski_graph
-from .tools import retrieve_documents
-from .types import CHECK_DOCUMENT_PROMPT_TEMPLATE
+from .tools import get_agent_capabilities, retrieve_documents
+from .types import AGENT_CAPABILITIES_PROMPT, CHECK_DOCUMENT_PROMPT_TEMPLATE
 
 settings: BackendSettings = get_settings()
 logger: Logger = getLogger()
@@ -48,7 +48,7 @@ async def build_agent(
     )
 
     # Bind tools so the model knows about them
-    tools = [retrieve_documents]
+    tools = [retrieve_documents, get_agent_capabilities]
     try:
         system_prompt_template: TextPromptClient = lf_client.get_prompt(
             name=settings.langfuse_system_prompt_name, label=settings.langfuse_system_prompt_label
@@ -75,13 +75,25 @@ async def build_agent(
         )
         check_document_prompt_template = CHECK_DOCUMENT_PROMPT_TEMPLATE
 
+    try:
+        agent_capabilities_prompt: TextPromptClient = lf_client.get_prompt(
+            name=settings.langfuse_agent_capabilities_prompt_name,
+            label=settings.langfuse_agent_capabilities_prompt_label,
+        )
+        agent_capabilities: str = agent_capabilities_prompt.compile()
+    except Exception as e:
+        logger.warning(
+            "Failed to fetch agent-capabilities prompt from Langfuse, using local fallback: %s",
+            e,
+        )
+        agent_capabilities = AGENT_CAPABILITIES_PROMPT
+
     graph = build_riski_graph(
         chat_model=chat_model,
         tools=tools,
         system_prompt=system_prompt,
         check_document_prompt_template=check_document_prompt_template,
     )
-
     # -- Configure checkpointer --
     checkpointer: BaseCheckpointSaver
     if isinstance(settings.checkpointer, InMemoryCheckpointerSettings):
@@ -109,7 +121,11 @@ async def build_agent(
         description="Der RISKI Agent unterstützt bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen aus dem Rats-Informations-System der Stadt München.",
         graph=compiled,
         config={
-            "configurable": {"vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
+            "configurable": {
+                "vectorstore": vectorstore,
+                "db_sessionmaker": db_sessionmaker,
+                "agent_capabilities": agent_capabilities,
+            },
             "callbacks": callbacks,
         },
     )
