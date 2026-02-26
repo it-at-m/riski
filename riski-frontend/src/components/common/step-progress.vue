@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import type { ExecutionStep } from "@/types/RiskiAnswer.ts";
 
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 import DocumentChecksTable from "./DocumentChecksTable.vue";
 
 const props = defineProps<{
   steps: ExecutionStep[];
 }>();
+
+const showCheckDetails = ref(false);
 
 const documentUrlMap = computed(() => {
   const map = new Map<string, string>();
@@ -26,12 +28,10 @@ const documentUrlMap = computed(() => {
 const documentCheckUrlMap = computed(() => {
   const map = new Map<string, string>();
 
-  // Include all URLs from the main documentUrlMap
   for (const [name, url] of documentUrlMap.value.entries()) {
     map.set(name, url);
   }
 
-  // Also look for URLs from document checks in tool results
   for (const step of props.steps) {
     for (const check of step.documentChecks ?? []) {
       if (!map.has(check.name)) {
@@ -153,165 +153,253 @@ const visibleSteps = computed(() => {
   return mergedSteps;
 });
 
-function formatStepName(name: string): string {
-  const map: Record<string, string> = {
-    retrieve_documents: "Dokumente durchsuchen",
-    get_agent_capabilities: "Fähigkeiten abrufen",
-    model: "Antwort formulieren",
-    guard: "Ergebnisse prüfen",
-    check_document: "Ergebnisse prüfen",
-    __start__: "Start",
-  };
-  return map[name] || name;
-}
+/**
+ * Maps the real step sequence (model → tools → model) to the three fixed
+ * progress sections shown in the UI.
+ *
+ * Real structure:
+ *   steps[0]: model  (displayName "Denke nach")      → ignored / pre-phase
+ *   steps[1]: tools  (toolCalls: retrieve_documents)  → Archivsuche
+ *   steps[2]: model  (displayName "Antwort generieren") → Antworterstellung
+ *
+ * Ergebnisprüfung: any step (usually tools or a dedicated step) that carries
+ * documentChecks, OR the tools step itself once documents are retrieved.
+ */
+const progressSections = computed(() => {
+  const allSteps = props.steps;
 
-function formatToolName(name: string): string {
-  const map: Record<string, string> = {
-    retrieve_documents: "Dokumentensuche",
-    get_agent_capabilities: "Fähigkeiten abrufen",
+  const statusToProgress = (status?: string): number => {
+    if (status === "completed") return 100;
+    if (status === "running") return 60;
+    return 0;
   };
-  return map[name] || name;
-}
+
+  // Archivsuche: prefer the tools step that actually has a retrieve_documents
+  // toolCall (arrives later); fall back to the last tools step seen so far.
+  const toolsSteps = allSteps.filter((s) => s.name === "tools");
+  const archiveStep =
+    toolsSteps.findLast((s) =>
+      s.toolCalls?.some((tc) => tc.name === "retrieve_documents")
+    ) ?? toolsSteps[toolsSteps.length - 1];
+
+  // Ergebnisprüfung: any step with documentChecks, or a check_document step
+  const checkStep = allSteps.find(
+    (s) =>
+      (s.documentChecks && s.documentChecks.length > 0) ||
+      s.name === "check_document"
+  );
+
+  // Antworterstellung: the LAST model step (the one that generates the answer)
+  const modelSteps = allSteps.filter((s) => s.name === "model");
+  // Antworterstellung: only the model step that comes AFTER the tools step.
+  // We identify it by position: find the index of the last tools step, then
+  // take the first model step that appears after it. This prevents the early
+  // "Denke nach" model step from driving the Antworterstellung bar.
+  const lastToolsIndex = allSteps.map((s) => s.name).lastIndexOf("tools");
+  const answerStep =
+    lastToolsIndex >= 0
+      ? allSteps.slice(lastToolsIndex + 1).find((s) => s.name === "model")
+      : modelSteps[modelSteps.length - 1];
+
+  const checkProgress = (() => {
+    if (!checkStep) return 0;
+    if (checkStep.status === "completed") return 100;
+    if (checkStep.documentChecks && checkStep.documentChecks.length > 0) {
+      const total = checkStep.documentChecks.length;
+      const done = checkStep.documentChecks.filter(
+        (c) => c.relevant !== undefined
+      ).length;
+      if (checkStep.status === "running") {
+        return Math.max(10, Math.round((done / total) * 100));
+      }
+    }
+    return statusToProgress(checkStep.status);
+  })();
+
+  return [
+    {
+      label: "Archivsuche",
+      progress: statusToProgress(archiveStep?.status),
+      status: archiveStep?.status,
+      step: archiveStep,
+      hasChecks: false,
+    },
+    {
+      label: "Ergebnisprüfung",
+      progress: checkProgress,
+      status: checkStep?.status,
+      step: checkStep,
+      hasChecks: (checkStep?.documentChecks?.length ?? 0) > 0,
+    },
+    {
+      label: "Antworterstellung",
+      progress: statusToProgress(answerStep?.status),
+      status: answerStep?.status,
+      step: answerStep,
+      hasChecks: false,
+    },
+  ];
+});
 </script>
 
 <template>
   <div
-    v-if="visibleSteps.length > 0"
-    class="steps-container"
+    v-if="props.steps.length > 0"
+    class="progress-container"
   >
     <div
-      v-for="step in visibleSteps"
-      :key="step.name"
-      class="step-item"
-      :class="{ 'step-item--zoom': allChecksFailed(step) }"
+      v-for="section in progressSections"
+      :key="section.label"
+      class="progress-section"
     >
-      <div class="step-header">
-        <span class="step-status-icon">
-          <template v-if="step.status === 'running'">⏳</template>
-          <template v-else-if="step.status === 'completed'">✅</template>
-          <template v-else-if="step.status === 'failed'">❌</template>
-        </span>
-        <span class="step-name">{{
-          step.displayName || formatStepName(step.name)
-        }}</span>
-        <span
-          v-if="step.status === 'running'"
-          class="step-running-hint"
-          >läuft…</span
-        >
+      <div class="progress-label">{{ section.label }}</div>
+
+      <div class="progress-bar-track">
+        <div
+          class="progress-bar-fill"
+          :class="{
+            'progress-bar-fill--running': section.status === 'running',
+            'progress-bar-fill--failed': section.status === 'failed',
+          }"
+          :style="{ width: section.progress + '%' }"
+        />
       </div>
 
       <div
-        v-if="step.toolCalls && step.toolCalls.length > 0"
-        class="step-tools"
+        v-if="section.label === 'Ergebnisprüfung'"
+        class="check-details-toggle"
       >
-        <div
-          v-for="tool in step.toolCalls"
-          :key="tool.id"
-          class="tool-call"
+        <button
+          class="toggle-btn"
+          @click="showCheckDetails = !showCheckDetails"
         >
-          <div class="tool-summary">
-            <span class="tool-status-icon">
-              <template v-if="tool.status === 'running'">🔄</template>
-              <template v-else>✔️</template>
-            </span>
-            {{ formatToolName(tool.name) }}
-            <span
-              v-if="tool.args"
-              class="tool-args"
-              >– „{{ tool.args }}"</span
-            >
-          </div>
+          Details zur Prüfung
+          <span class="toggle-icon">{{ showCheckDetails ? "▲" : "▼" }}</span>
+        </button>
+
+        <div
+          v-if="showCheckDetails && section.step?.documentChecks?.length"
+          class="check-details"
+        >
+          <document-checks-table
+            :document-checks="section.step.documentChecks!"
+            :document-url-map="documentCheckUrlMap"
+          />
+        </div>
+
+        <div
+          v-else-if="showCheckDetails"
+          class="check-details check-details--empty"
+        >
+          Noch keine Prüfergebnisse verfügbar.
         </div>
       </div>
-
-      <!-- Per-document relevance checks (guard step) -->
-      <document-checks-table
-        v-if="step.documentChecks && step.documentChecks.length > 0"
-        :document-checks="step.documentChecks"
-        :document-url-map="documentCheckUrlMap"
-      />
     </div>
   </div>
 </template>
 
 <style scoped>
-.steps-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+.progress-container {
+  padding: 20px 24px;
+  background-color: #ffffff;
+  font-family: "Source Sans Pro", "Segoe UI", sans-serif;
+  max-width: 680px;
 }
 
-.step-item {
-  padding: 6px 10px;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+.progress-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  margin: 0 0 24px 0;
 }
 
-.step-item--zoom {
-  transform: scale(1.02);
-  box-shadow: 0 6px 14px rgba(0, 90, 159, 0.12);
-  border-color: #c7d7ea;
-  background-color: #f3f7fb;
+.progress-section {
+  margin-bottom: 20px;
 }
 
-.step-header {
+.progress-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a3a5c;
+  margin-bottom: 6px;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background-color: #d6e2ef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: #005a9f;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.progress-bar-fill--running {
+  background-color: #005a9f;
+  /* animated shimmer for running state */
+  background-image: linear-gradient(
+    90deg,
+    #005a9f 0%,
+    #0074cc 50%,
+    #005a9f 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.progress-bar-fill--failed {
+  background-color: #c0392b;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.check-details-toggle {
+  margin-top: 6px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #005a9f;
+  font-size: 0.88rem;
+  cursor: pointer;
+  padding: 0;
   display: flex;
   align-items: center;
+  gap: 4px;
+  text-decoration: none;
 }
 
-.step-status-icon {
-  margin-right: 8px;
-  min-width: 20px;
-  text-align: center;
+.toggle-btn:hover {
+  text-decoration: underline;
 }
 
-.step-name {
-  font-weight: 500;
+.toggle-icon {
+  font-size: 0.75rem;
 }
 
-.step-running-hint {
-  font-size: 0.85em;
-  color: #888;
-  margin-left: 6px;
-  animation: pulse 1.5s ease-in-out infinite;
+.check-details {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f3f7fb;
+  border: 1px solid #c7d7ea;
+  border-radius: 6px;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.4;
-  }
-}
-
-.step-tools {
-  margin-top: 4px;
-  padding-left: 28px;
-}
-
-.tool-call {
-  margin-bottom: 4px;
-}
-
-.tool-summary {
-  font-size: 0.92em;
-  color: #444;
-}
-
-.tool-status-icon {
-  margin-right: 4px;
-}
-
-.tool-args {
+.check-details--empty {
+  font-size: 0.88rem;
   color: #888;
   font-style: italic;
 }
