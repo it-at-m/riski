@@ -110,6 +110,8 @@ const mapProposal = (raw: Record<string, unknown>): Proposal => {
     name: pickString(m?.title, m?.name, raw.title, raw.name) || "",
     identifier: pickString(m?.identifier, m?.id, raw.identifier, raw.id),
     risUrl: pickString(m?.risUrl, m?.source, raw.risUrl, raw.source),
+    subject: typeof raw.subject === "string" ? raw.subject : "",
+    date: typeof raw.date === "string" ? raw.date : null,
   };
 };
 
@@ -219,6 +221,8 @@ interface TrackedDocumentSnapshot {
 interface TrackedProposalSnapshot {
   identifier: string;
   name: string;
+  subject: string;
+  date: string | null;
   risUrl: string;
 }
 

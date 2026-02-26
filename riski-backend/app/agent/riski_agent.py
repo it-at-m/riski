@@ -479,8 +479,8 @@ def build_riski_graph(
                 content="Nutze die folgenden gefilterten Dokumente und Vorschläge, um die Nutzerfrage zu beantworten."
             )
             docs_payload = {
-                "documents": [d.model_dump(exclude={"is_checked", "is_relevant", "relevance_reason"}) for d in relevant_docs],
-                "proposals": [p.model_dump() for p in state.tracked_proposals],
+                "documents": [d.model_dump(mode="json", exclude={"is_checked", "is_relevant", "relevance_reason"}) for d in relevant_docs],
+                "proposals": [p.model_dump(mode="json") for p in state.tracked_proposals],
             }
             docs_message = HumanMessage(content=json.dumps(docs_payload))
 

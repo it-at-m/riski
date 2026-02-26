@@ -39,6 +39,8 @@ class TrackedProposal(BaseModel):
 
     identifier: str = Field(default="", description="Reference identifier of the proposal.")
     name: str = Field(default="", description="Name / title of the proposal.")
+    subject: str = Field(default="", description="Subject / description of the proposal.")
+    date: str | None = Field(default=None, description="Reference date of the proposal in ISO format.")
     risUrl: str = Field(default="", description="URL in the RIS system.")
     source_document_ids: list[str] = Field(
         default_factory=list,
