@@ -48,12 +48,12 @@ function fileSizeAsString(fileSize: number): string {
 
 <template>
   <div class="data-section">
-    <h3 class="m-dataset-item__headline headline">Daten</h3>
+    <h2 class="m-dataset-item__headline headline">Daten</h2>
     <div
       v-if="sortedProposals.length > 0"
       class="source-section"
     >
-      <h4 class="source-subheading">Anträge</h4>
+      <h3 class="source-subheading">Anträge</h3>
       <ul class="source-list">
         <li
           v-for="proposal in sortedProposals"
@@ -104,7 +104,7 @@ function fileSizeAsString(fileSize: number): string {
       v-if="documents.length > 0"
       class="source-section"
     >
-      <h4 class="source-subheading">Dokumente</h4>
+      <h3 class="source-subheading">Dokumente</h3>
       <ul class="source-list">
         <li
           v-for="document in documents"
