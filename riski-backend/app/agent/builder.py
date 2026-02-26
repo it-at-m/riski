@@ -124,6 +124,7 @@ async def build_agent(
             "configurable": {
                 "vectorstore": vectorstore,
                 "db_sessionmaker": db_sessionmaker,
+                "top_k_docs": settings.top_k_docs,
                 "agent_capabilities": agent_capabilities,
             },
             "callbacks": callbacks,
