@@ -94,7 +94,11 @@ class BackendSettings(AppBaseSettings):
         description="The port for the riski-backend server to bind to.",
     )
 
-    top_k_docs: int = Field(default=10, description="Number of documents to retrieve in corresponding tool")
+    top_k_docs: int = Field(
+        default=10,
+        ge=1,
+        description="Number of documents to retrieve in corresponding tool",
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
