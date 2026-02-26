@@ -96,13 +96,15 @@ async def retrieve_documents(
         if runtime.context is None:
             vectorstore = config["configurable"]["vectorstore"]
             db_sessionmaker = config["configurable"]["db_sessionmaker"]
+            top_k_docs = config["configurable"]["top_k_docs"]
         else:
             vectorstore = runtime.context["vectorstore"]
             db_sessionmaker = runtime.context["db_sessionmaker"]
+            top_k_docs = runtime.context["top_k_docs"]
             logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
 
         # Step 1: Perform similarity search in the vector store
-        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=5)
+        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=top_k_docs)
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
         if not docs:
