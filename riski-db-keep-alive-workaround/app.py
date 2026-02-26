@@ -32,7 +32,7 @@ def main():
         }
 
         logger.info(f"Request {config.request_url}")
-        response = client.post(url=config.request_url, json=payload)
+        response = client.post(url=config.request_url, json=payload, timeout=60.0)
         logger.info(f"Request Finished {response.status_code}")
         time.sleep(config.request_interval)
 
