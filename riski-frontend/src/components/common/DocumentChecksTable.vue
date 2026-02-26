@@ -67,7 +67,7 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
                     </caption>
                     <thead>
                         <tr>
-                            <th scope="col">Relevante Dokument</th>
+                            <th scope="col">Relevante Dokumente</th>
                             <th v-if="showReasons" scope="col">Begründung</th>
                         </tr>
                     </thead>
@@ -98,7 +98,7 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
                     </caption>
                     <thead>
                         <tr>
-                            <th scope="col">NICHT relevante Dokument</th>
+                            <th scope="col">Nicht relevante Dokumente</th>
                             <th v-if="showReasons" scope="col">Begründung</th>
                         </tr>
                     </thead>
