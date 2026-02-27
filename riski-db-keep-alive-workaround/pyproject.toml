@@ -1,0 +1,42 @@
+[project]
+name = "db-keep-alive-workaround"
+version = "0.0.1"
+description = "Python application for keeping DB connections healthy."
+readme = "README.md"
+requires-python = "==3.13.9"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
+    { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
+    { name = "Annalena Wittmann", email = "annalena.wittmann@muenchen.de" },
+    { name = "Tim-Luca Pfeifer", email = "tim-luca.pfeifer@muenchen.de" },
+]
+dependencies = [
+    "gitpython>=3.1.45",
+    "httpx>=0.28.1",
+    "pydantic-settings>=2.13.1",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit==4.3.0",
+    "ty==0.0.1a23",
+    "ruff>=0.14.11",
+    "python-dotenv>=1.2.1",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
+
+
+[tool.uv]
+exclude-dependencies = ["tree-sitter-java-orchard"]
