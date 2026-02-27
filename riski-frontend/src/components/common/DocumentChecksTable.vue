@@ -61,6 +61,7 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
         :aria-expanded="showReasons"
         aria-controls="doc-checks-content"
         @click="showReasons = !showReasons"
+        style="margin-left: auto; display: block;"
       >
         {{ showReasons ? "Begründung ausblenden" : "Begründung anzeigen" }}
       </button>
