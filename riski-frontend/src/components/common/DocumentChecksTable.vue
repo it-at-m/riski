@@ -54,7 +54,6 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
     aria-labelledby="doc-checks-heading"
   >
     <div class="doc-checks-header-row">
-      <h4 id="doc-checks-heading">Dokumentprüfung</h4>
       <button
         v-if="hasReasoning"
         type="button"
