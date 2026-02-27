@@ -190,7 +190,7 @@ async function copyAnswer() {
     class="response-section"
   >
     <div class="response-header">
-      <h3 class="m-dataset-item__headline headline">KI Antwort</h3>
+      <h2 class="m-dataset-item__headline headline">KI-Antwort</h2>
       <span
         v-if="isStreaming"
         class="answer-status"
@@ -285,7 +285,7 @@ async function copyAnswer() {
     class="progress-section"
   >
     <div class="progress-header">
-      <h3 class="m-dataset-item__headline headline">Recherchefortschritt</h3>
+      <h2 class="m-dataset-item__headline headline">Recherchefortschritt</h2>
       <button
         class="progress-toggle"
         type="button"
