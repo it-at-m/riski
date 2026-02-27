@@ -1,3 +1,4 @@
+import asyncio
 import json
 from logging import Logger
 from typing import TypedDict
@@ -45,9 +46,12 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
         logger.debug(f"Fetching proposals for file IDs: {file_ids}")
 
         async with db_sessionmaker() as db_session:
-            result = await db_session.execute(
-                select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                execution_options={"timeout": 10},
+            result = await asyncio.wait_for(
+                db_session.execute(
+                    select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
+                    execution_options={"timeout": 10},
+                ),
+                timeout=15,
             )
 
             files = result.scalars().all()
@@ -106,7 +110,10 @@ async def retrieve_documents(
             logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
 
         # Step 1: Perform similarity search in the vector store
-        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=top_k_docs)
+        docs: list[Document] = await asyncio.wait_for(
+            vectorstore.asimilarity_search(query=query, k=top_k_docs),
+            timeout=15,
+        )
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
         if not docs:
@@ -143,6 +150,9 @@ async def retrieve_documents(
         )
 
         return content_summary, artifact
+    except asyncio.TimeoutError:
+        logger.error("retrieve_documents timed out waiting for DB or vector store")
+        raise ToolException("Failed to retrieve documents: database or vector store query timed out")
     except Exception as e:
         logger.error(f"Error in retrieve_documents tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve documents: {str(e)}")

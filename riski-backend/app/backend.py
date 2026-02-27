@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from langchain_postgres import PGEngine, PGVectorStore
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
+from sqlalchemy.pool import NullPool
 from sqlmodel import text
 
 logger = getLogger()
@@ -29,9 +30,7 @@ def create_app() -> FastAPI:
         db_engine: AsyncEngine = create_async_engine(
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,
-            pool_timeout=10,
-            pool_pre_ping=True,
-            pool_recycle=1800,
+            poolclass=NullPool,
             connect_args={"timeout": 30},
         )
 
