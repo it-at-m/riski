@@ -30,6 +30,8 @@ def create_app() -> FastAPI:
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,
             pool_timeout=10,
+            pool_pre_ping=True,
+            pool_recycle=1800,
             connect_args={"timeout": 30},
         )
 
