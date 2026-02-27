@@ -1,3 +1,9 @@
+<script setup lang="ts">
+defineProps<{
+  documentationUrl: string;
+}>();
+
+</script>
 <template>
   <footer>
     <div class="footer-bottom-fullsize flex-shrink-0">
@@ -48,9 +54,8 @@
                 <a
                   target="_blank"
                   rel="noopener"
-                  href="https://ki.muenchen.de/ki-systeme/riski"
-                  >Hilfe und FAQ</a
-                >
+                  :href="documentationUrl"
+                >Hilfe und FAQ</a>
               </li>
             </ul>
           </div>

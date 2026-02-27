@@ -29,7 +29,7 @@ const searchquery = ref<string>("");
 const title = ref("RIS KI Suche (Beta-Version)");
 const version = ref("unknown");
 const frontendVersion = ref("unknown");
-const documentationUrl = ref("https://ki.muenchen.de");
+const documentationUrl = ref("https://ki.muenchen.de/");
 
 onMounted(async () => {
   try {
@@ -245,7 +245,7 @@ const submitQuery = (query: string) => {
       />
     </div>
   </main>
-  <risi-footer />
+  <risi-footer :documentation-url="documentationUrl" />
 </template>
 
 <style>
