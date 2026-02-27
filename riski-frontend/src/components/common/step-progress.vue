@@ -196,10 +196,9 @@ const progressSections = computed(() => {
   // take the first model step that appears after it. This prevents the early
   // "Denke nach" model step from driving the Antworterstellung bar.
   const lastToolsIndex = allSteps.map((s) => s.name).lastIndexOf("tools");
-  const answerStep =
-    lastToolsIndex >= 0
-      ? allSteps.slice(lastToolsIndex + 1).find((s) => s.name === "model")
-      : modelSteps[modelSteps.length - 1];
+  const answerStep = lastToolsIndex >= 0
+    ? allSteps.slice(lastToolsIndex + 1).find((s) => s.name === "model")
+    : undefined;
 
   const checkProgress = (() => {
     if (!checkStep) return 0;
