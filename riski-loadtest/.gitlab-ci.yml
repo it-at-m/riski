@@ -1,0 +1,11 @@
+default:
+  tags:
+  - openshift
+
+stages:
+- mock
+
+mock-pipeline:
+  stage: mock
+  script:
+  - echo "I am a mock pipeline"
