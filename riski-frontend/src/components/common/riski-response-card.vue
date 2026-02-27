@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type RiskiAnswer from "@/types/RiskiAnswer.ts";
-
+import { MucButton } from "@muenchen/muc-patternlab-vue";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { computed, ref } from "vue";
@@ -196,47 +196,7 @@ async function copyAnswer() {
         class="answer-status"
         >Wird generiert…</span
       >
-      <button
-        v-if="aiResponse && !isStreaming"
-        class="copy-button"
-        :class="{ 'copy-success': copySuccess }"
-        :aria-label="copySuccess ? 'Kopiert!' : 'Antwort kopieren'"
-        :title="
-          copySuccess ? 'Kopiert!' : 'Antwort in die Zwischenablage kopieren'
-        "
-        @click="copyAnswer"
-      >
-        <svg
-          v-if="!copySuccess"
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-        >
-          <path
-            d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H6z"
-          />
-          <path
-            d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1H2z"
-          />
-        </svg>
-        <svg
-          v-else
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-        >
-          <path
-            d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"
-          />
-        </svg>
-        <span class="copy-label">{{
-          copySuccess ? "Kopiert!" : "Kopieren"
-        }}</span>
-      </button>
+      <MucButton  v-if="aiResponse && !isStreaming" icon="copy-link" spinIconOnClick variant="secondary"> Kopieren </MucButton>
     </div>
 
     <!-- Skeleton placeholder while waiting for first content -->
