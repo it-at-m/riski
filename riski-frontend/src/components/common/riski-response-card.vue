@@ -195,7 +195,7 @@ async function copyAnswer() {
         class="answer-status"
         >Wird generiert…</span
       >
-      <MucButton  v-if="aiResponse && !isStreaming" icon="copy-link" spinIconOnClick variant="secondary"> Kopieren </MucButton>
+      <MucButton  v-if="aiResponse && !isStreaming" icon="copy-link" spinIconOnClick variant="secondary" @click=copyAnswer> Kopieren </MucButton>
     </div>
 
     <!-- Skeleton placeholder while waiting for first content -->
