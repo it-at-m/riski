@@ -256,7 +256,7 @@ function fileSizeAsString(fileSize: number): string {
 
 .source-filesize {
   font-size: 0.82em;
-  color: #777;
+  color: #3A5368;
   white-space: nowrap;
   margin-left: auto;
 }
