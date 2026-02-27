@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type RiskiAnswer from "@/types/RiskiAnswer.ts";
-import { MucButton } from "@muenchen/muc-patternlab-vue";
+import { MucButton,  MucIcon  } from "@muenchen/muc-patternlab-vue";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { computed, ref } from "vue";
 
 import RiskiDataSection from "@/components/common/riski-data-section.vue";
 import StepProgress from "@/components/common/step-progress.vue";
-
 const props = defineProps<{
   riskiAnswer?: RiskiAnswer;
   isStreaming?: boolean;
@@ -96,9 +95,9 @@ const progressSummary = computed(() => {
 
 const progressStatusIcon = computed(() => {
   if (!hasProgress.value) return "";
-  if (visibleSteps.value.some((step) => step.status === "failed")) return "❌";
-  if (visibleSteps.value.some((step) => step.status === "running")) return "⏳";
-  return "✅";
+  if (visibleSteps.value.some((step) => step.status === "failed")) return "warning";
+  if (visibleSteps.value.some((step) => step.status === "running")) return "hourglass";
+  return "check";
 });
 
 const copySuccess = ref(false);
@@ -255,7 +254,7 @@ async function copyAnswer() {
       </button>
     </div>
     <div class="progress-summary">
-      <span class="progress-status-icon">{{ progressStatusIcon }}</span>
+      <MucIcon :icon=progressStatusIcon></MucIcon>
       <span>{{ progressSummary }}</span>
     </div>
     <div
