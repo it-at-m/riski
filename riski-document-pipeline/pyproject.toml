@@ -5,24 +5,24 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.13.9"
 dependencies = [
-    "mistralai>=1.9.11",
-    "truststore>=0.10.4",
+    "mistralai==1.10.1",
+    "truststore==0.10.4",
     "core",
     "pypdf>=6.6.0",
-    "langchain-postgres>=0.0.16",
-    "langchain-text-splitters>=1.1.0",
-    "cryptography>=46.0.4",
+    "langchain-postgres==0.0.16",
+    "langchain-text-splitters==1.1.0",
+    "cryptography==46.0.5",
 ]
 
 [dependency-groups]
 dev = [
-    "ipykernel>=7.1.0",
-    "pre-commit>=4.5.1",
+    "ipykernel==7.1.0",
+    "pre-commit==4.5.1",
     "pypdf>=6.4.1",
-    "pytest>=9.0.2",
-    "python-dotenv>=1.2.1",
-    "ruff>=0.14.11",
-    "ty>=0.0.11",
+    "pytest==9.0.2",
+    "python-dotenv==1.2.1",
+    "ruff==0.14.14",
+    "ty==0.0.14",
 ]
 
 [tool.uv.sources]
