@@ -15,21 +15,21 @@ dependencies = [
     "tokenizers==0.21.2",
     "torch==2.8.0",
     "torchvision==0.23.0",
-    "pytest-asyncio>=1.3.0",
-    "truststore>=0.10.4",
-    "gitpython>=3.1.45",
-    "pyyaml>=6.0.2",
-    "stamina>=25.1.0",
-    "httpx>=0.28.1",
+    "pytest-asyncio==1.3.0",
+    "truststore==0.10.4",
+    "gitpython==3.1.46",
+    "pyyaml==6.0.3",
+    "stamina==25.2.0",
+    "httpx==0.28.1",
     "core",
-    "legacy-cgi>=2.6.4",
-    "bs4>=0.0.2",
+    "legacy-cgi==2.6.4",
+    "bs4==0.0.2",
 ]
 
 [project.optional-dependencies]
 pgvector = [
     "asyncpg==0.30.0",
-    "langchain-postgres>=0.0.15",
+    "langchain-postgres==0.0.16",
 ]
 
 [dependency-groups]
@@ -37,14 +37,14 @@ dev = [
     "ipykernel==7.0.1",
     "pre-commit==4.3.0",
     "ty==0.0.1a23",
-    "langchain>=0.3.27",
-    "langchain-community>=0.3.28",
-    "langchain-docling>=1.1.0",
-    "langchain-openai>=0.3.32",
+    "langchain==1.2.7",
+    "langchain-community==0.4.1",
+    "langchain-docling==2.0.0",
+    "langchain-openai==1.1.7",
     "pytest==8.4.2",
     "faststream[kafka]==0.6.1",
-    "ruff>=0.14.11",
-    "python-dotenv>=1.2.1",
+    "ruff==0.14.14",
+    "python-dotenv==1.2.1",
 ]
 
 [tool.uv.sources]
@@ -61,7 +61,7 @@ explicit = true
 pythonpath = ["."]
 
 [build-system]
-requires = ["uv_build>=0.9.13,<0.10.0"]
+requires = ["uv_build==0.9.30"]
 build-backend = "uv_build"
 
 
