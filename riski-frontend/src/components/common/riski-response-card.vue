@@ -33,7 +33,6 @@ const visibleSteps = computed(() =>
   )
 );
 
-const showStepDetails = ref(true);
 const hasProgress = computed(() => visibleSteps.value.length > 0);
 
 /** User-facing heading for the error callout */
@@ -76,21 +75,18 @@ const progressSummary = computed(() => {
   const total = visibleSteps.value.length;
   if (!total) return "";
 
-  const completed = visibleSteps.value.filter(
-    (step) => step.status === "completed"
-  ).length;
   const hasFailed = visibleSteps.value.some((step) => step.status === "failed");
   const isRunning = visibleSteps.value.some(
     (step) => step.status === "running"
   );
 
   if (hasFailed) {
-    return `Recherche mit Fehlern (${completed}/${total} Schritte)`;
+    return `Recherche mit Fehlern`;
   }
   if (isRunning) {
-    return `Recherche läuft (${completed}/${total} Schritte)`;
+    return `Recherche läuft`;
   }
-  return `Recherche abgeschlossen (${completed}/${total} Schritte)`;
+  return `Recherche abgeschlossen`;
 });
 
 const progressStatusIcon = computed(() => {
@@ -247,20 +243,12 @@ async function copyAnswer() {
   >
     <div class="progress-header">
       <h2 class="m-dataset-item__headline headline">Recherchefortschritt</h2>
-      <button
-        class="progress-toggle"
-        type="button"
-        @click="showStepDetails = !showStepDetails"
-      >
-        {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
-      </button>
     </div>
     <div class="progress-summary">
       <MucIcon :icon=progressStatusIcon></MucIcon>
       <span>{{ progressSummary }}</span>
     </div>
     <div
-      v-if="showStepDetails"
       class="progress-details"
     >
       <step-progress :steps="visibleSteps" />
