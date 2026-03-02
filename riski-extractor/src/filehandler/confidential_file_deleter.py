@@ -36,5 +36,9 @@ class ConfidentialFileDeleter:
 
             offset += limit
 
+        if len(file_ids_to_delete) > 100:
+            self.logger.warning(f"[Plausibility Issue] {len(file_ids_to_delete)} files are marked for deletion. Skipping Deletion step.")
+            return
+
         for id in file_ids_to_delete:
             remove_object_by_id(id, File)
