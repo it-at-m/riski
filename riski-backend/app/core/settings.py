@@ -17,7 +17,7 @@ class BackendSettings(AppBaseSettings):
 
     version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
     frontend_version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski frontend.")
-    title: str = Field(default="RIS KI Suche (Beta-Version)", description="The title of the application.")
+    title: str = Field(default="RIS KI-Suche (Beta-Version)", description="The title of the application.")
     documentation_url: str = Field(default="https://ki.muenchen.de", description="The URL to the documentation.")
 
     @field_validator("version", "frontend_version", mode="before")
