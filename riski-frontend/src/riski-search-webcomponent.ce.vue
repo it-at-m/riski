@@ -26,7 +26,7 @@ const loading = ref<boolean>(false);
 const initial = ref<boolean>(true);
 const fehler = ref<string>("");
 const searchquery = ref<string>("");
-const title = ref("RIS KI Suche (Beta-Version)");
+const title = ref("RIS KI-Suche (Beta-Version)");
 const version = ref("unknown");
 const frontendVersion = ref("unknown");
 const documentationUrl = ref("https://ki.muenchen.de/");
@@ -224,15 +224,9 @@ const submitQuery = (query: string) => {
               type="info"
               class="heading disclaimer-callout"
             >
-              <template #header>Rechtliche Hinweise</template>
+              <template #header>Hinweise zur Nutzung</template>
               <template #content>
-                Die von diesem System bereitgestellten Informationen dienen als
-                erste Orientierung und es kann nicht zugesichert werden, dass
-                diese tatsächlich korrekt sind. Wir arbeiten daran, dass die
-                Informationen so korrekt wie möglich sind, können dafür jedoch
-                keine Gewähr geben. Überprüfen sie die Ergebnisse daher bitte
-                mittels der angegebenen Anträge und Dokumente selbständig um die
-                Korrektheit zu garantieren, wo dies wichtig ist.
+                Die von diesem System bereitgestellten Informationen dienen als erste Orientierung und es kann nicht zugesichert werden, dass diese tatsächlich korrekt sind. Wir arbeiten daran, dass die Informationen so korrekt wie möglich sind, können dafür jedoch keine Gewähr geben. Überprüfen Sie die Ergebnisse daher bitte mittels der angegebenen Anträge und Dokumente selbständig. Weitere Informationen zu Limitationen und Risiken finden Sie in unserer <a target="_blank" rel="noopener" href="https://ki.muenchen.de/ki-systeme/riski#risiken-und-limitierungen">Dokumentation</a>.
               </template>
             </muc-callout>
           </div>

@@ -16,10 +16,7 @@ defineProps<{
         <div class="m-intro-vertical__content">
           <div class="intro-info">
             <p>
-              Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus
-              dem Ratsinformationssystem (RIS) stellen. Die Suche liefert ihnen
-              dann eine zusammenfassende Antwort sowie relevante Dokumente und
-              die Bezeichnungen relevanter Anträge.
+              Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus dem Ratsinformationssystem (RIS) stellen. Die KI-Suche liefert dann eine zusammenfassende Antwort basierend auf gefundenen relevanten Dokumenten.
             </p>
             <div style="margin-bottom: 24px"></div>
             <slot></slot>

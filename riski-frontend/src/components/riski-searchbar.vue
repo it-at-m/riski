@@ -26,7 +26,7 @@ watch(
 <template>
   <form
     role="search"
-    aria-label="RIS KI Suche"
+    aria-label="RIS KI-Suche"
     @submit.prevent="submitQuery(searchquery)"
   >
     <riski-search-input
