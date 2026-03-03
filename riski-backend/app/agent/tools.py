@@ -30,12 +30,19 @@ class RetrieveDocumentsArtifact(TypedDict):
     proposals: list[dict]
 
 
-async def get_proposals(documents: list[Document], db_sessionmaker: async_sessionmaker) -> list[TrackedProposal]:
+async def get_proposals(
+    documents: list[Document],
+    db_sessionmaker: async_sessionmaker,
+    db_query_timeout_seconds: int,
+    db_query_total_timeout_seconds: int,
+) -> list[TrackedProposal]:
     """Fetch proposals related to the given documents from the database.
 
     Args:
         documents (list[Document]): List of documents to find related proposals for.
         db_sessionmaker (async_sessionmaker): The async session maker for database access.
+        db_query_timeout_seconds (int): Server-side statement timeout (seconds).
+        db_query_total_timeout_seconds (int): Total asyncio timeout including connection overhead (seconds).
 
     Returns:
         list[TrackedProposal]: A list of proposals related to the documents.
@@ -49,9 +56,9 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
             result = await asyncio.wait_for(
                 db_session.execute(
                     select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                    execution_options={"timeout": 10},
+                    execution_options={"timeout": db_query_timeout_seconds},
                 ),
-                timeout=15,
+                timeout=db_query_total_timeout_seconds,
             )
 
             files = result.scalars().all()
@@ -103,16 +110,22 @@ async def retrieve_documents(
             vectorstore = config["configurable"]["vectorstore"]
             db_sessionmaker = config["configurable"]["db_sessionmaker"]
             top_k_docs = config["configurable"]["top_k_docs"]
+            db_query_timeout_seconds = config["configurable"]["db_query_timeout_seconds"]
+            db_query_total_timeout_seconds = config["configurable"]["db_query_total_timeout_seconds"]
+            vectorstore_timeout_seconds = config["configurable"]["vectorstore_timeout_seconds"]
         else:
             vectorstore = runtime.context["vectorstore"]
             db_sessionmaker = runtime.context["db_sessionmaker"]
             top_k_docs = runtime.context["top_k_docs"]
+            db_query_timeout_seconds = runtime.context["db_query_timeout_seconds"]
+            db_query_total_timeout_seconds = runtime.context["db_query_total_timeout_seconds"]
+            vectorstore_timeout_seconds = runtime.context["vectorstore_timeout_seconds"]
             logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
 
         # Step 1: Perform similarity search in the vector store
         docs: list[Document] = await asyncio.wait_for(
             vectorstore.asimilarity_search(query=query, k=top_k_docs),
-            timeout=15,
+            timeout=vectorstore_timeout_seconds,
         )
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
@@ -123,7 +136,9 @@ async def retrieve_documents(
 
         # Step 2: Fetch related proposals from the database
         logger.info("Get proposals for retrieved documents")
-        proposals: list[TrackedProposal] = await get_proposals(docs, db_sessionmaker)
+        proposals: list[TrackedProposal] = await get_proposals(
+            docs, db_sessionmaker, db_query_timeout_seconds, db_query_total_timeout_seconds
+        )
 
         # Build TrackedDocument entries (is_checked=False, is_relevant=True by default)
         tracked_docs = [

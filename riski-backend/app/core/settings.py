@@ -100,6 +100,30 @@ class BackendSettings(AppBaseSettings):
         description="Number of documents to retrieve in corresponding tool",
     )
 
+    db_query_timeout_seconds: int = Field(
+        default=10,
+        ge=1,
+        description="Server-side statement timeout for database queries (seconds).",
+    )
+
+    db_query_total_timeout_seconds: int = Field(
+        default=15,
+        ge=1,
+        description="Total asyncio timeout for database queries, including connection overhead (seconds).",
+    )
+
+    vectorstore_timeout_seconds: int = Field(
+        default=15,
+        ge=1,
+        description="Total asyncio timeout for vector store similarity search (seconds).",
+    )
+
+    db_connect_timeout_seconds: int = Field(
+        default=30,
+        ge=1,
+        description="Timeout for establishing a new database connection (seconds).",
+    )
+
     check_document_max_concurrency: int = Field(
         default=1,
         ge=1,

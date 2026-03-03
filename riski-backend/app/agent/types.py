@@ -10,6 +10,10 @@ class AgentContext(TypedDict):
     vectorstore: PGVectorStore
     db_sessionmaker: async_sessionmaker
     agent_capabilities: str
+    top_k_docs: int
+    db_query_timeout_seconds: int
+    db_query_total_timeout_seconds: int
+    vectorstore_timeout_seconds: int
 
 
 NO_RESULTS_RESPONSE: str = json.dumps(
