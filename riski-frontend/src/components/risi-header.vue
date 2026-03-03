@@ -11,7 +11,7 @@ import logo from "@/assets/mde-Logo_Sonne.svg";
       <div class="header-fullsize flex-shrink-0">
         <div class="container">
           <div
-            class="row align-items-center justify-content-between no-gutters"
+            class="d-md-flex align-items-center justify-content-between no-gutters"
           >
             <!-- Logo + Title -->
             <div class="col-10 col-md-8 d-flex align-items-center">
@@ -61,8 +61,10 @@ import logo from "@/assets/mde-Logo_Sonne.svg";
   text-decoration: none;
 }
 
-.row {
-  padding-left: 20%;
-  padding-right: 20%;
+@media (min-width: 768px) {
+  .d-md-flex {
+    padding-left: 20%;
+    padding-right: 20%;
+  }
 }
 </style>
