@@ -16,7 +16,16 @@ defineProps<{
         <div class="m-intro-vertical__content">
           <div class="intro-info">
             <p>
-              Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus dem Ratsinformationssystem (RIS) stellen. Die KI-Suche liefert dann eine zusammenfassende Antwort basierend auf gefundenen relevanten Dokumenten.
+              Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus
+              dem Ratsinformationssystem (RIS) stellen. Die KI-Suche liefert
+              dann eine zusammenfassende Antwort basierend auf gefundenen
+              relevanten Dokumenten. Bitte beachten Sie die aktuellen
+              <a
+                target="_blank"
+                rel="noopener"
+                href="https://ki.muenchen.de/ki-systeme/riski#risiken-und-limitierungen"
+                >Risiken und Limitierungen</a
+              >.
             </p>
             <div style="margin-bottom: 24px"></div>
             <slot></slot>
