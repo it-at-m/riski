@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DocumentCheckResult } from "@/types/RiskiAnswer.ts";
-import { MucIcon  } from "@muenchen/muc-patternlab-vue";
+
+import { MucIcon } from "@muenchen/muc-patternlab-vue";
 import { computed, ref } from "vue";
 
 const props = defineProps<{
@@ -60,8 +61,8 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
         class="doc-checks-toggle"
         :aria-expanded="showReasons"
         aria-controls="doc-checks-content"
+        style="margin-left: auto; display: block"
         @click="showReasons = !showReasons"
-        style="margin-left: auto; display: block;"
       >
         {{ showReasons ? "Begründung ausblenden" : "Begründung anzeigen" }}
       </button>
@@ -110,7 +111,10 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
                   :aria-label="`Dokument öffnen: ${check.name} (öffnet in neuem Fenster)`"
                 >
                   {{ check.name }}
-                  <MucIcon icon="file" style="height: 1em; width: 1em; vertical-align: middle;"></MucIcon>
+                  <muc-icon
+                    icon="file"
+                    style="height: 1em; width: 1em; vertical-align: middle"
+                  ></muc-icon>
                 </a>
                 <span v-else>{{ check.name }}</span>
               </td>
@@ -167,7 +171,10 @@ const resolveDocUrl = (check: DocumentCheckResult): string | undefined => {
                   :aria-label="`Dokument öffnen: ${check.name} (öffnet in neuem Fenster)`"
                 >
                   {{ check.name }}
-                  <MucIcon icon="file" style="height: 1em; width: 1em; vertical-align: middle;"></MucIcon>
+                  <muc-icon
+                    icon="file"
+                    style="height: 1em; width: 1em; vertical-align: middle"
+                  ></muc-icon>
                 </a>
                 <span v-else>{{ check.name }}</span>
               </td>
