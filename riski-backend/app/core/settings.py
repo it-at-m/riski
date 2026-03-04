@@ -81,7 +81,7 @@ class BackendSettings(AppBaseSettings):
     # === Agent Settings ===
     checkpointer: "CheckpointerSettings" = Field(
         description="Settings for the agent's checkpointer, which manages the state of ongoing interactions.",
-        default={"type": "in_memory"},  # type: ignore
+        default={"type": "redis"},  # type: ignore
     )
 
     # === Server Settings ===
