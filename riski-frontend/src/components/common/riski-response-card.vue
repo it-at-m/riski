@@ -153,6 +153,16 @@ async function copyAnswer() {
       <div>
         <p class="error-heading">{{ errorHeading }}</p>
         <p class="error-hint">{{ errorHint }}</p>
+        <p class="error-hint">
+          Gegebenenfalls kann dieser Fragetyp aktuell nicht beantwortet werden.
+          Beachten Sie dazu die aktuellen
+          <a
+            target="_blank"
+            rel="noopener"
+            href="https://ki.muenchen.de/ki-systeme/riski#risiken-und-limitierungen"
+            >Risiken und Limitierungen</a
+          >.
+        </p>
         <div
           v-if="
             errorInfo?.suggestions &&
