@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Union
+from urllib.parse import quote
 
 from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
@@ -42,10 +43,12 @@ class RedisCheckpointerSettings(BaseModel):
     @property
     def redis_url(self) -> RedisDsn:
         """Construct the Redis DSN URL."""
+        raw_password = self.password.get_secret_value() if self.password else None
+        encoded_password = quote(raw_password, safe="") if raw_password else None
         return RedisDsn.build(
             scheme="rediss" if self.secure else "redis",
             username=None,
-            password=self.password.get_secret_value() if self.password else None,
+            password=encoded_password,
             host=self.host,
             port=self.port,
             path=f"/{self.db}",
