@@ -1,5 +1,5 @@
 import pytest
-from app.core.settings import BackendSettings, InMemoryCheckpointerSettings, RedisCheckpointerSettings, get_settings
+from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_settings
 
 
 @pytest.fixture(autouse=True)
@@ -38,15 +38,15 @@ def _base_env(monkeypatch: pytest.MonkeyPatch, *, host_env: str | None = None, t
 
 
 @pytest.mark.usefixtures("clear_settings_cache")
-def test_checkpointer_default_is_in_memory(monkeypatch: pytest.MonkeyPatch):
-    """Default checkpointer settings should be in_memory when no env vars are present."""
+def test_checkpointer_default_is_redis(monkeypatch: pytest.MonkeyPatch):
+    """Default checkpointer settings should be redis when no env vars are present."""
 
     _base_env(monkeypatch, host_env=None)
 
     settings = get_settings()
 
-    assert isinstance(settings.checkpointer, InMemoryCheckpointerSettings)
-    assert settings.checkpointer.type == "in_memory"
+    assert isinstance(settings.checkpointer, RedisCheckpointerSettings)
+    assert settings.checkpointer.type == "redis"
 
 
 @pytest.mark.usefixtures("clear_settings_cache")
