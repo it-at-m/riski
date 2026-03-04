@@ -79,9 +79,9 @@ class BackendSettings(AppBaseSettings):
     )
 
     # === Agent Settings ===
-    checkpointer: "CheckpointerSettings" = Field(
+    checkpointer: RedisCheckpointerSettings = Field(
         description="Settings for the agent's checkpointer, which manages the state of ongoing interactions.",
-        default={"type": "redis"},  # type: ignore
+        default_factory=lambda: RedisCheckpointerSettings(),  # type: ignore
     )
 
     # === Server Settings ===
