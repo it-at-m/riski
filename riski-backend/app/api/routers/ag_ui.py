@@ -3,6 +3,7 @@ from typing import Any, AsyncGenerator
 from ag_ui.core import RunErrorEvent
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder
+from ag_ui_langgraph import LangGraphAgent
 from ag_ui_langgraph.agent import ProcessedEvents
 from app.agent.state import ErrorInfo, RelevanceUpdate, TrackedDocument, TrackedProposal
 from app.utils.logging import getLogger
@@ -14,9 +15,30 @@ router = APIRouter(prefix="/api/ag-ui", tags=["ag-ui"])
 logger = getLogger()
 
 
+def _make_request_agent(request: Request) -> LangGraphAgent:
+    """Create a fresh ``LangGraphAgent`` instance for each request.
+
+    ``LangGraphAgent`` stores mutable per-run state (``active_run``,
+    ``messages_in_process``) as instance attributes.  Sharing a single
+    instance across concurrent requests causes those fields to be
+    overwritten by whichever coroutine runs last, leading to corrupted
+    event streams and errors.  Creating a lightweight wrapper per request
+    is safe because the expensive objects (compiled graph, config) are
+    shared by reference from the application-level singleton.
+    """
+    singleton: LangGraphAgent = request.app.state.agent
+    return LangGraphAgent(
+        name=singleton.name,
+        description=singleton.description,
+        graph=singleton.graph,
+        config=singleton.config,
+    )
+
+
 @observe(name="ag-ui-agent-run")
 async def run_agent_traced(input_data: RunAgentInput, request: Request) -> AsyncGenerator[ProcessedEvents, None]:
-    async for event in request.app.state.agent.run(input_data):
+    agent = _make_request_agent(request)
+    async for event in agent.run(input_data):
         yield event
 
 
