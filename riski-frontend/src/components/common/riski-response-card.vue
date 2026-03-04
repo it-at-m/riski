@@ -266,12 +266,10 @@ async function copyAnswer() {
       <h2 class="m-dataset-item__headline headline">Recherchefortschritt</h2>
     </div>
     <div class="progress-summary">
-      <MucIcon :icon=progressStatusIcon></MucIcon>
+      <muc-icon :icon="progressStatusIcon"></muc-icon>
       <span>{{ progressSummary }}</span>
     </div>
-    <div
-      class="progress-details"
-    >
+    <div class="progress-details">
       <step-progress :steps="visibleSteps" />
     </div>
   </div>

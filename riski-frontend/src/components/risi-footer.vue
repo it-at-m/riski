@@ -2,7 +2,6 @@
 defineProps<{
   documentationUrl: string;
 }>();
-
 </script>
 <template>
   <footer>
@@ -52,7 +51,8 @@ defineProps<{
                   target="_blank"
                   rel="noopener"
                   :href="documentationUrl"
-                >Hilfe und FAQ</a>
+                  >Hilfe und FAQ</a
+                >
               </li>
             </ul>
           </div>
