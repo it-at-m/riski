@@ -42,7 +42,7 @@ async def get_proposals(
     Args:
         documents (list[Document]): List of documents to find related proposals for.
         db_sessionmaker (async_sessionmaker): The async session maker for database access.
-        db_query_timeout_seconds (int): Server-side statement timeout (seconds).
+        db_query_timeout_seconds (int): Per-statement asyncio timeout for the database query (seconds).
         db_query_total_timeout_seconds (int): Total asyncio timeout including connection overhead (seconds).
         force_db_timeout (bool): If True, immediately raise TimeoutError (for testing).
 
@@ -61,7 +61,6 @@ async def get_proposals(
             result = await asyncio.wait_for(
                 db_session.execute(
                     select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                    execution_options={"timeout": db_query_timeout_seconds},
                 ),
                 timeout=db_query_total_timeout_seconds,
             )

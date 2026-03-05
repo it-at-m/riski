@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal, Union
 from urllib.parse import quote
 
-from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
+from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
@@ -168,6 +168,16 @@ class BackendSettings(AppBaseSettings):
         ge=1,
         description="Timeout for establishing a new database connection (seconds).",
     )
+
+    @model_validator(mode="after")
+    def validate_db_timeouts(self) -> "BackendSettings":
+        """Validate that db_query_total_timeout_seconds >= db_query_timeout_seconds."""
+        if self.db_query_total_timeout_seconds < self.db_query_timeout_seconds:
+            raise ValueError(
+                f"db_query_total_timeout_seconds ({self.db_query_total_timeout_seconds}) must be "
+                f">= db_query_timeout_seconds ({self.db_query_timeout_seconds})."
+            )
+        return self
 
     check_document_max_concurrency: int = Field(
         default=1,

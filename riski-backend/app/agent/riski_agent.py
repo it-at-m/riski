@@ -134,9 +134,12 @@ def _route_after_collect(state: RiskiAgentState) -> str:
 def _route_after_tools(state: RiskiAgentState) -> str:
     """Route after the tools node.
 
+    - ``has_error`` is set (e.g. timeout) → END immediately, preserving error_info.
     - ``get_agent_capabilities`` was called → back to model for final LLM answer.
     - Otherwise → guard as usual.
     """
+    if state.has_error:
+        return END
     last_message = state["messages"][-1] if state["messages"] else None
     if isinstance(last_message, ToolMessage) and last_message.name == get_agent_capabilities.name:
         return NODE_MODEL
@@ -540,9 +543,19 @@ def build_riski_graph(
                 "Capabilities pass message sequence: %s",
                 [type(m).__name__ for m in caps_messages],
             )
-            if force_llm_timeout:
-                raise APITimeoutError.__new__(APITimeoutError)
-            response = await chat_model.ainvoke(caps_messages)
+            try:
+                if force_llm_timeout:
+                    raise APITimeoutError.__new__(APITimeoutError)
+                response = await chat_model.ainvoke(caps_messages)
+            except APITimeoutError:
+                logger.warning("call_model: capabilities-pass LLM call timed out.")
+                return {
+                    "messages": [],
+                    "error_info": ErrorInfo(
+                        error_type="timeout",
+                        message="Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut.",
+                    ),
+                }
             return {"messages": [response]}
         if relevant_docs:
             # -- Generation pass: we have guard-filtered documents --
@@ -742,6 +755,7 @@ def build_riski_graph(
         chat_model,
         check_document_prompt_template=check_document_prompt_template,
         snippet_size=snippet_size,
+        force_llm_timeout=force_llm_timeout,
     )
 
     graph = StateGraph(RiskiAgentState)
