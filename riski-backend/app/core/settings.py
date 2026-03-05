@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal, Union
 from urllib.parse import quote
 
-from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
+from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
@@ -145,12 +145,63 @@ class BackendSettings(AppBaseSettings):
         description="Number of documents to retrieve in corresponding tool",
     )
 
+    db_query_timeout_seconds: int = Field(
+        default=10,
+        ge=1,
+        description="Server-side statement timeout for database queries (seconds).",
+    )
+
+    db_query_total_timeout_seconds: int = Field(
+        default=15,
+        ge=1,
+        description="Total asyncio timeout for database queries, including connection overhead (seconds).",
+    )
+
+    vectorstore_timeout_seconds: int = Field(
+        default=15,
+        ge=1,
+        description="Total asyncio timeout for vector store similarity search (seconds).",
+    )
+
+    db_connect_timeout_seconds: int = Field(
+        default=30,
+        ge=1,
+        description="Timeout for establishing a new database connection (seconds).",
+    )
+
+    @model_validator(mode="after")
+    def validate_db_timeouts(self) -> "BackendSettings":
+        """Validate that db_query_total_timeout_seconds >= db_query_timeout_seconds."""
+        if self.db_query_total_timeout_seconds < self.db_query_timeout_seconds:
+            raise ValueError(
+                f"db_query_total_timeout_seconds ({self.db_query_total_timeout_seconds}) must be "
+                f">= db_query_timeout_seconds ({self.db_query_timeout_seconds})."
+            )
+        return self
+
     check_document_max_concurrency: int = Field(
         default=1,
         ge=1,
         description="Maximum number of check_document fan-out branches that run concurrently. "
         "Lower values reduce parallel LLM API load at the cost of higher latency.",
         validation_alias="RISKI_BACKEND__CHECK_DOCUMENT_MAX_CONCURRENCY",
+    )
+
+    # === Debug / testing flags ===
+    # Set via env var (e.g. RISKI_BACKEND__FORCE_VECTORSTORE_TIMEOUT=true) or config.yaml.
+    # These immediately trigger the corresponding timeout path without needing a real
+    # slow network call — useful for manual end-to-end testing.
+    force_vectorstore_timeout: bool = Field(
+        default=False,
+        description="Force a vectorstore timeout on every retrieve_documents call (for testing).",
+    )
+    force_db_timeout: bool = Field(
+        default=False,
+        description="Force a database timeout on every retrieve_documents call (for testing).",
+    )
+    force_llm_timeout: bool = Field(
+        default=False,
+        description="Force an LLM timeout on every model call (for testing).",
     )
 
     model_config = SettingsConfigDict(

@@ -45,6 +45,7 @@ async def build_agent(
         model_name=settings.core.genai.chat_model,
         temperature=settings.core.genai.chat_temperature,
         max_retries=settings.core.genai.chat_max_retries,
+        timeout=settings.core.genai.chat_timeout_seconds,
     )
 
     # Bind tools so the model knows about them
@@ -126,6 +127,12 @@ async def build_agent(
                 "db_sessionmaker": db_sessionmaker,
                 "top_k_docs": settings.top_k_docs,
                 "agent_capabilities": agent_capabilities,
+                "db_query_timeout_seconds": settings.db_query_timeout_seconds,
+                "db_query_total_timeout_seconds": settings.db_query_total_timeout_seconds,
+                "vectorstore_timeout_seconds": settings.vectorstore_timeout_seconds,
+                "force_vectorstore_timeout": settings.force_vectorstore_timeout,
+                "force_db_timeout": settings.force_db_timeout,
+                "force_llm_timeout": settings.force_llm_timeout,
             },
             "callbacks": callbacks,
             # Cap parallel check_document fan-out branches to avoid overwhelming

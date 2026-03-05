@@ -25,3 +25,8 @@ class GenAISettings(BaseModel):
         default=2,
         ge=0,
     )
+    chat_timeout_seconds: int = Field(
+        description="Timeout in seconds for chat model requests",
+        default=60,
+        ge=1,
+    )

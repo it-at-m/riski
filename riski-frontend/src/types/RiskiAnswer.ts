@@ -33,6 +33,9 @@ export interface DocumentCheckResult {
  * - `no_tool_call` – the model did not invoke any tool.
  * - `no_documents_found` – the tool ran but returned zero documents.
  * - `no_relevant_documents` – documents were found but none passed relevance check.
+ * - `timeout` – DB or vector store did not respond in time; user should retry.
+ * - `content_policy_violation` – the request was blocked by content policy.
+ * - `server_error` – an unexpected server-side error occurred.
  */
 export interface ErrorInfo {
   /** Machine-readable error category */

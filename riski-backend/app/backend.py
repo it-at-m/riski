@@ -29,10 +29,9 @@ def create_app() -> FastAPI:
         db_engine: AsyncEngine = create_async_engine(
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,
-            pool_timeout=10,
             pool_pre_ping=True,
             pool_recycle=1800,
-            connect_args={"timeout": 30},
+            connect_args={"timeout": settings.db_connect_timeout_seconds},
         )
 
         db_sessionmaker: async_sessionmaker[AsyncSession] = async_sessionmaker(

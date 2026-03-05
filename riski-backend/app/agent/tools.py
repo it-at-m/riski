@@ -1,3 +1,4 @@
+import asyncio
 import json
 from logging import Logger
 from typing import TypedDict
@@ -29,12 +30,21 @@ class RetrieveDocumentsArtifact(TypedDict):
     proposals: list[dict]
 
 
-async def get_proposals(documents: list[Document], db_sessionmaker: async_sessionmaker) -> list[TrackedProposal]:
+async def get_proposals(
+    documents: list[Document],
+    db_sessionmaker: async_sessionmaker,
+    db_query_timeout_seconds: int,
+    db_query_total_timeout_seconds: int,
+    force_db_timeout: bool = False,
+) -> list[TrackedProposal]:
     """Fetch proposals related to the given documents from the database.
 
     Args:
         documents (list[Document]): List of documents to find related proposals for.
         db_sessionmaker (async_sessionmaker): The async session maker for database access.
+        db_query_timeout_seconds (int): Per-statement asyncio timeout for the database query (seconds).
+        db_query_total_timeout_seconds (int): Total asyncio timeout including connection overhead (seconds).
+        force_db_timeout (bool): If True, immediately raise TimeoutError (for testing).
 
     Returns:
         list[TrackedProposal]: A list of proposals related to the documents.
@@ -44,10 +54,15 @@ async def get_proposals(documents: list[Document], db_sessionmaker: async_sessio
         file_ids = {doc.id for doc in documents}
         logger.debug(f"Fetching proposals for file IDs: {file_ids}")
 
+        if force_db_timeout:
+            raise asyncio.TimeoutError("forced DB timeout for testing")
+
         async with db_sessionmaker() as db_session:
-            result = await db_session.execute(
-                select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                execution_options={"timeout": 10},
+            result = await asyncio.wait_for(
+                db_session.execute(
+                    select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
+                ),
+                timeout=db_query_total_timeout_seconds,
             )
 
             files = result.scalars().all()
@@ -99,14 +114,29 @@ async def retrieve_documents(
             vectorstore = config["configurable"]["vectorstore"]
             db_sessionmaker = config["configurable"]["db_sessionmaker"]
             top_k_docs = config["configurable"]["top_k_docs"]
+            db_query_timeout_seconds = config["configurable"]["db_query_timeout_seconds"]
+            db_query_total_timeout_seconds = config["configurable"]["db_query_total_timeout_seconds"]
+            vectorstore_timeout_seconds = config["configurable"]["vectorstore_timeout_seconds"]
+            force_vectorstore_timeout: bool = config["configurable"].get("force_vectorstore_timeout", False)
+            force_db_timeout: bool = config["configurable"].get("force_db_timeout", False)
         else:
             vectorstore = runtime.context["vectorstore"]
             db_sessionmaker = runtime.context["db_sessionmaker"]
             top_k_docs = runtime.context["top_k_docs"]
+            db_query_timeout_seconds = runtime.context["db_query_timeout_seconds"]
+            db_query_total_timeout_seconds = runtime.context["db_query_total_timeout_seconds"]
+            vectorstore_timeout_seconds = runtime.context["vectorstore_timeout_seconds"]
+            force_vectorstore_timeout = runtime.context.get("force_vectorstore_timeout", False)
+            force_db_timeout = runtime.context.get("force_db_timeout", False)
             logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
 
         # Step 1: Perform similarity search in the vector store
-        docs: list[Document] = await vectorstore.asimilarity_search(query=query, k=top_k_docs)
+        if force_vectorstore_timeout:
+            raise asyncio.TimeoutError("forced vectorstore timeout for testing")
+        docs: list[Document] = await asyncio.wait_for(
+            vectorstore.asimilarity_search(query=query, k=top_k_docs),
+            timeout=vectorstore_timeout_seconds,
+        )
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
         if not docs:
@@ -116,7 +146,13 @@ async def retrieve_documents(
 
         # Step 2: Fetch related proposals from the database
         logger.info("Get proposals for retrieved documents")
-        proposals: list[TrackedProposal] = await get_proposals(docs, db_sessionmaker)
+        proposals: list[TrackedProposal] = await get_proposals(
+            docs,
+            db_sessionmaker,
+            db_query_timeout_seconds,
+            db_query_total_timeout_seconds,
+            force_db_timeout=force_db_timeout,
+        )
 
         # Build TrackedDocument entries (is_checked=False, is_relevant=True by default)
         tracked_docs = [
@@ -143,6 +179,9 @@ async def retrieve_documents(
         )
 
         return content_summary, artifact
+    except asyncio.TimeoutError:
+        logger.error("retrieve_documents timed out waiting for DB or vector store")
+        raise ToolException("TIMEOUT: database or vector store query timed out")
     except Exception as e:
         logger.error(f"Error in retrieve_documents tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve documents: {str(e)}")
