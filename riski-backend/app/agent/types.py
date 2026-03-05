@@ -14,6 +14,9 @@ class AgentContext(TypedDict):
     db_query_timeout_seconds: int
     db_query_total_timeout_seconds: int
     vectorstore_timeout_seconds: int
+    force_vectorstore_timeout: bool
+    force_db_timeout: bool
+    force_llm_timeout: bool
 
 
 NO_RESULTS_RESPONSE: str = json.dumps(

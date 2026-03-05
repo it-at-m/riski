@@ -65,7 +65,9 @@ class ErrorInfo(BaseModel):
             "Machine-readable error category. Known values:\n"
             "  • ``no_tool_call`` – the model did not invoke any tool.\n"
             "  • ``no_documents_found`` – the tool ran but returned zero documents.\n"
-            "  • ``no_relevant_documents`` – documents were found but none passed the relevance check."
+            "  • ``no_relevant_documents`` – documents were found but none passed the relevance check.\n"
+            "  • ``timeout`` – the DB or vector store did not respond in time; user should retry.\n"
+            "  • ``content_policy_violation`` – the request was blocked by content policy."
         )
     )
     message: str = Field(description="Human-readable message (German) suitable for direct display.")

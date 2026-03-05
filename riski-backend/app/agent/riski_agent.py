@@ -1,3 +1,4 @@
+import asyncio
 import json
 from logging import Logger
 from typing import Any, Iterable
@@ -10,7 +11,7 @@ from langfuse.model import TextPromptClient
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Send
-from openai import BadRequestError
+from openai import APITimeoutError, BadRequestError
 
 from .state import (
     DocumentCheckInput,
@@ -146,6 +147,7 @@ def build_guard_nodes(
     chat_model: ChatOpenAI,
     check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
     snippet_size: int = 10_000,
+    force_llm_timeout: bool = False,
 ):
     """Build and return the three guard-related node functions + fan-out router.
 
@@ -200,6 +202,9 @@ def build_guard_nodes(
             )
             if isinstance(response, SuggestionsResponse):
                 return response.suggestions[:3]
+            return []
+        except APITimeoutError:
+            logger.warning("_generate_suggestions timed out; returning empty suggestions.")
             return []
         except Exception:
             logger.warning("Could not generate query suggestions.", exc_info=True)
@@ -346,6 +351,8 @@ def build_guard_nodes(
 
         relevance_model = chat_model.with_structured_output(DocumentRelevanceVerdict)
         try:
+            if force_llm_timeout:
+                raise APITimeoutError.__new__(APITimeoutError)
             verdict_raw = await relevance_model.ainvoke(
                 [
                     SystemMessage(content="Du bist ein Relevanz-Prüfer. Bewerte ob ein Dokument relevant für eine Benutzeranfrage ist."),
@@ -374,6 +381,15 @@ def build_guard_nodes(
                     verdict_raw,
                 )
                 verdict = DocumentRelevanceVerdict(relevant=True, reason="Prüfung nicht eindeutig.")
+        except APITimeoutError:
+            logger.error(
+                "check_document: LLM relevance check timed out for doc '%s' (id=%s). Assuming relevant.",
+                doc_name,
+                doc_id,
+            )
+            verdict = DocumentRelevanceVerdict(
+                relevant=True, reason="Zeitüberschreitung bei der Relevanzprüfung, Dokument wird beibehalten."
+            )
         except Exception as exc:
             logger.error(
                 "check_document: LLM relevance check failed for doc '%s' (id=%s). Exception type: %s, repr: %r. Assuming relevant.",
@@ -493,6 +509,7 @@ def build_riski_graph(
     system_prompt: str = SYSTEM_PROMPT,
     check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
     snippet_size: int = 10_000,
+    force_llm_timeout: bool = False,
 ) -> StateGraph:
     """Build the RISKI agent graph with core nodes and guard pipeline."""
     tools = list(tools)
@@ -523,6 +540,8 @@ def build_riski_graph(
                 "Capabilities pass message sequence: %s",
                 [type(m).__name__ for m in caps_messages],
             )
+            if force_llm_timeout:
+                raise APITimeoutError.__new__(APITimeoutError)
             response = await chat_model.ainvoke(caps_messages)
             return {"messages": [response]}
         if relevant_docs:
@@ -555,6 +574,8 @@ def build_riski_graph(
             messages = [system_message, *base_messages, synthetic_context, docs_message]
             structured_model = chat_model.with_structured_output(StructuredAgentResponse)
             try:
+                if force_llm_timeout:
+                    raise APITimeoutError.__new__(APITimeoutError)
                 response = await structured_model.ainvoke(messages)
                 try:
                     if isinstance(response, StructuredAgentResponse):
@@ -571,6 +592,14 @@ def build_riski_graph(
                         exc_info=True,
                     )
                     content = str(response)
+            except APITimeoutError:
+                logger.warning("call_model: structured generation timed out.")
+                return {
+                    "error_info": ErrorInfo(
+                        error_type="timeout",
+                        message="Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut.",
+                    )
+                }
             except Exception:
                 logger.warning(
                     "Structured generation failed, returning safe response.",
@@ -591,7 +620,17 @@ def build_riski_graph(
 
         messages = [system_message, *_sanitize_messages(state["messages"])]
         try:
+            if force_llm_timeout:
+                raise APITimeoutError.__new__(APITimeoutError)
             response = await model_with_tools.ainvoke(messages)
+        except APITimeoutError:
+            logger.warning("call_model: first-pass LLM call timed out.")
+            return {
+                "error_info": ErrorInfo(
+                    error_type="timeout",
+                    message="Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut.",
+                )
+            }
         except BadRequestError as e:
             if _is_content_filter_error(e):
                 logger.warning("Content policy violation for user query.", exc_info=True)
@@ -626,9 +665,49 @@ def build_riski_graph(
         text is used to synthesize a final ``AIMessage`` directly — no second
         LLM call is required and the message history stays clean.
         """
-        # Delegate actual tool execution to the standard ToolNode
-        result: dict[str, Any] = await tool_node.ainvoke(state)
+        # Delegate actual tool execution to the standard ToolNode.
+        # Wrap in try/except because ToolNode's built-in error handler for
+        # content_and_artifact tools can itself raise when it receives a
+        # ToolException, letting the raw exception escape ainvoke.
+        try:
+            result: dict[str, Any] = await tool_node.ainvoke(state)
+        except asyncio.TimeoutError:
+            logger.error("run_tools: tool raised TimeoutError outside ToolNode error handler.")
+            return {
+                "messages": [],
+                "error_info": ErrorInfo(
+                    error_type="timeout",
+                    message="Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut.",
+                ),
+            }
+        except Exception as exc:
+            # ToolNode's error handler for content_and_artifact tools can itself
+            # raise (known LangGraph bug).  Detect a TIMEOUT: ToolException by
+            # inspecting the exception message; treat everything else as a hard error.
+            exc_str = str(exc)
+            if "TIMEOUT:" in exc_str:
+                logger.error("run_tools: ToolException with TIMEOUT escaped ToolNode: %s", exc_str)
+                return {
+                    "messages": [],
+                    "error_info": ErrorInfo(
+                        error_type="timeout",
+                        message="Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut.",
+                    ),
+                }
+            raise
         tool_messages: list[ToolMessage] = result.get("messages", [])
+
+        # -- Check for timeout errors signalled by the tool -------------------
+        for msg in tool_messages:
+            if isinstance(msg, ToolMessage) and isinstance(msg.content, str) and msg.content.startswith("TIMEOUT:"):
+                logger.warning("Tool '%s' timed out: %s", msg.name, msg.content)
+                return {
+                    "messages": tool_messages,
+                    "error_info": ErrorInfo(
+                        error_type="timeout",
+                        message=("Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut."),
+                    ),
+                }
 
         # -- Short-circuit for get_agent_capabilities -------------------------
         for msg in tool_messages:

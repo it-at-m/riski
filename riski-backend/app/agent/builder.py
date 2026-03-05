@@ -130,6 +130,9 @@ async def build_agent(
                 "db_query_timeout_seconds": settings.db_query_timeout_seconds,
                 "db_query_total_timeout_seconds": settings.db_query_total_timeout_seconds,
                 "vectorstore_timeout_seconds": settings.vectorstore_timeout_seconds,
+                "force_vectorstore_timeout": settings.force_vectorstore_timeout,
+                "force_db_timeout": settings.force_db_timeout,
+                "force_llm_timeout": settings.force_llm_timeout,
             },
             "callbacks": callbacks,
             # Cap parallel check_document fan-out branches to avoid overwhelming

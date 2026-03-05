@@ -177,6 +177,23 @@ class BackendSettings(AppBaseSettings):
         validation_alias="RISKI_BACKEND__CHECK_DOCUMENT_MAX_CONCURRENCY",
     )
 
+    # === Debug / testing flags ===
+    # Set via env var (e.g. RISKI_BACKEND__FORCE_VECTORSTORE_TIMEOUT=true) or config.yaml.
+    # These immediately trigger the corresponding timeout path without needing a real
+    # slow network call — useful for manual end-to-end testing.
+    force_vectorstore_timeout: bool = Field(
+        default=False,
+        description="Force a vectorstore timeout on every retrieve_documents call (for testing).",
+    )
+    force_db_timeout: bool = Field(
+        default=False,
+        description="Force a database timeout on every retrieve_documents call (for testing).",
+    )
+    force_llm_timeout: bool = Field(
+        default=False,
+        description="Force an LLM timeout on every model call (for testing).",
+    )
+
     model_config = SettingsConfigDict(
         env_prefix="RISKI_BACKEND__",
         env_file=str(Path(__file__).resolve().parents[3] / ".env"),

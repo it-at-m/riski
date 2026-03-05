@@ -46,6 +46,8 @@ const errorHeading = computed(() => {
       return "Keine Dokumente gefunden";
     case "no_relevant_documents":
       return "Keine relevanten Dokumente";
+    case "timeout":
+      return "Zeitüberschreitung";
     case "content_policy_violation":
       return "Anfrage nicht zulässig";
     case "server_error":
@@ -64,6 +66,8 @@ const errorHint = computed(() => {
       return "Versuchen Sie es mit anderen Suchbegriffen.";
     case "no_relevant_documents":
       return "Versuchen Sie es mit einer präziseren Fragestellung.";
+    case "timeout":
+      return "Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es in Kürze erneut.";
     case "content_policy_violation":
       return "Ihre Anfrage verstößt gegen die Inhaltsrichtlinien. Bitte stellen Sie eine andere Frage.";
     case "server_error":
@@ -168,7 +172,8 @@ async function copyAnswer() {
             errorInfo?.suggestions &&
             errorInfo.suggestions.length > 0 &&
             errorInfo.errorType !== 'content_policy_violation' &&
-            errorInfo.errorType !== 'server_error'
+            errorInfo.errorType !== 'server_error' &&
+            errorInfo.errorType !== 'timeout'
           "
           class="error-suggestions"
         >
