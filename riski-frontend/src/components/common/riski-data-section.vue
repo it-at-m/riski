@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type Document from "@/types/Document";
 import type Proposal from "@/types/Proposal";
-import { MucIcon  } from "@muenchen/muc-patternlab-vue";
+
+import { MucIcon } from "@muenchen/muc-patternlab-vue";
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -75,7 +76,7 @@ function fileSizeAsString(fileSize: number): string {
             class="source-link"
           >
             {{ proposal.name }}
-            <MucIcon icon="ext-link"></MucIcon>
+            <muc-icon icon="ext-link"></muc-icon>
           </a>
           <p
             v-if="proposal.subject"
@@ -105,7 +106,7 @@ function fileSizeAsString(fileSize: number): string {
               class="source-link"
             >
               {{ document.name }}
-              <MucIcon icon="file"></MucIcon>
+              <muc-icon icon="file"></muc-icon>
             </a>
             <span class="source-filesize">{{
               fileSizeAsString(document.size)
@@ -228,7 +229,7 @@ function fileSizeAsString(fileSize: number): string {
 
 .source-filesize {
   font-size: 0.82em;
-  color: #3A5368;
+  color: #3a5368;
   white-space: nowrap;
   margin-left: auto;
 }

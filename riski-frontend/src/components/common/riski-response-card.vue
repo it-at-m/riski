@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import type RiskiAnswer from "@/types/RiskiAnswer.ts";
-import { MucButton,  MucIcon  } from "@muenchen/muc-patternlab-vue";
+
+import { MucButton, MucIcon } from "@muenchen/muc-patternlab-vue";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import { computed, ref } from "vue";
 
 import RiskiDataSection from "@/components/common/riski-data-section.vue";
 import StepProgress from "@/components/common/step-progress.vue";
+
 const props = defineProps<{
   riskiAnswer?: RiskiAnswer;
   isStreaming?: boolean;
@@ -33,7 +35,6 @@ const visibleSteps = computed(() =>
   )
 );
 
-const showStepDetails = ref(true);
 const hasProgress = computed(() => visibleSteps.value.length > 0);
 
 /** User-facing heading for the error callout */
@@ -76,27 +77,26 @@ const progressSummary = computed(() => {
   const total = visibleSteps.value.length;
   if (!total) return "";
 
-  const completed = visibleSteps.value.filter(
-    (step) => step.status === "completed"
-  ).length;
   const hasFailed = visibleSteps.value.some((step) => step.status === "failed");
   const isRunning = visibleSteps.value.some(
     (step) => step.status === "running"
   );
 
   if (hasFailed) {
-    return `Recherche mit Fehlern (${completed}/${total} Schritte)`;
+    return `Recherche mit Fehlern`;
   }
   if (isRunning) {
-    return `Recherche läuft (${completed}/${total} Schritte)`;
+    return `Recherche läuft`;
   }
-  return `Recherche abgeschlossen (${completed}/${total} Schritte)`;
+  return `Recherche abgeschlossen`;
 });
 
 const progressStatusIcon = computed(() => {
   if (!hasProgress.value) return "";
-  if (visibleSteps.value.some((step) => step.status === "failed")) return "warning";
-  if (visibleSteps.value.some((step) => step.status === "running")) return "hourglass";
+  if (visibleSteps.value.some((step) => step.status === "failed"))
+    return "warning";
+  if (visibleSteps.value.some((step) => step.status === "running"))
+    return "hourglass";
   return "check";
 });
 
@@ -153,6 +153,16 @@ async function copyAnswer() {
       <div>
         <p class="error-heading">{{ errorHeading }}</p>
         <p class="error-hint">{{ errorHint }}</p>
+        <p class="error-hint">
+          Gegebenenfalls kann dieser Fragetyp aktuell nicht beantwortet werden.
+          Beachten Sie dazu die aktuellen
+          <a
+            target="_blank"
+            rel="noopener"
+            href="https://ki.muenchen.de/ki-systeme/riski#risiken-und-limitierungen"
+            >Risiken und Limitierungen</a
+          >.
+        </p>
         <div
           v-if="
             errorInfo?.suggestions &&
@@ -195,9 +205,16 @@ async function copyAnswer() {
         class="answer-status"
         >Wird generiert…</span
       >
-      <MucButton  v-if="aiResponse && !isStreaming" icon="copy-link" spinIconOnClick variant="secondary" @click=copyAnswer
-      style="margin-bottom: 12px;"
-      > Kopieren </MucButton>
+      <muc-button
+        v-if="aiResponse && !isStreaming"
+        icon="copy-link"
+        spin-icon-on-click
+        variant="secondary"
+        style="margin-bottom: 12px"
+        @click="copyAnswer"
+      >
+        Kopieren
+      </muc-button>
     </div>
 
     <!-- Skeleton placeholder while waiting for first content -->
@@ -247,22 +264,12 @@ async function copyAnswer() {
   >
     <div class="progress-header">
       <h2 class="m-dataset-item__headline headline">Recherchefortschritt</h2>
-      <button
-        class="progress-toggle"
-        type="button"
-        @click="showStepDetails = !showStepDetails"
-      >
-        {{ showStepDetails ? "Details ausblenden" : "Details anzeigen" }}
-      </button>
     </div>
     <div class="progress-summary">
-      <MucIcon :icon=progressStatusIcon></MucIcon>
+      <muc-icon :icon="progressStatusIcon"></muc-icon>
       <span>{{ progressSummary }}</span>
     </div>
-    <div
-      v-if="showStepDetails"
-      class="progress-details"
-    >
+    <div class="progress-details">
       <step-progress :steps="visibleSteps" />
     </div>
   </div>

@@ -5,10 +5,7 @@ defineProps<{
 </script>
 
 <template>
-  <div
-    class="m-intro pt-4 m-intro-static-image"
-    style="background-color: var(--color-neutrals-blue-xlight)"
-  >
+  <div class="m-intro pt-4 m-intro-static-image" style="background-color: var(--color-neutrals-blue-xlight)">
     <div class="container">
       <div class="muc-intro-content padded-intro">
         <h1 class="m-intro-vertical__title">{{ title }}</h1>
@@ -17,9 +14,11 @@ defineProps<{
           <div class="intro-info">
             <p>
               Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus
-              dem Ratsinformationssystem (RIS) stellen. Die Suche liefert ihnen
-              dann eine zusammenfassende Antwort sowie relevante Dokumente und
-              die Bezeichnungen relevanter Anträge.
+              dem Ratsinformationssystem (RIS) stellen. Die KI-Suche liefert
+              dann eine zusammenfassende Antwort basierend auf gefundenen
+              relevanten Dokumenten. Bitte beachten Sie die aktuellen
+              <a target="_blank" rel="noopener"
+                href="https://ki.muenchen.de/ki-systeme/riski#risiken-und-limitierungen">Risiken und Limitierungen</a>.
             </p>
             <div style="margin-bottom: 24px"></div>
             <slot></slot>

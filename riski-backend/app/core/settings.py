@@ -1,13 +1,58 @@
-from __future__ import annotations
-
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Literal, Union
+from typing import Literal, Union
+from urllib.parse import quote
 
 from pydantic import BaseModel, Field, RedisDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from core.settings.base import AppBaseSettings
+
+
+class InMemoryCheckpointerSettings(BaseModel):
+    type: Literal["in_memory"] = "in_memory"
+
+
+class RedisCheckpointerSettings(BaseModel):
+    type: Literal["redis"] = "redis"
+    host: str = Field(
+        default="localhost",
+        description="Redis host for checkpointer",
+    )
+    port: int = Field(
+        default=6379,
+        description="Redis port for checkpointer",
+    )
+    db: int = Field(
+        default=0,
+        description="Redis database number for checkpointer",
+    )
+    password: SecretStr | None = Field(
+        default=None,
+        description="Redis password for checkpointer",
+    )
+    secure: bool = Field(
+        default=False,
+        description="Use SSL/TLS for Redis connection",
+    )
+    ttl_minutes: int = Field(
+        default=720,
+        description="TTL for checkpoints in minutes",
+    )
+
+    @property
+    def redis_url(self) -> RedisDsn:
+        """Construct the Redis DSN URL."""
+        raw_password = self.password.get_secret_value() if self.password else None
+        encoded_password = quote(raw_password, safe="") if raw_password else None
+        return RedisDsn.build(
+            scheme="rediss" if self.secure else "redis",
+            username=None,
+            password=encoded_password,
+            host=self.host,
+            port=self.port,
+            path=f"/{self.db}",
+        )
 
 
 class BackendSettings(AppBaseSettings):
@@ -17,7 +62,7 @@ class BackendSettings(AppBaseSettings):
 
     version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski backend.")
     frontend_version: str = Field(default="DUMMY FOR GITHUBACTION", description="The version of the riski frontend.")
-    title: str = Field(default="RIS KI Suche (Beta-Version)", description="The title of the application.")
+    title: str = Field(default="RIS KI-Suche (Beta-Version)", description="The title of the application.")
     documentation_url: str = Field(default="https://ki.muenchen.de", description="The URL to the documentation.")
 
     @field_validator("version", "frontend_version", mode="before")
@@ -79,11 +124,11 @@ class BackendSettings(AppBaseSettings):
     )
 
     # === Agent Settings ===
-    checkpointer: "CheckpointerSettings" = Field(
-        description="Settings for the agent's checkpointer, which manages the state of ongoing interactions.",
-        default={"type": "in_memory"},  # type: ignore
+    checkpointer: Union[InMemoryCheckpointerSettings, RedisCheckpointerSettings] = Field(  # type: ignore
+        discriminator="type",
+        default={"type": "in_memory"},
+        description="Settings for the agent's checkpointer.",
     )
-
     # === Server Settings ===
     server_host: str = Field(
         default="localhost",
@@ -143,56 +188,6 @@ class BackendSettings(AppBaseSettings):
         cli_kebab_case=True,
         cli_prog_name="riski",
     )
-
-
-CheckpointerSettings = Annotated[
-    Union["InMemoryCheckpointerSettings", "RedisCheckpointerSettings"],
-    Field(discriminator="type"),
-]
-
-
-class InMemoryCheckpointerSettings(BaseModel):
-    type: Literal["in_memory"] = "in_memory"
-
-
-class RedisCheckpointerSettings(BaseModel):
-    type: Literal["redis"] = "redis"
-    host: str = Field(
-        default="localhost",
-        description="Redis host for checkpointer",
-    )
-    port: int = Field(
-        default=6379,
-        description="Redis port for checkpointer",
-    )
-    db: int = Field(
-        default=0,
-        description="Redis database number for checkpointer",
-    )
-    password: SecretStr | None = Field(
-        default=None,
-        description="Redis password for checkpointer",
-    )
-    secure: bool = Field(
-        default=False,
-        description="Use SSL/TLS for Redis connection",
-    )
-    ttl_minutes: int = Field(
-        default=720,
-        description="TTL for checkpoints in minutes",
-    )
-
-    @property
-    def redis_url(self) -> RedisDsn:
-        """Construct the Redis DSN URL."""
-        return RedisDsn.build(
-            scheme="rediss" if self.secure else "redis",
-            username=None,
-            password=self.password.get_secret_value() if self.password else None,
-            host=self.host,
-            port=self.port,
-            path=f"/{self.db}",
-        )
 
 
 @lru_cache(maxsize=1)

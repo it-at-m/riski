@@ -2,7 +2,6 @@
 defineProps<{
   documentationUrl: string;
 }>();
-
 </script>
 <template>
   <footer>
@@ -16,7 +15,7 @@ defineProps<{
             <ul
               class="footer-link-list list-group list-group-horizontal-lg list-group-flush list-unstyled"
             >
-              <!-- TODO: Kontakt & Barrierefreiheit korrekt hinterlegen -->
+              <!-- TODO: Kontakt anpassen? -->
               <li>
                 <a
                   target="_blank"
@@ -32,9 +31,6 @@ defineProps<{
                   href="https://risi.muenchen.de/risi/service/impressum"
                   >Impressum &amp; Datenschutz</a
                 >
-              </li>
-              <li>
-                <a href="./barrierefreiheit">Erklärung zur Barrierefreiheit</a>
               </li>
             </ul>
           </div>
@@ -55,7 +51,8 @@ defineProps<{
                   target="_blank"
                   rel="noopener"
                   :href="documentationUrl"
-                >Hilfe und FAQ</a>
+                  >Hilfe und FAQ</a
+                >
               </li>
             </ul>
           </div>
