@@ -768,7 +768,7 @@ def build_riski_graph(
 
     graph.add_edge(START, NODE_MODEL)
     graph.add_conditional_edges(NODE_MODEL, _route_after_model, {NODE_TOOLS: NODE_TOOLS, NODE_GUARD: NODE_GUARD, END: END})
-    graph.add_conditional_edges(NODE_TOOLS, _route_after_tools, {NODE_MODEL: NODE_MODEL, NODE_GUARD: NODE_GUARD})
+    graph.add_conditional_edges(NODE_TOOLS, _route_after_tools, {NODE_MODEL: NODE_MODEL, NODE_GUARD: NODE_GUARD, END: END})
     graph.add_conditional_edges(NODE_GUARD, fan_out_checks, [NODE_CHECK_DOCUMENT, NODE_COLLECT_RESULTS])
     graph.add_edge(NODE_CHECK_DOCUMENT, NODE_COLLECT_RESULTS)
     graph.add_conditional_edges(NODE_COLLECT_RESULTS, _route_after_collect, {NODE_MODEL: NODE_MODEL, END: END})
