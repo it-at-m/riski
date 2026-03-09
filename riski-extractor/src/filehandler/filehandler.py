@@ -39,9 +39,6 @@ class Filehandler:
 
     async def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")
-
-    async def download_and_persist_files(self, batch_size: int = 100):
-        self.logger.info("Persisting content of all scraped files to database.")
         tasks = []
         offset = 0
         while True:

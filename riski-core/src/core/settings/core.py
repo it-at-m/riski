@@ -1,6 +1,6 @@
 from core.settings.db import DatabaseSettings
-from core.settings.kafka import KafkaSettings
 from core.settings.genai import GenAISettings
+from core.settings.kafka import KafkaSettings
 from core.settings.testdb import TestDBSettings
 from pydantic import BaseModel, Field
 
@@ -17,7 +17,7 @@ class CoreSettings(BaseModel):
     )
 
     kafka: KafkaSettings = Field(default_factory=lambda: KafkaSettings(), description="Kafka related settings")
-      
+
     testdb: TestDBSettings = Field(
         description="Test DB related settings",
         default_factory=lambda: TestDBSettings(),
