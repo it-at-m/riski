@@ -58,12 +58,18 @@ async def get_proposals(
             raise asyncio.TimeoutError("forced DB timeout for testing")
 
         async with db_sessionmaker() as db_session:
-            result = await asyncio.wait_for(
-                db_session.execute(
-                    select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                ),
-                timeout=db_query_total_timeout_seconds,
-            )
+            try:
+                result = await asyncio.wait_for(
+                    db_session.execute(
+                        select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
+                    ),
+                    timeout=db_query_total_timeout_seconds,
+                )
+            except asyncio.TimeoutError:
+                logger.error(
+                    f"get_proposals timed out waiting for DB query (timeout={db_query_total_timeout_seconds}s, file_ids={file_ids})"
+                )
+                raise
 
             files = result.scalars().all()
             logger.debug(f"Look for proposals in {len(files)} files from db.")
@@ -133,10 +139,14 @@ async def retrieve_documents(
         # Step 1: Perform similarity search in the vector store
         if force_vectorstore_timeout:
             raise asyncio.TimeoutError("forced vectorstore timeout for testing")
-        docs: list[Document] = await asyncio.wait_for(
-            vectorstore.asimilarity_search(query=query, k=top_k_docs),
-            timeout=vectorstore_timeout_seconds,
-        )
+        try:
+            docs: list[Document] = await asyncio.wait_for(
+                vectorstore.asimilarity_search(query=query, k=top_k_docs),
+                timeout=vectorstore_timeout_seconds,
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"retrieve_documents timed out waiting for vector store (timeout={vectorstore_timeout_seconds}s)")
+            raise ToolException("TIMEOUT: vector store query timed out")
         logger.debug(f"Retrieved {len(docs)} documents:\n{[doc.metadata for doc in docs]}")
 
         if not docs:
@@ -180,8 +190,8 @@ async def retrieve_documents(
 
         return content_summary, artifact
     except asyncio.TimeoutError:
-        logger.error("retrieve_documents timed out waiting for DB or vector store")
-        raise ToolException("TIMEOUT: database or vector store query timed out")
+        logger.error(f"retrieve_documents timed out waiting for DB query (timeout={db_query_total_timeout_seconds}s)")
+        raise ToolException("TIMEOUT: database query timed out")
     except Exception as e:
         logger.error(f"Error in retrieve_documents tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve documents: {str(e)}")
