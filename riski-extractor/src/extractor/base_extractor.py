@@ -105,11 +105,9 @@ class BaseExtractor(ABC, Generic[T]):
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
-                
-            return extracted_objects
+
         except Exception as e:
             self.logger.exception(f"Error extracting objects. - {e}")
-
 
     def _parse_objects_from_links(self, object_links: list[str]):
         for link in object_links:
