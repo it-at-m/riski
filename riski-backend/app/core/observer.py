@@ -11,7 +11,7 @@ logger: Logger = getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def setup_langfuse() -> tuple[Langfuse, CallbackHandler]:
-    langfuse = get_client()
+    langfuse: Langfuse = get_client()
     # Verify connection
     if not os.getenv("LOCAL_DEBUG"):
         try:

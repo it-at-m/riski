@@ -1,21 +1,24 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  title: string;
+}>();
+</script>
 
 <template>
-  <div
-    class="m-intro m-intro-static-image"
-    style="background-color: var(--color-neutrals-blue-xlight)"
-  >
+  <div class="m-intro pt-4 m-intro-static-image" style="background-color: var(--color-neutrals-blue-xlight)">
     <div class="container">
       <div class="muc-intro-content padded-intro">
-        <h1 class="m-intro-vertical__title">RIS KI Suche (Beta-Version)</h1>
+        <h1 class="m-intro-vertical__title">{{ title }}</h1>
 
         <div class="m-intro-vertical__content">
           <div class="intro-info">
             <p>
               Hier können Sie Ihre Frage zu öffentlich verfügbaren Inhalten aus
-              dem Ratsinformationssystem (RIS) stellen. Die Suche liefert ihnen
-              dann eine zusammenfassende Antwort sowie relevante Dokumente und
-              die Bezeichnungen relevanter Anträge.
+              dem Ratsinformationssystem (RIS) stellen. Die KI-Suche liefert
+              dann eine zusammenfassende Antwort basierend auf gefundenen
+              relevanten Dokumenten. Bitte beachten Sie die aktuellen
+              <a target="_blank" rel="noopener"
+                href="https://ki.muenchen.de/ki-systeme/riski#risiken-und-limitierungen">Risiken und Limitierungen</a>.
             </p>
             <div style="margin-bottom: 24px"></div>
             <slot></slot>
@@ -54,6 +57,5 @@
 .m-intro-static-image {
   padding-bottom: 0;
   margin-bottom: 0;
-  padding-top: 0;
 }
 </style>

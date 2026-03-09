@@ -305,6 +305,7 @@ dist
 .vscode-test
 
 .vscode/
+*.code-workspace
 
 # yarn v3
 .pnp.*

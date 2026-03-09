@@ -27,6 +27,7 @@ class Filehandler:
             self.client = AsyncClient(proxy=config.https_proxy or config.http_proxy, timeout=config.request_timeout, limits=limits)
         else:
             self.client = AsyncClient(timeout=config.request_timeout)
+
         self.broker = kafkaBroker
         self.logger.info("Filehandler created.")
 
@@ -35,6 +36,9 @@ class Filehandler:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.client.aclose()
+
+    async def download_and_persist_files(self, batch_size: int = 100):
+        self.logger.info("Persisting content of all scraped files to database.")
 
     async def download_and_persist_files(self, batch_size: int = 100):
         self.logger.info("Persisting content of all scraped files to database.")

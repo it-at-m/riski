@@ -1,108 +1,142 @@
+from datetime import datetime
 from logging import Logger
-from typing import Any
 
 from ag_ui_langgraph import LangGraphAgent
-from app.core.settings import BackendSettings, RedisCheckpointerSettings, get_settings
+from app.core.settings import BackendSettings, InMemoryCheckpointerSettings, RedisCheckpointerSettings, get_settings
 from app.utils.logging import getLogger
-from langchain.agents import create_agent
-from langchain.agents.structured_output import ProviderStrategy
-from langchain.tools import BaseTool
 from langchain_core.callbacks import Callbacks
 from langchain_openai import ChatOpenAI
 from langchain_postgres import PGVectorStore
+from langfuse import Langfuse
+from langfuse.model import TextPromptClient
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.redis import AsyncRedisSaver
-from pydantic import BaseModel, Field
+from langgraph.checkpoint.redis import AsyncShallowRedisSaver
 from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from .tools import retrieve_documents
-from .types import AgentContext
+from .riski_agent import build_riski_graph
+from .tools import get_agent_capabilities, retrieve_documents
+from .types import AGENT_CAPABILITIES_PROMPT, CHECK_DOCUMENT_PROMPT_TEMPLATE
 
 settings: BackendSettings = get_settings()
 logger: Logger = getLogger()
 
 
-class StructuredAgentResponse(BaseModel):
-    response: str = Field(description="The final answer to the user's question.")
-    documents: list[dict[str, Any]] = Field(description="List of documents supporting the answer.")
-    proposals: list[dict[str, Any]] = Field(description="List of proposals related to the supporting documents.")
+# ---------------------------------------------------------------------------
+# Agent builder
+# ---------------------------------------------------------------------------
 
 
-async def build_agent(vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks) -> LangGraphAgent:
-    """Build and return the RISKI agent."""
+async def build_agent(
+    vectorstore: PGVectorStore, db_sessionmaker: async_sessionmaker, callbacks: Callbacks, lf_client: Langfuse
+) -> LangGraphAgent:
+    """
+    Constructs and returns a configured RISKI LangGraphAgent with a custom graph.
+
+    The graph enforces that the ``retrieve_documents`` tool is called and
+    returns non-empty results **before** the model generates its final answer.
+    If the tool is not called or returns no results, the agent deterministically
+    responds with a fixed "no results" message — no LLM generation happens.
+    """
 
     # Build the chat model
     chat_model: ChatOpenAI = ChatOpenAI(
         model_name=settings.core.genai.chat_model,
         temperature=settings.core.genai.chat_temperature,
         max_retries=settings.core.genai.chat_max_retries,
+        timeout=settings.core.genai.chat_timeout_seconds,
     )
 
-    # Configure the checkpointer
+    # Bind tools so the model knows about them
+    tools = [retrieve_documents, get_agent_capabilities]
+    try:
+        system_prompt_template: TextPromptClient = lf_client.get_prompt(
+            name=settings.langfuse_system_prompt_name, label=settings.langfuse_system_prompt_label
+        )
+        system_prompt = system_prompt_template.compile(
+            date_written=datetime.now().strftime("%A, %d %B %Y - %H:%M"),
+            date_isoformat=datetime.now().isoformat(),
+        )
+    except Exception as e:
+        logger.error(f"Failed to fetch system prompt from Langfuse: {e}")
+        raise ValueError(
+            f"Could not retrieve the {settings.langfuse_system_prompt_name} prompt (label={settings.langfuse_system_prompt_label}) from Langfuse. "
+            "Ensure the prompt exists and Langfuse is reachable."
+        )
+
+    try:
+        check_document_prompt_template: TextPromptClient | str = lf_client.get_prompt(
+            name=settings.langfuse_check_document_prompt_name, label=settings.langfuse_check_document_prompt_label
+        )
+    except Exception as e:
+        logger.warning(
+            "Failed to fetch check-document prompt from Langfuse, using local template: %s",
+            e,
+        )
+        check_document_prompt_template = CHECK_DOCUMENT_PROMPT_TEMPLATE
+
+    try:
+        agent_capabilities_prompt: TextPromptClient = lf_client.get_prompt(
+            name=settings.langfuse_agent_capabilities_prompt_name,
+            label=settings.langfuse_agent_capabilities_prompt_label,
+        )
+        agent_capabilities: str = agent_capabilities_prompt.compile()
+    except Exception as e:
+        logger.warning(
+            "Failed to fetch agent-capabilities prompt from Langfuse, using local fallback: %s",
+            e,
+        )
+        agent_capabilities = AGENT_CAPABILITIES_PROMPT
+
+    graph = build_riski_graph(
+        chat_model=chat_model,
+        tools=tools,
+        system_prompt=system_prompt,
+        check_document_prompt_template=check_document_prompt_template,
+    )
+    # -- Configure checkpointer --
     checkpointer: BaseCheckpointSaver
-    if settings.checkpointer is None:
+    if isinstance(settings.checkpointer, InMemoryCheckpointerSettings):
         checkpointer = InMemorySaver()
     elif isinstance(settings.checkpointer, RedisCheckpointerSettings):
-        # Instantiate Redis client and saver directly
-        logger.info(f"{settings.checkpointer.redis_url.encoded_string()=}")
         async_redis: AsyncRedis = AsyncRedis.from_url(
             url=settings.checkpointer.redis_url.encoded_string(),
         )
-        checkpointer = AsyncRedisSaver(
+        checkpointer = AsyncShallowRedisSaver(
             redis_client=async_redis,
             ttl={
                 "default_ttl": settings.checkpointer.ttl_minutes,
                 "refresh_on_read": True,
             },
         )
-        # Setup the checkpointer inside an async context
-        await checkpointer.setup()
+        await checkpointer.asetup()
     else:
         raise ValueError("Unsupported checkpointer configuration")
 
-    # Configure the tools
-    available_tools: list[BaseTool] = [retrieve_documents]
+    compiled = graph.compile(checkpointer=checkpointer)
 
-    system_prompt: str = """
-        You are the RISKI Agent, an AI assistant designed to help users research and analyze documents and proposals from the City of Munich's Council Information System. 
-        Your goal is to provide accurate, concise, and relevant information based on the user's queries and the documents available to you.
-        
-        Tools:
-        You have access to the following tools to assist you in your tasks:
-        1. retrieve_documents: Use this tool to search for and retrieve documents relevant to the user's query.
-    """
-
-    # Create the agent via the factory method
-    agent = create_agent(
-        model=chat_model,
-        system_prompt=system_prompt,
-        tools=available_tools,
-        response_format=ProviderStrategy(StructuredAgentResponse),
-        context_schema=AgentContext,  # type: ignore
-        checkpointer=checkpointer,
-    )
-
-    # Context usage probably supported in future LangGraphAgent versions
-    # agent_result = await agent.ainvoke(
-    #     input={"messages": [{"role": "user", "content": "Wird in München über eine Zweitwohnungssteuer diskutiert?"}]},
-    #     config={
-    #         "configurable": {"thread_id": uuid4(), "vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
-    #         "callbacks": callbacks,
-    #     },
-    #     # context=AgentContext(vectorstore=vectorstore, db_sessionmaker=db_sessionmaker),
-    # )
-
-    # logger.info(f"Agent test invocation result: {agent_result}")
-
-    # Wrap the agent in a AG-UI LangGraphAgent
+    # Wrap in AG-UI LangGraphAgent
     return LangGraphAgent(
         name="RISKI Agent",
         description="Der RISKI Agent unterstützt bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen aus dem Rats-Informations-System der Stadt München.",
-        graph=agent,  # type: ignore
+        graph=compiled,
         config={
-            "configurable": {"vectorstore": vectorstore, "db_sessionmaker": db_sessionmaker},
+            "configurable": {
+                "vectorstore": vectorstore,
+                "db_sessionmaker": db_sessionmaker,
+                "top_k_docs": settings.top_k_docs,
+                "agent_capabilities": agent_capabilities,
+                "db_query_timeout_seconds": settings.db_query_timeout_seconds,
+                "db_query_total_timeout_seconds": settings.db_query_total_timeout_seconds,
+                "vectorstore_timeout_seconds": settings.vectorstore_timeout_seconds,
+                "force_vectorstore_timeout": settings.force_vectorstore_timeout,
+                "force_db_timeout": settings.force_db_timeout,
+                "force_llm_timeout": settings.force_llm_timeout,
+            },
             "callbacks": callbacks,
-        },  # Workaround as LangGraphAgent doesnt yet support context parameter
+            # Cap parallel check_document fan-out branches to avoid overwhelming
+            # the LLM API with too many concurrent requests.
+            "max_concurrency": settings.check_document_max_concurrency,
+        },
     )

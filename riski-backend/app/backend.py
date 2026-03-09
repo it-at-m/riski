@@ -29,8 +29,9 @@ def create_app() -> FastAPI:
         db_engine: AsyncEngine = create_async_engine(
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,
-            pool_timeout=10,
-            connect_args={"timeout": 30},
+            pool_pre_ping=True,
+            pool_recycle=1800,
+            connect_args={"timeout": settings.db_connect_timeout_seconds},
         )
 
         db_sessionmaker: async_sessionmaker[AsyncSession] = async_sessionmaker(
@@ -48,6 +49,7 @@ def create_app() -> FastAPI:
             vectorstore=vectorstore,
             db_sessionmaker=db_sessionmaker,
             callbacks=[lf_callback_handler],
+            lf_client=lf_client,
         )
         logger.info("Agent setup complete")
 
@@ -85,7 +87,7 @@ async def build_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
     embedding_model = create_embedding_model(settings)
     vectorstore = await PGVectorStore.create(
         engine=pg_engine,
-        schema_name=settings.core.db.schema,
+        schema_name=settings.core.db.schemaname,
         table_name="file",
         embedding_service=embedding_model,
         id_column="db_id",
@@ -97,3 +99,9 @@ async def build_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
 
 
 backend = create_app()
+
+
+def get_backend() -> FastAPI:
+    """Return the initialized FastAPI application instance."""
+
+    return backend

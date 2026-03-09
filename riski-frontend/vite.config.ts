@@ -10,6 +10,7 @@ import vueDevTools from "vite-plugin-vue-devtools";
 export default defineConfig(({ mode }) => {
   const isDevelopment = mode === "development";
   const isDevNoMock = mode === "development-no-mock";
+  const isProduction = mode === "production";
   const enableOptionsAPI = isDevelopment || isDevNoMock;
   const proxy: Record<string, string | ProxyOptions> | undefined = isDevNoMock
     ? {
@@ -20,6 +21,7 @@ export default defineConfig(({ mode }) => {
       }
     : undefined;
   return {
+    base: isProduction ? "/src/" : "/",
     plugins: [
       vue({
         features: {
