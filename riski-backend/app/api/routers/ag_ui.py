@@ -43,10 +43,10 @@ async def run_agent_traced(input_data: RunAgentInput, request: Request) -> Async
 
 
 def encode(encoder, event):
-    raw_event = getattr(event, "event", None)
-    event_name = raw_event.get("event") if isinstance(raw_event, dict) else None
-    tags = raw_event.get("tags") if isinstance(raw_event, dict) else None
-    logger.debug("type=%s event=%s tags=%s", event.type, event_name, tags)
+    # raw_event = getattr(event, "event", None)
+    # event_name = raw_event.get("event") if isinstance(raw_event, dict) else None
+    # tags = raw_event.get("tags") if isinstance(raw_event, dict) else None
+    # logger.debug("type=%s event=%s tags=%s", event.type, event_name, tags)
     return encoder.encode(event)
 
 
