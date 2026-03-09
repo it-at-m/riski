@@ -38,7 +38,7 @@ def create_app() -> FastAPI:
             bind=db_engine,
             expire_on_commit=False,
         )
-        vectorstore, pg_engine = await build_vectorstore(settings)
+        vectorstore, pg_engine = await build_vectorstore(settings, db_engine)
         logger.info("Database handler created")
 
         lf_client, lf_callback_handler = setup_langfuse()
@@ -77,13 +77,8 @@ def create_app() -> FastAPI:
     return app
 
 
-def get_pgengine(settings) -> PGEngine:
-    pg_engine = PGEngine.from_connection_string(url=settings.core.db.async_database_url.encoded_string())
-    return pg_engine
-
-
-async def build_vectorstore(settings) -> tuple[PGVectorStore, PGEngine]:
-    pg_engine = get_pgengine(settings)
+async def build_vectorstore(settings, db_engine: AsyncEngine) -> tuple[PGVectorStore, PGEngine]:
+    pg_engine = PGEngine.from_engine(db_engine)
     embedding_model = create_embedding_model(settings)
     vectorstore = await PGVectorStore.create(
         engine=pg_engine,
