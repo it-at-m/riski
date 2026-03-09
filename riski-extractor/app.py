@@ -67,7 +67,7 @@ async def main():
 
     broker = await createKafkaBroker(config, logger)
     try:
-        async with Filehandler() as filehandler:
+        async with Filehandler(kafkaBroker=broker) as filehandler:
             await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
     finally:
         await broker.stop()

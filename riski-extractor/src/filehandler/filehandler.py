@@ -99,5 +99,5 @@ class Filehandler:
             except Exception as e:
                 # If Kafka Broker is unavailable rollback the file download to ensure
                 # All Documents that have content, are published to the Kafka Queue
-                update_file_content(file.db_id, None, "")
+                update_file_content(file.db_id, b"", "")
                 self.logger.error(f"Publishing failed. Rolled file download back: {file.db_id}. - {e}")

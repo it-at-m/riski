@@ -78,7 +78,7 @@ class BaseExtractor(ABC, Generic[T]):
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
-    def run(self) -> list[T]:
+    def run(self):
         try:
             # Initial request for cookies, sessionID etc.
             self._initial_request()
