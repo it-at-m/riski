@@ -28,6 +28,7 @@ from .tools import (
 from .types import (
     AGENT_CAPABILITIES_PROMPT,
     CHECK_DOCUMENT_PROMPT_TEMPLATE,
+    CHECK_DOCUMENT_SYSTEM_PROMPT,
     SYSTEM_PROMPT,
     DocumentRelevanceVerdict,
     StructuredAgentResponse,
@@ -144,6 +145,45 @@ def _route_after_tools(state: RiskiAgentState) -> str:
     if isinstance(last_message, ToolMessage) and last_message.name == get_agent_capabilities.name:
         return NODE_MODEL
     return NODE_GUARD
+
+
+def _assume_relevant(doc_id: str, reason: str) -> dict[str, list[RelevanceUpdate]]:
+    """Return a state update that marks a document as checked and relevant.
+
+    Used as a safe fallback in all ``check_document`` error paths so that a
+    single failing check never blocks the rest of the pipeline.
+    """
+    return {"tracked_documents": [RelevanceUpdate(doc_id=doc_id, is_relevant=True, reason=reason)]}
+
+
+def _coerce_verdict(verdict_raw: Any, doc_name: str, doc_id: str) -> DocumentRelevanceVerdict:
+    """Normalise the raw LLM output to a ``DocumentRelevanceVerdict``.
+
+    ``with_structured_output`` should always return the correct type, but
+    occasionally returns a plain dict or an unexpected object.  This helper
+    handles all three cases so ``check_document`` stays readable.
+    """
+    if isinstance(verdict_raw, DocumentRelevanceVerdict):
+        return verdict_raw
+    if isinstance(verdict_raw, dict):
+        logger.debug(
+            "check_document: verdict_raw was dict for doc '%s' (id=%s): %r",
+            doc_name,
+            doc_id,
+            verdict_raw,
+        )
+        return DocumentRelevanceVerdict(
+            relevant=bool(verdict_raw.get("relevant", True)),
+            reason=str(verdict_raw.get("reason", "Prüfung nicht eindeutig.")),
+        )
+    logger.warning(
+        "check_document: Unexpected verdict_raw type %s for doc '%s' (id=%s): %r. Assuming relevant.",
+        type(verdict_raw).__name__,
+        doc_name,
+        doc_id,
+        verdict_raw,
+    )
+    return DocumentRelevanceVerdict(relevant=True, reason="Prüfung nicht eindeutig.")
 
 
 def build_guard_nodes(
@@ -294,31 +334,45 @@ def build_guard_nodes(
         Returns a ``RelevanceUpdate`` which the custom reducer on
         ``tracked_documents`` will merge back into the main list.
         """
-        doc = state["doc"]
-        user_query = state["user_query"]
+        # --- Phase 1: unpack state -------------------------------------------
+        # Guard against unexpected state shapes (e.g. LangGraph passing a
+        # different object type via Send) before any further processing.
+        try:
+            doc = state["doc"]
+            user_query = state["user_query"]
+        except Exception:
+            logger.error(
+                "check_document: Unexpected state shape – could not extract 'doc'/'user_query'. "
+                "State type: %s, repr: %r. Assuming relevant.",
+                type(state).__name__,
+                state,
+                exc_info=True,
+            )
+            return _assume_relevant("", "Unerwartetes State-Format, Dokument wird beibehalten.")
 
-        doc_id: str = doc.get("id", "")
-        metadata: dict = doc.get("metadata", {})
+        doc_id: str = doc.get("id", "") if isinstance(doc, dict) else ""
+        metadata: dict = doc.get("metadata", {}) if isinstance(doc, dict) else {}
         doc_name: str = metadata.get("name", metadata.get("title", doc_id or "Dokument"))
-        page_content: str = doc.get("page_content", "")
-        snippet = page_content[:snippet_size]
+        page_content: str = doc.get("page_content", "") if isinstance(doc, dict) else ""
+        snippet: str = page_content[:snippet_size]
 
+        # --- Phase 2: build the relevance-check prompt -----------------------
         try:
             if isinstance(check_document_prompt_template, TextPromptClient):
-                check_prompt_raw = check_document_prompt_template.compile(
+                check_prompt: str = check_document_prompt_template.compile(
                     user_query=user_query,
                     doc_name=doc_name,
                     snippet=snippet,
                 )
             else:
-                check_prompt_raw = check_document_prompt_template.format(
+                check_prompt = check_document_prompt_template.format(
                     user_query=user_query,
                     doc_name=doc_name,
                     snippet=snippet,
                 )
         except Exception:
             logger.error(
-                "check_document: Failed to compile prompt for doc '%s' (id=%s). Template type: %s. user_query=%r, snippet_len=%d",
+                "check_document: Failed to compile prompt for doc '%s' (id=%s). Template type: %s, user_query=%r, snippet_len=%d",
                 doc_name,
                 doc_id,
                 type(check_document_prompt_template).__name__,
@@ -326,73 +380,38 @@ def build_guard_nodes(
                 len(snippet),
                 exc_info=True,
             )
-            return {
-                "tracked_documents": [
-                    RelevanceUpdate(
-                        doc_id=doc_id, is_relevant=True, reason="Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten."
-                    )
-                ]
-            }
+            return _assume_relevant(doc_id, "Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten.")
 
-        if not isinstance(check_prompt_raw, str):
+        if not isinstance(check_prompt, str):
             logger.error(
-                "check_document: Prompt compilation returned unexpected type %s for doc '%s' (id=%s). repr: %r. Template type: %s.",
-                type(check_prompt_raw).__name__,
+                "check_document: Prompt compilation returned unexpected type %s for doc '%s' (id=%s). repr: %r, template type: %s",
+                type(check_prompt).__name__,
                 doc_name,
                 doc_id,
-                check_prompt_raw,
+                check_prompt,
                 type(check_document_prompt_template).__name__,
             )
-            return {
-                "tracked_documents": [
-                    RelevanceUpdate(
-                        doc_id=doc_id, is_relevant=True, reason="Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten."
-                    )
-                ]
-            }
-        check_prompt: str = check_prompt_raw
+            return _assume_relevant(doc_id, "Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten.")
 
+        # --- Phase 3: LLM relevance check ------------------------------------
         relevance_model = chat_model.with_structured_output(DocumentRelevanceVerdict)
         try:
             if force_llm_timeout:
                 raise APITimeoutError.__new__(APITimeoutError)
             verdict_raw = await relevance_model.ainvoke(
                 [
-                    SystemMessage(content="Du bist ein Relevanz-Prüfer. Bewerte ob ein Dokument relevant für eine Benutzeranfrage ist."),
+                    SystemMessage(content=CHECK_DOCUMENT_SYSTEM_PROMPT),
                     HumanMessage(content=check_prompt),
                 ]
             )
-            if isinstance(verdict_raw, DocumentRelevanceVerdict):
-                verdict = verdict_raw
-            elif isinstance(verdict_raw, dict):
-                logger.debug(
-                    "check_document: verdict_raw was dict (not DocumentRelevanceVerdict) for doc '%s' (id=%s): %r",
-                    doc_name,
-                    doc_id,
-                    verdict_raw,
-                )
-                verdict = DocumentRelevanceVerdict(
-                    relevant=bool(verdict_raw.get("relevant", True)),
-                    reason=str(verdict_raw.get("reason", "Prüfung nicht eindeutig.")),
-                )
-            else:
-                logger.warning(
-                    "check_document: Unexpected verdict_raw type %s for doc '%s' (id=%s): %r. Assuming relevant.",
-                    type(verdict_raw).__name__,
-                    doc_name,
-                    doc_id,
-                    verdict_raw,
-                )
-                verdict = DocumentRelevanceVerdict(relevant=True, reason="Prüfung nicht eindeutig.")
+            verdict = _coerce_verdict(verdict_raw, doc_name, doc_id)
         except APITimeoutError:
             logger.error(
                 "check_document: LLM relevance check timed out for doc '%s' (id=%s). Assuming relevant.",
                 doc_name,
                 doc_id,
             )
-            verdict = DocumentRelevanceVerdict(
-                relevant=True, reason="Zeitüberschreitung bei der Relevanzprüfung, Dokument wird beibehalten."
-            )
+            return _assume_relevant(doc_id, "Zeitüberschreitung bei der Relevanzprüfung, Dokument wird beibehalten.")
         except Exception as exc:
             logger.error(
                 "check_document: LLM relevance check failed for doc '%s' (id=%s). Exception type: %s, repr: %r. Assuming relevant.",
@@ -402,22 +421,15 @@ def build_guard_nodes(
                 exc,
                 exc_info=True,
             )
-            verdict = DocumentRelevanceVerdict(relevant=True, reason="Prüfung fehlgeschlagen, Dokument wird beibehalten.")
+            return _assume_relevant(doc_id, "Prüfung fehlgeschlagen, Dokument wird beibehalten.")
 
+        # --- Phase 4: emit result --------------------------------------------
         if verdict.relevant:
-            logger.debug("Guard: Document '%s' is relevant: %s", doc_name, verdict.reason)
+            logger.debug("check_document: '%s' is relevant: %s", doc_name, verdict.reason)
         else:
-            logger.info("Guard: Document '%s' is NOT relevant: %s", doc_name, verdict.reason)
+            logger.info("check_document: '%s' is NOT relevant: %s", doc_name, verdict.reason)
 
-        return {
-            "tracked_documents": [
-                RelevanceUpdate(
-                    doc_id=doc_id,
-                    is_relevant=verdict.relevant,
-                    reason=verdict.reason,
-                )
-            ]
-        }
+        return {"tracked_documents": [RelevanceUpdate(doc_id=doc_id, is_relevant=verdict.relevant, reason=verdict.reason)]}
 
     # ----- collect_results node (convergence after fan-out) -----
     async def collect_results(state: RiskiAgentState, config: RunnableConfig) -> dict[str, Any]:

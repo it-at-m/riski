@@ -38,6 +38,8 @@ SYSTEM_PROMPT: str = (
     "You MUST always call the retrieve_documents tool before answering a question."
 )
 
+CHECK_DOCUMENT_SYSTEM_PROMPT: str = "Du bist ein Relevanz-Prüfer. Bewerte ob ein Dokument relevant für eine Benutzeranfrage ist."
+
 CHECK_DOCUMENT_PROMPT_TEMPLATE: str = (
     "Prüfe, ob das folgende Dokument für die Benutzeranfrage relevant ist.\n\n"
     "Benutzeranfrage: {user_query}\n\n"
