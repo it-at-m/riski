@@ -55,7 +55,7 @@ class Config(AppBaseSettings):
     max_files_to_delete_at_once: int = Field(
         default=100,
         ge=0,
-        description="Number of retries on failed requests",
+        description="Safety switch for deleting files. Number of files that are allowed to be deleted in one run at maximum.",
     )
 
     model_config = SettingsConfigDict(
