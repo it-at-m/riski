@@ -47,6 +47,8 @@ def run_ocr_for_documents(settings):
 
             docs_with_content = [doc for doc in docs_to_process if doc.content is not None and doc.text is None]
 
+            logger.info("Parsing %d files of batch (%d - %d).", len(docs_with_content), offset, offset + batch_size)
+
             for doc in docs_with_content:
                 logger.debug(f"Processing doc id={doc.id}")
                 pages_text = []

@@ -52,6 +52,12 @@ class Config(AppBaseSettings):
         description="Number of retries on failed requests",
     )
 
+    max_files_to_delete_at_once: int = Field(
+        default=100,
+        ge=0,
+        description="Safety switch for deleting files. Number of files that are allowed to be deleted in one run at maximum.",
+    )
+
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[2] / ".env"),
         env_prefix="RISKI_EXTRACTOR__",  # only applies to extractor-related fields

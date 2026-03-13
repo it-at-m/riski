@@ -29,6 +29,8 @@ def embed_documents(settings):
 
             docs_without_embedding = [doc for doc in docs_to_process if doc.embed is None and doc.text is not None]
 
+            logger.info("Embedding %d files of batch (%d - %d).", len(docs_without_embedding), offset, offset + batch_size)
+
             for doc in docs_without_embedding:
                 try:
                     doc.embed = embedding_model.embed_documents([temp_chunk(doc.text)])[0]
