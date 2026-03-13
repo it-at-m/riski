@@ -4,6 +4,8 @@ from logging import Logger
 
 from config.config import Config, get_config
 from core.db.db import create_db_and_tables, init_db
+from core.kafka.security import setup_security
+from faststream.kafka import KafkaBroker
 from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
 from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
 from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
@@ -23,7 +25,7 @@ logger: Logger
 async def main():
     config = get_config()
     config.print_config()
-    logger = getLogger()
+    logger = getLogger(__name__)
     version = get_version()
 
     init_db(config.core.db.database_url)
@@ -63,8 +65,13 @@ async def main():
     city_council_motion_extractor.run()
     logger.info("Extracted City Council Motions")
 
-    async with Filehandler() as filehandler:
-        await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
+    broker = await createKafkaBroker(config, logger)
+    try:
+        async with Filehandler(kafkaBroker=broker) as filehandler:
+            await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)
+    finally:
+        await broker.stop()
+        logger.info("Broker closed.")
 
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
@@ -73,6 +80,23 @@ async def main():
 
     logger.info("RIS Indexer completed successfully")
     return 0
+
+
+async def createKafkaBroker(config: Config, logger: Logger) -> KafkaBroker:
+    security = None
+    if config.core.kafka.security:
+        security = setup_security(config.core.kafka.pkcs12_data, config.core.kafka.pkcs12_pw, config.core.kafka.ca_b64)
+
+    # Kafka Broker and FastStream app setup
+    broker = KafkaBroker(bootstrap_servers=config.core.kafka.server, security=security)
+    logger.debug("Connecting to Broker...")
+    try:
+        await broker.connect()
+        logger.info("Broker connected.")
+        return broker
+    except Exception as e:
+        logger.exception(f"Failed to connect to broker. - {e}")
+        raise
 
 
 if __name__ == "__main__":

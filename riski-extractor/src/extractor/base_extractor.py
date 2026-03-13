@@ -37,7 +37,7 @@ class BaseExtractor(ABC, Generic[T]):
         else:
             self.client = Client(timeout=config.request_timeout)
 
-        self.logger = getLogger()
+        self.logger = getLogger(__name__)
         self.base_url = base_url
         self.base_path = base_path
         self.parser = parser
@@ -78,7 +78,7 @@ class BaseExtractor(ABC, Generic[T]):
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
 
-    def run(self) -> list[T]:
+    def run(self):
         try:
             # Initial request for cookies, sessionID etc.
             self._initial_request()
@@ -105,8 +105,9 @@ class BaseExtractor(ABC, Generic[T]):
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
-        except Exception:
-            self.logger.exception("Error extracting objects")
+
+        except Exception as e:
+            self.logger.exception(f"Error extracting objects. - {e}")
 
     def _parse_objects_from_links(self, object_links: list[str]):
         for link in object_links:
