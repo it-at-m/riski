@@ -8,3 +8,10 @@ class ConfigResponse(BaseModel):
     frontend_version: str = Field(description="The version of the frontend.")
     title: str = Field(description="The title of the application.")
     documentation_url: str = Field(description="The URL to the documentation.")
+    contact_url: str = Field(description="The URL to the contact page for inquiries regarding RISKI service.")
+    impressum_url: str = Field(
+        default="https://risi.muenchen.de/risi/service/impressum", description="The URL to the legal notice (Impressum) for RISKI service."
+    )
+    townhallbulletin_url: str = Field(
+        default="https://stadt.muenchen.de/infos/ru-aboservice.html", description="The URL to the Town Hall Bulletin service information."
+    )
