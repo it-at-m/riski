@@ -42,7 +42,7 @@ defineProps<{
                 <a
                   target="_blank"
                   rel="noopener"
-                  href="https://www.muenchen.de/rathaus/Stadtinfos/Presse-Service.html"
+                  href="https://stadt.muenchen.de/infos/ru-aboservice.html"
                   >Rathaus-Umschau</a
                 >
               </li>
