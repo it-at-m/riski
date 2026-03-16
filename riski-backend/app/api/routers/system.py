@@ -22,4 +22,7 @@ def get_config() -> ConfigResponse:
         frontend_version=settings.frontend_version,
         title=settings.title,
         documentation_url=settings.documentation_url,
+        contact_url=settings.contact_url,
+        impressum_url=settings.impressum_url,
+        townhallbulletin_url=settings.townhallbulletin_url,
     )
