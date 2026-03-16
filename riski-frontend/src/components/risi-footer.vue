@@ -1,6 +1,9 @@
 <script setup lang="ts">
 defineProps<{
   documentationUrl: string;
+  contactUrl: string;
+  impressumUrl: string;
+  townhallbulletinUrl: string;
 }>();
 </script>
 <template>
@@ -20,7 +23,7 @@ defineProps<{
                 <a
                   target="_blank"
                   rel="noopener"
-                  href="https://risi.muenchen.de/risi/service/kontakt"
+                  :href="contactUrl"
                   >Kontakt</a
                 >
               </li>
@@ -28,7 +31,7 @@ defineProps<{
                 <a
                   target="_blank"
                   rel="noopener"
-                  href="https://risi.muenchen.de/risi/service/impressum"
+                  :href="impressumUrl"
                   >Impressum &amp; Datenschutz</a
                 >
               </li>
@@ -42,7 +45,7 @@ defineProps<{
                 <a
                   target="_blank"
                   rel="noopener"
-                  href="https://stadt.muenchen.de/infos/ru-aboservice.html"
+                  :href="townhallbulletinUrl"
                   >Rathaus-Umschau</a
                 >
               </li>

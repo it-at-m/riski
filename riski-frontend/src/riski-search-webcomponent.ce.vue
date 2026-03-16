@@ -30,6 +30,9 @@ const title = ref("RIS KI-Suche (Beta-Version)");
 const version = ref("unknown");
 const frontendVersion = ref("unknown");
 const documentationUrl = ref("https://ki.muenchen.de/");
+const contactUrl = ref("https://risi.muenchen.de/risi/service/kontakt");
+const impressumUrl = ref("https://risi.muenchen.de/risi/service/impressum");
+const townhallbulletinUrl = ref("https://stadt.muenchen.de/infos/ru-aboservice.html");
 
 onMounted(async () => {
   try {
@@ -252,7 +255,7 @@ const submitQuery = (query: string) => {
       />
     </div>
   </main>
-  <risi-footer :documentation-url="documentationUrl" />
+  <risi-footer :documentation-url="documentationUrl" :contact-url="contactUrl" :impressum-url="impressumUrl" :townhallbulletin-url="townhallbulletinUrl" />
 </template>
 
 <style>

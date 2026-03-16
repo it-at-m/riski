@@ -3,4 +3,8 @@ export default interface ConfigResponse {
   frontend_version: string;
   title: string;
   documentation_url: string;
+  contactUrl: string;
+  impressumUrl: string;
+  townhallbulletinUrl: string;
 }
+
