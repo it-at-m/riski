@@ -41,6 +41,9 @@ onMounted(async () => {
     version.value = config.version;
     frontendVersion.value = config.frontend_version;
     documentationUrl.value = config.documentation_url;
+    contactUrl.value=config.contactUrl;
+    impressumUrl.value=config.impressumUrl;
+    townhallbulletinUrl.value=config.townhallbulletinUrl;
   } catch (error) {
     console.error("Failed to load config", error);
   }
