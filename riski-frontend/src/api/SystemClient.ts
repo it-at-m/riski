@@ -11,6 +11,9 @@ export default class SystemClient {
         frontend_version: "0.1.0-dev",
         title: "RIS KI-Suche (Beta-Version)",
         documentation_url: "https://ki.muenchen.de",
+        contact_url: "https://risi.muenchen.de/risi/service/kontakt",
+        impressum_url: "https://risi.muenchen.de/risi/service/impressum",
+        townhallbulletin_url: "https://stadt.muenchen.de/infos/ru-aboservice.html"
       };
     }
 
