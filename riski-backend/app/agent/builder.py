@@ -125,6 +125,7 @@ async def build_agent(
             "configurable": {
                 "vectorstore": vectorstore,
                 "db_sessionmaker": db_sessionmaker,
+                "lf_client": lf_client,
                 "top_k_docs": settings.top_k_docs,
                 "agent_capabilities": agent_capabilities,
                 "db_query_timeout_seconds": settings.db_query_timeout_seconds,

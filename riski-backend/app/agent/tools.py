@@ -8,6 +8,7 @@ from core.model.data_models import File
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
+from langfuse import Langfuse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import selectinload
@@ -33,6 +34,7 @@ class RetrieveDocumentsArtifact(TypedDict):
 async def get_proposals(
     documents: list[Document],
     db_sessionmaker: async_sessionmaker,
+    lf_client: Langfuse,
     db_query_timeout_seconds: int,
     db_query_total_timeout_seconds: int,
     force_db_timeout: bool = False,
@@ -59,19 +61,23 @@ async def get_proposals(
 
         async with db_sessionmaker() as db_session:
             try:
-                result = await asyncio.wait_for(
-                    db_session.execute(
-                        select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                    ),
-                    timeout=db_query_total_timeout_seconds,
-                )
+                with lf_client.start_as_current_observation(
+                    name="database_query_proposals",
+                    input={"file_ids": list(file_ids)},
+                ):
+                    result = await asyncio.wait_for(
+                        db_session.execute(
+                            select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
+                        ),
+                        timeout=db_query_total_timeout_seconds,
+                    )
+                    files = result.scalars().all()
             except asyncio.TimeoutError:
                 logger.error(
                     f"get_proposals timed out waiting for DB query (timeout={db_query_total_timeout_seconds}s, file_ids={file_ids})"
                 )
                 raise
 
-            files = result.scalars().all()
             logger.debug(f"Look for proposals in {len(files)} files from db.")
             for f in files:
                 if not f.papers:
@@ -125,6 +131,7 @@ async def retrieve_documents(
             vectorstore_timeout_seconds = config["configurable"]["vectorstore_timeout_seconds"]
             force_vectorstore_timeout: bool = config["configurable"].get("force_vectorstore_timeout", False)
             force_db_timeout: bool = config["configurable"].get("force_db_timeout", False)
+            lf_client = config["configurable"].get("lf_client")
         else:
             vectorstore = runtime.context["vectorstore"]
             db_sessionmaker = runtime.context["db_sessionmaker"]
@@ -134,16 +141,21 @@ async def retrieve_documents(
             vectorstore_timeout_seconds = runtime.context["vectorstore_timeout_seconds"]
             force_vectorstore_timeout = runtime.context.get("force_vectorstore_timeout", False)
             force_db_timeout = runtime.context.get("force_db_timeout", False)
+            lf_client = runtime.context.get("lf_client")
             logger.debug(f"Using context: {runtime.context} of type {type(runtime.context)}")
 
         # Step 1: Perform similarity search in the vector store
         if force_vectorstore_timeout:
             raise asyncio.TimeoutError("forced vectorstore timeout for testing")
         try:
-            docs: list[Document] = await asyncio.wait_for(
-                vectorstore.asimilarity_search(query=query, k=top_k_docs),
-                timeout=vectorstore_timeout_seconds,
-            )
+            with lf_client.start_as_current_observation(
+                name="vector_store_similarity_search",
+                input={"query": query, "k": top_k_docs},
+            ):
+                docs: list[Document] = await asyncio.wait_for(
+                    vectorstore.asimilarity_search(query=query, k=top_k_docs),
+                    timeout=vectorstore_timeout_seconds,
+                )
         except asyncio.TimeoutError:
             logger.error(f"retrieve_documents timed out waiting for vector store (timeout={vectorstore_timeout_seconds}s)")
             raise ToolException("TIMEOUT: vector store query timed out")
@@ -159,6 +171,7 @@ async def retrieve_documents(
         proposals: list[TrackedProposal] = await get_proposals(
             docs,
             db_sessionmaker,
+            lf_client,
             db_query_timeout_seconds,
             db_query_total_timeout_seconds,
             force_db_timeout=force_db_timeout,
