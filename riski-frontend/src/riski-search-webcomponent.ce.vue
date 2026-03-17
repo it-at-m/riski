@@ -30,6 +30,9 @@ const title = ref("RIS KI-Suche (Beta-Version)");
 const version = ref("unknown");
 const frontendVersion = ref("unknown");
 const documentationUrl = ref("https://ki.muenchen.de/");
+const contactUrl = ref("https://risi.muenchen.de/risi/service/kontakt");
+const impressumUrl = ref("https://risi.muenchen.de/risi/service/impressum");
+const townhallbulletinUrl = ref("https://stadt.muenchen.de/infos/ru-aboservice.html");
 
 onMounted(async () => {
   try {
@@ -38,6 +41,9 @@ onMounted(async () => {
     version.value = config.version;
     frontendVersion.value = config.frontend_version;
     documentationUrl.value = config.documentation_url;
+    contactUrl.value=config.contact_url;
+    impressumUrl.value=config.impressum_url;
+    townhallbulletinUrl.value=config.townhallbulletin_url;
   } catch (error) {
     console.error("Failed to load config", error);
   }
@@ -252,7 +258,7 @@ const submitQuery = (query: string) => {
       />
     </div>
   </main>
-  <risi-footer :documentation-url="documentationUrl" />
+  <risi-footer :documentation-url="documentationUrl" :contact-url="contactUrl" :impressum-url="impressumUrl" :townhallbulletin-url="townhallbulletinUrl" />
 </template>
 
 <style>
