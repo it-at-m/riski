@@ -1,4 +1,4 @@
-FROM  quay.io/docling-project/docling-serve-cpu:latest@sha256:7ae9e7d69002b6af6fa2b22b84d1afa73624bc17c76bf255f45b0ce33e849de9
+FROM  quay.io/docling-project/docling-serve-cpu:latest@sha256:41c177c4c355d050e4f8e289ebbeb3bb5eaaae4c4d40914eac7c37890591fc15
 # Set the working directory
 WORKDIR /usr/src/app
 
