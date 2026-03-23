@@ -7,10 +7,10 @@ from app.utils.logging import getLogger
 from core.model.data_models import File
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
-from langchain_core.runnables import RunnableConfig
+from langchain_core.runnables import RunnableConfig, RunnableLambda
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import defer, selectinload
 from sqlmodel import select
 
 from .state import TrackedDocument, TrackedProposal
@@ -33,6 +33,7 @@ class RetrieveDocumentsArtifact(TypedDict):
 async def get_proposals(
     documents: list[Document],
     db_sessionmaker: async_sessionmaker,
+    config: RunnableConfig,
     db_query_timeout_seconds: int,
     db_query_total_timeout_seconds: int,
     force_db_timeout: bool = False,
@@ -59,19 +60,31 @@ async def get_proposals(
 
         async with db_sessionmaker() as db_session:
             try:
-                result = await asyncio.wait_for(
-                    db_session.execute(
-                        select(File).where(File.db_id.in_(file_ids)).options(selectinload(File.papers)),  # type: ignore[arg-type, attr-defined]
-                    ),
-                    timeout=db_query_total_timeout_seconds,
-                )
+
+                async def call_db(_):
+                    result = await asyncio.wait_for(
+                        db_session.execute(
+                            select(File)
+                            .where(File.db_id.in_(file_ids))
+                            .options(
+                                selectinload(File.papers),
+                                defer(File.text),
+                                defer(File.content),
+                                defer(File.embed),
+                            ),  # type: ignore[arg-type, attr-defined]
+                        ),
+                        timeout=db_query_total_timeout_seconds,
+                    )
+                    files = result.scalars().all()
+                    return files
+
+                files = await RunnableLambda(call_db).ainvoke(None, config)  # type: ignore
             except asyncio.TimeoutError:
                 logger.error(
                     f"get_proposals timed out waiting for DB query (timeout={db_query_total_timeout_seconds}s, file_ids={file_ids})"
                 )
                 raise
 
-            files = result.scalars().all()
             logger.debug(f"Look for proposals in {len(files)} files from db.")
             for f in files:
                 if not f.papers:
@@ -140,10 +153,15 @@ async def retrieve_documents(
         if force_vectorstore_timeout:
             raise asyncio.TimeoutError("forced vectorstore timeout for testing")
         try:
-            docs: list[Document] = await asyncio.wait_for(
-                vectorstore.asimilarity_search(query=query, k=top_k_docs),
-                timeout=vectorstore_timeout_seconds,
-            )
+
+            async def call_vectorstore(_):
+                docs: list[Document] = await asyncio.wait_for(
+                    vectorstore.asimilarity_search(query=query, k=top_k_docs),
+                    timeout=vectorstore_timeout_seconds,
+                )
+                return docs
+
+            docs = await RunnableLambda(call_vectorstore).ainvoke(None, config)  # type: ignore
         except asyncio.TimeoutError:
             logger.error(f"retrieve_documents timed out waiting for vector store (timeout={vectorstore_timeout_seconds}s)")
             raise ToolException("TIMEOUT: vector store query timed out")
@@ -159,20 +177,14 @@ async def retrieve_documents(
         proposals: list[TrackedProposal] = await get_proposals(
             docs,
             db_sessionmaker,
+            config,
             db_query_timeout_seconds,
             db_query_total_timeout_seconds,
             force_db_timeout=force_db_timeout,
         )
 
         # Build TrackedDocument entries (is_checked=False, is_relevant=True by default)
-        tracked_docs = [
-            TrackedDocument(
-                id=doc.id or "",
-                page_content=doc.page_content,
-                metadata=doc.metadata,
-            )
-            for doc in docs
-        ]
+        tracked_docs = [TrackedDocument(id=doc.id or "", page_content=doc.page_content, metadata=doc.metadata) for doc in docs]
 
         # Artifact carries serialised TrackedDocument / TrackedProposal dicts
         artifact: RetrieveDocumentsArtifact = {
