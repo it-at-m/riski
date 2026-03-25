@@ -174,7 +174,7 @@ wheels = [
 
 [[package]]
 name = "core"
-version = "0.1.4"
+version = "0.1.5"
 source = { directory = "../riski-core" }
 dependencies = [
     { name = "langchain-openai" },
