@@ -188,6 +188,7 @@ def _coerce_verdict(verdict_raw: Any, doc_name: str, doc_id: str) -> DocumentRel
 
 def build_guard_nodes(
     chat_model: ChatOpenAI,
+    relevance_check_model: ChatOpenAI,
     check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
     snippet_size: int = 10_000,
     force_llm_timeout: bool = False,
@@ -394,7 +395,7 @@ def build_guard_nodes(
             return _assume_relevant(doc_id, "Prompt-Kompilierung fehlgeschlagen, Dokument wird beibehalten.")
 
         # --- Phase 3: LLM relevance check ------------------------------------
-        relevance_model = chat_model.with_structured_output(DocumentRelevanceVerdict)
+        relevance_model = relevance_check_model.with_structured_output(DocumentRelevanceVerdict)
         try:
             if force_llm_timeout:
                 raise APITimeoutError.__new__(APITimeoutError)
@@ -520,6 +521,7 @@ def _sanitize_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
 
 def build_riski_graph(
     chat_model: ChatOpenAI,
+    relevance_check_model: ChatOpenAI,
     tools: Iterable[Any],
     system_prompt: str = SYSTEM_PROMPT,
     check_document_prompt_template: str | TextPromptClient = CHECK_DOCUMENT_PROMPT_TEMPLATE,
@@ -765,6 +767,7 @@ def build_riski_graph(
     # -- Build the guard nodes --
     guard, fan_out_checks, check_document, collect_results = build_guard_nodes(
         chat_model,
+        relevance_check_model,
         check_document_prompt_template=check_document_prompt_template,
         snippet_size=snippet_size,
         force_llm_timeout=force_llm_timeout,
