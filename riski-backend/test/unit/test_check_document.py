@@ -71,6 +71,7 @@ def _make_check_document(
 
     _, _, check_document, _ = build_guard_nodes(
         chat_model=mock_llm,
+        relevance_check_model=mock_llm,
         check_document_prompt_template=prompt_template,
         snippet_size=snippet_size,
         force_llm_timeout=force_llm_timeout,
