@@ -48,6 +48,14 @@ async def build_agent(
         timeout=settings.core.genai.chat_timeout_seconds,
     )
 
+    # Build the relevance check model
+    relevance_check_model: ChatOpenAI = ChatOpenAI(
+        model_name=settings.core.genai.relevance_check_model,
+        temperature=settings.core.genai.relevance_check_temperature,
+        max_retries=settings.core.genai.relevance_check_max_retries,
+        timeout=settings.core.genai.relevance_check_timeout_seconds,
+    )
+
     # Bind tools so the model knows about them
     tools = [retrieve_documents, get_agent_capabilities]
     try:
@@ -91,6 +99,7 @@ async def build_agent(
 
     graph = build_riski_graph(
         chat_model=chat_model,
+        relevance_check_model=relevance_check_model,
         tools=tools,
         system_prompt=system_prompt,
         check_document_prompt_template=check_document_prompt_template,

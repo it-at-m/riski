@@ -30,3 +30,23 @@ class GenAISettings(BaseModel):
         default=60,
         ge=1,
     )
+    relevance_check_model: str = Field(
+        description="Model for relevance checking",
+        default="gpt-4.1-nano",
+    )
+    relevance_check_temperature: float = Field(
+        description="Temperature setting for relevance check model",
+        default=0.1,
+        le=2.0,
+        ge=0.0,
+    )
+    relevance_check_max_retries: int = Field(
+        description="Number of retries for relevance check model requests",
+        default=2,
+        ge=0,
+    )
+    relevance_check_timeout_seconds: int = Field(
+        description="Timeout in seconds for relevance check model requests",
+        default=60,
+        ge=1,
+    )
