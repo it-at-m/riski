@@ -59,7 +59,8 @@ def _make_check_document(
     If *verdict* is given the LLM mock returns it.  If *llm_side_effect* is
     given it is raised instead.
     """
-    mock_llm = MagicMock()
+    mock_chat_llm = MagicMock()
+    mock_check_llm = MagicMock()
     structured_mock = AsyncMock()
 
     if llm_side_effect is not None:
@@ -67,16 +68,16 @@ def _make_check_document(
     else:
         structured_mock.ainvoke = AsyncMock(return_value=verdict or DocumentRelevanceVerdict(relevant=True, reason="Relevant."))
 
-    mock_llm.with_structured_output = MagicMock(return_value=structured_mock)
+    mock_check_llm.with_structured_output = MagicMock(return_value=structured_mock)
 
     _, _, check_document, _ = build_guard_nodes(
-        chat_model=mock_llm,
-        relevance_check_model=mock_llm,
+        chat_model=mock_chat_llm,
+        relevance_check_model=mock_check_llm,
         check_document_prompt_template=prompt_template,
         snippet_size=snippet_size,
         force_llm_timeout=force_llm_timeout,
     )
-    return check_document, mock_llm
+    return check_document, mock_check_llm
 
 
 # ---------------------------------------------------------------------------
