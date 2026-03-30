@@ -23,6 +23,7 @@ async def test_download_and_persist_file_updates_filename(filehandler_instance, 
     mock_response = MagicMock()
     mock_response.content = b"test content"
     mock_response.headers = {"content-disposition": 'inline; filename="test_file.txt"'}
+    mock_response.status_code = 200
 
     filehandler_instance.client.get = AsyncMock(return_value=mock_response)
 
@@ -37,6 +38,7 @@ async def test_download_and_persist_file_updates_filename_urlencoding(filehandle
     mock_response = MagicMock()
     mock_response.content = b"test content"
     mock_response.headers = {"content-disposition": 'inline; filename="test%20file.txt"'}
+    mock_response.status_code = 200
 
     filehandler_instance.client.get = AsyncMock(return_value=mock_response)
     with patch("src.filehandler.filehandler.update_file_content") as mock_update:
@@ -50,6 +52,7 @@ async def test_download_and_persist_file_not_updates_filename_when_unchanged_fil
     mock_response = MagicMock()
     mock_response.content = b"test"
     mock_response.headers = {"content-disposition": 'inline; filename="test_file.txt"'}
+    mock_response.status_code = 200
 
     filehandler_instance.client.get = AsyncMock(return_value=mock_response)
     mock_file.content = b"test"

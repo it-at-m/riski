@@ -1,25 +1,17 @@
 from logging import Logger
 
-from core.model.data_models import File
 from src.logtools import getLogger
 
 file_ids: list[str] = []
 logger: Logger = getLogger()
 
 
-def collect_file_id(f):
-    def wrap(*args, **kwargs):
-        # Prefer first positional arg if present, otherwise fall back to common keyword names
-        candidate = args[0] if args else kwargs.get("obj")
-        if isinstance(candidate, File):
-            logger.debug(f"Found id: {candidate.id}")
-            file_ids.append(candidate.id)
-        return f(*args, **kwargs)
-
-    return wrap
+def mark_file_id_for_deletion(f):
+    logger.debug(f"Did not find id: {f}")
+    file_ids.append(f)
 
 
-def get_all_found_file_ids() -> list[str]:
+def get_all_ids_to_delete() -> list[str]:
     return file_ids
 
 

@@ -8,7 +8,6 @@ from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
-from core.db.file_id_collector import collect_file_id
 from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, File, Keyword, Paper, Person
 from src.logtools import getLogger
 
@@ -254,7 +253,6 @@ def insert_object_to_database(obj: T, session: Session) -> None:
 
 
 @log_execution_time
-@collect_file_id
 def get_or_insert_object_to_database(obj: RIS_PARSED_DB_OBJECT | Keyword) -> RIS_PARSED_DB_OBJECT | Keyword:
     """
     Retrieves or inserts an object into the database.

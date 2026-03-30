@@ -6,6 +6,7 @@ import httpx
 import stamina
 from config.config import Config, get_config
 from core.db.db_access import request_batch, update_file_content
+from core.db.file_id_collector import mark_file_id_for_deletion
 from core.model.data_models import File
 from httpx import AsyncClient
 
@@ -62,8 +63,13 @@ class Filehandler:
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
         response = await self.client.get(url=file.id)
-        response.raise_for_status()
+        if response.status_code >= 400 and response.status_code < 500:
+            mark_file_id_for_deletion(file.id)
+        elif response.status_code >= 500:
+            response.raise_for_status()
+
         content = response.content
+
         if file.content is None or content != file.content:
             content_disposition = response.headers.get("content-disposition")
             if content_disposition:
