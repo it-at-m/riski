@@ -63,11 +63,10 @@ class Filehandler:
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
         response = await self.client.get(url=file.id)
-        if response.status_code >= 400 and response.status_code < 500:
+        if response.status_code == 404:
             mark_file_id_for_deletion(file.id)
-        elif response.status_code >= 500:
-            response.raise_for_status()
 
+        response.raise_for_status()
         content = response.content
 
         if file.content is None or content != file.content:

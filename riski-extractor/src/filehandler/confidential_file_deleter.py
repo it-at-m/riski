@@ -25,5 +25,5 @@ class ConfidentialFileDeleter:
             return
 
         for id in file_ids_to_delete:
-            self.logger.info(f"Deleted file with id: {id}")
             remove_object_by_id(id, File)
+            self.logger.info(f"Deleted file with id: {id}")
