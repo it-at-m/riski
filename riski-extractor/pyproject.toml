@@ -41,7 +41,7 @@ dev = [
     "langchain-community>=0.3.28",
     "langchain-docling>=1.1.0",
     "langchain-openai>=0.3.32",
-    "pytest==8.4.2",
+    "pytest==9.0.3",
     "faststream[kafka]==0.6.1",
     "ruff>=0.14.11",
     "python-dotenv>=1.2.1",
