@@ -11,7 +11,7 @@ dependencies = [
     "pydantic[email]>=2.11.7",
     "pydantic-settings>=2.10.1",
     "pgvector<0.4",
-    "langchain-openai>=1.1.7",
+    "langchain-core==1.2.31",
     "truststore>=0.10.4",
 ]
 
