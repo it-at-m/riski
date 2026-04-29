@@ -4,3 +4,8 @@
 # CVE-2021-12345
 # CVE-2022-67890
 GHSA-w5hq-g745-h8pq # the project inherits a uuid version (11.1.0) from the mermaid package with a medium security vulnerability
+CVE-2026-27794
+GHSA-rr7j-v2q5-chgv
+CVE-2026-25645     
+CVE-2025-67221     
+CVE-2026-0994    
