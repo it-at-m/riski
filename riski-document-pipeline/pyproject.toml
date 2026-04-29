@@ -12,7 +12,6 @@ dependencies = [
     "langchain-postgres>=0.0.16",
     "langchain-text-splitters>=1.1.0",
     "cryptography>=46.0.4",
-    "langchain-openai==1.1.14",
 ]
 
 [dependency-groups]
