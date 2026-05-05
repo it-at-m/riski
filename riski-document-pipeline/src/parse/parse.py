@@ -58,6 +58,10 @@ def run_ocr_for_documents(settings):
                     for pdf_chunk in chunk_pdf_into_max_page_blocks(
                         doc.content, max_pages_per_chunk=max_pages_per_chunk, max_chunk_size_mb=max_chunk_size_mb
                     ):
+                        if not is_chunk_size_valid(pdf_chunk, max_chunk_size_mb):
+                            logger.error(f"Chunk exceeds size limit for doc id={doc.id}. Skipping this chunk.")
+                            continue
+
                         base64_pdf = base64.b64encode(pdf_chunk).decode("utf-8")
                         try:
                             resp = client.ocr.process(
