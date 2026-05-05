@@ -138,7 +138,9 @@ def split_pdf_with_size_guard(
 
     num_pages = end - start
     if num_pages <= 1:
-        logger.warning("Single page exceeds max size limit.")
+        logger.error(
+            "Single page exceeds max size limit. Page size: %d bytes, Max size: %d bytes.", len(chunk_bytes), max_size_mb * 1024 * 1024
+        )
         return [chunk_bytes]
 
     mid = start + num_pages // 2
