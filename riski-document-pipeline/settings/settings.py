@@ -29,11 +29,13 @@ class DocPipelineSettings(AppBaseSettings):
     )
     ocr_max_pages_per_chunk: int = Field(
         default=30,
+        gt=0,
         description="Maximum number of pages per OCR chunk",
     )
 
     ocr_max_chunk_size_mb: int = Field(
         default=30,
+        gt=0,
         description="Maximum size per OCR chunk in MB",
     )
 

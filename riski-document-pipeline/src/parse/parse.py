@@ -96,9 +96,26 @@ def run_ocr_for_documents(settings):
 
 
 def is_chunk_size_valid(pdf_bytes: bytes, max_size_mb: int) -> bool:
-    size_mb = len(pdf_bytes) / (1024 * 1024)
-    logger.info(size_mb)
-    return size_mb <= max_size_mb
+    """
+    Checks if the size of a PDF file, when encoded in Base64, is within the specified maximum size.
+
+    Args:
+        pdf_bytes (bytes): The PDF file content in bytes.
+        max_size_mb (int): The maximum allowed size in megabytes.
+
+    Returns:
+        bool: True if the Base64-encoded size of the PDF is within the limit, False otherwise.
+
+    Notes:
+        - "data:application/pdf;base64," is the prefix added to Base64-encoded data URIs.
+        - ((len(pdf_bytes) + 2) // 3) * 4 calculates the size of the Base64-encoded content.
+          This formula accounts for the 4:3 ratio of Base64 encoding, where every 3 bytes of input
+          are encoded into 4 bytes of output, with padding as necessary.
+        - max_size_mb * 1024 * 1024 converts the maximum size from megabytes to bytes.
+    """
+    payload_bytes = len("data:application/pdf;base64,") + ((len(pdf_bytes) + 2) // 3) * 4
+    size_in_bytes = max_size_mb * 1024 * 1024
+    return payload_bytes <= size_in_bytes
 
 
 def split_pdf_with_size_guard(
