@@ -1,13 +1,10 @@
 # Trivy ignore file
 # Add CVE IDs or file paths to ignore during security scans
-# Example:
-# CVE-2021-12345
-# CVE-2022-67890
 GHSA-w5hq-g745-h8pq # the project inherits a uuid version (11.1.0) from the mermaid package with a medium security vulnerability
-CVE-2026-27794
-GHSA-rr7j-v2q5-chgv
-CVE-2026-25645     
-CVE-2025-67221     
-CVE-2026-0994    
-CVE-2026-41182
-CVE-2026-41907
+CVE-2026-27794 # langgraph-checkpoint (3.0.1) 
+GHSA-rr7j-v2q5-chgv # langsmith (0.6.8)
+CVE-2026-25645 # requests (2.32.5)
+CVE-2025-67221 # orjson (3.11.5)   
+CVE-2026-0994  # protobuf (6.33.4)
+CVE-2026-41182 # langsmith (0.6.6)
+CVE-2026-41907 # uuid (11.1.0)
