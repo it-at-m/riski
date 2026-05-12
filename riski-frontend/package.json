@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@ag-ui/client": "0.0.43",
-    "@ag-ui/core": "0.0.43",
+    "@ag-ui/core": "0.0.53",
     "@muenchen/muc-patternlab-vue": "^7.4.1",
     "@vueuse/core": "14.0.0",
     "dompurify": "^3.3.1",
