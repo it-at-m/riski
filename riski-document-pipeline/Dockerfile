@@ -1,9 +1,9 @@
 # Smallest ubi10 image
-FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:7bd3d2e7f5c507aebd1575d0f2fab9fe3e882e25fee54fa07f7970aa8bbc5fab
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:a41db89ac688576827fbd3e8e3ef145fd7f4db28d7f533c154f96224fcd20595
 
 RUN microdnf install -y postgresql-libs zlib && microdnf clean all
 
-COPY --from=ghcr.io/astral-sh/uv:latest@sha256:5164bf84e7b4e2e08ce0b4c66b4a8c996a286e6959f72ac5c6e0a3c80e8cb04a /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:latest@sha256:841c8e6fe30a8b07b4478d12d0c608cba6de66102d29d65d1cc423af86051563 /uv /uvx /bin/
 
 ENV UV_PROJECT_ENVIRONMENT=/app/document-pipeline/.venv
 
