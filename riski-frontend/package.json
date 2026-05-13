@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@ag-ui/client": "0.0.43",
+    "@ag-ui/client": "0.0.53",
     "@ag-ui/core": "0.0.53",
     "@muenchen/muc-patternlab-vue": "^7.4.1",
     "@vueuse/core": "14.0.0",
@@ -14,7 +14,7 @@
     "@tsconfig/node-lts": "22.0.4",
     "@types/dompurify": "^3.0.5",
     "@types/node": "22.19.17",
-    "@vitejs/plugin-vue": "6.0.5",
+    "@vitejs/plugin-vue": "6.0.6",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/test-utils": "^2.4.0",

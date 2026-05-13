@@ -19,6 +19,8 @@ def run_ocr_for_documents(settings):
     ocr_model = settings.ocr_model_name
     max_docs = settings.max_documents_to_process
     batch_size = settings.ocr_batch_size
+    max_pages_per_chunk = settings.ocr_max_pages_per_chunk
+    max_chunk_size_mb = settings.ocr_max_chunk_size_mb
     if not batch_size:
         batch_size = 0
 
@@ -53,7 +55,13 @@ def run_ocr_for_documents(settings):
                 logger.debug(f"Processing doc id={doc.id}")
                 pages_text = []
                 try:
-                    for pdf_chunk in chunk_pdf_into_max_page_blocks(doc.content, chunk_size=30):
+                    for pdf_chunk in chunk_pdf_into_max_page_blocks(
+                        doc.content, max_pages_per_chunk=max_pages_per_chunk, max_chunk_size_mb=max_chunk_size_mb
+                    ):
+                        if not is_chunk_size_valid(pdf_chunk, max_chunk_size_mb):
+                            logger.error(f"Chunk exceeds size limit for doc id={doc.id}. Skipping this chunk.")
+                            continue
+
                         base64_pdf = base64.b64encode(pdf_chunk).decode("utf-8")
                         try:
                             resp = client.ocr.process(
@@ -91,7 +99,66 @@ def run_ocr_for_documents(settings):
             offset += batch_size
 
 
-def chunk_pdf_into_max_page_blocks(pdf_bytes: bytes, chunk_size: int = 30) -> list[bytes]:
+def is_chunk_size_valid(pdf_bytes: bytes, max_size_mb: int) -> bool:
+    """
+    Checks if the size of a PDF file, when encoded in Base64, is within the specified maximum size.
+
+    Args:
+        pdf_bytes (bytes): The PDF file content in bytes.
+        max_size_mb (int): The maximum allowed size in megabytes.
+
+    Returns:
+        bool: True if the Base64-encoded size of the PDF is within the limit, False otherwise.
+
+    Notes:
+        - "data:application/pdf;base64," is the prefix added to Base64-encoded data URIs.
+        - ((len(pdf_bytes) + 2) // 3) * 4 calculates the size of the Base64-encoded content.
+          This formula accounts for the 4:3 ratio of Base64 encoding, where every 3 bytes of input
+          are encoded into 4 bytes of output, with padding as necessary.
+        - max_size_mb * 1024 * 1024 converts the maximum size from megabytes to bytes.
+    """
+    payload_bytes = len("data:application/pdf;base64,") + ((len(pdf_bytes) + 2) // 3) * 4
+    size_in_bytes = max_size_mb * 1024 * 1024
+    return payload_bytes <= size_in_bytes
+
+
+def split_pdf_with_size_guard(
+    reader: PdfReader,
+    start: int,
+    end: int,
+    max_size_mb: int,
+) -> list[bytes]:
+    writer = PdfWriter()
+
+    for page_num in range(start, end):
+        writer.add_page(reader.pages[page_num])
+
+    stream = BytesIO()
+    writer.write(stream)
+    chunk_bytes = stream.getvalue()
+
+    if is_chunk_size_valid(chunk_bytes, max_size_mb):
+        return [chunk_bytes]
+
+    num_pages = end - start
+    if num_pages <= 1:
+        logger.error(
+            "Single page exceeds max size limit. Page size: %d bytes, Max size: %d bytes.", len(chunk_bytes), max_size_mb * 1024 * 1024
+        )
+        return [chunk_bytes]
+
+    mid = start + num_pages // 2
+
+    logger.debug(f"Chunk too large ({len(chunk_bytes)} bytes). Splitting further...")
+
+    return split_pdf_with_size_guard(reader, start, mid, max_size_mb) + split_pdf_with_size_guard(reader, mid, end, max_size_mb)
+
+
+def chunk_pdf_into_max_page_blocks(
+    pdf_bytes: bytes,
+    max_pages_per_chunk: int,
+    max_chunk_size_mb: float,
+) -> list[bytes]:
     """
     Split a PDF (from bytes) into chunks of up to `chunk_size` pages.
     Returns a list where each item is a PDF (as bytes) containing ≤ chunk_size pages.
@@ -101,19 +168,17 @@ def chunk_pdf_into_max_page_blocks(pdf_bytes: bytes, chunk_size: int = 30) -> li
 
     output_chunks = []
 
-    for start in range(0, total_pages, chunk_size):
-        writer = PdfWriter()
+    for start in range(0, total_pages, max_pages_per_chunk):
+        end = min(start + max_pages_per_chunk, total_pages)
 
-        end = min(start + chunk_size, total_pages)
+        chunks = split_pdf_with_size_guard(
+            reader,
+            start,
+            end,
+            max_chunk_size_mb,
+        )
+        output_chunks.extend(chunks)
 
-        # Add pages into this chunk
-        for page_num in range(start, end):
-            writer.add_page(reader.pages[page_num])
+    logger.debug(f"Split PDF into {len(output_chunks)} chunks (max_pages={max_pages_per_chunk}, max_size={max_chunk_size_mb}MB)")
 
-        # Serialize this chunk into bytes
-        stream = BytesIO()
-        writer.write(stream)
-        output_chunks.append(stream.getvalue())
-
-    logger.debug(f"Split PDF into {len(output_chunks)} chunks of up to {chunk_size} pages each.")
     return output_chunks
