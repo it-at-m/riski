@@ -71,7 +71,6 @@ name = "core"
 version = "0.1.5"
 source = { editable = "." }
 dependencies = [
-    { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
@@ -84,15 +83,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain-core", specifier = "==1.2.31" },
     { name = "langchain-openai", specifier = "==1.1.14" },
-    { name = "pgvector", specifier = "<0.4" },
-    { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
-    { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
-    { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "sqlalchemy", specifier = ">=2.0.42" },
-    { name = "sqlmodel", specifier = ">=0.0.24" },
-    { name = "truststore", specifier = ">=0.10.4" },
+    { name = "pgvector", specifier = "==0.3.6" },
+    { name = "psycopg", extras = ["binary", "pool"], specifier = "==3.3.3" },
+    { name = "pydantic", extras = ["email"], specifier = "==2.13.3" },
+    { name = "pydantic-settings", specifier = "==2.14.0" },
+    { name = "sqlalchemy", specifier = "==2.0.49" },
+    { name = "sqlmodel", specifier = "==0.0.38" },
+    { name = "truststore", specifier = "==0.10.4" },
 ]
 
 [[package]]

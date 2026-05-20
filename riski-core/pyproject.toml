@@ -5,16 +5,16 @@ description = "Riski core for shared functionality like data model, db access, e
 readme = "README.md"
 requires-python = "==3.13.9"
 dependencies = [
-    "sqlalchemy>=2.0.42",
-    "sqlmodel>=0.0.24",
-    "psycopg[binary,pool]>=3.2.9",
-    "pydantic[email]>=2.11.7",
-    "pydantic-settings>=2.10.1",
-    "pgvector<0.4",
+    "sqlalchemy==2.0.49",
+    "sqlmodel==0.0.38",
+    "psycopg[binary,pool]==3.3.3",
+    "pydantic[email]==2.13.3",
+    "pydantic-settings==2.14.0",
+    "pgvector==0.3.6",
     "langchain-openai==1.1.14",
-    "truststore>=0.10.4",
+    "truststore==0.10.4",
 ]
 
 [build-system]
-requires = ["uv_build>=0.9.13,<0.10.0"]
+requires = ["uv_build==0.9.30"]
 build-backend = "uv_build"
