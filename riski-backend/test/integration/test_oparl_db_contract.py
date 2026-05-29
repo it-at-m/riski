@@ -1,6 +1,6 @@
 import asyncio
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -36,7 +36,7 @@ def _db_url() -> str:
 
 
 @pytest.fixture(scope="module")
-def db_sessionmaker() -> async_sessionmaker[AsyncSession]:
+def db_sessionmaker() -> Iterator[async_sessionmaker[AsyncSession]]:
     db_url = _db_url()
     engine = create_async_engine(db_url, echo=False, pool_pre_ping=True)
 
@@ -84,7 +84,6 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
         )
 
         organization = Organization(id="https://example.org/organization/1", name="Organization 1")
-        membership = Membership(id="https://example.org/membership/1", organization=organization.db_id, role="member")
         person = Person(id="https://example.org/person/1", name="Person 1", familyName="Family", givenName="Given")
 
         file_obj = File(id="https://example.org/file/1", name="File 1", accessUrl="https://files.example.org/1.pdf")
@@ -93,6 +92,7 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
 
         paper = Paper(id="https://example.org/paper/1", name="Paper 1", reference="A-1", subject="Subject", mainFile_id=file_obj.db_id)
         agenda_item = AgendaItem(id="https://example.org/agendaitem/1", name="AgendaItem 1", meeting=meeting.db_id, order=1)
+        membership = Membership(id="https://example.org/membership/1", organization=organization.db_id, role="member")
 
         legislative_term = LegislativeTerm(id="https://example.org/legislative-term/1", name="LegislativeTerm 1")
 
@@ -114,14 +114,13 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
         )
         active_body.modified = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
-        # Persist parents first so dependent FK rows (agenda_item.meeting, paper.mainFile_id) are valid on flush.
+        # Persist parents first so dependent FK rows are always valid on flush.
         session.add_all(
             [
                 system,
                 active_body,
                 deleted_body,
                 organization,
-                membership,
                 person,
                 file_obj,
                 meeting,
@@ -129,6 +128,10 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
                 legislative_term,
             ]
         )
+        await session.flush()
+
+        # Dependent rows and link-table relationships are attached only after parent rows exist.
+        session.add(membership)
         await session.flush()
 
         person.membership = [membership]
@@ -147,7 +150,7 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
 
 
 @pytest.fixture(scope="module")
-def db_backed_client(db_sessionmaker: async_sessionmaker[AsyncSession]) -> AsyncIterator[tuple[TestClient, dict[str, UUID]]]:
+def db_backed_client(db_sessionmaker: async_sessionmaker[AsyncSession]) -> Iterator[tuple[TestClient, dict[str, UUID]]]:
     async def _override_db_session() -> AsyncIterator[AsyncSession]:
         async with db_sessionmaker() as session:
             yield session
