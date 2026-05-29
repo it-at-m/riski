@@ -2,13 +2,16 @@
 from contextlib import asynccontextmanager
 
 from app.agent import build_agent
+from app.api.oparl.errors import http_exception_handler, request_validation_exception_handler
 from app.api.routers.ag_ui import router as ag_ui_router
+from app.api.routers.oparl import router as oparl_router
 from app.api.routers.system import router as systems_router
 from app.core.observer import setup_langfuse
 from app.core.settings import BackendSettings, get_settings
 from app.utils.logging import getLogger
 from core.genai import create_embedding_model
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from langchain_postgres import PGEngine, PGVectorStore
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
@@ -38,6 +41,7 @@ def create_app() -> FastAPI:
             bind=db_engine,
             expire_on_commit=False,
         )
+        app.state.db_sessionmaker = db_sessionmaker
         vectorstore, pg_engine = await build_vectorstore(settings, db_engine)
         logger.info("Database handler created")
 
@@ -71,8 +75,21 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
+
+    @app.middleware("http")
+    async def add_oparl_cors_headers(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api/oparl/"):
+            response.headers.setdefault("Access-Control-Allow-Origin", "*")
+            response.headers.setdefault("Access-Control-Allow-Methods", "GET, OPTIONS")
+            response.headers.setdefault("Access-Control-Allow-Headers", "*")
+        return response
+
     app.include_router(systems_router)
     app.include_router(ag_ui_router)
+    app.include_router(oparl_router)
 
     return app
 
