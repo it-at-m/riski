@@ -86,18 +86,13 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
         organization = Organization(id="https://example.org/organization/1", name="Organization 1")
         membership = Membership(id="https://example.org/membership/1", organization=organization.db_id, role="member")
         person = Person(id="https://example.org/person/1", name="Person 1", familyName="Family", givenName="Given")
-        person.membership = [membership]
 
         file_obj = File(id="https://example.org/file/1", name="File 1", accessUrl="https://files.example.org/1.pdf")
         meeting = Meeting(id="https://example.org/meeting/1", name="Meeting 1", invitation=file_obj.db_id)
-        agenda_item = AgendaItem(id="https://example.org/agendaitem/1", name="AgendaItem 1", meeting=meeting.db_id, order=1)
-        meeting.agenda_items = [agenda_item]
-        meeting.auxiliary_files = [file_obj]
-
         location = Location(id="https://example.org/location/1", description="Location 1")
+
         paper = Paper(id="https://example.org/paper/1", name="Paper 1", reference="A-1", subject="Subject", mainFile_id=file_obj.db_id)
-        paper.auxiliary_files = [file_obj]
-        paper.locations = [location]
+        agenda_item = AgendaItem(id="https://example.org/agendaitem/1", name="AgendaItem 1", meeting=meeting.db_id, order=1)
 
         legislative_term = LegislativeTerm(id="https://example.org/legislative-term/1", name="LegislativeTerm 1")
 
@@ -119,6 +114,7 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
         )
         active_body.modified = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
+        # Persist parents first so dependent FK rows (agenda_item.meeting, paper.mainFile_id) are valid on flush.
         session.add_all(
             [
                 system,
@@ -129,12 +125,18 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
                 person,
                 file_obj,
                 meeting,
-                agenda_item,
-                paper,
                 location,
                 legislative_term,
             ]
         )
+        await session.flush()
+
+        person.membership = [membership]
+        meeting.agenda_items = [agenda_item]
+        meeting.auxiliary_files = [file_obj]
+        paper.auxiliary_files = [file_obj]
+        paper.locations = [location]
+        session.add_all([agenda_item, paper])
         await session.commit()
 
         return {
@@ -144,7 +146,7 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
         }
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def db_backed_client(db_sessionmaker: async_sessionmaker[AsyncSession]) -> AsyncIterator[tuple[TestClient, dict[str, UUID]]]:
     async def _override_db_session() -> AsyncIterator[AsyncSession]:
         async with db_sessionmaker() as session:
