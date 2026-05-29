@@ -11,13 +11,18 @@ from core.model.data_models import (
     AgendaItem,
     Body,
     File,
+    FileMeetingLink,
     LegislativeTerm,
     Location,
     Meeting,
+    MeetingAgendaItemLink,
     Membership,
     Organization,
     Paper,
+    PaperFileLink,
+    PaperLocationLink,
     Person,
+    PersonMembershipLink,
     System,
 )
 from fastapi.testclient import TestClient
@@ -130,16 +135,20 @@ async def _seed_base_data(sessionmaker: async_sessionmaker[AsyncSession]) -> dic
         )
         await session.flush()
 
-        # Dependent rows and link-table relationships are attached only after parent rows exist.
-        session.add(membership)
+        # Dependent rows are attached only after parent rows exist.
+        session.add_all([membership, agenda_item, paper])
         await session.flush()
 
-        person.membership = [membership]
-        meeting.agenda_items = [agenda_item]
-        meeting.auxiliary_files = [file_obj]
-        paper.auxiliary_files = [file_obj]
-        paper.locations = [location]
-        session.add_all([agenda_item, paper])
+        # Add many-to-many links explicitly to avoid lazy-load IO during relationship assignment.
+        session.add_all(
+            [
+                PersonMembershipLink(person_id=person.db_id, membership_id=membership.db_id),
+                MeetingAgendaItemLink(meeting_id=meeting.db_id, agenda_item_id=agenda_item.db_id),
+                FileMeetingLink(file_id=file_obj.db_id, meeting_id=meeting.db_id),
+                PaperFileLink(paper_id=paper.db_id, file_id=file_obj.db_id),
+                PaperLocationLink(paper_id=paper.db_id, location_id=location.db_id),
+            ]
+        )
         await session.commit()
 
         return {
