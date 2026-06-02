@@ -39,16 +39,17 @@ class PaperTypeEnum(str, Enum):
     MEETING_TEMPLATE = "Sitzungsvorlage"
     CITIZENS_ASSEMBLY_RECOMMENDATION = "Empfehlung der Bürgerversammlung"
     CITIZENS_ASSEMBLY_REQUEST = "Anfrage der Bürgerversammlung"
-    SUPPLEMENTARY_PROPOSAL = "Ergänzungsantrag"
     COUNCIL_REQUEST = "Stadtratsanfrage"
 
 
 class PaperSubtypeEnum(str, Enum):
     # Subtypes for Council Proposal
     URGENT_PROPOSAL = "Dringlichkeitsantrag"
+    SUPPLEMENTARY_PROPOSAL = "Ergänzungsantrag"
     PROPOSAL = "Antrag"
     REQUEST = "Anfrage"
     AMENDMENT_PROPOSAL = "Änderungsantrag"
+    REQUEST_FOR_REVIEW = "Nachprüfungsantrag"
 
     # Subtypes for District Committee Proposal
     DISTRICT_COMMITTEE_PROPOSAL = "Bezirksausschussantrag"

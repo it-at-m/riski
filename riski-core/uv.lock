@@ -71,7 +71,6 @@ name = "core"
 version = "0.1.5"
 source = { editable = "." }
 dependencies = [
-    { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary", "pool"] },
@@ -84,7 +83,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain-core", specifier = "==1.2.31" },
     { name = "langchain-openai", specifier = "==1.1.14" },
     { name = "pgvector", specifier = "<0.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
