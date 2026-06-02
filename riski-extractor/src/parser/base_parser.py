@@ -1,17 +1,31 @@
 import locale
 import platform
 from abc import ABC, abstractmethod
+from functools import wraps
 from typing import Generic, TypeVar
 
 from bs4 import BeautifulSoup
 from core.model.data_models import PaperSubtypeEnum
 
-from src.logtools import getLogger
+from src.logtools import context_log_url, getLogger
 
 T = TypeVar("T")
 
 
 class BaseParser(ABC, Generic[T]):
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        parse = cls.__dict__.get("parse")
+        if parse is None:
+            return
+
+        @wraps(parse)
+        def parse_with_url_context(self, url: str, html: str):
+            with context_log_url(url):
+                return parse(self, url, html)
+
+        cls.parse = parse_with_url_context
+
     def __init__(self) -> None:
         self.logger = getLogger()
         if platform.system() == "Windows":

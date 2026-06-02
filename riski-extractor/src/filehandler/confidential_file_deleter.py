@@ -5,7 +5,7 @@ from core.db.db_access import remove_object_by_id
 from core.db.file_id_collector import get_all_ids_to_delete
 from core.model.data_models import File
 
-from src.logtools import getLogger
+from src.logtools import context_log_url, getLogger
 
 
 class ConfidentialFileDeleter:
@@ -25,5 +25,6 @@ class ConfidentialFileDeleter:
             return
 
         for id in file_ids_to_delete:
-            remove_object_by_id(id, File)
-            self.logger.info(f"Deleted file with id: {id}")
+            with context_log_url(id):
+                remove_object_by_id(id, File)
+                self.logger.info("Deleted file")

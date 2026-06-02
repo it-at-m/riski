@@ -10,7 +10,7 @@ from config.config import Config, get_config
 from core.db.db_access import update_or_insert_objects_to_database
 from httpx import Client
 
-from src.logtools import getLogger
+from src.logtools import context_log_url, getLogger
 from src.parser.base_parser import BaseParser
 
 config: Config = get_config()
@@ -55,13 +55,14 @@ class BaseExtractor(ABC, Generic[T]):
         Method for determining how many results should be included in responses.
         """
         url = f"{self._get_sanitized_url(path).split('&')[0]}{self.results_filter_identifier_url}"
-        self.logger.info(url)
-        data = {self.results_filter_identifier_key: "3"}
-        response = self.client.post(url=url, data=data)
+        with context_log_url(url):
+            self.logger.info("Set results per page")
+            data = {self.results_filter_identifier_key: "3"}
+            response = self.client.post(url=url, data=data)
 
-        assert response.is_redirect
-        # redirect url needs to be used by following request
-        return response.headers.get("Location")
+            assert response.is_redirect
+            # redirect url needs to be used by following request
+            return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_object_html(self, link: str) -> str:
@@ -71,9 +72,10 @@ class BaseExtractor(ABC, Generic[T]):
         of this method.
         Must return valid HTML, that can be parsed by the Parser provided in __init__
         """
-        response = self.client.get(url=link, follow_redirects=True)  # request detail page
-        response.raise_for_status()
-        return response.text
+        with context_log_url(link):
+            response = self.client.get(url=link, follow_redirects=True)  # request detail page
+            response.raise_for_status()
+            return response.text
 
     def _get_sanitized_url(self, unsanitized_path: str) -> str:
         return f"{self.base_url}/{unsanitized_path.lstrip('./')}"
@@ -89,11 +91,14 @@ class BaseExtractor(ABC, Generic[T]):
             # Request and process all extractable objects
             access_denied = False
             while not access_denied:
-                current_page_text = self._get_current_page_text(results_per_page_redirect_path)
-                object_links = self._extract_links(current_page_text)
+                current_page_url = self._get_sanitized_url(results_per_page_redirect_path)
+                with context_log_url(current_page_url):
+                    current_page_text = self._get_current_page_text(results_per_page_redirect_path)
+                    object_links = self._extract_links(current_page_text)
 
                 if not object_links:
-                    self.logger.warning("No objects found on the overview page.")
+                    with context_log_url(current_page_url):
+                        self.logger.warning("No objects found on the overview page.")
                 else:
                     self._parse_objects_from_links(object_links)
 
@@ -101,24 +106,29 @@ class BaseExtractor(ABC, Generic[T]):
 
                 if not nav_top_next_link:
                     access_denied = True
-                    self.logger.info("There are no more pages - exiting loop.")
+                    with context_log_url(current_page_url):
+                        self.logger.info("There are no more pages - exiting loop.")
                     break
 
                 self._get_next_page(path=results_per_page_redirect_path, next_page_link=nav_top_next_link)
-        except Exception:
-            self.logger.exception("Error extracting objects")
+        except Exception as e:
+            request = getattr(e, "request", None)
+            url = str(request.url) if request is not None and getattr(request, "url", None) is not None else None
+            with context_log_url(url):
+                self.logger.exception("Error extracting objects")
 
     def _parse_objects_from_links(self, object_links: list[str]):
         for link in object_links:
-            try:
-                response = self._get_object_html(link)
-                extracted_object = self.parser.parse(link, response)
-                if extracted_object is None:
-                    self.logger.warning(f"No object parsed for {link}")
-                    continue
-                update_or_insert_objects_to_database([extracted_object])
-            except Exception:
-                self.logger.exception(f"Error parsing {link}")
+            with context_log_url(link):
+                try:
+                    response = self._get_object_html(link)
+                    extracted_object = self.parser.parse(link, response)
+                    if extracted_object is None:
+                        self.logger.warning("No object parsed")
+                        continue
+                    update_or_insert_objects_to_database([extracted_object])
+                except Exception:
+                    self.logger.exception("Error parsing")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _filter(self) -> str:
@@ -130,25 +140,28 @@ class BaseExtractor(ABC, Generic[T]):
         filter_url = self._get_sanitized_url(self.base_path) + self.filter_url
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {"von": config.start_date, "bis": config.end_date} | self.extend_filter_data
-        response = self.client.post(url=filter_url, headers=headers, data=data)
+        with context_log_url(filter_url):
+            response = self.client.post(url=filter_url, headers=headers, data=data)
 
-        # When sending a filter request the RIS always returns a redirect to the url with the filtered results
-        # If not raise errror for stamina retry
-        if not response.is_redirect:
-            raise httpx.HTTPStatusError(
-                "Expected redirect from filter request",
-                request=response.request,
-                response=response,
-            )
+            # When sending a filter request the RIS always returns a redirect to the url with the filtered results
+            # If not raise errror for stamina retry
+            if not response.is_redirect:
+                raise httpx.HTTPStatusError(
+                    "Expected redirect from filter request",
+                    request=response.request,
+                    response=response,
+                )
 
-        # redirect url needs to be called with GET in order to get the filtered results or be used for a following POST
-        return response.headers.get("Location")
+            # redirect url needs to be called with GET in order to get the filtered results or be used for a following POST
+            return response.headers.get("Location")
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _initial_request(self) -> None:
         # make request
-        response = self.client.get(url=self.base_url + self.base_path, follow_redirects=True)
-        response.raise_for_status()
+        url = self.base_url + self.base_path
+        with context_log_url(url):
+            response = self.client.get(url=url, follow_redirects=True)
+            response.raise_for_status()
 
     def _extract_links(self, html: str) -> list[str]:
         soup = BeautifulSoup(html, "html.parser")
@@ -182,10 +195,12 @@ class BaseExtractor(ABC, Generic[T]):
     def _get_current_page_text(self, path: str) -> str:
         if not path:
             raise ValueError("Empty redirect path detected")
-        self.logger.info(f"Request page content: {self._get_sanitized_url(path)}")
-        response = self.client.get(url=self._get_sanitized_url(path))
-        response.raise_for_status()
-        return response.text
+        url = self._get_sanitized_url(path)
+        with context_log_url(url):
+            self.logger.info("Request page content")
+            response = self.client.get(url=url)
+            response.raise_for_status()
+            return response.text
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     def _get_next_page(self, path: str, next_page_link: str) -> None:
@@ -201,6 +216,7 @@ class BaseExtractor(ABC, Generic[T]):
         }
 
         page_url = self._get_sanitized_url(next_page_link) + "&_=1"
-        self.logger.debug(f"Request the next page: {page_url}")
-        page_response = self.client.get(url=page_url, headers=headers)
-        page_response.raise_for_status()
+        with context_log_url(page_url):
+            self.logger.debug("Request the next page")
+            page_response = self.client.get(url=page_url, headers=headers)
+            page_response.raise_for_status()
