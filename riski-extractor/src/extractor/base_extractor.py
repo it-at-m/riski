@@ -60,7 +60,12 @@ class BaseExtractor(ABC, Generic[T]):
             data = {self.results_filter_identifier_key: "3"}
             response = self.client.post(url=url, data=data)
 
-            assert response.is_redirect
+            if not response.is_redirect:
+                raise httpx.HTTPStatusError(
+                    "Expected redirect from set-results-per-page request",
+                    request=response.request,
+                    response=response,
+                )
             # redirect url needs to be used by following request
             return response.headers.get("Location")
 

@@ -1,5 +1,6 @@
 import asyncio
 import urllib.parse
+from email.message import Message
 from logging import Logger
 
 import httpx
@@ -10,7 +11,7 @@ from core.db.file_id_collector import mark_file_id_for_deletion
 from core.model.data_models import File
 from httpx import AsyncClient
 
-from src.logtools import context_log_url, getLogger
+from src.logtools import getLogger
 
 config: Config = get_config()
 
@@ -46,11 +47,10 @@ class Filehandler:
 
             async def sem_task(file_in):
                 async with semaphore:
-                    with context_log_url(file_in.id):
-                        try:
-                            await self.download_and_persist_file(file=file_in)
-                        except Exception as e:
-                            self.logger.exception(f"Could not download file '{file_in.id} - {e}'")
+                    try:
+                        await self.download_and_persist_file(file=file_in)
+                    except Exception as e:
+                        self.logger.exception(f"Could not download file '{file_in.id} - {e}'")
 
             for file in files:
                 tasks.append(sem_task(file))
@@ -63,30 +63,27 @@ class Filehandler:
 
     @stamina.retry(on=httpx.HTTPError, attempts=config.max_retries)
     async def download_and_persist_file(self, file: File):
-        with context_log_url(file.id):
-            response = await self.client.get(url=file.id)
-            if response.status_code == 404:
-                mark_file_id_for_deletion(file.id)
+        response = await self.client.get(url=file.id)
+        if response.status_code == 404:
+            mark_file_id_for_deletion(file.id)
 
-            response.raise_for_status()
-            content = response.content
+        response.raise_for_status()
+        content = response.content
 
-            if file.content is None or content != file.content:
-                content_disposition = response.headers.get("content-disposition")
-                if content_disposition:
-                    # Parse using cgi module for robust header parsing
-                    import cgi
-
-                    _, params = cgi.parse_header(content_disposition)
-                    fileName = params.get("filename")
-                    if fileName:
-                        fileName = urllib.parse.unquote(fileName)
-                        self.logger.debug(f"Extracted fileName: {fileName}")
-                    else:
-                        self.logger.warning("No filename found in Content-Disposition header")
-                        fileName = file.name
+        if file.content is None or content != file.content:
+            content_disposition = response.headers.get("content-disposition")
+            if content_disposition:
+                msg = Message()
+                msg["Content-Disposition"] = content_disposition
+                fileName = msg.get_filename()
+                if fileName:
+                    fileName = urllib.parse.unquote(fileName)
+                    self.logger.debug(f"Extracted fileName: {fileName}")
                 else:
-                    self.logger.debug("No Content-Disposition header")
+                    self.logger.warning(f"No filename found in Content-Disposition header for {file.id}")
                     fileName = file.name
-                self.logger.debug(f"Saving content of file {file.name} to database.")
-                update_file_content(file.db_id, content, fileName)
+            else:
+                self.logger.debug(f"No Content-Disposition header for {file.id}")
+                fileName = file.name
+            self.logger.debug(f"Saving content of file {file.name} to database.")
+            update_file_content(file.db_id, content, fileName)
