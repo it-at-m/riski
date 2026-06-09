@@ -16,7 +16,7 @@ from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from .riski_agent import build_riski_graph
-from .tools import get_agent_capabilities, retrieve_documents
+from .tools import get_agent_capabilities, query_ris_database, retrieve_documents
 from .types import AGENT_CAPABILITIES_PROMPT, CHECK_DOCUMENT_PROMPT_TEMPLATE
 
 settings: BackendSettings = get_settings()
@@ -34,10 +34,10 @@ async def build_agent(
     """
     Constructs and returns a configured RISKI LangGraphAgent with a custom graph.
 
-    The graph enforces that the ``retrieve_documents`` tool is called and
-    returns non-empty results **before** the model generates its final answer.
-    If the tool is not called or returns no results, the agent deterministically
-    responds with a fixed "no results" message — no LLM generation happens.
+    The graph routes content questions through ``retrieve_documents`` and structured
+    RIS database questions through ``query_ris_database``. Document retrieval
+    results are relevance-checked before final generation; structured DB results
+    are routed directly back to the model for the final answer.
     """
 
     # Build the chat model
@@ -57,7 +57,7 @@ async def build_agent(
     )
 
     # Bind tools so the model knows about them
-    tools = [retrieve_documents, get_agent_capabilities]
+    tools = [retrieve_documents, query_ris_database, get_agent_capabilities]
     try:
         system_prompt_template: TextPromptClient = lf_client.get_prompt(
             name=settings.langfuse_system_prompt_name, label=settings.langfuse_system_prompt_label
@@ -128,7 +128,7 @@ async def build_agent(
     # Wrap in AG-UI LangGraphAgent
     return LangGraphAgent(
         name="RISKI Agent",
-        description="Der RISKI Agent unterstützt bei der Recherche und Analyse von Dokumenten und Beschlussvorlagen aus dem Rats-Informations-System der Stadt München.",
+        description="Der RISKI Agent unterstützt bei der Recherche und Analyse von Dokumenten, Beschlussvorlagen sowie strukturierten Personen-, Fraktions- und Antragsdaten aus dem Rats-Informations-System der Stadt München.",
         graph=compiled,
         config={
             "configurable": {

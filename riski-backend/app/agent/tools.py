@@ -1,10 +1,13 @@
 import asyncio
 import json
+from datetime import datetime
+from enum import Enum
 from logging import Logger
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from app.utils.logging import getLogger
-from core.model.data_models import File
+from core.db.ris_queries import count_papers, find_persons, list_factions, person_factions, person_papers
+from core.model.data_models import File, PaperTypeEnum
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig, RunnableLambda
@@ -207,6 +210,154 @@ async def retrieve_documents(
     except Exception as e:
         logger.error(f"Error in retrieve_documents tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve documents: {str(e)}")
+
+
+class RisDbOperation(str, Enum):
+    """Allowed structured RIS database operations for the agent tool."""
+
+    LIST_FACTIONS = "list_factions"
+    SEARCH_PERSONS = "search_persons"
+    PERSON_FACTIONS = "person_factions"
+    PERSON_PAPERS = "person_papers"
+    COUNT_PAPERS = "count_papers"
+
+
+class QueryRisDatabaseArgs(BaseModel):
+    operation: RisDbOperation = Field(
+        description=(
+            "Structured RIS database operation. Use list_factions for questions like "
+            "'Welche Fraktionen gibt es?'; search_persons for ambiguous person lookups; "
+            "person_factions for 'In welcher Fraktion ist XY?'; person_papers for "
+            "'Welche Anträge hat XY eingereicht?'; count_papers for "
+            "'Wie viele Anträge wurden seit/bis/in einem Zeitraum eingereicht?'."
+        )
+    )
+    person_name: str | None = Field(
+        default=None,
+        description="Person name. Required for search_persons, person_factions and person_papers.",
+    )
+    since: str | None = Field(
+        default=None,
+        description="Inclusive start date as ISO date/datetime, e.g. YYYY-MM-DD. Resolve relative dates before calling.",
+    )
+    until: str | None = Field(
+        default=None,
+        description="Inclusive end date as ISO date/datetime, e.g. YYYY-MM-DD. Resolve relative dates before calling.",
+    )
+    paper_type: PaperTypeEnum | None = Field(
+        default=PaperTypeEnum.COUNCIL_PROPOSAL,
+        description=(
+            "Paper/proposal type filter. Default is Stadtratsantrag. Set to null only if the user explicitly asks across all paper types."
+        ),
+    )
+    limit: int = Field(default=20, ge=1, le=100, description="Maximum number of returned rows.")
+    include_inactive: bool = Field(
+        default=False,
+        description="Whether inactive factions/organizations should be included for list_factions.",
+    )
+
+
+def _parse_optional_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    return datetime.fromisoformat(value)
+
+
+@tool(
+    description=(
+        "Query structured RIS database tables for persons, factions/organizations, memberships and papers/proposals. "
+        "Use this for factual data questions such as 'Welche Fraktionen gibt es?', "
+        "'In welcher Fraktion ist XY?', 'Welche Anträge hat Person XY eingereicht?' or "
+        "'Wie viele Anträge wurden seit einem Datum eingereicht?'. Do not use this tool for "
+        "questions about the content/text of documents; use retrieve_documents for that."
+    ),
+    args_schema=QueryRisDatabaseArgs,
+    parse_docstring=False,
+    response_format="content_and_artifact",
+)
+async def query_ris_database(
+    operation: RisDbOperation,
+    runtime: ToolRuntime[AgentContext],
+    config: RunnableConfig,
+    person_name: str | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    paper_type: PaperTypeEnum | None = PaperTypeEnum.COUNCIL_PROPOSAL,
+    limit: int = 20,
+    include_inactive: bool = False,
+) -> tuple[str, dict[str, Any]]:
+    """Run a safe, structured RIS database query and return JSON data to the model."""
+    try:
+        if runtime.context is None:
+            db_sessionmaker = config["configurable"]["db_sessionmaker"]
+            db_query_total_timeout_seconds = config["configurable"]["db_query_total_timeout_seconds"]
+            force_db_timeout: bool = config["configurable"].get("force_db_timeout", False)
+        else:
+            db_sessionmaker = runtime.context["db_sessionmaker"]
+            db_query_total_timeout_seconds = runtime.context["db_query_total_timeout_seconds"]
+            force_db_timeout = runtime.context.get("force_db_timeout", False)
+
+        if force_db_timeout:
+            raise asyncio.TimeoutError("forced DB timeout for testing")
+
+        since_dt = _parse_optional_datetime(since)
+        until_dt = _parse_optional_datetime(until)
+
+        async with db_sessionmaker() as db_session:
+
+            async def call_db(_):
+                if operation == RisDbOperation.LIST_FACTIONS:
+                    return await list_factions(db_session, include_inactive=include_inactive, limit=limit)
+
+                if operation == RisDbOperation.SEARCH_PERSONS:
+                    if not person_name:
+                        raise ValueError("person_name is required for search_persons")
+                    return await find_persons(db_session, person_name=person_name, limit=limit)
+
+                if operation == RisDbOperation.PERSON_FACTIONS:
+                    if not person_name:
+                        raise ValueError("person_name is required for person_factions")
+                    return await person_factions(db_session, person_name=person_name, limit=limit)
+
+                if operation == RisDbOperation.PERSON_PAPERS:
+                    if not person_name:
+                        raise ValueError("person_name is required for person_papers")
+                    return await person_papers(
+                        db_session,
+                        person_name=person_name,
+                        paper_type=paper_type,
+                        since=since_dt,
+                        until=until_dt,
+                        limit=limit,
+                    )
+
+                if operation == RisDbOperation.COUNT_PAPERS:
+                    return await count_papers(
+                        db_session,
+                        paper_type=paper_type,
+                        since=since_dt,
+                        until=until_dt,
+                    )
+
+                raise ValueError(f"Unsupported RIS DB operation: {operation}")
+
+            data = await asyncio.wait_for(
+                RunnableLambda(call_db).ainvoke(None, config),  # type: ignore[arg-type]
+                timeout=db_query_total_timeout_seconds,
+            )
+
+        artifact: dict[str, Any] = {
+            "operation": operation.value,
+            "data": data,
+        }
+        return json.dumps(artifact, ensure_ascii=False, default=str), artifact
+
+    except asyncio.TimeoutError:
+        logger.error("query_ris_database timed out waiting for DB query")
+        raise ToolException("TIMEOUT: database query timed out")
+    except Exception as e:
+        logger.error("Error in query_ris_database tool: %s", e, exc_info=True)
+        raise ToolException(f"Failed to query RIS database: {str(e)}")
 
 
 class GetAgentCapabilitiesArgs(BaseModel):
