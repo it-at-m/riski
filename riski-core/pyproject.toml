@@ -13,6 +13,7 @@ dependencies = [
     "pgvector<0.4",
     "langchain-openai==1.1.14",
     "truststore>=0.10.4",
+    "langchain-core==1.4.3",
 ]
 
 [build-system]
