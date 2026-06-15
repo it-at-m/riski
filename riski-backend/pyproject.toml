@@ -35,8 +35,8 @@ dependencies = [
     "langchain==1.2.8",
     "langgraph==1.0.10",
     "langgraph-prebuilt==1.0.8",
-    "langgraph-checkpoint==3.0.1",
-    "langgraph-checkpoint-redis==0.3.4",
+    "langgraph-checkpoint==4.1.1",
+    "langgraph-checkpoint-redis==0.4.1",
 ]
 
 [dependency-groups]
