@@ -624,10 +624,6 @@ dependencies = [
     { name = "pyyaml" },
     { name = "stamina" },
     { name = "tokenizers" },
-    { name = "torch", version = "2.11.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torch", version = "2.11.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
-    { name = "torchvision", version = "0.26.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
-    { name = "torchvision", version = "0.26.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
     { name = "truststore" },
 ]
 
@@ -649,6 +645,10 @@ dev = [
     { name = "pytest" },
     { name = "python-dotenv" },
     { name = "ruff" },
+    { name = "torch", version = "2.11.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torch", version = "2.11.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
+    { name = "torchvision", version = "0.26.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'darwin'" },
+    { name = "torchvision", version = "0.26.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'darwin'" },
     { name = "ty" },
 ]
 
@@ -665,8 +665,6 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "stamina", specifier = ">=25.1.0" },
     { name = "tokenizers", specifier = "==0.21.2" },
-    { name = "torch", specifier = "==2.11.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "torchvision", specifier = "==0.26.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "truststore", specifier = ">=0.10.4" },
 ]
 provides-extras = ["pgvector"]
@@ -683,6 +681,8 @@ dev = [
     { name = "pytest", specifier = "==9.0.3" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "ruff", specifier = ">=0.14.11" },
+    { name = "torch", specifier = "==2.11.0", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torchvision", specifier = "==0.26.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "ty", specifier = "==0.0.1a23" },
 ]
 
