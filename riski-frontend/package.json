@@ -14,7 +14,7 @@
     "@tsconfig/node-lts": "22.0.4",
     "@types/dompurify": "3.2.0",
     "@types/node": "22.19.19",
-    "@vitejs/plugin-vue": "6.0.6",
+    "@vitejs/plugin-vue": "6.0.7",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/test-utils": "^2.4.0",
