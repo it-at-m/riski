@@ -8,17 +8,17 @@ dependencies = [
     "mistralai>=1.9.11",
     "truststore>=0.10.4",
     "core",
-    "pypdf>=6.6.0",
+    "pypdf>=6.12.0",
     "langchain-postgres>=0.0.16",
     "langchain-text-splitters>=1.1.0",
-    "cryptography>=46.0.4",
+    "cryptography>= 48.0.1",
 ]
 
 [dependency-groups]
 dev = [
     "ipykernel>=7.1.0",
     "pre-commit>=4.5.1",
-    "pypdf>=6.4.1",
+    "pypdf>=6.12.0",
     "pytest>=9.0.2",
     "python-dotenv>=1.2.1",
     "ruff>=0.14.11",
