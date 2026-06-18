@@ -166,7 +166,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "langchain-core", specifier = "==1.4.3" },
+    { name = "langchain-core", specifier = "==1.4.7" },
     { name = "langchain-openai", specifier = "==1.1.14" },
     { name = "langsmith", specifier = "==0.8.0" },
     { name = "pgvector", specifier = "<0.4" },
@@ -227,7 +227,6 @@ dependencies = [
     { name = "core" },
     { name = "gitpython" },
     { name = "httpx" },
-    { name = "legacy-cgi" },
     { name = "pytest-asyncio" },
     { name = "pyyaml" },
     { name = "stamina" },
@@ -259,7 +258,6 @@ requires-dist = [
     { name = "gitpython", specifier = ">=3.1.45" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "langchain-postgres", marker = "extra == 'pgvector'", specifier = ">=0.0.15" },
-    { name = "legacy-cgi", specifier = ">=2.6.4" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "stamina", specifier = ">=25.1.0" },
@@ -532,7 +530,7 @@ wheels = [
 
 [[package]]
 name = "langchain-core"
-version = "1.4.3"
+version = "1.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonpatch" },
@@ -545,9 +543,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "uuid-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/56/48/b2b8778039a09106660d32a4841336592da61e2078141bdfcff7545aa2df/langchain_core-1.4.3.tar.gz", hash = "sha256:c127f8ac6ee7f2a431689a61f6f004e6d909b93c4396e4ec71f1f53fe38a6b5d", size = 935174, upload-time = "2026-06-09T20:31:48.499Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/2b/fffaff399d20a56d40b9562fa19701e91abd72d8c9d9bc8c2673077b56b6/langchain_core-1.4.7.tar.gz", hash = "sha256:7a825d77de0a3f39adbd9d09612a75e85527e14a52c1601089bcc062972d9f2b", size = 952522, upload-time = "2026-06-12T19:23:57.588Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fa/0e/85e237988b3047f2a769a53915fa4c104d032c7b61e83d33ff51c05b9c25/langchain_core-1.4.3-py3-none-any.whl", hash = "sha256:019664ff8caf0175f9cd10af391c1ea79601d7c1a0f54ed53a260155b7a47c40", size = 550114, upload-time = "2026-06-09T20:31:46.866Z" },
+    { url = "https://files.pythonhosted.org/packages/de/3e/dcdffa60078ae7b3a00ebb4cbbf1a204a14c3609983c604886523a7d4418/langchain_core-1.4.7-py3-none-any.whl", hash = "sha256:bcadd51951140ecdcba98311dbd931ba5de02a5ba8a2288dad5069c1eea2a13d", size = 554941, upload-time = "2026-06-12T19:23:55.826Z" },
 ]
 
 [[package]]
@@ -612,15 +610,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a8/64/95f1f013531395f4e8ed73caeee780f65c7c58fe028cb543f8937b45611b/langsmith-0.8.0.tar.gz", hash = "sha256:59fe5b2a56bbbe14a08aa76691f84b49e8675dd21e11b57d80c6db8c08bac2e3", size = 4432996, upload-time = "2026-04-30T22:13:07.341Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/e1/a4be2e696c9473bb53298df398237da5674704d781d4b748ed35aeef592a/langsmith-0.8.0-py3-none-any.whl", hash = "sha256:12cc4bc5622b835a6d841964d6034df3617bdb912dae0c1381fd0a68a9b3a3ef", size = 393268, upload-time = "2026-04-30T22:13:05.56Z" },
-]
-
-[[package]]
-name = "legacy-cgi"
-version = "2.6.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f4/9c/91c7d2c5ebbdf0a1a510bfa0ddeaa2fbb5b78677df5ac0a0aa51cf7125b0/legacy_cgi-2.6.4.tar.gz", hash = "sha256:abb9dfc7835772f7c9317977c63253fd22a7484b5c9bbcdca60a29dcce97c577", size = 24603, upload-time = "2025-10-27T05:20:05.395Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/7e/e7394eeb49a41cc514b3eb49020223666cbf40d86f5721c2f07871e6d84a/legacy_cgi-2.6.4-py3-none-any.whl", hash = "sha256:7e235ce58bf1e25d1fc9b2d299015e4e2cd37305eccafec1e6bac3fc04b878cd", size = 20035, upload-time = "2025-10-27T05:20:04.289Z" },
 ]
 
 [[package]]

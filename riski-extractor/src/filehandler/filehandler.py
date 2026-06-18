@@ -1,5 +1,6 @@
 import asyncio
 import urllib.parse
+from email.message import Message
 from logging import Logger
 
 import httpx
@@ -72,11 +73,9 @@ class Filehandler:
         if file.content is None or content != file.content:
             content_disposition = response.headers.get("content-disposition")
             if content_disposition:
-                # Parse using cgi module for robust header parsing
-                import cgi
-
-                _, params = cgi.parse_header(content_disposition)
-                fileName = params.get("filename")
+                msg = Message()
+                msg["Content-Disposition"] = content_disposition
+                fileName = msg.get_filename()
                 if fileName:
                     fileName = urllib.parse.unquote(fileName)
                     self.logger.debug(f"Extracted fileName: {fileName}")
