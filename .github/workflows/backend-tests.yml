@@ -12,6 +12,20 @@ permissions:
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: riski_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d riski_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: riski-backend
@@ -36,3 +50,9 @@ jobs:
         run: uv run pytest
     env:
       OPENAI_API_KEY: dummykey
+      RISKI_BACKEND__CORE__DB__HOSTNAME: localhost
+      RISKI_BACKEND__CORE__DB__PORT: "5432"
+      RISKI_BACKEND__CORE__DB__NAME: riski_test
+      RISKI_BACKEND__CORE__DB__USER: postgres
+      RISKI_BACKEND__CORE__DB__PASSWORD: postgres
+      RISKI_TEST_DB_ASYNC_URL: postgresql+psycopg://postgres:postgres@localhost:5432/riski_test

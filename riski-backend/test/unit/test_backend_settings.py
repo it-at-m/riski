@@ -22,6 +22,9 @@ def _base_env(monkeypatch: pytest.MonkeyPatch):
         "RISKI_BACKEND__SERVER_HOST",
         "RISKI_BACKEND__SERVER_PORT",
         "RISKI_BACKEND__ENABLE_DOCS",
+        "RISKI_BACKEND__OPARL_BASE_URL",
+        "RISKI_BACKEND__OPARL_PAGE_SIZE_DEFAULT",
+        "RISKI_BACKEND__OPARL_PAGE_SIZE_MAX",
         "LANGFUSE_PUBLIC_KEY",
         "LANGFUSE_SECRET_KEY",
         "LANGFUSE_HOST",
@@ -46,6 +49,9 @@ def test_server_defaults(monkeypatch: pytest.MonkeyPatch):
     assert settings.server_host == "localhost"
     assert settings.server_port == 8080
     assert settings.enable_docs is False
+    assert settings.oparl_base_url == "http://localhost:8080/api/oparl/v1.1"
+    assert settings.oparl_page_size_default == 100
+    assert settings.oparl_page_size_max == 500
 
 
 def test_server_and_langfuse_overrides(monkeypatch: pytest.MonkeyPatch):
@@ -55,6 +61,9 @@ def test_server_and_langfuse_overrides(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("RISKI_BACKEND__SERVER_HOST", "0.0.0.0")
     monkeypatch.setenv("RISKI_BACKEND__SERVER_PORT", "9090")
     monkeypatch.setenv("RISKI_BACKEND__ENABLE_DOCS", "true")
+    monkeypatch.setenv("RISKI_BACKEND__OPARL_BASE_URL", "https://api.example.org/oparl/v1.1")
+    monkeypatch.setenv("RISKI_BACKEND__OPARL_PAGE_SIZE_DEFAULT", "42")
+    monkeypatch.setenv("RISKI_BACKEND__OPARL_PAGE_SIZE_MAX", "420")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pub-key")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sec-key")
     monkeypatch.setenv("LANGFUSE_HOST", "https://langfuse.local")
@@ -64,6 +73,9 @@ def test_server_and_langfuse_overrides(monkeypatch: pytest.MonkeyPatch):
     assert settings.server_host == "0.0.0.0"
     assert settings.server_port == 9090
     assert settings.enable_docs is True
+    assert settings.oparl_base_url == "https://api.example.org/oparl/v1.1"
+    assert settings.oparl_page_size_default == 42
+    assert settings.oparl_page_size_max == 420
     assert settings.langfuse_public_key.get_secret_value() == "pub-key"
     assert settings.langfuse_secret_key.get_secret_value() == "sec-key"
     assert settings.langfuse_host == "https://langfuse.local"
