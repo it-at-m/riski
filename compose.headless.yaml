@@ -55,7 +55,7 @@ services:
       retries: 10
 
   redis:
-    image: docker.io/redis:8.4@sha256:2682db57264ed5a15c2f2b7e9b4305bb5f1501bffc651ca1be6689a0a7d4c016
+    image: docker.io/redis:8.4@sha256:2d9454c21bc6d6fad6269007c4e40619986f97065bf6881573eb6d2b0540313a
     deploy:
       resources:
         limits:
