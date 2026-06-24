@@ -538,7 +538,7 @@ def bulk_create_agenda_items(agenda_items: List["AgendaItem"]) -> int:
 @log_execution_time
 def get_or_create_location(name: str) -> Location:
     """
-    Retrieves or creates a Location by name.
+    Retrieves or creates a Location by description/name.
 
     Args:
         name: The name/description of the location (e.g., 'Rathaus', 'Plenarsaal')
@@ -549,8 +549,8 @@ def get_or_create_location(name: str) -> Location:
     from core.model.data_models import Location
 
     with _get_session_ctx() as sess:
-        # Check if it exists by name
-        statement = select(Location).where(Location.name == name)
+        # Check if it exists by description
+        statement = select(Location).where(Location.description == name)
         existing = sess.exec(statement).first()
         if existing:
             logger.info(f"Location '{name}' already exists (db_id: {existing.db_id})")
@@ -560,7 +560,7 @@ def get_or_create_location(name: str) -> Location:
         location_id = f"urn:riski:location:{name.casefold().replace(' ', '-')}"
         location = Location(
             id=location_id,
-            name=name,
+            description=name,
             deleted=False,
         )
 
