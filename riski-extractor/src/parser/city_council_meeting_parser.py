@@ -54,9 +54,12 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             if not location_name or not location_name.strip():
                 return None
             location_name = location_name.strip()
-            return get_or_create_location(location_name)
+            location = get_or_create_location(location_name)
+            if location:
+                self.logger.info(f"Location resolved/created: {location_name} (id: {location.id}, db_id: {location.db_id})")
+            return location
         except Exception as e:
-            self.logger.debug(f"Error resolving/creating location '{location_name}': {e!r}")
+            self.logger.exception(f"Error resolving/creating location '{location_name}'")
             return None
 
     def _extract_agenda_items(self, soup: BeautifulSoup, meeting_url: str) -> list[AgendaItem]:
@@ -271,6 +274,9 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
         # --- Remaining Fields ---
         deleted = False
 
+        # --- Build locations list ---
+        locations = [location] if location else []
+
         # --- Assemble Meeting ---
         meeting = Meeting(
             id=url,
@@ -283,16 +289,9 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             agenda_items=agenda_items,
             organizations=organizations,
             participants=participants,
+            locations=locations,
+            keywords=[],
         )
 
-        # Add location if found
-        if location:
-            meeting.locations = [location]
-        else:
-            meeting.locations = []
-
-        # Initialize remaining relationships
-        meeting.keywords = []
-
-        self.logger.debug(f"Meeting object created: {meeting.name} with {len(agenda_items)} agenda items, {len(participants)} participants")
+        self.logger.info(f"Meeting created: {meeting.name} with {len(agenda_items)} agenda items, {len(participants)} participants, {len(locations)} locations")
         return meeting

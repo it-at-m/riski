@@ -8,7 +8,7 @@ from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
-from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Paper, Person
+from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Paper, Person, Location
 from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
@@ -536,7 +536,7 @@ def bulk_create_agenda_items(agenda_items: List["AgendaItem"]) -> int:
 
 
 @log_execution_time
-def get_or_create_location(name: str) -> "Location":
+def get_or_create_location(name: str) -> Location:
     """
     Retrieves or creates a Location by name.
 
@@ -553,7 +553,7 @@ def get_or_create_location(name: str) -> "Location":
         statement = select(Location).where(Location.name == name)
         existing = sess.exec(statement).first()
         if existing:
-            logger.debug(f"Location '{name}' already exists")
+            logger.info(f"Location '{name}' already exists (db_id: {existing.db_id})")
             return existing
 
         # Create new with ID based on name
@@ -563,15 +563,9 @@ def get_or_create_location(name: str) -> "Location":
             name=name,
             deleted=False,
         )
-        location.meetings = []
-        location.papers = []
-        location.organizations = []
-        location.persons = []
-        location.bodies = []
-        location.keywords = []
 
         sess.add(location)
         sess.commit()
         sess.refresh(location)
-        logger.debug(f"Created new Location: {name}")
+        logger.info(f"Created new Location: {name} (db_id: {location.db_id}, id: {location.id})")
         return location

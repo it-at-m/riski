@@ -21,6 +21,7 @@ dependencies = [
     "httpx>=0.28.1",
     "core",
     "bs4>=0.0.2",
+    "pre-commit>=4.3.0",
 ]
 
 [project.optional-dependencies]
