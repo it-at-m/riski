@@ -54,13 +54,6 @@ async def main():
     meeting_extractor.run()
     logger.info("Extracted City Council Meetings")
 
-    logger.info("Extracting Agenda Items from Meeting Tagesordnung Pages")
-    from src.extractor.meeting_tagesordnung_extractor import MeetingTagesordnungExtractor
-
-    tagesordnung_extractor = MeetingTagesordnungExtractor()
-    tagesordnung_extractor.run()
-    logger.info("Extracted Agenda Items from Meeting Tagesordnung Pages")
-
     logger.info("Extracting City Council Meeting Templates")
     city_council_meeting_template_extractor = CityCouncilMeetingTemplateExtractor()
     city_council_meeting_template_extractor.run()
@@ -70,6 +63,13 @@ async def main():
     city_council_motion_extractor = CityCouncilMotionExtractor()
     city_council_motion_extractor.run()
     logger.info("Extracted City Council Motions")
+
+    logger.info("Extracting Agenda Items from Meeting Tagesordnung Pages")
+    from src.extractor.meeting_tagesordnung_extractor import MeetingTagesordnungExtractor
+
+    tagesordnung_extractor = MeetingTagesordnungExtractor()
+    tagesordnung_extractor.run()
+    logger.info("Extracted Agenda Items from Meeting Tagesordnung Pages")
 
     # --- District Committee (BA) ---
     logger.info("Extracting District Committee Members")
