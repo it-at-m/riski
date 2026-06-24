@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from core.db.db_access import (
+    get_or_create_legislative_term,
     get_or_insert_object_to_database,
     request_object_by_name,
     request_paper_by_reference,
@@ -116,7 +117,20 @@ class CityCouncilMotionParser(BaseParser[Paper]):
                     self.logger.debug(f"Matched person: {given or ''} {family}")
                     continue
 
-            # 3. No match → log error
+                # 3. Person does not exist yet → create it
+                new_person = Person(
+                    id=f"urn:riski:person:{given.casefold()}:{family.casefold()}".replace(" ", "-"),
+                    familyName=family,
+                    givenName=given,
+                    name=f"{given} {family}",
+                    deleted=False,
+                )
+                person = get_or_insert_object_to_database(new_person)
+                persons.append(person)
+                self.logger.info(f"Created new person from originator: {given} {family}")
+                continue
+
+            # 4. No usable name → log error
             self.logger.error(f"Originator not found in DB (neither person nor organization): '{clean_entry}'")
 
         return persons, orgs
@@ -145,6 +159,14 @@ class CityCouncilMotionParser(BaseParser[Paper]):
         # --- date ---
         date_str = self._kv_value("Gestellt am:", soup)
         date = self._parse_date(date_str)
+
+        # --- legislative term (Wahlperiode) ---
+        wahlperiode = self._kv_value("Wahlperiode:", soup)
+        if wahlperiode:
+            try:
+                get_or_create_legislative_term(wahlperiode)
+            except Exception as e:
+                self.logger.debug(f"Could not create legislative term {wahlperiode}: {e!r}")
 
         # --- subtype ---
         paper_subtype_string = self._kv_value("Typ:", soup)

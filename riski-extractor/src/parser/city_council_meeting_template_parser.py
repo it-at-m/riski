@@ -3,7 +3,12 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from core.db.db_access import get_or_insert_object_to_database, insert_and_return_object, request_person_by_familyName
+from core.db.db_access import (
+    get_or_create_legislative_term,
+    get_or_insert_object_to_database,
+    insert_and_return_object,
+    request_person_by_familyName,
+)
 from core.model.data_models import File, Keyword, Paper, PaperTypeEnum, Person
 
 from src.parser.base_parser import BaseParser
@@ -61,6 +66,14 @@ class CityCouncilMeetingTemplateParser(BaseParser[Paper]):
                 self.logger.warning(f"{url}: Unparseable Freigabe date: {date_str!r}")
         paper_subtype_string = self._kv_value("Typ:", soup)
         paper_subtype = self._get_paper_subtype_enum(paper_subtype_string) if paper_subtype_string else None
+
+        # --- Legislative Term (Wahlperiode) ---
+        wahlperiode = self._kv_value("Wahlperiode:", soup)
+        if wahlperiode:
+            try:
+                get_or_create_legislative_term(wahlperiode)
+            except Exception as e:
+                self.logger.debug(f"Could not create legislative term {wahlperiode}: {e!r}")
 
         name = self._kv_value("Referent*in:", soup)
         familyName = self._extract_lastname(name) if name else None
