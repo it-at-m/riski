@@ -25,7 +25,7 @@ def _create_gremium_html(
     <html>
     <head><title>{title}</title></head>
     <body>
-        <h1>{title}</h1>
+        <h1 class="page-title">{title}</h1>
         <div class="keyvalue-container">
             <div class="keyvalue-row">
                 <div class="keyvalue-key">Kürzel:</div>
@@ -129,7 +129,7 @@ def test_extract_members_with_dates(mock_create_membership, parser):
     url = "https://risi.muenchen.de/gremium/detail/456"
     html = _create_gremium_html(members_html=members_html)
 
-    org = parser.parse(url, html)
+    parser.extract_memberships(url, html)
 
     # Verify create_membership was called for each member
     assert mock_create_membership.call_count == 3
@@ -178,7 +178,7 @@ def test_extract_members_without_dates(mock_create_membership, parser):
     url = "https://risi.muenchen.de/gremium/detail/789"
     html = _create_gremium_html(members_html=members_html)
 
-    org = parser.parse(url, html)
+    parser.extract_memberships(url, html)
 
     # Both members should be created without dates
     assert mock_create_membership.call_count == 2
@@ -205,7 +205,7 @@ def test_no_duplicate_memberships(mock_create_membership, parser):
     url = "https://risi.muenchen.de/gremium/detail/999"
     html = _create_gremium_html(members_html=members_html)
 
-    org = parser.parse(url, html)
+    parser.extract_memberships(url, html)
 
     # Should only create 2 memberships, not 3 (deduped)
     assert mock_create_membership.call_count == 2
@@ -243,7 +243,7 @@ def test_extract_sub_organization_urls_with_relative_paths(parser):
         <h1>Ausschuss</h1>
         <div class="section">
             <p>ist Unterausschuss von:</p>
-            <a href="../detail/789">Übergeordneter Ausschuss</a>
+            <a href="../gremium/detail/789">Übergeordneter Ausschuss</a>
         </div>
     </body>
     </html>
@@ -253,7 +253,8 @@ def test_extract_sub_organization_urls_with_relative_paths(parser):
     soup = BeautifulSoup(html, "html.parser")
     sub_urls = parser._extract_sub_organization_urls(soup)
 
-    # Should resolve relative path
+    # Should resolve relative path to full URL with 789
+    assert len(sub_urls) > 0
     assert any("789" in url for url in sub_urls)
 
 
