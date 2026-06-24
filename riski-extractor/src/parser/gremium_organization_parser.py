@@ -150,6 +150,87 @@ class GremiumOrganizationParser(BaseParser[Organization]):
 
         return None
 
+    def _extract_sub_organization_urls(self, soup: BeautifulSoup) -> list[str]:
+        """
+        Extract URLs of sub-organizations (Unterausschüsse, etc.) from the page.
+
+        Looks for links to related committees/sub-organizations. These typically appear:
+        - In a "Unterausschüsse" or similar section
+        - As related organization links on the detail page
+        - In a hierarchy or tree structure
+
+        Returns:
+            List of organization URLs (full URLs).
+        """
+        sub_org_urls = []
+
+        try:
+            # Strategy 1: Look for links in sections containing "Unterausschuss" or similar keywords
+            for link in soup.find_all("a", href=re.compile(r"/gremium/detail/", re.IGNORECASE)):
+                href = link.get("href", "")
+                link_text = link.get_text(strip=True).lower()
+
+                # Skip if this is a section heading or link to self
+                if not href or "/gremium/detail/" not in href:
+                    continue
+
+                # Check context for sub-organization indicators
+                parent = link.parent
+                if parent:
+                    context = parent.get_text(" ", strip=True).lower()
+                    # Look for keywords indicating this is a sub-organization
+                    if any(
+                        keyword in context
+                        for keyword in [
+                            "unterausschuss",
+                            "unterkomitee",
+                            "subcommittee",
+                            "sub-committee",
+                            "untergremium",
+                            "fachausschuss",
+                        ]
+                    ):
+                        # Resolve to full URL
+                        if href.startswith("/"):
+                            full_url = f"https://risi.muenchen.de{href}"
+                        elif href.startswith(".."):
+                            from urllib.parse import urljoin
+
+                            base_url = soup.find("base")
+                            if base_url and base_url.get("href"):
+                                full_url = urljoin(base_url.get("href"), href)
+                            else:
+                                # Fallback: assume /gremium/detail structure
+                                full_url = f"https://risi.muenchen.de{href.lstrip('../')}"
+                        else:
+                            continue
+
+                        if full_url not in sub_org_urls:
+                            sub_org_urls.append(full_url)
+                            self.logger.debug(f"Found sub-organization: {full_url}")
+
+            # Strategy 2: Look for tables or lists with "ist Unterausschuss von" or similar
+            # This catches cases where the relationship is explicitly stated
+            for text_node in soup.find_all(string=re.compile(r"ist\s+Unterausschuss|ist\s+Sub.*von", re.IGNORECASE)):
+                parent_elem = text_node.parent
+                if parent_elem:
+                    for link in parent_elem.find_all("a", href=re.compile(r"/gremium/detail/", re.IGNORECASE)):
+                        href = link.get("href", "")
+                        if href:
+                            if href.startswith("/"):
+                                full_url = f"https://risi.muenchen.de{href}"
+                            else:
+                                full_url = f"https://risi.muenchen.de{href.lstrip('../')}"
+
+                            if full_url not in sub_org_urls:
+                                sub_org_urls.append(full_url)
+                                self.logger.debug(f"Found sub-organization via relationship text: {full_url}")
+
+        except Exception as e:
+            self.logger.debug(f"Error extracting sub-organization URLs: {e!r}")
+
+        return sub_org_urls
+
     def _extract_members_and_create_memberships(self, soup: BeautifulSoup, org_url: str) -> None:
         """Extract member list from gremium detail page and create Membership records."""
         try:
@@ -233,6 +314,43 @@ class GremiumOrganizationParser(BaseParser[Organization]):
         """
         soup = BeautifulSoup(html, "html.parser")
         self._extract_members_and_create_memberships(soup, url)
+
+    def extract_sub_organizations(self, url: str, html: str) -> None:
+        """Extract and link sub-organizations from a gremium detail page.
+
+        This is called separately from parse() to ensure all Organization records
+        are already in the database.
+        """
+        try:
+            soup = BeautifulSoup(html, "html.parser")
+            sub_org_urls = self._extract_sub_organization_urls(soup)
+
+            if not sub_org_urls:
+                self.logger.debug(f"No sub-organizations found for {url}")
+                return
+
+            self.logger.info(f"Found {len(sub_org_urls)} sub-organizations for {url}")
+
+            # Import here to avoid circular imports
+            from core.db.db_access import link_sub_organization
+
+            created_count = 0
+            failed_count = 0
+
+            for sub_url in sub_org_urls:
+                try:
+                    if link_sub_organization(url, sub_url):
+                        created_count += 1
+                    else:
+                        failed_count += 1
+                except Exception as e:
+                    self.logger.warning(f"Error linking sub-organization {sub_url}: {e!r}")
+                    failed_count += 1
+
+            self.logger.info(f"Sub-organization linking complete: {created_count} linked, {failed_count} failed")
+
+        except Exception as e:
+            self.logger.error(f"Error extracting sub-organizations: {e!r}")
 
     def parse(self, url: str, html: str) -> Organization:
         soup = BeautifulSoup(html, "html.parser")

@@ -152,6 +152,21 @@ async def main():
     ba_committee_membership_extractor.run()
     logger.info("Extracted District Committee Memberships")
 
+    # --- Gremium Hierarchies (must run after all organizations are in DB) ---
+    logger.info("Extracting City Council Committee Hierarchies")
+    from src.extractor.gremium_hierarchy_extractor import StRCommitteeHierarchyExtractor
+
+    str_committee_hierarchy_extractor = StRCommitteeHierarchyExtractor()
+    str_committee_hierarchy_extractor.run()
+    logger.info("Extracted City Council Committee Hierarchies")
+
+    logger.info("Extracting District Committee Hierarchies")
+    from src.extractor.gremium_hierarchy_extractor import BACommitteeHierarchyExtractor
+
+    ba_committee_hierarchy_extractor = BACommitteeHierarchyExtractor()
+    ba_committee_hierarchy_extractor.run()
+    logger.info("Extracted District Committee Hierarchies")
+
     logger.info("Extraction process finished")
 
     logger.info("RIS Indexer completed successfully")

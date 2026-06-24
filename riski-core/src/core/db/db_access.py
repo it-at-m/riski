@@ -744,3 +744,53 @@ def get_or_create_location(name: str) -> Location:
         sess.refresh(location)
         logger.info(f"Created new Location: {name} (db_id: {location.db_id}, id: {location.id})")
         return location
+
+
+@log_execution_time
+def link_sub_organization(parent_id: str, sub_id: str) -> bool:
+    """
+    Links a sub-organization to a parent organization via the OrganizationSubOrganization link table.
+
+    Args:
+        parent_id: The parent Organization's ID/URL
+        sub_id: The sub-organization's ID/URL
+
+    Returns:
+        True if link was created, False if either organization not found.
+    """
+    from core.model.data_models import OrganizationSubOrganization
+
+    with _get_session_ctx() as sess:
+        parent = sess.exec(select(Organization).where(Organization.id == parent_id)).first()
+        sub = sess.exec(select(Organization).where(Organization.id == sub_id)).first()
+
+        if not parent:
+            logger.warning(f"Parent organization not found: {parent_id}")
+            return False
+        if not sub:
+            logger.warning(f"Sub-organization not found: {sub_id}")
+            return False
+
+        # Check if already linked
+        from sqlmodel import select as sql_select
+
+        existing = sess.exec(
+            sql_select(OrganizationSubOrganization).where(
+                OrganizationSubOrganization.organization_id == parent.db_id,
+                OrganizationSubOrganization.sub_organization_id == sub.db_id,
+            )
+        ).first()
+
+        if existing:
+            logger.debug(f"Sub-organization {sub_id} already linked to {parent_id}")
+            return True
+
+        # Create the link
+        link = OrganizationSubOrganization(
+            organization_id=parent.db_id,
+            sub_organization_id=sub.db_id,
+        )
+        sess.add(link)
+        sess.commit()
+        logger.info(f"Linked sub-organization {sub_id} to parent {parent_id}")
+        return True

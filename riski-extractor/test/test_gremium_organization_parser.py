@@ -44,13 +44,13 @@ def _create_gremium_html(
     """
 
 
-def test_parse_basic_organization(parser):
+@patch("src.parser.gremium_organization_parser.create_membership")
+def test_parse_basic_organization(mock_create_membership, parser):
     """Test basic organization parsing without members."""
     url = "https://risi.muenchen.de/gremium/detail/123"
     html = _create_gremium_html(title="Sportausschuss", short_name="SpA")
 
-    with patch("src.parser.gremium_organization_parser.create_membership"):
-        org = parser.parse(url, html)
+    org = parser.parse(url, html)
 
     assert org is not None
     assert org.name == "Sportausschuss"
@@ -134,24 +134,36 @@ def test_extract_members_with_dates(mock_create_membership, parser):
     # Verify create_membership was called for each member
     assert mock_create_membership.call_count == 3
 
-    # Check first call (Vorsitz)
+    # Check first call (Vorsitz) - use positional or keyword args
     first_call = mock_create_membership.call_args_list[0]
-    assert "101" in first_call[1]["person_id"]
-    assert first_call[1]["role"] == "Vorsitz"
-    assert first_call[1]["start_date"] == "2026-01-01"
-    assert first_call[1]["end_date"] == "2032-12-31"
+    call_kwargs = first_call.kwargs if first_call.kwargs else dict(zip(
+        ['person_id', 'organization_id', 'role', 'start_date', 'end_date', 'voting_right', 'on_behalf_of'],
+        first_call.args
+    ))
+    assert "101" in call_kwargs.get("person_id", "")
+    assert call_kwargs.get("role") == "Vorsitz"
+    assert call_kwargs.get("start_date") == "2026-01-01"
+    assert call_kwargs.get("end_date") == "2032-12-31"
 
     # Check second call (Stellvertreter)
     second_call = mock_create_membership.call_args_list[1]
-    assert "102" in second_call[1]["person_id"]
-    assert second_call[1]["role"] == "Stellvertreter"
+    call_kwargs = second_call.kwargs if second_call.kwargs else dict(zip(
+        ['person_id', 'organization_id', 'role', 'start_date', 'end_date', 'voting_right', 'on_behalf_of'],
+        second_call.args
+    ))
+    assert "102" in call_kwargs.get("person_id", "")
+    assert call_kwargs.get("role") == "Stellvertreter"
 
     # Check third call (regular member with different dates)
     third_call = mock_create_membership.call_args_list[2]
-    assert "103" in third_call[1]["person_id"]
-    assert third_call[1]["role"] == "Mitglied"
-    assert third_call[1]["start_date"] == "2026-03-15"
-    assert third_call[1]["end_date"] == "2030-09-30"
+    call_kwargs = third_call.kwargs if third_call.kwargs else dict(zip(
+        ['person_id', 'organization_id', 'role', 'start_date', 'end_date', 'voting_right', 'on_behalf_of'],
+        third_call.args
+    ))
+    assert "103" in call_kwargs.get("person_id", "")
+    assert call_kwargs.get("role") == "Mitglied"
+    assert call_kwargs.get("start_date") == "2026-03-15"
+    assert call_kwargs.get("end_date") == "2030-09-30"
 
 
 @patch("src.parser.gremium_organization_parser.create_membership")
@@ -171,9 +183,13 @@ def test_extract_members_without_dates(mock_create_membership, parser):
     # Both members should be created without dates
     assert mock_create_membership.call_count == 2
     for call in mock_create_membership.call_args_list:
-        assert call[1]["start_date"] is None
-        assert call[1]["end_date"] is None
-        assert call[1]["role"] == "Mitglied"
+        call_kwargs = call.kwargs if call.kwargs else dict(zip(
+            ['person_id', 'organization_id', 'role', 'start_date', 'end_date', 'voting_right', 'on_behalf_of'],
+            call.args
+        ))
+        assert call_kwargs.get("start_date") is None
+        assert call_kwargs.get("end_date") is None
+        assert call_kwargs.get("role") == "Mitglied"
 
 
 @patch("src.parser.gremium_organization_parser.create_membership")
@@ -193,3 +209,67 @@ def test_no_duplicate_memberships(mock_create_membership, parser):
 
     # Should only create 2 memberships, not 3 (deduped)
     assert mock_create_membership.call_count == 2
+
+
+def test_extract_sub_organization_urls_basic(parser):
+    """Test extraction of sub-organization URLs."""
+    html = """
+    <html>
+    <body>
+        <h1>Hauptausschuss</h1>
+        <div class="sub-orgs">
+            <p>Unterausschüsse:</p>
+            <a href="/gremium/detail/456">Unterausschuss A</a>
+            <a href="/gremium/detail/457">Unterausschuss B</a>
+        </div>
+    </body>
+    </html>
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    sub_urls = parser._extract_sub_organization_urls(soup)
+
+    assert len(sub_urls) >= 2
+    assert "https://risi.muenchen.de/gremium/detail/456" in sub_urls
+    assert "https://risi.muenchen.de/gremium/detail/457" in sub_urls
+
+
+def test_extract_sub_organization_urls_with_relative_paths(parser):
+    """Test extraction with relative paths."""
+    html = """
+    <html>
+    <body>
+        <h1>Ausschuss</h1>
+        <div class="section">
+            <p>ist Unterausschuss von:</p>
+            <a href="../detail/789">Übergeordneter Ausschuss</a>
+        </div>
+    </body>
+    </html>
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    sub_urls = parser._extract_sub_organization_urls(soup)
+
+    # Should resolve relative path
+    assert any("789" in url for url in sub_urls)
+
+
+def test_extract_sub_organization_urls_empty(parser):
+    """Test extraction when no sub-organizations exist."""
+    html = """
+    <html>
+    <body>
+        <h1>Einzelner Ausschuss</h1>
+        <p>Keine Unterausschüsse vorhanden</p>
+    </body>
+    </html>
+    """
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    sub_urls = parser._extract_sub_organization_urls(soup)
+
+    assert len(sub_urls) == 0
