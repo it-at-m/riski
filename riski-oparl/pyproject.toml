@@ -1,7 +1,39 @@
 [project]
 name = "riski-oparl"
+license = "MIT"
 version = "0.1.0"
-description = "Add your description here"
+description = "OParl 1.1 publishing API for the RISKI database (Munich RIS)"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = "==3.13.9"
+
+dependencies = [
+    "fastapi==0.137.1",
+    "uvicorn==0.40.0",
+    "pydantic==2.12.5",
+    "pydantic-settings==2.12.0",
+    "python-dotenv==1.2.2",
+    "truststore==0.10.4",
+    "pyyaml==6.0.3",
+    "sqlmodel>=0.0.24",
+    "sqlalchemy>=2.0.42",
+    "psycopg[binary,pool]>=3.2.9",
+    "pgvector<0.4",
+    "core",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.3",
+    "httpx==0.28.1",
+    "ruff==0.14.14",
+]
+
+[tool.uv.sources]
+core = { path = "../riski-core" }
+
+[tool.uv]
+add-bounds = "exact"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["test"]

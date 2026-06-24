@@ -1,0 +1,2523 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RISKI OParl API",
+    "summary": "OParl 1.1 publishing API for Munich's political information system (RIS).",
+    "description": "\nThis service publishes the RISKI database according to the\n[OParl 1.1 specification](https://oparl.org).\n\n### How to use it\nOParl is **link-driven** — start at the entry point and follow the URLs:\n\n1. `GET /oparl/v1/system` — the entry point. Its `body` field links to the body list.\n2. `GET /oparl/v1/bodies` — pick a body; its `organization` / `person` / `meeting` /\n   `paper` fields are URLs to paginated **external lists**.\n3. Follow object URLs (e.g. a paper's `originatorPerson`) to fetch individual objects.\n\nEvery object's `id` is the canonical URL on this API; the original RIS web page is\nprovided in the `web` field.\n\n### External lists\nSupport pagination via `page` and time filtering via `created_since`, `created_until`,\n`modified_since`, `modified_until`. Responses contain `data`, `pagination` and `links`\n(`first` / `prev` / `next` / `last`).\n",
+    "contact": {
+      "name": "Landeshauptstadt München",
+      "url": "https://github.com/it-at-m/riski"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Liveness check",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/system": {
+      "get": {
+        "tags": [
+          "OParl: System"
+        ],
+        "summary": "OParl entry point (System object)",
+        "description": "The OParl `System` object. Start here: its `body` field links to the body list.",
+        "operationId": "get_system_oparl_v1_system_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/system",
+                  "type": "https://schema.oparl.org/1.1/System",
+                  "oparlVersion": "https://schema.oparl.org/1.1/",
+                  "name": "RISKI OParl Schnittstelle",
+                  "body": "https://oparl.example.org/oparl/v1/bodies",
+                  "website": "https://risi.muenchen.de/risi",
+                  "vendor": "https://github.com/it-at-m/riski",
+                  "product": "https://github.com/it-at-m/riski",
+                  "license": "https://www.govdata.de/dl-de/by-2-0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies": {
+      "get": {
+        "tags": [
+          "OParl: Body"
+        ],
+        "summary": "List bodies",
+        "description": "Paginated external list of `Body` objects.",
+        "operationId": "list_bodies_oparl_v1_bodies_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261",
+                      "type": "https://schema.oparl.org/1.1/Body",
+                      "system": "https://oparl.example.org/oparl/v1/system",
+                      "name": "Landeshauptstadt München",
+                      "shortName": "München",
+                      "website": "https://risi.muenchen.de/risi",
+                      "license": "https://www.govdata.de/dl-de/by-2-0",
+                      "organization": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/organizations",
+                      "person": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/people",
+                      "meeting": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/meetings",
+                      "paper": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/papers",
+                      "agendaItem": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/agendaItems",
+                      "consultation": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/consultations",
+                      "file": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/files",
+                      "locationList": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/locations",
+                      "membership": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/memberships",
+                      "legislativeTerm": [],
+                      "created": "2026-06-24T15:47:08+02:00",
+                      "modified": "2026-06-24T15:47:08+02:00"
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 1,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Body"
+        ],
+        "summary": "Get a body",
+        "operationId": "get_body_oparl_v1_bodies__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261",
+                  "type": "https://schema.oparl.org/1.1/Body",
+                  "system": "https://oparl.example.org/oparl/v1/system",
+                  "name": "Landeshauptstadt München",
+                  "shortName": "München",
+                  "website": "https://risi.muenchen.de/risi",
+                  "license": "https://www.govdata.de/dl-de/by-2-0",
+                  "organization": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/organizations",
+                  "person": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/people",
+                  "meeting": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/meetings",
+                  "paper": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/papers",
+                  "agendaItem": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/agendaItems",
+                  "consultation": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/consultations",
+                  "file": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/files",
+                  "locationList": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/locations",
+                  "membership": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261/memberships",
+                  "legislativeTerm": [],
+                  "created": "2026-06-24T15:47:08+02:00",
+                  "modified": "2026-06-24T15:47:08+02:00"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/organizations": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List organizations of a body",
+        "operationId": "list_body_organizations_oparl_v1_bodies__db_id__organizations_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/organizations/3a1b8e10-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/Organization",
+                      "body": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261",
+                      "name": "Fraktion Beispiel",
+                      "shortName": "FB",
+                      "organizationType": "Fraktion",
+                      "classification": "Fraktion",
+                      "membership": [
+                        "https://oparl.example.org/oparl/v1/memberships/9c1f0000-0000-4000-8000-000000000001"
+                      ]
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/people": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List people of a body",
+        "operationId": "list_body_people_oparl_v1_bodies__db_id__people_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/people/3c3f9342-741a-4eb6-b15d-037d60fda0a1",
+                      "type": "https://schema.oparl.org/1.1/Person",
+                      "web": "https://risi.muenchen.de/risi/person/detail/12345",
+                      "name": "Dr. Maria Musterfrau",
+                      "familyName": "Musterfrau",
+                      "givenName": "Maria",
+                      "formOfAddress": "Frau",
+                      "title": [
+                        "Dr."
+                      ],
+                      "status": [
+                        "Stadträtin"
+                      ],
+                      "membership": [
+                        "https://oparl.example.org/oparl/v1/memberships/9c1f0000-0000-4000-8000-000000000001"
+                      ]
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 771,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/meetings": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List meetings of a body",
+        "operationId": "list_body_meetings_oparl_v1_bodies__db_id__meetings_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/meetings/7b2c0000-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/Meeting",
+                      "web": "https://risi.muenchen.de/risi/sitzung/detail/67890",
+                      "name": "Vollversammlung des Stadtrats",
+                      "meetingState": "conducted",
+                      "cancelled": false,
+                      "start": "2026-03-05T09:00:00",
+                      "end": "2026-03-05T13:30:00",
+                      "organization": [
+                        "https://oparl.example.org/oparl/v1/organizations/3a1b8e10-0000-4000-8000-000000000001"
+                      ],
+                      "agendaItem": [
+                        {
+                          "id": "https://oparl.example.org/oparl/v1/agendaItems/aa110000-0000-4000-8000-000000000001",
+                          "type": "https://schema.oparl.org/1.1/AgendaItem",
+                          "number": "1",
+                          "order": 0,
+                          "name": "Begrüßung",
+                          "public": true
+                        }
+                      ]
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 113,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/papers": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List papers of a body",
+        "operationId": "list_body_papers_oparl_v1_bodies__db_id__papers_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/papers/32d05f75-2e09-4568-b4f2-3d21bf4af3f3",
+                      "type": "https://schema.oparl.org/1.1/Paper",
+                      "web": "https://risi.muenchen.de/risi/sitzungsvorlage/detail/205451",
+                      "name": "Sitzungsvorlage zur Verkehrsberuhigung",
+                      "reference": "02-08 / V 00516",
+                      "date": "2026-03-05",
+                      "paperType": "Sitzungsvorlage",
+                      "mainFile": "https://oparl.example.org/oparl/v1/files/195f2cfe-ff05-4d51-a934-fb78a697dc1a",
+                      "auxiliaryFile": [
+                        "https://oparl.example.org/oparl/v1/files/ecf694ba-8f44-4fae-b9fd-6e3d6f888708"
+                      ],
+                      "originatorPerson": [
+                        "https://oparl.example.org/oparl/v1/people/3c3f9342-741a-4eb6-b15d-037d60fda0a1"
+                      ]
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/agendaItems": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List agenda items of a body",
+        "operationId": "list_body_agenda_items_oparl_v1_bodies__db_id__agendaItems_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/agendaItems/aa110000-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/AgendaItem",
+                      "meeting": "https://oparl.example.org/oparl/v1/meetings/7b2c0000-0000-4000-8000-000000000001",
+                      "number": "1",
+                      "order": 0,
+                      "name": "Begrüßung",
+                      "public": true
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/consultations": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List consultations of a body",
+        "operationId": "list_body_consultations_oparl_v1_bodies__db_id__consultations_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/consultations/dd440000-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/Consultation",
+                      "paper": "https://oparl.example.org/oparl/v1/papers/32d05f75-2e09-4568-b4f2-3d21bf4af3f3",
+                      "meeting": "https://oparl.example.org/oparl/v1/meetings/7b2c0000-0000-4000-8000-000000000001",
+                      "authoritative": true,
+                      "role": "Beschlussfassung"
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/files": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List files of a body",
+        "operationId": "list_body_files_oparl_v1_bodies__db_id__files_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/files/195f2cfe-ff05-4d51-a934-fb78a697dc1a",
+                      "type": "https://schema.oparl.org/1.1/File",
+                      "name": "Beschlussvorlage",
+                      "fileName": "vorlage.pdf",
+                      "mimeType": "application/pdf",
+                      "accessUrl": "https://risi.muenchen.de/risi/dokument/205451.pdf",
+                      "downloadUrl": "https://risi.muenchen.de/risi/dokument/205451.pdf"
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/locations": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List locations of a body (locationList)",
+        "operationId": "list_body_locations_oparl_v1_bodies__db_id__locations_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/locations/cc330000-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/Location",
+                      "description": "Rathaus, Marienplatz 8, 80331 München",
+                      "streetAddress": "Marienplatz 8",
+                      "postalCode": "80331",
+                      "locality": "München"
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/bodies/{db_id}/memberships": {
+      "get": {
+        "tags": [
+          "OParl: Lists"
+        ],
+        "summary": "List memberships of a body",
+        "operationId": "list_body_memberships_oparl_v1_bodies__db_id__memberships_get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based page number.",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "1-based page number."
+          },
+          {
+            "name": "created_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/after this ISO-8601 timestamp.",
+              "examples": [
+                "2026-01-01T00:00:00"
+              ],
+              "title": "Created Since"
+            },
+            "description": "Only objects created at/after this ISO-8601 timestamp."
+          },
+          {
+            "name": "created_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects created at/before this ISO-8601 timestamp.",
+              "title": "Created Until"
+            },
+            "description": "Only objects created at/before this ISO-8601 timestamp."
+          },
+          {
+            "name": "modified_since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+              "examples": [
+                "2026-06-01T00:00:00"
+              ],
+              "title": "Modified Since"
+            },
+            "description": "Only objects modified at/after this ISO-8601 timestamp (incremental harvesting)."
+          },
+          {
+            "name": "modified_until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only objects modified at/before this ISO-8601 timestamp.",
+              "title": "Modified Until"
+            },
+            "description": "Only objects modified at/before this ISO-8601 timestamp."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "data": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/memberships/9c1f0000-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/Membership",
+                      "person": "https://oparl.example.org/oparl/v1/people/3c3f9342-741a-4eb6-b15d-037d60fda0a1",
+                      "organization": "https://oparl.example.org/oparl/v1/organizations/3a1b8e10-0000-4000-8000-000000000001",
+                      "role": "Mitglied",
+                      "votingRight": true,
+                      "startDate": "2020-05-01"
+                    }
+                  ],
+                  "pagination": {
+                    "totalElements": 19,
+                    "elementsPerPage": 50,
+                    "currentPage": 1,
+                    "totalPages": 1
+                  },
+                  "links": {
+                    "first": "https://oparl.example.org/oparl/v1/list?page=1",
+                    "last": "https://oparl.example.org/oparl/v1/list?page=1"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/organizations/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get an organization",
+        "operationId": "get_organization_oparl_v1_organizations__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/organizations/3a1b8e10-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/Organization",
+                  "body": "https://oparl.example.org/oparl/v1/bodies/dbf2fbcb-38b4-4334-93fa-875f9963b261",
+                  "name": "Fraktion Beispiel",
+                  "shortName": "FB",
+                  "organizationType": "Fraktion",
+                  "classification": "Fraktion",
+                  "membership": [
+                    "https://oparl.example.org/oparl/v1/memberships/9c1f0000-0000-4000-8000-000000000001"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/people/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a person",
+        "operationId": "get_person_oparl_v1_people__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/people/3c3f9342-741a-4eb6-b15d-037d60fda0a1",
+                  "type": "https://schema.oparl.org/1.1/Person",
+                  "web": "https://risi.muenchen.de/risi/person/detail/12345",
+                  "name": "Dr. Maria Musterfrau",
+                  "familyName": "Musterfrau",
+                  "givenName": "Maria",
+                  "formOfAddress": "Frau",
+                  "title": [
+                    "Dr."
+                  ],
+                  "status": [
+                    "Stadträtin"
+                  ],
+                  "membership": [
+                    "https://oparl.example.org/oparl/v1/memberships/9c1f0000-0000-4000-8000-000000000001"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/memberships/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a membership",
+        "operationId": "get_membership_oparl_v1_memberships__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/memberships/9c1f0000-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/Membership",
+                  "person": "https://oparl.example.org/oparl/v1/people/3c3f9342-741a-4eb6-b15d-037d60fda0a1",
+                  "organization": "https://oparl.example.org/oparl/v1/organizations/3a1b8e10-0000-4000-8000-000000000001",
+                  "role": "Mitglied",
+                  "votingRight": true,
+                  "startDate": "2020-05-01"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/meetings/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a meeting (with embedded agenda items)",
+        "operationId": "get_meeting_oparl_v1_meetings__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/meetings/7b2c0000-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/Meeting",
+                  "web": "https://risi.muenchen.de/risi/sitzung/detail/67890",
+                  "name": "Vollversammlung des Stadtrats",
+                  "meetingState": "conducted",
+                  "cancelled": false,
+                  "start": "2026-03-05T09:00:00",
+                  "end": "2026-03-05T13:30:00",
+                  "organization": [
+                    "https://oparl.example.org/oparl/v1/organizations/3a1b8e10-0000-4000-8000-000000000001"
+                  ],
+                  "agendaItem": [
+                    {
+                      "id": "https://oparl.example.org/oparl/v1/agendaItems/aa110000-0000-4000-8000-000000000001",
+                      "type": "https://schema.oparl.org/1.1/AgendaItem",
+                      "number": "1",
+                      "order": 0,
+                      "name": "Begrüßung",
+                      "public": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/agendaItems/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get an agenda item",
+        "operationId": "get_agenda_item_oparl_v1_agendaItems__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/agendaItems/aa110000-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/AgendaItem",
+                  "meeting": "https://oparl.example.org/oparl/v1/meetings/7b2c0000-0000-4000-8000-000000000001",
+                  "number": "1",
+                  "order": 0,
+                  "name": "Begrüßung",
+                  "public": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/papers/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a paper",
+        "operationId": "get_paper_oparl_v1_papers__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/papers/32d05f75-2e09-4568-b4f2-3d21bf4af3f3",
+                  "type": "https://schema.oparl.org/1.1/Paper",
+                  "web": "https://risi.muenchen.de/risi/sitzungsvorlage/detail/205451",
+                  "name": "Sitzungsvorlage zur Verkehrsberuhigung",
+                  "reference": "02-08 / V 00516",
+                  "date": "2026-03-05",
+                  "paperType": "Sitzungsvorlage",
+                  "mainFile": "https://oparl.example.org/oparl/v1/files/195f2cfe-ff05-4d51-a934-fb78a697dc1a",
+                  "auxiliaryFile": [
+                    "https://oparl.example.org/oparl/v1/files/ecf694ba-8f44-4fae-b9fd-6e3d6f888708"
+                  ],
+                  "originatorPerson": [
+                    "https://oparl.example.org/oparl/v1/people/3c3f9342-741a-4eb6-b15d-037d60fda0a1"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/files/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a file",
+        "operationId": "get_file_oparl_v1_files__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/files/195f2cfe-ff05-4d51-a934-fb78a697dc1a",
+                  "type": "https://schema.oparl.org/1.1/File",
+                  "name": "Beschlussvorlage",
+                  "fileName": "vorlage.pdf",
+                  "mimeType": "application/pdf",
+                  "accessUrl": "https://risi.muenchen.de/risi/dokument/205451.pdf",
+                  "downloadUrl": "https://risi.muenchen.de/risi/dokument/205451.pdf"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/locations/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a location",
+        "operationId": "get_location_oparl_v1_locations__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/locations/cc330000-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/Location",
+                  "description": "Rathaus, Marienplatz 8, 80331 München",
+                  "streetAddress": "Marienplatz 8",
+                  "postalCode": "80331",
+                  "locality": "München"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/consultations/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a consultation",
+        "operationId": "get_consultation_oparl_v1_consultations__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/consultations/dd440000-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/Consultation",
+                  "paper": "https://oparl.example.org/oparl/v1/papers/32d05f75-2e09-4568-b4f2-3d21bf4af3f3",
+                  "meeting": "https://oparl.example.org/oparl/v1/meetings/7b2c0000-0000-4000-8000-000000000001",
+                  "authoritative": true,
+                  "role": "Beschlussfassung"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oparl/v1/legislativeTerms/{db_id}": {
+      "get": {
+        "tags": [
+          "OParl: Objects"
+        ],
+        "summary": "Get a legislative term",
+        "operationId": "get_legislative_term_oparl_v1_legislativeTerms__db_id__get",
+        "parameters": [
+          {
+            "name": "db_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Db Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "id": "https://oparl.example.org/oparl/v1/legislativeTerms/ee550000-0000-4000-8000-000000000001",
+                  "type": "https://schema.oparl.org/1.1/LegislativeTerm",
+                  "name": "Wahlperiode 2020–2026",
+                  "startDate": "2020-05-01",
+                  "endDate": "2026-04-30"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Object not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": {
+                    "type": "https://schema.oparl.org/1.1/Error",
+                    "name": "Not Found",
+                    "message": "No Paper with id 00000000-0000-0000-0000-000000000000."
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "system",
+      "description": "Service health and the OParl entry point."
+    },
+    {
+      "name": "OParl: System",
+      "description": "The OParl System object — the API entry point."
+    },
+    {
+      "name": "OParl: Body",
+      "description": "Bodies (Körperschaften) and their scoped external lists."
+    },
+    {
+      "name": "OParl: Lists",
+      "description": "Paginated, time-filterable external lists of objects."
+    },
+    {
+      "name": "OParl: Objects",
+      "description": "Individual OParl objects retrieved by id."
+    }
+  ]
+}
