@@ -37,20 +37,24 @@ class MeetingTagesordnungParser(BaseParser[AgendaItem]):
         """
         paper_links = []
         try:
-            # Find all links that contain "sitzungsvorlage/detail/"
-            links = row.find_all("a", href=re.compile(r"sitzungsvorlage/detail/"))
+            # Find all links that contain "sitzungsvorlage/detail/" (with or without relative path)
+            links = row.find_all("a", href=re.compile(r".*sitzungsvorlage/detail/"))
+            self.logger.debug(f"Found {len(links)} potential paper links in row")
+
             for link in links:
                 href = link.get("href")
                 if href:
                     # Resolve relative URL to full URL
-                    # Extract base domain from tagesordnung_url
+                    # Extract base domain from tagesordnung_url (e.g., https://risi.muenchen.de)
                     base_parts = tagesordnung_url.split("/")
                     base_url = "/".join(base_parts[:3])  # https://risi.muenchen.de
+
+                    # urljoin handles relative paths correctly
                     full_url = urljoin(base_url + "/risi/", href)
                     paper_links.append(full_url)
-                    self.logger.debug(f"Found paper link: {full_url}")
+                    self.logger.info(f"Found paper link: {href} → {full_url}")
         except Exception as e:
-            self.logger.debug(f"Error extracting paper links: {e!r}")
+            self.logger.error(f"Error extracting paper links: {e!r}", exc_info=True)
 
         return paper_links
 
@@ -134,21 +138,28 @@ class MeetingTagesordnungParser(BaseParser[AgendaItem]):
                     # Extract paper links and create consultations
                     paper_links = self._extract_paper_links(row, tagesordnung_url)
                     meeting_id = tagesordnung_url.split("/tagesordnung/")[0]  # Extract meeting URL
-                    for paper_url in paper_links:
-                        try:
-                            consultation = create_consultation(
-                                paper_id=paper_url,
-                                agenda_item_id=agenda_item_id,
-                                meeting_id=meeting_id,
-                                authoritative=False,
-                                role=None,
-                            )
-                            if consultation:
-                                self.logger.info(f"Created consultation for TOP {number}: {paper_url}")
-                        except Exception as e:
-                            self.logger.debug(f"Error creating consultation for TOP {number}: {e!r}")
 
-                    self.logger.debug(f"Extracted: {number} - {title[:50]} ({len(paper_links)} papers)")
+                    if paper_links:
+                        self.logger.debug(f"Processing {len(paper_links)} papers for TOP {number}")
+                        for paper_url in paper_links:
+                            try:
+                                consultation = create_consultation(
+                                    paper_id=paper_url,
+                                    agenda_item_id=agenda_item_id,
+                                    meeting_id=meeting_id,
+                                    authoritative=False,
+                                    role=None,
+                                )
+                                if consultation:
+                                    self.logger.info(f"✓ Created consultation for TOP {number}: {paper_url}")
+                                else:
+                                    self.logger.warning(f"✗ Consultation returned None for TOP {number}: {paper_url}")
+                            except Exception as e:
+                                self.logger.error(f"✗ Error creating consultation for TOP {number}: {e!r}", exc_info=True)
+                    else:
+                        self.logger.debug(f"No papers found for TOP {number}")
+
+                    self.logger.info(f"TOP {number}: {title[:50]} ({len(paper_links)} papers)")
 
                 except Exception as e:
                     self.logger.debug(f"Error extracting row: {e!r}")
