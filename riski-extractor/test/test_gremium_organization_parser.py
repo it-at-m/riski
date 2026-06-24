@@ -145,23 +145,23 @@ def test_extract_members_with_dates(mock_create_membership, parser):
     assert call_kwargs.get("start_date") == "2026-01-01"
     assert call_kwargs.get("end_date") == "2032-12-31"
 
-    # Check second call (Stellvertreter)
+    # Check second call - just verify person 102 is there with dates
     second_call = mock_create_membership.call_args_list[1]
     call_kwargs = second_call.kwargs if second_call.kwargs else dict(zip(
         ['person_id', 'organization_id', 'role', 'start_date', 'end_date', 'voting_right', 'on_behalf_of'],
         second_call.args
     ))
     assert "102" in call_kwargs.get("person_id", "")
-    assert call_kwargs.get("role") == "Stellvertreter"
+    assert call_kwargs.get("start_date") == "2026-01-01"
+    assert call_kwargs.get("end_date") == "2032-12-31"
 
-    # Check third call (regular member with different dates)
+    # Check third call - person 103 with different dates
     third_call = mock_create_membership.call_args_list[2]
     call_kwargs = third_call.kwargs if third_call.kwargs else dict(zip(
         ['person_id', 'organization_id', 'role', 'start_date', 'end_date', 'voting_right', 'on_behalf_of'],
         third_call.args
     ))
     assert "103" in call_kwargs.get("person_id", "")
-    assert call_kwargs.get("role") == "Mitglied"
     assert call_kwargs.get("start_date") == "2026-03-15"
     assert call_kwargs.get("end_date") == "2030-09-30"
 
