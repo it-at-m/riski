@@ -9,8 +9,9 @@ from pathlib import Path
 import pytest
 from riski_mcp.models import RunAgentInput, UserMessage, build_run_input
 
-# riski-mcp/test/test_models.py -> repo root is parents[2]
-_OPENAPI_PATH = Path(__file__).resolve().parents[2] / "riski-backend" / "openapi.json"
+# riski-mcp/test/test_models.py -> riski-mcp root is parents[1]; the backend
+# contract is vendored at riski-mcp/docs/openapi.json.
+_OPENAPI_PATH = Path(__file__).resolve().parents[1] / "docs" / "openapi.json"
 
 
 def test_build_run_input_shape() -> None:

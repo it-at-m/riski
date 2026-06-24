@@ -40,7 +40,7 @@ build-backend = "uv_build"
 add-bounds = "exact"
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["test"]
 asyncio_mode = "auto"
 addopts = ["--cov=riski_mcp", "--cov-report=term-missing"]
