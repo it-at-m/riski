@@ -8,7 +8,7 @@ from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
-from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Location, Paper, Person
+from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Location, Paper, Person, Consultation
 from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
@@ -539,7 +539,7 @@ def create_consultation(
     meeting_id: str,
     authoritative: bool = False,
     role: str | None = None,
-) -> "Consultation":
+) -> Consultation:
     """
     Creates a Consultation linking a Paper to an AgendaItem in a Meeting.
 
