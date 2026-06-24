@@ -8,7 +8,7 @@ from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
-from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, File, Keyword, Paper, Person
+from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Paper, Person
 from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
@@ -320,3 +320,258 @@ def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
     statement = select(model).order_by(model.db_id).offset(offset).limit(limit)
     with _get_session_ctx() as sess:
         return list(sess.exec(statement).all())
+
+
+@log_execution_time
+def get_or_create_legislative_term(name: str) -> "LegislativeTerm":
+    """
+    Retrieves or creates a LegislativeTerm by name (e.g., '2026-2032').
+
+    Args:
+        name: The name of the legislative term, e.g., '2026-2032'
+
+    Returns:
+        The retrieved or newly created LegislativeTerm object.
+    """
+    from core.model.data_models import LegislativeTerm
+
+    with _get_session_ctx() as sess:
+        # Check if it exists
+        statement = select(LegislativeTerm).where(LegislativeTerm.name == name)
+        existing = sess.exec(statement).first()
+        if existing:
+            return existing
+
+        # Create new
+        term = LegislativeTerm(id=f"term:{name}", name=name)
+        sess.add(term)
+        sess.commit()
+        sess.refresh(term)
+        return term
+
+
+@log_execution_time
+def get_or_create_agenda_item(id: str, name: str, number: str | None = None, order: int | None = None) -> "AgendaItem":
+    """
+    Retrieves or creates an AgendaItem by ID.
+
+    Args:
+        id: Unique identifier for the agenda item (e.g., 'meeting_url#agenda-1')
+        name: Name/title of the agenda item
+        number: Optional outline number (e.g., '1.', '1.1', 'A.')
+        order: Optional position in the agenda (starting from 0)
+
+    Returns:
+        The retrieved or newly created AgendaItem object.
+    """
+    with _get_session_ctx() as sess:
+        # Check if it exists
+        statement = select(AgendaItem).where(AgendaItem.id == id)
+        existing = sess.exec(statement).first()
+        if existing:
+            logger.debug(f"AgendaItem {id} already exists")
+            return existing
+
+        # Create new
+        agenda_item = AgendaItem(
+            id=id,
+            name=name,
+            number=number,
+            order=order,
+            public=True,
+            deleted=False,
+        )
+        agenda_item.meetings = []
+        agenda_item.keywords = []
+
+        sess.add(agenda_item)
+        sess.commit()
+        sess.refresh(agenda_item)
+        logger.debug(f"Created new AgendaItem {id}: {name}")
+        return agenda_item
+
+
+@log_execution_time
+def create_agenda_items_for_meeting(meeting_id: str, agenda_data: List[dict]) -> List["AgendaItem"]:
+    """
+    Creates multiple agenda items for a meeting.
+
+    Args:
+        meeting_id: The ID/URL of the meeting
+        agenda_data: List of dicts with keys: id, name, number (optional), order (optional), public (optional)
+
+    Returns:
+        List of created or retrieved AgendaItem objects.
+
+    Example:
+        agenda_data = [
+            {"id": "url#agenda-1", "name": "Eröffnung", "number": "1", "order": 0},
+            {"id": "url#agenda-2", "name": "Genehmigung Protokoll", "number": "2", "order": 1},
+        ]
+        items = create_agenda_items_for_meeting("meeting_url", agenda_data)
+    """
+    from core.model.data_models import Meeting
+
+    agenda_items = []
+
+    with _get_session_ctx() as sess:
+        # Get the meeting from DB
+        meeting = sess.exec(select(Meeting).where(Meeting.id == meeting_id)).first()
+        if not meeting:
+            logger.warning(f"Meeting {meeting_id} not found in database")
+            return []
+
+        # Create agenda items
+        for item_data in agenda_data:
+            item_id = item_data.get("id")
+            name = item_data.get("name")
+
+            if not item_id or not name:
+                logger.warning(f"Skipping agenda item data with missing id or name: {item_data}")
+                continue
+
+            number = item_data.get("number")
+            order = item_data.get("order")
+            public = item_data.get("public", True)
+
+            # Check if it exists
+            existing = sess.exec(select(AgendaItem).where(AgendaItem.id == item_id)).first()
+            if existing:
+                logger.debug(f"AgendaItem {item_id} already exists, skipping")
+                agenda_items.append(existing)
+                continue
+
+            # Create new
+            agenda_item = AgendaItem(
+                id=item_id,
+                name=name,
+                number=number,
+                order=order,
+                public=public,
+                deleted=False,
+            )
+            agenda_item.meetings = [meeting]
+            agenda_item.keywords = []
+
+            sess.add(agenda_item)
+            agenda_items.append(agenda_item)
+            logger.debug(f"Created AgendaItem {item_id} for meeting {meeting_id}")
+
+        sess.commit()
+        # Refresh all items to get their db_ids
+        for item in agenda_items:
+            sess.refresh(item)
+
+    return agenda_items
+
+
+@log_execution_time
+def request_agenda_items_by_meeting(meeting_id: str) -> List["AgendaItem"]:
+    """
+    Retrieves all agenda items for a specific meeting.
+
+    Args:
+        meeting_id: The ID/URL of the meeting
+
+    Returns:
+        List of AgendaItem objects for this meeting.
+    """
+    from core.model.data_models import Meeting, MeetingAgendaItemLink
+
+    with _get_session_ctx() as sess:
+        # Get all agenda items linked to this meeting
+        statement = select(AgendaItem).join(
+            MeetingAgendaItemLink,
+            MeetingAgendaItemLink.agenda_item_id == AgendaItem.db_id
+        ).join(
+            Meeting,
+            Meeting.db_id == MeetingAgendaItemLink.meeting_id
+        ).where(
+            Meeting.id == meeting_id
+        )
+
+        results = list(sess.exec(statement).all())
+        logger.debug(f"Found {len(results)} agenda items for meeting {meeting_id}")
+        return results
+
+
+@log_execution_time
+def bulk_create_agenda_items(agenda_items: List["AgendaItem"]) -> int:
+    """
+    Bulk creates agenda items in the database.
+
+    Args:
+        agenda_items: List of AgendaItem objects to create
+
+    Returns:
+        Number of items successfully created.
+
+    Note:
+        Existing items (by ID) are skipped. Items should have their relationships
+        (meetings, keywords) already set up before calling this function.
+    """
+    created_count = 0
+
+    with _get_session_ctx() as sess:
+        for item in agenda_items:
+            try:
+                # Check if exists
+                existing = sess.exec(select(AgendaItem).where(AgendaItem.id == item.id)).first()
+                if existing:
+                    logger.debug(f"AgendaItem {item.id} already exists, skipping")
+                    continue
+
+                sess.add(item)
+                created_count += 1
+                logger.debug(f"Added AgendaItem {item.id} to session")
+            except Exception as e:
+                logger.warning(f"Error adding AgendaItem {item.id}: {e!r}")
+                continue
+
+        if created_count > 0:
+            sess.commit()
+            logger.info(f"Successfully created {created_count} agenda items")
+
+    return created_count
+
+
+@log_execution_time
+def get_or_create_location(name: str) -> "Location":
+    """
+    Retrieves or creates a Location by name.
+
+    Args:
+        name: The name/description of the location (e.g., 'Rathaus', 'Plenarsaal')
+
+    Returns:
+        The retrieved or newly created Location object.
+    """
+    from core.model.data_models import Location
+
+    with _get_session_ctx() as sess:
+        # Check if it exists by name
+        statement = select(Location).where(Location.name == name)
+        existing = sess.exec(statement).first()
+        if existing:
+            logger.debug(f"Location '{name}' already exists")
+            return existing
+
+        # Create new with ID based on name
+        location_id = f"urn:riski:location:{name.casefold().replace(' ', '-')}"
+        location = Location(
+            id=location_id,
+            name=name,
+            deleted=False,
+        )
+        location.meetings = []
+        location.papers = []
+        location.organizations = []
+        location.persons = []
+        location.bodies = []
+        location.keywords = []
+
+        sess.add(location)
+        sess.commit()
+        sess.refresh(location)
+        logger.debug(f"Created new Location: {name}")
+        return location

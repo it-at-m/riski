@@ -33,25 +33,33 @@ async def main():
 
     logger.info(f"Extract data from {config.start_date}{f' until {config.end_date}' if config.end_date else ''}")
 
+    # --- City Council (StR) ---
     logger.info("Extracting City Council Factions")
     faction_extractor = CityCouncilFactionExtractor()
     faction_extractor.run()
-    logger.info("Extracted factions")
+    logger.info("Extracted City Council Factions")
 
-    logger.info("Extracting meetings")
-    meeting_extractor = CityCouncilMeetingExtractor()
-    meeting_extractor.run()
-    logger.info("Extracted meetings")
+    logger.info("Extracting City Council Members")
+    city_council_member_extractor = CityCouncilMemberExtractor()
+    city_council_member_extractor.run()
+    logger.info("Extracted City Council Members")
 
     logger.info("Extracting Heads of Departments")
     head_of_department_extractor = HeadOfDepartmentExtractor()
     head_of_department_extractor.run()
     logger.info("Extracted Heads of Departments")
 
-    logger.info("Extracting City Council Members")
-    city_council_member_extractor = CityCouncilMemberExtractor()
-    city_council_member_extractor.run()
-    logger.info("Extracted City Council Members")
+    logger.info("Extracting City Council Meetings")
+    meeting_extractor = CityCouncilMeetingExtractor()
+    meeting_extractor.run()
+    logger.info("Extracted City Council Meetings")
+
+    logger.info("Extracting Agenda Items from Meeting Tagesordnung Pages")
+    from src.extractor.meeting_tagesordnung_extractor import MeetingTagesordnungExtractor
+
+    tagesordnung_extractor = MeetingTagesordnungExtractor()
+    tagesordnung_extractor.run()
+    logger.info("Extracted Agenda Items from Meeting Tagesordnung Pages")
 
     logger.info("Extracting City Council Meeting Templates")
     city_council_meeting_template_extractor = CityCouncilMeetingTemplateExtractor()
@@ -62,6 +70,59 @@ async def main():
     city_council_motion_extractor = CityCouncilMotionExtractor()
     city_council_motion_extractor.run()
     logger.info("Extracted City Council Motions")
+
+    # --- District Committee (BA) ---
+    logger.info("Extracting District Committee Members")
+    from src.extractor.ba_member_extractor import BAMemberExtractor
+
+    ba_member_extractor = BAMemberExtractor()
+    ba_member_extractor.run()
+    logger.info("Extracted District Committee Members")
+
+    logger.info("Extracting District Committee Motions")
+    from src.extractor.bezirksausschuss_paper_extractor import BAMotionExtractor
+
+    ba_motion_extractor = BAMotionExtractor()
+    ba_motion_extractor.run()
+    logger.info("Extracted District Committee Motions")
+
+    logger.info("Extracting Citizen Assembly Recommendations")
+    from src.extractor.bezirksausschuss_paper_extractor import BVRecommendationExtractor
+
+    bv_recommendation_extractor = BVRecommendationExtractor()
+    bv_recommendation_extractor.run()
+    logger.info("Extracted Citizen Assembly Recommendations")
+
+    logger.info("Extracting Citizen Assembly Requests")
+    from src.extractor.bezirksausschuss_paper_extractor import BVRequestExtractor
+
+    bv_request_extractor = BVRequestExtractor()
+    bv_request_extractor.run()
+    logger.info("Extracted Citizen Assembly Requests")
+
+    # --- Gremien (Committees/Factions) ---
+    logger.info("Extracting City Council Committees")
+    from src.extractor.gremium_organization_extractor import StRCommitteeExtractor
+
+    str_committee_extractor = StRCommitteeExtractor()
+    str_committee_extractor.run()
+    logger.info("Extracted City Council Committees")
+
+    logger.info("Extracting District Committees")
+    from src.extractor.gremium_organization_extractor import BACommitteeExtractor
+
+    ba_committee_extractor = BACommitteeExtractor()
+    ba_committee_extractor.run()
+    logger.info("Extracted District Committees")
+
+    # --- Locations ---
+    logger.info("Initializing Location placeholder")
+    from src.extractor.location_extractor import LocationExtractor
+
+    location_extractor = LocationExtractor()
+    location_extractor.run()
+
+    # --- Legislative Terms are created ad-hoc by parsers when encountered ---
 
     async with Filehandler() as filehandler:
         await filehandler.download_and_persist_files(batch_size=config.core.db.batch_size)

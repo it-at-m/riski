@@ -124,35 +124,53 @@ class PersonParser(BaseParser[Person]):
         else:
             existing_person = None
 
-        if existing_person and any(s not in existing_person.status for s in status):
-            person = existing_person
-            if not existing_person.name and name:
-                person.name = name
-            if not existing_person.formOfAddress and form_of_address:
-                person.formOfAddress = form_of_address
-            if (not existing_person.life and life) or (life and existing_person.life and len(existing_person.life) < len(life)):
-                person.life = life
-                person.lifeSource = url
-            for stat in status:
-                if stat not in existing_person.status:
-                    existing_person.status.append(stat)
+        # If person exists and has all the info we have (no new data), skip
+        if existing_person:
+            has_new_status = any(s not in existing_person.status for s in status)
+            has_new_life = life and (not existing_person.life or len(life) > len(existing_person.life))
+            has_new_name = name and name != existing_person.name
+            has_new_form_of_address = form_of_address and form_of_address != existing_person.formOfAddress
 
-            return person
+            if not (has_new_status or has_new_life or has_new_name or has_new_form_of_address):
+                # Person exists with same/no new data — skip to avoid duplicate writes
+                self.logger.debug(f"Person {last_name}, {given_name} already in DB with same data, skipping")
+                return None
 
-        # --- Assemble Person ---
+            # Person exists but has new data — merge and update
+            merged_status = list(set(existing_person.status + status)) if has_new_status else existing_person.status
+            name = name or existing_person.name
+            form_of_address = form_of_address or existing_person.formOfAddress
+            life_to_use = life
+            if existing_person.life and life:
+                life_to_use = life if len(life) > len(existing_person.life) else existing_person.life
+            elif existing_person.life:
+                life_to_use = existing_person.life
+            life = life_to_use
+            person_id = existing_person.id
+        else:
+            # New person
+            merged_status = status
+            person_id = url
+
+        # --- Assemble Person (always create fresh object to avoid DetachedInstanceError) ---
         person = Person(
-            id=url,
+            id=person_id,
             familyName=last_name,
             givenName=given_name,
             name=name,
             formOfAddress=form_of_address,
-            life=data_dict.get("Lebenslauf:"),
+            life=life,
             lifeSource=url,
-            status=status,
+            status=merged_status,
             title=(" ".join(self._get_titles(potential_titles)).strip() or None),
             web=url,
             deleted=False,
         )
+        # Initialize relationships to avoid DetachedInstanceError
+        person.keywords = []
+        person.membership = []
+        person.papers = []
+        person.meetings = []
 
-        self.logger.debug(f"Person - object created: {person.givenName} {person.familyName}")
+        self.logger.debug(f"Person - object created/updated: {person.givenName} {person.familyName}")
         return person

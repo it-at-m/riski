@@ -81,5 +81,5 @@ class BaseParser(ABC, Generic[T]):
         try:
             return PaperSubtypeEnum(s)
         except ValueError:
-            self.logger.warning(f"Unknown PaperSubtypeEnum value: '{s}'")
+            self.logger.debug(f"No PaperSubtype set for unknown value: '{s}'")
             return None

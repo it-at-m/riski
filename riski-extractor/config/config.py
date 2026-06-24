@@ -58,6 +58,12 @@ class Config(AppBaseSettings):
         description="Safety switch for deleting files. Number of files that are allowed to be deleted in one run at maximum.",
     )
 
+    batch_size: int = Field(
+        default=50,
+        ge=1,
+        description="Batch size for loading objects from database (e.g., meetings, papers)",
+    )
+
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[2] / ".env"),
         env_prefix="RISKI_EXTRACTOR__",  # only applies to extractor-related fields

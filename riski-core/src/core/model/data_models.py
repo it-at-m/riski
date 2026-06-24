@@ -737,6 +737,7 @@ class Meeting(RIS_NAME_OBJECT, table=True):
     auxiliary_files: list["File"] = Relationship(back_populates="meetings", link_model=FileMeetingLink)
     agenda_items: list["AgendaItem"] = Relationship(back_populates="meetings", link_model=MeetingAgendaItemLink)
     keywords: list["Keyword"] = Relationship(back_populates="meetings", link_model=MeetingKeywordLink)
+    locations: list["Location"] = Relationship(link_model=LocationMeetings)
 
 
 class Consultation(RIS_PARSED_DB_OBJECT, table=True):
