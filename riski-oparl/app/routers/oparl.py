@@ -27,7 +27,7 @@ from app.oparl import examples as ex
 from app.oparl.pagination import make_list_envelope
 from app.oparl.repository import TimeFilters, get_by_id, list_objects
 from app.oparl.serializers import OParlSerializer
-from app.oparl.urls import body_list_url, body_sublist_url, object_url, system_url
+from app.oparl.urls import body_list_url, body_sublist_url, system_url
 from app.settings import OParlSettings, get_settings
 
 router = APIRouter(prefix="/oparl/v1")
@@ -56,9 +56,15 @@ SerializerDep = Annotated[OParlSerializer, Depends(get_serializer)]
 
 
 def _time_filters(
-    created_since: datetime | None = Query(None, description="Only objects created at/after this ISO-8601 timestamp.", examples=["2026-01-01T00:00:00"]),
+    created_since: datetime | None = Query(
+        None, description="Only objects created at/after this ISO-8601 timestamp.", examples=["2026-01-01T00:00:00"]
+    ),
     created_until: datetime | None = Query(None, description="Only objects created at/before this ISO-8601 timestamp."),
-    modified_since: datetime | None = Query(None, description="Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).", examples=["2026-06-01T00:00:00"]),
+    modified_since: datetime | None = Query(
+        None,
+        description="Only objects modified at/after this ISO-8601 timestamp (incremental harvesting).",
+        examples=["2026-06-01T00:00:00"],
+    ),
     modified_until: datetime | None = Query(None, description="Only objects modified at/before this ISO-8601 timestamp."),
 ) -> TimeFilters:
     return TimeFilters(
@@ -165,84 +171,202 @@ def get_body(db_id: uuid.UUID, session: SessionDep, serializer: SerializerDep) -
 
 
 # --- Body external lists ----------------------------------------------------
-@router.get("/bodies/{db_id}/organizations", tags=[TAG_LISTS], summary="List organizations of a body", responses=_ok(ex.list_example(ex.ORGANIZATION_EXAMPLE)))
+@router.get(
+    "/bodies/{db_id}/organizations",
+    tags=[TAG_LISTS],
+    summary="List organizations of a body",
+    responses=_ok(ex.list_example(ex.ORGANIZATION_EXAMPLE)),
+)
 def list_body_organizations(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
-        session, Organization, serializer.serialize_organization, body_sublist_url(settings.base_url, db_id, Organization), page, settings.page_size, filters
+        session,
+        Organization,
+        serializer.serialize_organization,
+        body_sublist_url(settings.base_url, db_id, Organization),
+        page,
+        settings.page_size,
+        filters,
     )
 
 
-@router.get("/bodies/{db_id}/people", tags=[TAG_LISTS], summary="List people of a body", responses=_ok(ex.list_example(ex.PERSON_EXAMPLE, total=771)))
+@router.get(
+    "/bodies/{db_id}/people",
+    tags=[TAG_LISTS],
+    summary="List people of a body",
+    responses=_ok(ex.list_example(ex.PERSON_EXAMPLE, total=771)),
+)
 def list_body_people(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
         session, Person, serializer.serialize_person, body_sublist_url(settings.base_url, db_id, Person), page, settings.page_size, filters
     )
 
 
-@router.get("/bodies/{db_id}/meetings", tags=[TAG_LISTS], summary="List meetings of a body", responses=_ok(ex.list_example(ex.MEETING_EXAMPLE, total=113)))
+@router.get(
+    "/bodies/{db_id}/meetings",
+    tags=[TAG_LISTS],
+    summary="List meetings of a body",
+    responses=_ok(ex.list_example(ex.MEETING_EXAMPLE, total=113)),
+)
 def list_body_meetings(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
-        session, Meeting, serializer.serialize_meeting, body_sublist_url(settings.base_url, db_id, Meeting), page, settings.page_size, filters
+        session,
+        Meeting,
+        serializer.serialize_meeting,
+        body_sublist_url(settings.base_url, db_id, Meeting),
+        page,
+        settings.page_size,
+        filters,
     )
 
 
-@router.get("/bodies/{db_id}/papers", tags=[TAG_LISTS], summary="List papers of a body", responses=_ok(ex.list_example(ex.PAPER_EXAMPLE, total=19)))
+@router.get(
+    "/bodies/{db_id}/papers", tags=[TAG_LISTS], summary="List papers of a body", responses=_ok(ex.list_example(ex.PAPER_EXAMPLE, total=19))
+)
 def list_body_papers(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
         session, Paper, serializer.serialize_paper, body_sublist_url(settings.base_url, db_id, Paper), page, settings.page_size, filters
     )
 
 
-@router.get("/bodies/{db_id}/agendaItems", tags=[TAG_LISTS], summary="List agenda items of a body", responses=_ok(ex.list_example(ex.AGENDA_ITEM_EXAMPLE)))
+@router.get(
+    "/bodies/{db_id}/agendaItems",
+    tags=[TAG_LISTS],
+    summary="List agenda items of a body",
+    responses=_ok(ex.list_example(ex.AGENDA_ITEM_EXAMPLE)),
+)
 def list_body_agenda_items(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
-        session, AgendaItem, serializer.serialize_agenda_item, body_sublist_url(settings.base_url, db_id, AgendaItem), page, settings.page_size, filters
+        session,
+        AgendaItem,
+        serializer.serialize_agenda_item,
+        body_sublist_url(settings.base_url, db_id, AgendaItem),
+        page,
+        settings.page_size,
+        filters,
     )
 
 
-@router.get("/bodies/{db_id}/consultations", tags=[TAG_LISTS], summary="List consultations of a body", responses=_ok(ex.list_example(ex.CONSULTATION_EXAMPLE)))
+@router.get(
+    "/bodies/{db_id}/consultations",
+    tags=[TAG_LISTS],
+    summary="List consultations of a body",
+    responses=_ok(ex.list_example(ex.CONSULTATION_EXAMPLE)),
+)
 def list_body_consultations(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
-        session, Consultation, serializer.serialize_consultation, body_sublist_url(settings.base_url, db_id, Consultation), page, settings.page_size, filters
+        session,
+        Consultation,
+        serializer.serialize_consultation,
+        body_sublist_url(settings.base_url, db_id, Consultation),
+        page,
+        settings.page_size,
+        filters,
     )
 
 
 @router.get("/bodies/{db_id}/files", tags=[TAG_LISTS], summary="List files of a body", responses=_ok(ex.list_example(ex.FILE_EXAMPLE)))
 def list_body_files(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
         session, File, serializer.serialize_file, body_sublist_url(settings.base_url, db_id, File), page, settings.page_size, filters
     )
 
 
-@router.get("/bodies/{db_id}/locations", tags=[TAG_LISTS], summary="List locations of a body (locationList)", responses=_ok(ex.list_example(ex.LOCATION_EXAMPLE)))
+@router.get(
+    "/bodies/{db_id}/locations",
+    tags=[TAG_LISTS],
+    summary="List locations of a body (locationList)",
+    responses=_ok(ex.list_example(ex.LOCATION_EXAMPLE)),
+)
 def list_body_locations(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
-        session, Location, serializer.serialize_location, body_sublist_url(settings.base_url, db_id, Location), page, settings.page_size, filters
+        session,
+        Location,
+        serializer.serialize_location,
+        body_sublist_url(settings.base_url, db_id, Location),
+        page,
+        settings.page_size,
+        filters,
     )
 
 
-@router.get("/bodies/{db_id}/memberships", tags=[TAG_LISTS], summary="List memberships of a body", responses=_ok(ex.list_example(ex.MEMBERSHIP_EXAMPLE)))
+@router.get(
+    "/bodies/{db_id}/memberships",
+    tags=[TAG_LISTS],
+    summary="List memberships of a body",
+    responses=_ok(ex.list_example(ex.MEMBERSHIP_EXAMPLE)),
+)
 def list_body_memberships(
-    db_id: uuid.UUID, session: SessionDep, settings: SettingsDep, serializer: SerializerDep, filters: FiltersDep, page: int = Query(1, ge=1, description="1-based page number.")
+    db_id: uuid.UUID,
+    session: SessionDep,
+    settings: SettingsDep,
+    serializer: SerializerDep,
+    filters: FiltersDep,
+    page: int = Query(1, ge=1, description="1-based page number."),
 ) -> JSONResponse:
     return _external_list(
-        session, Membership, serializer.serialize_membership, body_sublist_url(settings.base_url, db_id, Membership), page, settings.page_size, filters
+        session,
+        Membership,
+        serializer.serialize_membership,
+        body_sublist_url(settings.base_url, db_id, Membership),
+        page,
+        settings.page_size,
+        filters,
     )
 
 
@@ -271,7 +395,9 @@ def get_membership(db_id: uuid.UUID, session: SessionDep, serializer: Serializer
     return JSONResponse(serializer.serialize_membership(obj))
 
 
-@router.get("/meetings/{db_id}", tags=[TAG_OBJECTS], summary="Get a meeting (with embedded agenda items)", responses=_ok_obj(ex.MEETING_EXAMPLE))
+@router.get(
+    "/meetings/{db_id}", tags=[TAG_OBJECTS], summary="Get a meeting (with embedded agenda items)", responses=_ok_obj(ex.MEETING_EXAMPLE)
+)
 def get_meeting(db_id: uuid.UUID, session: SessionDep, serializer: SerializerDep) -> JSONResponse:
     obj = get_by_id(session, Meeting, db_id)
     if obj is None:
@@ -319,7 +445,9 @@ def get_consultation(db_id: uuid.UUID, session: SessionDep, serializer: Serializ
     return JSONResponse(serializer.serialize_consultation(obj))
 
 
-@router.get("/legislativeTerms/{db_id}", tags=[TAG_OBJECTS], summary="Get a legislative term", responses=_ok_obj(ex.LEGISLATIVE_TERM_EXAMPLE))
+@router.get(
+    "/legislativeTerms/{db_id}", tags=[TAG_OBJECTS], summary="Get a legislative term", responses=_ok_obj(ex.LEGISLATIVE_TERM_EXAMPLE)
+)
 def get_legislative_term(db_id: uuid.UUID, session: SessionDep, serializer: SerializerDep) -> JSONResponse:
     obj = get_by_id(session, LegislativeTerm, db_id)
     if obj is None:

@@ -130,6 +130,28 @@ async def main():
     confidential_file_deleter = ConfidentialFileDeleter()
     confidential_file_deleter.delete_confidential_files()
 
+    # --- Gremium Memberships (must run after persons and organizations are in DB) ---
+    logger.info("Extracting City Council Faction Memberships")
+    from src.extractor.gremium_membership_extractor import StRFactionMembershipExtractor
+
+    str_faction_membership_extractor = StRFactionMembershipExtractor()
+    str_faction_membership_extractor.run()
+    logger.info("Extracted City Council Faction Memberships")
+
+    logger.info("Extracting City Council Committee Memberships")
+    from src.extractor.gremium_membership_extractor import StRCommitteeMembershipExtractor
+
+    str_committee_membership_extractor = StRCommitteeMembershipExtractor()
+    str_committee_membership_extractor.run()
+    logger.info("Extracted City Council Committee Memberships")
+
+    logger.info("Extracting District Committee Memberships")
+    from src.extractor.gremium_membership_extractor import BACommitteeMembershipExtractor
+
+    ba_committee_membership_extractor = BACommitteeMembershipExtractor()
+    ba_committee_membership_extractor.run()
+    logger.info("Extracted District Committee Memberships")
+
     logger.info("Extraction process finished")
 
     logger.info("RIS Indexer completed successfully")

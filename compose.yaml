@@ -19,6 +19,23 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:8080/api/healthz"]
 
+  oparl:
+    build:
+      context: .
+      dockerfile: riski-oparl/Dockerfile
+      args:
+        - HTTPS_PROXY=${HTTPS_PROXY}
+    env_file:
+      - ./.env
+    volumes:
+      - ./ca-bundle.crt:/etc/ssl/certs/ca-bundle.crt:ro
+    ports:
+      - "8082:8082"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:8082/healthz"]
+
   refarch-gateway:
     image: ghcr.io/it-at-m/refarch/refarch-gateway:1.7.0@sha256:3f82ab83c212ca53c9c2b606cfe29291f21525eac86fece215d0e1c6ca51273f
     ports:

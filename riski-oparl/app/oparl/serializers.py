@@ -31,7 +31,6 @@ from core.model.data_models import (
 
 # OParl date-time fields must carry a UTC offset. The DB stores naive local
 # timestamps (datetime.now()), so we attach the server's local offset on output.
-
 from app.oparl.mappings import map_meeting_state
 from app.oparl.urls import body_sublist_url, object_url, system_url
 

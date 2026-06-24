@@ -18,6 +18,7 @@ from core.model.data_models import (
     Keyword,
     LegislativeTerm,
     Location,
+    Meeting,
     Membership,
     Organization,
     Paper,
@@ -573,14 +574,25 @@ def create_membership(
         The created Membership object, or None if Person/Organization not found.
     """
     with _get_session_ctx() as sess:
+        logger.debug(f"Looking for Person: {person_id}")
         person = sess.exec(select(Person).where(Person.id == person_id)).first()
+
+        logger.debug(f"Looking for Organization: {organization_id}")
         organization = sess.exec(select(Organization).where(Organization.id == organization_id)).first()
 
         if not person:
-            logger.warning(f"Person {person_id} not found in database")
+            logger.warning(f"Person not found: {person_id}")
+            # Debug: show what persons exist
+            all_persons = sess.exec(select(Person)).all()
+            sample_person_ids = [p.id for p in list(all_persons)[:3]]
+            logger.debug(f"Sample person IDs in DB: {sample_person_ids}")
             return None
         if not organization:
-            logger.warning(f"Organization {organization_id} not found in database")
+            logger.warning(f"Organization not found: {organization_id}")
+            # Debug: show what organizations exist
+            all_orgs = sess.exec(select(Organization)).all()
+            sample_org_ids = [o.id for o in list(all_orgs)[:3]]
+            logger.debug(f"Sample org IDs in DB: {sample_org_ids}")
             return None
 
         # Parse dates if they are strings

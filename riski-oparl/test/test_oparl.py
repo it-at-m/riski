@@ -2,12 +2,11 @@
 
 from datetime import datetime
 
-from core.model.data_models import Body, Meeting, Paper, Person
-from core.model.data_models import File as RisFile
-
 from app.oparl.pagination import make_list_envelope
 from app.oparl.serializers import OParlSerializer
 from app.oparl.urls import object_url
+from core.model.data_models import Body, Meeting, Paper, Person
+from core.model.data_models import File as RisFile
 
 BASE = "https://example.org/oparl/v1"
 

@@ -10,7 +10,7 @@ missing. It is invoked on application startup and can also be run standalone::
 import logging
 import uuid
 
-from core.model.data_models import Body, Organization, Meeting, Paper, Person, System
+from core.model.data_models import Body, Meeting, Organization, Paper, Person, System
 from sqlmodel import Session, select
 
 from app.oparl.urls import body_sublist_url, system_url
