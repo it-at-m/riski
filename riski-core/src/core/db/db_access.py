@@ -1,5 +1,6 @@
 import time
 from contextlib import contextmanager
+from datetime import datetime
 from functools import wraps
 from typing import List, TypeVar, overload
 
@@ -17,8 +18,11 @@ from core.model.data_models import (
     Keyword,
     LegislativeTerm,
     Location,
+    Membership,
+    Organization,
     Paper,
     Person,
+    Post,
 )
 from src.logtools import getLogger
 
@@ -544,13 +548,118 @@ def bulk_create_agenda_items(agenda_items: List["AgendaItem"]) -> int:
 
 
 @log_execution_time
+def create_membership(
+    person_id: str,
+    organization_id: str,
+    role: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    voting_right: bool = True,
+    on_behalf_of: str | None = None,
+) -> Membership | None:
+    """
+    Creates a Membership linking a Person to an Organization.
+
+    Args:
+        person_id: The Person's ID/URL
+        organization_id: The Organization's ID/URL
+        role: Role in the organization (e.g., "Vorsitz", "Mitglied")
+        start_date: Start date of membership (ISO format or datetime object)
+        end_date: End date of membership (ISO format or datetime object)
+        voting_right: Whether the person has voting rights
+        on_behalf_of: Optional grouping the person represents
+
+    Returns:
+        The created Membership object, or None if Person/Organization not found.
+    """
+    with _get_session_ctx() as sess:
+        person = sess.exec(select(Person).where(Person.id == person_id)).first()
+        organization = sess.exec(select(Organization).where(Organization.id == organization_id)).first()
+
+        if not person:
+            logger.warning(f"Person {person_id} not found in database")
+            return None
+        if not organization:
+            logger.warning(f"Organization {organization_id} not found in database")
+            return None
+
+        # Parse dates if they are strings
+        start_dt = _parse_date(start_date) if start_date else None
+        end_dt = _parse_date(end_date) if end_date else None
+
+        # Create membership with a unique ID
+        membership_id = f"urn:riski:membership:{organization_id.split('/')[-1]}:{person_id.split('/')[-1]}"
+        membership = Membership(
+            id=membership_id,
+            organization=organization.db_id,
+            role=role,
+            startDate=start_dt,
+            endDate=end_dt,
+            votingRight=voting_right,
+            onBehalfOf=on_behalf_of,
+            deleted=False,
+        )
+        membership.person = [person]
+        membership.organizations = [organization]
+        membership.keywords = []
+
+        sess.add(membership)
+        sess.commit()
+        sess.refresh(membership)
+        logger.info(f"Created Membership: {person.id} → {organization.id} (role: {role})")
+        return membership
+
+
+def _parse_date(date_input: str | datetime | None) -> datetime | None:
+    """Parse a date string or return datetime as-is."""
+    if not date_input:
+        return None
+    if isinstance(date_input, datetime):
+        return date_input
+    if isinstance(date_input, str):
+        try:
+            return datetime.fromisoformat(date_input)
+        except ValueError:
+            logger.warning(f"Could not parse date: {date_input}")
+            return None
+    return None
+
+
+@log_execution_time
+def create_post(name: str, organization_id: str) -> Post | None:
+    """
+    Creates a Post (position/role) in an Organization.
+
+    Args:
+        name: Name of the post (e.g., "Vorsitzender", "Stellvertreter")
+        organization_id: The Organization's ID/URL
+
+    Returns:
+        The created Post object, or None if Organization not found.
+    """
+    with _get_session_ctx() as sess:
+        organization = sess.exec(select(Organization).where(Organization.id == organization_id)).first()
+
+        if not organization:
+            logger.warning(f"Organization {organization_id} not found in database")
+            return None
+
+        post = Post(name=name, organization_id=organization.db_id)
+        sess.add(post)
+        sess.commit()
+        sess.refresh(post)
+        logger.info(f"Created Post: {name} in {organization.id}")
+        return post
+
+
+@log_execution_time
 def create_consultation(
     paper_id: str,
     agenda_item_id: str,
     meeting_id: str,
     authoritative: bool = False,
     role: str | None = None,
-) -> Consultation:
+) -> Consultation | None:
     """
     Creates a Consultation linking a Paper to an AgendaItem in a Meeting.
 
@@ -562,12 +671,9 @@ def create_consultation(
         role: Function of the consultation (e.g., "Anhörung")
 
     Returns:
-        The created Consultation object.
+        The created Consultation object, or None if any referenced object not found.
     """
-    from core.model.data_models import AgendaItem, Consultation, Meeting, Paper
-
     with _get_session_ctx() as sess:
-        # Get the referenced objects from database
         paper = sess.exec(select(Paper).where(Paper.id == paper_id)).first()
         agenda_item = sess.exec(select(AgendaItem).where(AgendaItem.id == agenda_item_id)).first()
         meeting = sess.exec(select(Meeting).where(Meeting.id == meeting_id)).first()
@@ -612,23 +718,14 @@ def get_or_create_location(name: str) -> Location:
     Returns:
         The retrieved or newly created Location object.
     """
-    from core.model.data_models import Location
-
     with _get_session_ctx() as sess:
-        # Check if it exists by description
-        statement = select(Location).where(Location.description == name)
-        existing = sess.exec(statement).first()
+        existing = sess.exec(select(Location).where(Location.description == name)).first()
         if existing:
             logger.info(f"Location '{name}' already exists (db_id: {existing.db_id})")
             return existing
 
-        # Create new with ID based on name
         location_id = f"urn:riski:location:{name.casefold().replace(' ', '-')}"
-        location = Location(
-            id=location_id,
-            description=name,
-            deleted=False,
-        )
+        location = Location(id=location_id, description=name, deleted=False)
 
         sess.add(location)
         sess.commit()
