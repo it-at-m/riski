@@ -8,7 +8,18 @@ from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
-from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, Consultation, File, Keyword, Location, Paper, Person, LegislativeTerm
+from core.model.data_models import (
+    RIS_NAME_OBJECT,
+    RIS_PARSED_DB_OBJECT,
+    AgendaItem,
+    Consultation,
+    File,
+    Keyword,
+    LegislativeTerm,
+    Location,
+    Paper,
+    Person,
+)
 from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
