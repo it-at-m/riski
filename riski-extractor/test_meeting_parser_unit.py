@@ -1,4 +1,5 @@
 """Unit tests for CityCouncilMeetingParser HTML extraction methods."""
+
 from bs4 import BeautifulSoup
 from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
 
@@ -44,7 +45,7 @@ def test_extract_agenda_items_no_crash():
     for i, html in enumerate(test_cases):
         soup = BeautifulSoup(html, "html.parser")
         items = parser._extract_agenda_items(soup, "https://test.example.com")
-        print(f"  Case {i+1}: extracted {len(items)} items (no crash)")
+        print(f"  Case {i + 1}: extracted {len(items)} items (no crash)")
         assert isinstance(items, list), f"Should return a list, got {type(items)}"
 
     print("PASS: test_extract_agenda_items_no_crash")
@@ -64,7 +65,7 @@ def test_extract_organizations_no_crash():
     soup = BeautifulSoup(html, "html.parser")
     orgs = parser._extract_organizations(soup)
     print(f"  Extracted {len(orgs)} organizations (no crash)")
-    assert isinstance(orgs, list), f"Should return a list"
+    assert isinstance(orgs, list), "Should return a list"
 
     print("PASS: test_extract_organizations_no_crash")
 
@@ -83,7 +84,7 @@ def test_extract_participants_no_crash():
     soup = BeautifulSoup(html, "html.parser")
     persons = parser._extract_participants(soup)
     print(f"  Extracted {len(persons)} participants (no crash)")
-    assert isinstance(persons, list), f"Should return a list"
+    assert isinstance(persons, list), "Should return a list"
 
     print("PASS: test_extract_participants_no_crash")
 

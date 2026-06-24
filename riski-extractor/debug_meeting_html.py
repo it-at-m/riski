@@ -1,7 +1,8 @@
 """Debug script to analyze actual Meeting HTML structure from RIS."""
+
 import httpx
 from bs4 import BeautifulSoup
-from config.config import Config, get_config
+from config.config import get_config
 
 config = get_config()
 
@@ -14,9 +15,9 @@ meeting_urls = [
 client = httpx.Client(timeout=10)
 
 for url in meeting_urls:
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Analyzing: {url}")
-    print('='*80)
+    print("=" * 80)
 
     try:
         response = client.get(url, follow_redirects=True)
@@ -29,7 +30,7 @@ for url in meeting_urls:
         print(f"\nFound {len(sections)} sections:")
         for i, section in enumerate(sections):
             aria_label = section.get("aria-labelledby", "N/A")
-            print(f"  {i+1}. aria-labelledby: {aria_label}")
+            print(f"  {i + 1}. aria-labelledby: {aria_label}")
 
         # Look for agenda-related content
         print("\n--- Looking for Agenda/Tagesordnung content ---")
@@ -41,7 +42,7 @@ for url in meeting_urls:
                 items = section.find_all(["li", "div", "tr"])
                 print(f"  Contains {len(items)} li/div/tr elements")
                 if items:
-                    print(f"  First few items:")
+                    print("  First few items:")
                     for item in items[:5]:
                         text = item.get_text(strip=True)[:100]
                         print(f"    - {text}")
@@ -52,7 +53,7 @@ for url in meeting_urls:
         print(f"Found {len(lists)} lists")
         for i, lst in enumerate(lists[:3]):
             items = lst.find_all("li")
-            print(f"  List {i+1}: {len(items)} items")
+            print(f"  List {i + 1}: {len(items)} items")
             for li in items[:3]:
                 text = li.get_text(strip=True)[:100]
                 print(f"    - {text}")

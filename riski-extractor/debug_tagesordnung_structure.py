@@ -1,7 +1,7 @@
 """Debug script to analyze the actual Tagesordnung page structure."""
+
 import httpx
 from bs4 import BeautifulSoup
-import json
 
 url = "https://risi.muenchen.de/risi/sitzung/detail/9015032/tagesordnung/oeffentlich"
 
@@ -21,7 +21,7 @@ try:
     sections = soup.find_all("section")
     for i, section in enumerate(sections):
         aria_id = section.get("aria-labelledby", "N/A")
-        print(f"{i+1}. {aria_id}")
+        print(f"{i + 1}. {aria_id}")
 
     # Look for tables
     print("\n" + "=" * 80)
@@ -48,7 +48,7 @@ try:
         if tbody:
             rows = tbody.find_all("tr")
             print(f"  Rows: {len(rows)}")
-            print(f"  First 3 rows:")
+            print("  First 3 rows:")
             for r_idx, row in enumerate(rows[:3]):
                 cols = row.find_all("td")
                 print(f"    Row {r_idx + 1} ({len(cols)} cols):")
@@ -95,4 +95,5 @@ try:
 except Exception as e:
     print(f"Error: {e}")
     import traceback
+
     traceback.print_exc()

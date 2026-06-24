@@ -1,14 +1,15 @@
 """Test the new agenda item database methods in riski-core."""
+
 from config.config import get_config
 from core.db.db import init_db
 from core.db.db_access import (
-    request_all,
-    get_or_create_agenda_item,
-    create_agenda_items_for_meeting,
-    request_agenda_items_by_meeting,
     bulk_create_agenda_items,
+    create_agenda_items_for_meeting,
+    get_or_create_agenda_item,
+    request_agenda_items_by_meeting,
+    request_all,
 )
-from core.model.data_models import Meeting, AgendaItem
+from core.model.data_models import AgendaItem, Meeting
 
 
 def test_get_or_create_agenda_item():

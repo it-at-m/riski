@@ -8,7 +8,7 @@ from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
-from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Paper, Person, Location
+from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, AgendaItem, File, Keyword, Location, Paper, Person
 from src.logtools import getLogger
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
@@ -480,14 +480,11 @@ def request_agenda_items_by_meeting(meeting_id: str) -> List["AgendaItem"]:
 
     with _get_session_ctx() as sess:
         # Get all agenda items linked to this meeting
-        statement = select(AgendaItem).join(
-            MeetingAgendaItemLink,
-            MeetingAgendaItemLink.agenda_item_id == AgendaItem.db_id
-        ).join(
-            Meeting,
-            Meeting.db_id == MeetingAgendaItemLink.meeting_id
-        ).where(
-            Meeting.id == meeting_id
+        statement = (
+            select(AgendaItem)
+            .join(MeetingAgendaItemLink, MeetingAgendaItemLink.agenda_item_id == AgendaItem.db_id)
+            .join(Meeting, Meeting.db_id == MeetingAgendaItemLink.meeting_id)
+            .where(Meeting.id == meeting_id)
         )
 
         results = list(sess.exec(statement).all())
@@ -533,6 +530,64 @@ def bulk_create_agenda_items(agenda_items: List["AgendaItem"]) -> int:
             logger.info(f"Successfully created {created_count} agenda items")
 
     return created_count
+
+
+@log_execution_time
+def create_consultation(
+    paper_id: str,
+    agenda_item_id: str,
+    meeting_id: str,
+    authoritative: bool = False,
+    role: str | None = None,
+) -> "Consultation":
+    """
+    Creates a Consultation linking a Paper to an AgendaItem in a Meeting.
+
+    Args:
+        paper_id: The Paper's ID/URL
+        agenda_item_id: The AgendaItem's ID/URL
+        meeting_id: The Meeting's ID/URL
+        authoritative: Whether a resolution was made
+        role: Function of the consultation (e.g., "Anhörung")
+
+    Returns:
+        The created Consultation object.
+    """
+    from core.model.data_models import AgendaItem, Consultation, Meeting, Paper
+
+    with _get_session_ctx() as sess:
+        # Get the referenced objects from database
+        paper = sess.exec(select(Paper).where(Paper.id == paper_id)).first()
+        agenda_item = sess.exec(select(AgendaItem).where(AgendaItem.id == agenda_item_id)).first()
+        meeting = sess.exec(select(Meeting).where(Meeting.id == meeting_id)).first()
+
+        if not paper:
+            logger.warning(f"Paper {paper_id} not found in database")
+            return None
+        if not agenda_item:
+            logger.warning(f"AgendaItem {agenda_item_id} not found in database")
+            return None
+        if not meeting:
+            logger.warning(f"Meeting {meeting_id} not found in database")
+            return None
+
+        # Create consultation with a unique ID
+        consultation_id = f"urn:riski:consultation:{meeting_id.split('/')[-1]}:{agenda_item_id.split('#')[-1]}:{paper_id.split('/')[-1]}"
+        consultation = Consultation(
+            id=consultation_id,
+            paper=paper.db_id,
+            agenda_item=agenda_item.db_id,
+            meeting=meeting.db_id,
+            authoritative=authoritative,
+            role=role,
+            deleted=False,
+        )
+
+        sess.add(consultation)
+        sess.commit()
+        sess.refresh(consultation)
+        logger.info(f"Created Consultation: Paper {paper.id} → AgendaItem {agenda_item_id} in Meeting {meeting_id}")
+        return consultation
 
 
 @log_execution_time

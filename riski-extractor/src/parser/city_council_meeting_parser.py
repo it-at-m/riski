@@ -58,7 +58,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             if location:
                 self.logger.info(f"Location resolved/created: {location_name} (id: {location.id}, db_id: {location.db_id})")
             return location
-        except Exception as e:
+        except Exception:
             self.logger.exception(f"Error resolving/creating location '{location_name}'")
             return None
 
@@ -293,5 +293,7 @@ class CityCouncilMeetingParser(BaseParser[Meeting]):
             keywords=[],
         )
 
-        self.logger.info(f"Meeting created: {meeting.name} with {len(agenda_items)} agenda items, {len(participants)} participants, {len(locations)} locations")
+        self.logger.info(
+            f"Meeting created: {meeting.name} with {len(agenda_items)} agenda items, {len(participants)} participants, {len(locations)} locations"
+        )
         return meeting

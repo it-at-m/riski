@@ -1,10 +1,14 @@
 """Parser for Tagesordnung (Agenda) pages of meetings."""
+
 import re
+from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup
+from core.db.db_access import create_consultation
 from core.model.data_models import AgendaItem
 
-from src.parser.base_parser import BaseParser
 from src.logtools import getLogger
+from src.parser.base_parser import BaseParser
 
 
 class MeetingTagesordnungParser(BaseParser[AgendaItem]):
@@ -17,6 +21,38 @@ class MeetingTagesordnungParser(BaseParser[AgendaItem]):
         super().__init__()
         self.logger = getLogger()
         self.logger.info("MeetingTagesordnungParser initialized.")
+
+    def _extract_paper_links(self, row: BeautifulSoup, tagesordnung_url: str) -> list[str]:
+        """
+        Extract paper/sitzungsvorlage links from a TOP row.
+
+        Papers appear as links like: <a href="sitzungsvorlage/detail/9470988">...</a>
+
+        Args:
+            row: The BeautifulSoup element for a complete TOP row
+            tagesordnung_url: The base Tagesordnung URL for resolving relative links
+
+        Returns:
+            List of full paper URLs
+        """
+        paper_links = []
+        try:
+            # Find all links that contain "sitzungsvorlage/detail/"
+            links = row.find_all("a", href=re.compile(r"sitzungsvorlage/detail/"))
+            for link in links:
+                href = link.get("href")
+                if href:
+                    # Resolve relative URL to full URL
+                    # Extract base domain from tagesordnung_url
+                    base_parts = tagesordnung_url.split("/")
+                    base_url = "/".join(base_parts[:3])  # https://risi.muenchen.de
+                    full_url = urljoin(base_url + "/risi/", href)
+                    paper_links.append(full_url)
+                    self.logger.debug(f"Found paper link: {full_url}")
+        except Exception as e:
+            self.logger.debug(f"Error extracting paper links: {e!r}")
+
+        return paper_links
 
     def extract_agenda_items(self, html: str, tagesordnung_url: str) -> list[AgendaItem]:
         """
@@ -82,8 +118,9 @@ class MeetingTagesordnungParser(BaseParser[AgendaItem]):
                     if title.startswith("TOP - "):
                         title = title[6:]
 
+                    agenda_item_id = f"{tagesordnung_url}#agenda-{number}"
                     agenda_item = AgendaItem(
-                        id=f"{tagesordnung_url}#agenda-{number}",
+                        id=agenda_item_id,
                         name=title[:500],
                         number=number,
                         order=order,
@@ -93,7 +130,25 @@ class MeetingTagesordnungParser(BaseParser[AgendaItem]):
                     agenda_item.meetings = []
                     agenda_item.keywords = []
                     agenda_items.append(agenda_item)
-                    self.logger.debug(f"Extracted: {number} - {title[:50]}")
+
+                    # Extract paper links and create consultations
+                    paper_links = self._extract_paper_links(row, tagesordnung_url)
+                    meeting_id = tagesordnung_url.split("/tagesordnung/")[0]  # Extract meeting URL
+                    for paper_url in paper_links:
+                        try:
+                            consultation = create_consultation(
+                                paper_id=paper_url,
+                                agenda_item_id=agenda_item_id,
+                                meeting_id=meeting_id,
+                                authoritative=False,
+                                role=None,
+                            )
+                            if consultation:
+                                self.logger.info(f"Created consultation for TOP {number}: {paper_url}")
+                        except Exception as e:
+                            self.logger.debug(f"Error creating consultation for TOP {number}: {e!r}")
+
+                    self.logger.debug(f"Extracted: {number} - {title[:50]} ({len(paper_links)} papers)")
 
                 except Exception as e:
                     self.logger.debug(f"Error extracting row: {e!r}")

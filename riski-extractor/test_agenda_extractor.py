@@ -1,4 +1,5 @@
 """Test MeetingAgendaItemExtractor with mock data."""
+
 from bs4 import BeautifulSoup
 from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
 

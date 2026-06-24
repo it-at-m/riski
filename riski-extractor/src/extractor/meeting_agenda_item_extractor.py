@@ -1,9 +1,9 @@
-from core.db.db_access import request_all, update_or_insert_objects_to_database, bulk_create_agenda_items
-from core.model.data_models import Meeting, AgendaItem
+from core.db.db_access import bulk_create_agenda_items, request_all
+from core.model.data_models import Meeting
 
 from src.extractor.base_extractor import BaseExtractor
-from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
 from src.logtools import getLogger
+from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
 
 
 class MeetingAgendaItemExtractor:
@@ -61,6 +61,7 @@ class MeetingAgendaItemExtractor:
 
                     # Extract agenda items using the parser's method
                     from bs4 import BeautifulSoup
+
                     soup = BeautifulSoup(html, "html.parser")
                     agenda_items = self.parser._extract_agenda_items(soup, meeting.id)
 

@@ -1,4 +1,5 @@
 """Test the correct URL structure for agenda items."""
+
 from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
 
 # Load the saved HTML
@@ -25,7 +26,7 @@ expected_base = "https://risi.muenchen.de/risi/sitzung/detail/9015032/tagesordnu
 if items and items[0].id.startswith(expected_base):
     print("SUCCESS: URL structure is correct!")
 else:
-    print(f"ERROR: URL structure is incorrect")
+    print("ERROR: URL structure is incorrect")
     print(f"Expected to start with: {expected_base}")
     if items:
         print(f"Got: {items[0].id}")

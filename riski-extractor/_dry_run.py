@@ -1,24 +1,25 @@
 """Dry-run test: instantiate all extractors without running extraction."""
+
 import sys
 
 try:
     print("[1/9] Importing extractors...")
-    from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
-    from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
-    from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
-    from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
-    from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
-    from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
     from src.extractor.ba_member_extractor import BAMemberExtractor
     from src.extractor.bezirksausschuss_paper_extractor import (
         BAMotionExtractor,
         BVRecommendationExtractor,
         BVRequestExtractor,
     )
+    from src.extractor.city_council_faction_extractor import CityCouncilFactionExtractor
+    from src.extractor.city_council_meeting_extractor import CityCouncilMeetingExtractor
+    from src.extractor.city_council_meeting_template_extractor import CityCouncilMeetingTemplateExtractor
+    from src.extractor.city_council_member_extractor import CityCouncilMemberExtractor
+    from src.extractor.city_council_motion_extractor import CityCouncilMotionExtractor
     from src.extractor.gremium_organization_extractor import (
-        StRCommitteeExtractor,
         BACommitteeExtractor,
+        StRCommitteeExtractor,
     )
+    from src.extractor.head_of_department_extractor import HeadOfDepartmentExtractor
     from src.extractor.legislative_term_extractor import LegislativeTermExtractor
     from src.extractor.location_extractor import LocationExtractor
 
@@ -49,5 +50,6 @@ try:
 except Exception as e:
     print(f"[FAIL] {e!r}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)

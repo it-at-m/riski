@@ -2,22 +2,16 @@
 """Test script to verify location creation in the database."""
 
 import sys
-sys.path.insert(0, str(__file__).replace('\\', '/').rsplit('/', 1)[0])
 
-from core.db.db import init_db, create_db_and_tables
+sys.path.insert(0, str(__file__).replace("\\", "/").rsplit("/", 1)[0])
+
+from core.db.db import create_db_and_tables, init_db
 from core.db.db_access import get_or_create_location, request_all
 from core.model.data_models import Location
 from pydantic import PostgresDsn
 
 # Initialize DB
-db_url = PostgresDsn.build(
-    scheme="postgresql",
-    username="postgres",
-    password="password",
-    host="localhost",
-    port=5432,
-    path="example_db"
-)
+db_url = PostgresDsn.build(scheme="postgresql", username="postgres", password="password", host="localhost", port=5432, path="example_db")
 
 print(f"Connecting to: {db_url}")
 init_db(db_url)

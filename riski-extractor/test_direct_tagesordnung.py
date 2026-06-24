@@ -1,7 +1,8 @@
 """Test the MeetingTagesordnungExtractor with direct URL construction."""
+
+import httpx
 from src.extractor.meeting_tagesordnung_extractor import MeetingTagesordnungExtractor
 from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
-import httpx
 
 extractor = MeetingTagesordnungExtractor()
 
@@ -45,4 +46,5 @@ try:
 except Exception as e:
     print(f"Error: {e}")
     import traceback
+
     traceback.print_exc()

@@ -1,8 +1,9 @@
 import sys
-sys.path.insert(0, '/home/runner/riski/riski-core/src')  # Ensure core is imported from source
+
+sys.path.insert(0, "/home/runner/riski/riski-core/src")  # Ensure core is imported from source
+
 
 from src.parser.city_council_meeting_parser import CityCouncilMeetingParser
-from datetime import datetime
 
 # Sample HTML from a real Munich RIS meeting page (simplified)
 sample_html = """

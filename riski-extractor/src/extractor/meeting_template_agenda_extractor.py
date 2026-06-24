@@ -2,12 +2,13 @@
 Extractor that creates AgendaItems from Meeting Templates (Sitzungsvorlagen).
 Meeting Templates often contain the agenda items, which can be linked to the actual meetings.
 """
+
 from core.db.db_access import request_all, update_or_insert_objects_to_database
-from core.model.data_models import Paper, PaperTypeEnum, AgendaItem
+from core.model.data_models import AgendaItem, Paper, PaperTypeEnum
 
 from src.extractor.base_extractor import BaseExtractor
-from src.parser.city_council_meeting_template_parser import CityCouncilMeetingTemplateParser
 from src.logtools import getLogger
+from src.parser.city_council_meeting_template_parser import CityCouncilMeetingTemplateParser
 
 
 class MeetingTemplateAgendaExtractor:
@@ -67,6 +68,7 @@ class MeetingTemplateAgendaExtractor:
 
                     # Extract agenda items using parser method
                     from bs4 import BeautifulSoup
+
                     soup = BeautifulSoup(html, "html.parser")
 
                     # Use same method as meeting parser

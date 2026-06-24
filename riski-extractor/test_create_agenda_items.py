@@ -1,8 +1,9 @@
 """Test script to create sample agenda items in the database."""
+
 from config.config import get_config
 from core.db.db import init_db
 from core.db.db_access import request_all, update_or_insert_objects_to_database
-from core.model.data_models import Meeting, AgendaItem
+from core.model.data_models import AgendaItem, Meeting
 
 
 def main():
@@ -52,6 +53,7 @@ def main():
     except Exception as e:
         print(f"ERROR: {e!r}")
         import traceback
+
         traceback.print_exc()
 
 

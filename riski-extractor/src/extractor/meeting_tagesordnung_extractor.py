@@ -2,19 +2,18 @@
 Extractor that processes Tagesordnung (agenda) pages for meetings.
 Fetches the Tagesordnung URL directly and extracts agenda items.
 """
-import re
-import httpx
 
+import httpx
 from config.config import Config, get_config
 from core.db.db_access import (
-    request_batch,
     create_agenda_items_for_meeting,
     request_agenda_items_by_meeting,
+    request_batch,
 )
 from core.model.data_models import Meeting
 
-from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
 from src.logtools import getLogger
+from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
 
 config: Config = get_config()
 

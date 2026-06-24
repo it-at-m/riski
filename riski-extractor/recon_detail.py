@@ -1,5 +1,7 @@
 """Dump key-value labels, section headers, title and download links of detail pages."""
+
 import sys
+
 import httpx
 from bs4 import BeautifulSoup
 
@@ -12,9 +14,9 @@ def dump(client, path):
     print(f"status {r.status_code} final {r.url}")
     soup = BeautifulSoup(r.text, "html.parser")
     t = soup.select_one("h1.page-title")
-    print("  title:", t.get_text(' ', strip=True) if t else None)
+    print("  title:", t.get_text(" ", strip=True) if t else None)
     add = soup.select_one("span.page-additionaltitle")
-    print("  additionaltitle:", add.get_text(' ', strip=True) if add else None)
+    print("  additionaltitle:", add.get_text(" ", strip=True) if add else None)
     print("  keyvalue rows:")
     for row in soup.select(".keyvalue-container .keyvalue-row"):
         k = row.select_one(".keyvalue-key")
@@ -29,12 +31,11 @@ def dump(client, path):
         print(f"    {a.get_text(strip=True)!r:40} -> {a.get('href')}")
     print("  tabs:")
     for a in soup.select("a[href*='tab=']")[:10]:
-        print(f"    {a.get_text(' ',strip=True)[:30]!r:32} -> {a.get('href')}")
+        print(f"    {a.get_text(' ', strip=True)[:30]!r:32} -> {a.get('href')}")
 
 
 if __name__ == "__main__":
-    with httpx.Client(timeout=30, follow_redirects=True,
-                      headers={"User-Agent": "Mozilla/5.0 (compatible; ScraperBot/1.0)"}) as c:
+    with httpx.Client(timeout=30, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (compatible; ScraperBot/1.0)"}) as c:
         # establish session
         c.get(BASE + "/")
         for p in sys.argv[1:]:

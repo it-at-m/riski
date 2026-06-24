@@ -29,8 +29,23 @@ def dump_nav(client: httpx.Client) -> None:
         if key in seen:
             continue
         seen.add(key)
-        if any(tok in href for tok in ("antrag", "person", "sitzung", "fraktion", "gremi", "ausschuss",
-                                       "buerger", "versammlung", "vorlage", "wahlperiode", "ort", "empfehl")):
+        if any(
+            tok in href
+            for tok in (
+                "antrag",
+                "person",
+                "sitzung",
+                "fraktion",
+                "gremi",
+                "ausschuss",
+                "buerger",
+                "versammlung",
+                "vorlage",
+                "wahlperiode",
+                "ort",
+                "empfehl",
+            )
+        ):
             print(f"  {text!r:55} -> {href}")
 
 
@@ -61,13 +76,13 @@ def dump_overview(client: httpx.Client, path: str) -> None:
                 print(f"    {h}")
 
     # sample detail links
-    links = [(a.get_text(' ', strip=True)[:40], a["href"]) for a in soup.select("a.headline-link[href]")][:5]
+    links = [(a.get_text(" ", strip=True)[:40], a["href"]) for a in soup.select("a.headline-link[href]")][:5]
     print("  headline-links (sample):")
     for t, h in links:
         print(f"    {t!r:42} -> {h}")
     if not links:
         # alt: any detail links
-        alt = [(a.get_text(' ', strip=True)[:40], a["href"]) for a in soup.select("a[href]") if "/detail/" in a.get("href", "")][:5]
+        alt = [(a.get_text(" ", strip=True)[:40], a["href"]) for a in soup.select("a[href]") if "/detail/" in a.get("href", "")][:5]
         print("  /detail/ links (sample):")
         for t, h in alt:
             print(f"    {t!r:42} -> {h}")

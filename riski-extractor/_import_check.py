@@ -1,4 +1,5 @@
 """Quick import check to validate all new extractors/parsers load without errors."""
+
 import sys
 
 try:
@@ -14,8 +15,6 @@ try:
     )
     from src.extractor.legislative_term_extractor import LegislativeTermExtractor
     from src.extractor.location_extractor import LocationExtractor
-    from src.parser.bezirksausschuss_paper_parser import BezirksausschussPaperParser
-    from src.parser.gremium_organization_parser import GremiumOrganizationParser
 
     print("[OK] All new extractors and parsers imported successfully")
     print(f"  BAMemberExtractor: {BAMemberExtractor}")
@@ -30,5 +29,6 @@ try:
 except Exception as e:
     print(f"[FAIL] Import failed: {e!r}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)

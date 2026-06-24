@@ -1,8 +1,8 @@
 """Test the MeetingTagesordnungExtractor with a real meeting."""
+
 import httpx
-from bs4 import BeautifulSoup
-from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
 from src.extractor.meeting_tagesordnung_extractor import MeetingTagesordnungExtractor
+from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
 
 # Test 1: Test finding Tagesordnung link
 print("=" * 80)

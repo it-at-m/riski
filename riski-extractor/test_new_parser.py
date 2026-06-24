@@ -1,4 +1,5 @@
 """Test the new MeetingTagesordnungParser with actual HTML."""
+
 from src.parser.meeting_tagesordnung_parser import MeetingTagesordnungParser
 
 # Load the saved HTML
