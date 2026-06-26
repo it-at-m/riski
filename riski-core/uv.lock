@@ -91,7 +91,7 @@ requires-dist = [
     { name = "pgvector", specifier = "<0.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.9" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.11.7" },
-    { name = "pydantic-settings", specifier = ">=2.10.1" },
+    { name = "pydantic-settings", specifier = "==2.14.2" },
     { name = "sqlalchemy", specifier = ">=2.0.42" },
     { name = "sqlmodel", specifier = ">=0.0.24" },
     { name = "truststore", specifier = ">=0.10.4" },
