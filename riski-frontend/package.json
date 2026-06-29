@@ -9,7 +9,7 @@
     "vue": "3.5.27"
   },
   "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "4.1.2",
+    "@cyclonedx/cyclonedx-npm": "5.0.0",
     "@muenchen/prettier-codeformat": "1.0.2",
     "@tsconfig/node-lts": "22.0.4",
     "@types/dompurify": "3.2.0",
