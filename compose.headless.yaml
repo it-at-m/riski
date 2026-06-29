@@ -2,7 +2,7 @@ volumes:
   riskidata:
 services:
   db:
-    image: docker.io/pgvector/pgvector:pg17@sha256:feb68f4f15446397d8cac7f4fe48fe4586de83160d1fc48b46283312d1a33966
+    image: docker.io/pgvector/pgvector:pg17@sha256:be400b50812ab2cc908ed78593fda2e51e3b45fe774fa637f1c7b16e68531d95
     container_name: pgvector-db
     networks:
       - default
