@@ -1,9 +1,9 @@
 [project]
 name = "document_pipeline"
-version = "0.1.10"
+version = "0.1.11"
 description = "Add your description here"
 readme = "README.md"
-requires-python = "==3.13.9"
+requires-python = "==3.13.14"
 dependencies = [
     "mistralai>=1.9.11",
     "truststore>=0.10.4",
