@@ -3,7 +3,7 @@ name = "extractor"
 version = "0.0.10"
 description = "Python application for extracting information from munich's political information system RIS"
 readme = "README.md"
-requires-python = "==3.13.9"
+requires-python = "==3.13.14"
 license = { file = "LICENSE" }
 authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
