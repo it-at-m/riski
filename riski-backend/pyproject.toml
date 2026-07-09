@@ -1,10 +1,10 @@
 [project]
 name = "riski-backend"
 license = "MIT"
-version = "0.5.5"
+version = "0.5.19"
 description = "Python backend for finding information in munich's political information system RIS"
 readme = "README.md"
-requires-python = "==3.13.9"
+requires-python = "==3.13.14"
 authors = [
     { name = "Fabian Reinold", email = "fabian.reinold@muenchen.de" },
     { name = "Stefan Hentschel", email = "stefan.hentschel@muenchen.de" },
