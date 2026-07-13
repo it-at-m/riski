@@ -3,7 +3,7 @@ FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:2c20ac20ca1ecbbb
 
 RUN microdnf install -y postgresql-libs zlib && microdnf clean all
 
-COPY --from=ghcr.io/astral-sh/uv:latest@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa /uv /uvx /bin/
 
 ENV UV_PROJECT_ENVIRONMENT=/app/document-pipeline/.venv
 
