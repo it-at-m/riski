@@ -2,10 +2,10 @@
   "dependencies": {
     "@ag-ui/client": "0.0.53",
     "@ag-ui/core": "0.0.53",
-    "@muenchen/muc-patternlab-vue": "^7.4.1",
+    "@muenchen/muc-patternlab-vue": "7.4.1",
     "@vueuse/core": "14.0.0",
     "dompurify": "^3.3.1",
-    "marked": "^17.0.1",
+    "marked": "17.0.2",
     "vue": "3.5.27"
   },
   "devDependencies": {
@@ -16,17 +16,17 @@
     "@types/node": "22.19.19",
     "@vitejs/plugin-vue": "6.0.7",
     "@vue/eslint-config-prettier": "10.2.0",
-    "@vue/eslint-config-typescript": "^14.7.0",
-    "@vue/test-utils": "^2.4.6",
+    "@vue/eslint-config-typescript": "14.8.0",
+    "@vue/test-utils": "2.4.11",
     "@vue/tsconfig": "0.8.1",
-    "eslint": "^10.0.2",
-    "eslint-plugin-vue": "^10.8.0",
+    "eslint": "10.5.0",
+    "eslint-plugin-vue": "10.9.2",
     "jsdom": "27.2.0",
     "prettier": "3.6.2",
     "typescript": "5.9.3",
-    "vite": "^7.3.5",
+    "vite": "7.3.5",
     "vite-plugin-vue-devtools": "8.0.5",
-    "vitest": "^4.1.8",
+    "vitest": "4.1.9",
     "vue-tsc": "3.1.8"
   },
   "engines": {
