@@ -8,3 +8,5 @@ CVE-2026-41907 # uuid (11.1.0) from ag-ui/client (0.0.43)
 CVE-2026-44431 # urllib3 (2.6.3) from requests (2.32.5)
 CVE-2026-44432 # urllib3 (2.6.3) from requests (2.32.5)
 CVE-2026-45409 # idna (3.11) from requests (2.32.5)
+GHSA-f4xh-w4cj-qxq8 # langsmith (0.8.0) inherited from langchain; TracingMiddleware not used
+GHSA-4xgf-cpjx-pc3j # pydantic-settings (<2.14.2) inherited across modules

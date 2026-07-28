@@ -36,3 +36,13 @@ repos:
   rev: v8.30.0
   hooks:
   - id: gitleaks
+- repo: local
+  hooks:
+  # Regenerate riski-mcp/requirements.txt (used by the Hugging Face Space) from
+  # the uv lockfile so it can never drift from pyproject.toml / uv.lock.
+  - id: uv-export-riski-mcp-requirements
+    name: uv export riski-mcp requirements.txt
+    entry: uv export --directory riski-mcp --no-dev --no-emit-project --no-hashes -o requirements.txt
+    language: system
+    files: ^riski-mcp/(pyproject\.toml|uv\.lock)$
+    pass_filenames: false
