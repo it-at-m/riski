@@ -26,6 +26,9 @@
     "node": ">=22.19 <=22"
   },
   "name": "riski-docs",
+  "overrides": {
+    "vite": "$vite"
+  },
   "private": true,
   "scripts": {
     "build": "vitepress build",
