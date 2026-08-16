@@ -5,6 +5,12 @@ If you don't know if you should create an ADR, the answer is probably "yes".
 
 ## ADR List
 
+- [01: System architecture](/adr/architecture_overview)
+- [02: Data Model](/adr/datenmodell)
+- [03: Extraction Pipeline](/adr/extract_process)
+- [04: Evaluation Docling](/adr/eval_docling)
+- [05: OParl 1.1 API Implementation Plan](/adr/oparl_api_rollout_plan)
+
 ## Background
 
 Background information on ADRs:
@@ -16,7 +22,7 @@ Background information on ADRs:
 
 We essentially follow [MADR](https://adr.github.io/madr/), but add a status field.
 
-```
+```md
 # ADR XX: < short description of the decision >
 
 | Status      | proposed | < accepted | rejected | deprecated | superseded by ADR <n> >

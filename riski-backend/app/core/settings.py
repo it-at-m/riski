@@ -148,6 +148,20 @@ class BackendSettings(AppBaseSettings):
         default=8080,
         description="The port for the riski-backend server to bind to.",
     )
+    oparl_base_url: str = Field(
+        default="http://localhost:8080/api/oparl/v1.1",
+        description="Canonical public base URL for OParl 1.1 endpoints.",
+    )
+    oparl_page_size_default: int = Field(
+        default=100,
+        ge=1,
+        description="Default page size for OParl list endpoints.",
+    )
+    oparl_page_size_max: int = Field(
+        default=500,
+        ge=1,
+        description="Maximum page size accepted for OParl list endpoints.",
+    )
 
     top_k_docs: int = Field(
         default=10,
