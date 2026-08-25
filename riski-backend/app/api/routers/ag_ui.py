@@ -1,5 +1,6 @@
 from typing import Any, AsyncGenerator
 
+from ag_ui.core import RunErrorEvent, RunFinishedEvent, StepFinishedEvent
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder
 from ag_ui_langgraph import LangGraphAgent
@@ -9,8 +10,6 @@ from app.utils.logging import getLogger
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from langfuse import observe
-from ag_ui.core import RunErrorEvent, RunFinishedEvent, StepFinishedEvent 
-
 
 router = APIRouter(prefix="/api/ag-ui", tags=["ag-ui"])
 logger = getLogger()
@@ -225,10 +224,10 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
     strip_raw_event_types = {*text_message_types, "TOOL_CALL_ARGS"}
 
     snapshot_stripper = SnapshotStripper()
+
     async def event_generator() -> AsyncGenerator[bytes, None]:
         tool_call_seen = False
         run_finished_sent = False
-    
 
         try:
             async for event in run_agent_traced(input_data, request):
@@ -253,10 +252,7 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
             return
 
         if not run_finished_sent:
-            logger.warning(
-                "Stream ended without RUN_FINISHED for run_id=%s",
-                input_data.run_id
-            )
+            logger.warning("Stream ended without RUN_FINISHED for run_id=%s", input_data.run_id)
 
             yield encode(
                 encoder=encoder,
@@ -274,7 +270,5 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
                     run_id=input_data.run_id,
                 ),
             )
-
-
 
     return StreamingResponse(event_generator(), media_type=encoder.get_content_type())
