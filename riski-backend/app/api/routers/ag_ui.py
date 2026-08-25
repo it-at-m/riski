@@ -1,6 +1,5 @@
 from typing import Any, AsyncGenerator
 
-from ag_ui.core import RunErrorEvent
 from ag_ui.core.types import RunAgentInput
 from ag_ui.encoder import EventEncoder
 from ag_ui_langgraph import LangGraphAgent
@@ -10,6 +9,8 @@ from app.utils.logging import getLogger
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from langfuse import observe
+from ag_ui.core import RunErrorEvent, RunFinishedEvent, StepFinishedEvent 
+
 
 router = APIRouter(prefix="/api/ag-ui", tags=["ag-ui"])
 logger = getLogger()
@@ -224,13 +225,17 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
     strip_raw_event_types = {*text_message_types, "TOOL_CALL_ARGS"}
 
     snapshot_stripper = SnapshotStripper()
-
     async def event_generator() -> AsyncGenerator[bytes, None]:
         tool_call_seen = False
+        run_finished_sent = False
+    
+
         try:
             async for event in run_agent_traced(input_data, request):
                 if event.type == "TOOL_CALL_START":
                     tool_call_seen = True
+                run_finished_sent |= event.type == "RUN_FINISHED"
+
                 if _is_check_document_node(event) or (
                     getattr(event, "type", None) in _TEXT_MESSAGE_TYPES
                     and (not tool_call_seen or _get_langgraph_node(event) not in _TEXT_MESSAGE_ALLOWED_NODES)
@@ -245,5 +250,31 @@ async def invoke_riski_agent(input_data: RunAgentInput, request: Request) -> Str
         except Exception as e:
             logger.error("Error in agent run: %s", e, exc_info=True)
             yield encode(encoder=encoder, event=RunErrorEvent(message="Ein interner Fehler ist aufgetreten."))
+            return
+
+        if not run_finished_sent:
+            logger.warning(
+                "Stream ended without RUN_FINISHED for run_id=%s",
+                input_data.run_id
+            )
+
+            yield encode(
+                encoder=encoder,
+                event=StepFinishedEvent(
+                    type="STEP_FINISHED",
+                    step_name="model",
+                ),
+            )
+
+            yield encode(
+                encoder=encoder,
+                event=RunFinishedEvent(
+                    type="RUN_FINISHED",
+                    thread_id=input_data.thread_id,
+                    run_id=input_data.run_id,
+                ),
+            )
+
+
 
     return StreamingResponse(event_generator(), media_type=encoder.get_content_type())
