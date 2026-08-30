@@ -1,5 +1,5 @@
 # mini for microdnf
-FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:2c20ac20ca1ecbbbd583603feabd9cc51e7e8ea5a82e5088e20a9494794b2574
+FROM registry.access.redhat.com/ubi10/ubi-minimal:latest@sha256:d28951a21182cbc821da281af307a4d583dbc39d464680adc6fdffbc5a935b20
 
 USER root
 RUN microdnf install -y glibc-all-langpacks && microdnf clean all
@@ -12,7 +12,7 @@ ENV LANG=de_DE.UTF-8 \
 
 RUN locale -a | grep -q de_DE.utf8 || (echo "de_DE.UTF-8 locale not found" && exit 1)
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.28@sha256:0f36cb9361a3346885ca3677e3767016687b5a170c1a6b88465ec14aefec90aa /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.7@sha256:95f2aa1fe59274951cfe9b0cbc7972e879ff1004bc8945d130a32eb0dbd85945 /uv /uvx /bin/
 
 ENV UV_PROJECT_ENVIRONMENT=/app/extractor/.venv
 
