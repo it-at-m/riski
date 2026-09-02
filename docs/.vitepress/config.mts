@@ -51,6 +51,10 @@ const vitepressConfig = defineConfig({
             text: "04: Evaluation Docling",
             link: "/adr/eval_docling",
           },
+          {
+            text: "05: OParl API implementation plan",
+            link: "/adr/oparl_api_rollout_plan",
+          },
         ],
       },
       {
