@@ -2,16 +2,19 @@ import asyncio
 import json
 from logging import Logger
 from typing import TypedDict
+from datetime import datetime          
+from zoneinfo import ZoneInfo 
 
 from app.utils.logging import getLogger
-from core.model.data_models import File
+from core.model.data_models import File, Paper, PaperTypeEnum
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig, RunnableLambda
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import defer, selectinload
-from sqlmodel import select
+from sqlmodel import select, func 
+from .timerange import TimeRangeError, TimeSpec, resolve
 
 from .state import TrackedDocument, TrackedProposal
 from .types import AGENT_CAPABILITIES_PROMPT, AgentContext
@@ -28,7 +31,6 @@ class RetrieveDocumentsArtifact(TypedDict):
 
     documents: list[dict]
     proposals: list[dict]
-
 
 async def get_proposals(
     documents: list[Document],
@@ -238,3 +240,64 @@ async def get_agent_capabilities(config: RunnableConfig) -> tuple[str, dict]:
     except Exception as e:
         logger.error(f"Error in get_agent_capabilities tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve agent capabilities: {str(e)}")
+
+
+
+TZ = ZoneInfo("Europe/Berlin")
+
+
+class CountAntraegeArgs(BaseModel):
+    spec: TimeSpec = Field(
+        description="Die vom Nutzer gemeinte Zeitangabe: 'relative' für Ausdrücke "
+                    "wie 'letzten Monat', 'explicit' für konkrete Datumsangaben."
+    )
+
+
+class CountAntraegeArtifact(TypedDict):
+    count: int
+    start: str
+    end: str
+    label: str
+
+
+@tool(
+    description="Zählt Stadtratsanträge, die in einem gegebenen Zeitraum gestellt wurden. "
+                "Löst dafür natürlichsprachliche oder explizite Zeitangaben selbst auf. "
+                "Aufrufen bei Fragen wie 'Wie viele Anträge gab es letzten Monat?",
+              
+    args_schema=CountAntraegeArgs,
+    parse_docstring=False,
+    response_format="content_and_artifact",
+)
+async def count_antraege_in_zeitraum(
+    spec: TimeSpec, config: RunnableConfig
+) -> tuple[str, CountAntraegeArtifact]:
+    try:
+        now = datetime.now(TZ)
+        start, end, label = resolve(spec, now)
+    except TimeRangeError as e:
+        logger.warning(f"Zeitraum nicht auflösbar: {e}")
+        raise ToolException(f"Der Zeitraum konnte nicht bestimmt werden: {e}")
+
+    try:
+        db_sessionmaker = config["configurable"]["db_sessionmaker"]
+        async with db_sessionmaker() as session:
+            result = await session.execute(
+                select(func.count())
+                .select_from(Paper)
+                .where(Paper.paper_type == PaperTypeEnum.COUNCIL_PROPOSAL)      # nur Anträge, keine Beschlüsse
+                .where(Paper.date >= start, Paper.date < end)
+            )
+            n = result.scalar_one()
+    except Exception as e:
+        logger.error(f"Error in count_antraege_in_zeitraum: {e}", exc_info=True)
+        raise ToolException(f"Die Zählung ist fehlgeschlagen: {str(e)}")
+
+    content = f"{n} Anträge im Zeitraum {label} ({start.date()} bis {end.date()})."
+    artifact: CountAntraegeArtifact = {
+        "count": n,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "label": label,
+    }
+    return content, artifact

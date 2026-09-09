@@ -16,7 +16,7 @@ from redis.asyncio import Redis as AsyncRedis
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from .riski_agent import build_riski_graph
-from .tools import get_agent_capabilities, retrieve_documents
+from .tools import get_agent_capabilities, retrieve_documents, count_antraege_in_zeitraum
 from .types import AGENT_CAPABILITIES_PROMPT, CHECK_DOCUMENT_PROMPT_TEMPLATE
 
 settings: BackendSettings = get_settings()
@@ -57,7 +57,7 @@ async def build_agent(
     )
 
     # Bind tools so the model knows about them
-    tools = [retrieve_documents, get_agent_capabilities]
+    tools = [retrieve_documents, get_agent_capabilities, count_antraege_in_zeitraum]
     try:
         system_prompt_template: TextPromptClient = lf_client.get_prompt(
             name=settings.langfuse_system_prompt_name, label=settings.langfuse_system_prompt_label
