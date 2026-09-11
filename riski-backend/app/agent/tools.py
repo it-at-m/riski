@@ -1,10 +1,12 @@
 import asyncio
 import json
+from datetime import date
 from logging import Logger
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from app.utils.logging import getLogger
-from core.model.data_models import File
+from core.db.db_access import query_faction_activity
+from core.model.data_models import File, PaperSubtypeEnum, PaperTypeEnum
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig, RunnableLambda
@@ -14,7 +16,7 @@ from sqlalchemy.orm import defer, selectinload
 from sqlmodel import select
 
 from .state import TrackedDocument, TrackedProposal
-from .types import AGENT_CAPABILITIES_PROMPT, AgentContext
+from .types import AGENT_CAPABILITIES_PROMPT, AgentContext, FactionActivityArgs
 
 logger: Logger = getLogger()
 
@@ -238,3 +240,94 @@ async def get_agent_capabilities(config: RunnableConfig) -> tuple[str, dict]:
     except Exception as e:
         logger.error(f"Error in get_agent_capabilities tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve agent capabilities: {str(e)}")
+
+
+@tool(
+    description=(
+        "Return exact SQL-based counts of papers submitted by each council faction. Use this for faction activity, "
+        "most/least active faction, or a named faction. Supports paper type/subtype, inclusive dates, the previous "
+        "legislative term, and ranking. Do not use semantic retrieval for these statistics."
+        "Limit includes all factions tied at the cutoff and may return more rows than "
+        "the requested limit."
+    ),
+    args_schema=FactionActivityArgs,
+    parse_docstring=False,
+    response_format="content_and_artifact",
+)
+async def get_faction_activity(
+    paper_type: PaperTypeEnum | None = None,
+    paper_subtype: PaperSubtypeEnum | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
+    period: Literal["previous_legislative_term"] | None = None,
+    faction_name: str | None = None,
+    ranking: Literal["descending", "ascending"] = "descending",
+    limit: int | None = None,
+    *,
+    runtime: ToolRuntime[AgentContext],
+    config: RunnableConfig,
+) -> tuple[str, dict]:
+    """Count distinct papers by faction originator with one SQL aggregation."""
+    if start_date and end_date and start_date > end_date:
+        raise ToolException("start_date must be on or before end_date")
+
+    context = runtime.context if runtime.context is not None else config.get("configurable", {})
+    db_sessionmaker = context["db_sessionmaker"]
+    timeout = context["db_query_total_timeout_seconds"]
+
+    try:
+        async with db_sessionmaker() as db_session:
+            rows, term, start_date, end_date = await query_faction_activity(
+                db_session,
+                paper_type=paper_type,
+                paper_subtype=paper_subtype,
+                start_date=start_date,
+                end_date=end_date,
+                period=period,
+                faction_name=faction_name,
+                ranking=ranking,
+                limit=None,
+                timeout=timeout,
+            )
+
+        rows = sorted(
+            rows,
+            key=lambda row: int(row[2]),
+            reverse=(ranking == "descending"),
+        )
+
+        if limit is not None:
+            if limit < 1:
+                raise ToolException("limit must be at least 1")
+
+            if len(rows) > limit:
+                cutoff = int(rows[limit - 1][2])
+
+                if ranking == "descending":
+                    rows = [row for row in rows if int(row[2]) >= cutoff]
+                else:
+                    rows = [row for row in rows if int(row[2]) <= cutoff]
+
+        factions = [
+            {"faction": name or short_name or "(unnamed faction)", "short_name": short_name, "count": int(count)}
+            for name, short_name, count in rows
+        ]
+        filters = {
+            "paper_type": paper_type.value if paper_type else None,
+            "paper_subtype": paper_subtype.value if paper_subtype else None,
+            "start_date": start_date.isoformat() if start_date else None,
+            "end_date": end_date.isoformat() if end_date else None,
+            "period": period,
+            "legislative_term": term.name if term else None,
+            "faction_name": faction_name,
+        }
+        artifact = {"factions": factions, "filters": filters, "ranking": ranking, "exact": True, "source": "SQL"}
+        logger.info(artifact["factions"])
+        return json.dumps(artifact, ensure_ascii=False), artifact
+    except ToolException:
+        raise
+    except asyncio.TimeoutError:
+        raise ToolException("TIMEOUT: database query timed out")
+    except Exception as exc:
+        logger.error("Error in get_faction_activity tool: %s", exc, exc_info=True)
+        raise ToolException(f"Failed to calculate faction activity: {exc}")
