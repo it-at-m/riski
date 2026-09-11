@@ -1,6 +1,8 @@
 import json
-from typing import TypedDict
+from datetime import date
+from typing import Literal, TypedDict
 
+from core.model.data_models import PaperSubtypeEnum, PaperTypeEnum
 from langchain_postgres import PGVectorStore
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -34,8 +36,10 @@ SYSTEM_PROMPT: str = (
     "user's queries and the documents available to you.\n\n"
     "Tools:\n"
     "You have access to the following tools to assist you in your tasks:\n"
-    "1. retrieve_documents: Use this tool to search for and retrieve documents relevant to the user's query.\n\n"
-    "You MUST always call the retrieve_documents tool before answering a question."
+    "1. retrieve_documents: Use this tool to search for and retrieve documents relevant to content questions.\n"
+    "2. get_faction_activity: Use this tool for exact counts and rankings of papers submitted by council factions.\n\n"
+    "You MUST call the appropriate tool before answering. For faction activity statistics, use get_faction_activity "
+    "instead of retrieve_documents and reproduce its exact SQL-derived counts without estimating."
 )
 
 CHECK_DOCUMENT_SYSTEM_PROMPT: str = "Du bist ein Relevanz-Prüfer. Bewerte ob ein Dokument relevant für eine Benutzeranfrage ist."
@@ -56,13 +60,15 @@ AGENT_CAPABILITIES_PROMPT: str = (
     "und der Bezirksausschüsse über eine semantische Ähnlichkeitssuche.\n"
     "- Beantwortung von inhaltlichen Fragen zu Stadtratsanträgen, Beschlüssen, Sitzungsprotokollen "
     "und anderen öffentlichen Dokumenten aus dem RIS.\n"
+    "- Exakte SQL-basierte Statistiken zur Aktivität von Stadtratsfraktionen, gruppiert und gerankt nach Fraktion, "
+    "filterbar nach Dokumenttyp, Untertyp und Zeitraum (einschließlich vorheriger Wahlperiode).\n"
     "- Antworten in der Sprache der jeweiligen Nutzerfrage (Deutsch, Englisch, Französisch u.\u202fa.).\n\n"
     "Wissensbasis:\n"
     "- Ausschließlich öffentliche Dokumente der Stadt München aus dem Zeitraum 2020 bis heute "
     "(aktuelle Legislaturperiode).\n"
-    "- Keine Dokumente aus früheren Legislaturperioden oder externen Quellen.\n\n"
+    "- Statistische Metadaten können auch nach gespeicherten früheren Legislaturperioden gefiltert werden.\n\n"
     "Grenzen:\n"
-    "- Keine statistischen Auswertungen möglich (z.\u202fB. 'Wie viele Dokumente gibt es zum Thema X?').\n"
+    "- Inhaltsbasierte Freitext-Statistiken sind nicht möglich; Fraktionsstatistiken nach Typ, Untertyp und Datum sind möglich.\n"
     "- Keine Echtzeitdaten oder Informationen außerhalb des RIS.\n"
     "- Keine allgemeinen Anfragen ohne Bezug zur Münchner Stadtverwaltung, zum Stadtrat "
     "oder zu den Bezirksausschüssen (z.\u202fB. Code schreiben, Gedichte verfassen, Mathe-Aufgaben lösen)."
@@ -115,3 +121,16 @@ class SuggestionsResponse(BaseModel):
         min_length=0,
         max_length=3,
     )
+
+
+class FactionActivityArgs(BaseModel):
+    paper_type: PaperTypeEnum | None = Field(default=None, description="Optional OParl paper type, e.g. 'Stadtratsantrag'.")
+    paper_subtype: PaperSubtypeEnum | None = Field(default=None, description="Optional subtype, e.g. 'Antrag' or 'Anfrage'.")
+    start_date: date | None = Field(default=None, description="Inclusive start date (YYYY-MM-DD).")
+    end_date: date | None = Field(default=None, description="Inclusive end date (YYYY-MM-DD).")
+    period: Literal["previous_legislative_term"] | None = Field(
+        default=None, description="Use the most recently completed legislative term as the date range."
+    )
+    faction_name: str | None = Field(default=None, description="Optional exact faction name or short name, case-insensitive.")
+    ranking: Literal["descending", "ascending"] = Field(default="descending", description="Order by paper count.")
+    limit: int | None = Field(default=None, ge=1, le=100, description="Optional number of ranked factions to return.")

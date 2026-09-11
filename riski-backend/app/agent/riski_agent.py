@@ -65,6 +65,7 @@ def filter_tracked_proposals(
 NODE_MODEL = "model"
 NODE_TOOLS = "tools"
 NODE_GUARD = "guard"
+NODE_CHECK_SQL = "check_sql"
 NODE_CHECK_DOCUMENT = "check_document"
 NODE_COLLECT_RESULTS = "collect_results"
 
@@ -104,6 +105,35 @@ def _is_content_filter_error(exc: BadRequestError) -> bool:
     return "ResponsibleAIPolicyViolation" in str(exc) or "content_filter" in str(exc)
 
 
+def _current_statistics(messages: list[AnyMessage]) -> list[dict]:
+    """Read successful statistics artifacts only from the current user turn."""
+    artifacts = []
+    for msg in reversed(messages):
+        if isinstance(msg, HumanMessage):
+            break
+        if isinstance(msg, ToolMessage) and isinstance(msg.artifact, dict) and "factions" in msg.artifact:
+            if getattr(msg, "status", "success") != "success":
+                raise ValueError("Statistics tool failed")
+            artifact = msg.artifact
+            rows = artifact.get("factions")
+            if artifact.get("source") != "SQL" or artifact.get("exact") is not True or not isinstance(rows, list):
+                raise ValueError("Invalid statistics provenance or rows")
+            if not isinstance(artifact.get("filters"), dict) or artifact.get("ranking") not in {"ascending", "descending"}:
+                raise ValueError("Invalid statistics filters or ranking")
+            for row in rows:
+                if not isinstance(row, dict) or not isinstance(row.get("faction"), str):
+                    raise ValueError("Invalid faction row")
+                if type(row.get("count")) is not int or row["count"] < 0:
+                    raise ValueError("Invalid faction count")
+            artifacts.append(artifact)
+    return list(reversed(artifacts))
+
+
+def _has_checked_statistics(state: RiskiAgentState) -> bool:
+    """Never reuse a previous turn's statistics as evidence for a new question."""
+    return bool(state.statistics_checked and state.statistics and _current_statistics(state["messages"]) == state.statistics)
+
+
 def _route_after_model(state: RiskiAgentState) -> str:
     """Route after the model node.
 
@@ -122,11 +152,13 @@ def _route_after_model(state: RiskiAgentState) -> str:
         return END
     if state.has_documents and state.all_checked:
         return END
+    if isinstance(last_message, AIMessage) and not last_message.tool_calls and state.statistics_checked and bool(state.statistics):
+        return END
     return NODE_GUARD
 
 
 def _route_after_collect(state: RiskiAgentState) -> str:
-    """Route after collect_results: back to model if relevant docs exist, else end."""
+    """Route validated document results back to the frontend-visible model node."""
     if state.has_error:
         return END
     return NODE_MODEL
@@ -137,6 +169,8 @@ def _route_after_tools(state: RiskiAgentState) -> str:
 
     - ``has_error`` is set (e.g. timeout) → END immediately, preserving error_info.
     - ``get_agent_capabilities`` was called → back to model for final LLM answer.
+    - Document retrieval → guard and per-document relevance checks.
+    - SQL statistics → validate them in ``check_sql``.
     - Otherwise → guard as usual.
     """
     if state.has_error:
@@ -144,7 +178,21 @@ def _route_after_tools(state: RiskiAgentState) -> str:
     last_message = state["messages"][-1] if state["messages"] else None
     if isinstance(last_message, ToolMessage) and last_message.name == get_agent_capabilities.name:
         return NODE_MODEL
+    try:
+        if _current_statistics(state["messages"]):
+            return NODE_CHECK_SQL
+    except ValueError:
+        # Invalid SQL output is handled by check_sql so it can return a
+        # consistent, user-facing error.
+        return NODE_CHECK_SQL
     return NODE_GUARD
+
+
+def _route_after_sql_check(state: RiskiAgentState) -> str:
+    """Generate an answer only when the SQL result passed validation."""
+    if state.has_error or not state.statistics_checked or not state.statistics:
+        return END
+    return NODE_MODEL
 
 
 def _assume_relevant(doc_id: str, reason: str) -> dict[str, list[RelevanceUpdate]]:
@@ -265,6 +313,16 @@ def build_guard_nodes(
         3. Ensures ``user_query`` / ``initial_question`` are set.
         """
         messages = state["messages"]
+        try:
+            statistics = _current_statistics(messages)
+        except ValueError:
+            return {
+                "statistics": [],
+                "statistics_checked": False,
+                "error_info": ErrorInfo(error_type="server_error", message="Ungültiges Statistik-Ergebnis."),
+            }
+        if statistics:
+            return {"statistics": statistics, "statistics_checked": True}
         has_any_tool_call = any(isinstance(m, ToolMessage) for m in messages)
 
         # If the only tool called was get_agent_capabilities, the answer was
@@ -313,7 +371,7 @@ def build_guard_nodes(
         If the guard already set error_info (no docs / no tool call),
         skip the fan-out and go straight to collect_results.
         """
-        if state.has_error:
+        if state.has_error or _has_checked_statistics(state):
             return [Send(NODE_COLLECT_RESULTS, state)]
 
         return [
@@ -444,6 +502,9 @@ def build_guard_nodes(
         if state.has_error:
             return {}
 
+        if _has_checked_statistics(state):
+            return {}
+
         total = len(state.tracked_documents)
         relevant = state.relevant_documents
         logger.info("Guard: %d/%d documents passed relevance check.", len(relevant), total)
@@ -571,7 +632,12 @@ def build_riski_graph(
                     ),
                 }
             return {"messages": [response]}
-        if relevant_docs:
+        has_statistics = _has_checked_statistics(state) or (
+            isinstance(last_message, ToolMessage) and state.statistics_checked and bool(state.statistics)
+        )
+        if relevant_docs or has_statistics:
+            if has_statistics:
+                relevant_docs = []
             # -- Generation pass: we have guard-filtered documents --
             # Build a clean prompt: keep only non-ToolMessages from history
             # (OpenAI rejects AIMessage(tool_calls) without a matching ToolMessage
@@ -584,6 +650,15 @@ def build_riski_graph(
                 "documents": [d.model_dump(mode="json", exclude={"is_checked", "is_relevant", "relevance_reason"}) for d in relevant_docs],
                 "proposals": [p.model_dump(mode="json") for p in state.tracked_proposals],
             }
+            if has_statistics:
+                docs_payload = {"statistics": state.statistics, "documents": [], "proposals": []}
+                synthetic_context = HumanMessage(
+                    content=(
+                        "Answer using the validated SQL statistics. Copy counts exactly; state the filters and date range. "
+                        "Empty faction rows mean no matching factions, not missing documents. "
+                        "Return empty documents and proposals lists."
+                    )
+                )
             docs_message = HumanMessage(content=json.dumps(docs_payload))
 
             # Strip AIMessage(tool_calls)/ToolMessage pairs — they are no longer
@@ -756,13 +831,45 @@ def build_riski_graph(
                 if isinstance(p, dict):
                     tracked_proposals.append(TrackedProposal(**p))
 
-        state_update: RiskiAgentStateUpdate = {"messages": tool_messages}
+        state_update: RiskiAgentStateUpdate = {"messages": tool_messages, "statistics": [], "statistics_checked": False}
         if tracked_docs:
             state_update["tracked_documents"] = tracked_docs
         if tracked_proposals:
             state_update["tracked_proposals"] = tracked_proposals
 
         return state_update
+
+    # -- Node: validate SQL output before answer generation --
+    async def check_sql(state: RiskiAgentState) -> RiskiAgentStateUpdate:
+        """Accept only complete, provenance-checked SQL statistics.
+
+        An empty ``factions`` list is still a valid answer: it means that the
+        query returned no matching factions. Missing or malformed SQL output,
+        however, must not reach answer generation.
+        """
+        try:
+            statistics = _current_statistics(state["messages"])
+        except ValueError:
+            return {
+                "statistics": [],
+                "statistics_checked": False,
+                "error_info": ErrorInfo(
+                    error_type="invalid_sql_result",
+                    message="Das SQL-Ergebnis konnte nicht validiert werden.",
+                ),
+            }
+
+        if not statistics:
+            return {
+                "statistics": [],
+                "statistics_checked": False,
+                "error_info": ErrorInfo(
+                    error_type="no_sql_answer",
+                    message="Die Datenbankabfrage hat kein verwertbares Ergebnis geliefert.",
+                ),
+            }
+
+        return {"statistics": statistics, "statistics_checked": True}
 
     # -- Build the guard nodes --
     guard, fan_out_checks, check_document, collect_results = build_guard_nodes(
@@ -778,14 +885,28 @@ def build_riski_graph(
     graph.add_node(NODE_MODEL, call_model)
     graph.add_node(NODE_TOOLS, run_tools)
     graph.add_node(NODE_GUARD, guard)
+    graph.add_node(NODE_CHECK_SQL, check_sql)
     graph.add_node(NODE_CHECK_DOCUMENT, check_document)
     graph.add_node(NODE_COLLECT_RESULTS, collect_results)
 
     graph.add_edge(START, NODE_MODEL)
     graph.add_conditional_edges(NODE_MODEL, _route_after_model, {NODE_TOOLS: NODE_TOOLS, NODE_GUARD: NODE_GUARD, END: END})
-    graph.add_conditional_edges(NODE_TOOLS, _route_after_tools, {NODE_MODEL: NODE_MODEL, NODE_GUARD: NODE_GUARD, END: END})
+    graph.add_conditional_edges(
+        NODE_TOOLS,
+        _route_after_tools,
+        {NODE_MODEL: NODE_MODEL, NODE_GUARD: NODE_GUARD, NODE_CHECK_SQL: NODE_CHECK_SQL, END: END},
+    )
+    graph.add_conditional_edges(
+        NODE_CHECK_SQL,
+        _route_after_sql_check,
+        {NODE_MODEL: NODE_MODEL, END: END},
+    )
     graph.add_conditional_edges(NODE_GUARD, fan_out_checks, [NODE_CHECK_DOCUMENT, NODE_COLLECT_RESULTS])
     graph.add_edge(NODE_CHECK_DOCUMENT, NODE_COLLECT_RESULTS)
-    graph.add_conditional_edges(NODE_COLLECT_RESULTS, _route_after_collect, {NODE_MODEL: NODE_MODEL, END: END})
+    graph.add_conditional_edges(
+        NODE_COLLECT_RESULTS,
+        _route_after_collect,
+        {NODE_MODEL: NODE_MODEL, END: END},
+    )
 
     return graph
