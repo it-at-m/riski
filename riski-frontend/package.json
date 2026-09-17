@@ -6,7 +6,7 @@
     "@vueuse/core": "14.0.0",
     "dompurify": "^3.4.13",
     "marked": "^17.0.1",
-    "vue": "3.5.27"
+    "vue": "3.5.42"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "5.0.0",
