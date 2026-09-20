@@ -1,4 +1,4 @@
-FROM node:22.22.3-alpine@sha256:968df39aedcea65eeb078fb336ed7191baf48f972b4479711397108be0966920 AS builder
+FROM node:22.23.2-alpine@sha256:b6f26b36c8ff49624cfdac716b8ea1138d606df02586a77d364bb5536a634f85 AS builder
 
 ENV GENERATE_SOURCEMAP=false
 ENV NODE_OPTIONS=--max_old_space_size=4096
@@ -25,7 +25,7 @@ COPY src/ ./src/
 RUN --mount=type=cache,target=/build/node_modules/.vite \
     npm run build
 
-FROM registry.access.redhat.com/ubi10/nginx-126:10.2-1780547966@sha256:0dbdf25609543b39944fa98c7002ca3dab3b6c8d08e13efb851f9d90b121cb1f as production-stage
+FROM registry.access.redhat.com/ubi10/nginx-126:10.2-1789607906@sha256:8b0099f9518a35d58601dda76e7743772f6654d782e86d3ac64104d4d5a6b1c0 as production-stage
 
 # Copy built web components
 # UBI Nginx images use /opt/app-root/src as the default document root and run on port 8080
