@@ -23,7 +23,7 @@ services:
       retries: 5
 
   adminer:
-    image: adminer@sha256:f742dcf1b6ca95733b54c4e020488ce78f3e774d73543a6ded9b4eaea8974f3d
+    image: adminer@sha256:b87a22863ed8c18437c7241a5d39ae2e05669d4d2eb9d78591d5087a09258bc8
     restart: always
     ports:
       - 8084:8080
