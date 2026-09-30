@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
         # Setup database connection
         logger.info(msg="Starting up application and creating database handler")
         init_db(settings.core.db.database_url)
+
         db_engine: AsyncEngine = create_async_engine(
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,
