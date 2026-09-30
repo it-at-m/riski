@@ -2,16 +2,15 @@ import time
 from contextlib import contextmanager
 from datetime import date
 from functools import wraps
-from typing import List, TypeVar, overload, Any
+from logging import getLogger
+from typing import Any, List, TypeVar, overload
 
-from sqlalchemy import inspect, func
+from sqlalchemy import func, inspect
 from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
 from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, File, Keyword, Paper, Person
-from logging import getLogger
- 
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
