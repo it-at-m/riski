@@ -13,6 +13,7 @@ from langchain_postgres import PGEngine, PGVectorStore
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlmodel import text
+from core.db.db import init_db
 
 logger = getLogger()
 
@@ -26,6 +27,7 @@ def create_app() -> FastAPI:
     async def lifespan(app: FastAPI):
         # Setup database connection
         logger.info(msg="Starting up application and creating database handler")
+        init_db(settings.core.db.database_url)
         db_engine: AsyncEngine = create_async_engine(
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,
