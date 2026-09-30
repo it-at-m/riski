@@ -1,20 +1,22 @@
 import time
 from contextlib import contextmanager
+from datetime import date
 from functools import wraps
-from typing import List, TypeVar, overload
+from typing import List, TypeVar, overload, Any
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect, func
 from sqlalchemy.orm import RelationshipProperty
 from sqlmodel import Session, select
 
 from core.db.db import get_session
 from core.model.data_models import RIS_NAME_OBJECT, RIS_PARSED_DB_OBJECT, File, Keyword, Paper, Person
-from src.logtools import getLogger
+from logging import getLogger
+ 
 
 T = TypeVar("T", bound=RIS_PARSED_DB_OBJECT)
 N = TypeVar("N", bound=RIS_NAME_OBJECT)
 UPDATE_EXCLUDED_FIELDS_BY_CLASS = {
-    File: {"content", "size"},
+    File: {"content", "size"}, 
 }
 
 logger = getLogger()
@@ -320,3 +322,24 @@ def request_batch(model: type[T], offset: int, limit: int) -> List[T]:
     statement = select(model).order_by(model.db_id).offset(offset).limit(limit)
     with _get_session_ctx() as sess:
         return list(sess.exec(statement).all())
+
+
+@log_execution_time
+def request_count_by_date_range(
+    model: type[Any],
+    date_field: Any,
+    start: date,
+    end: date,
+    extra_filter: Any = None,
+) -> int:
+    statement = (
+        select(func.count())
+        .select_from(model)
+        .where(date_field >= start, date_field < end)
+    )
+
+    if extra_filter is not None:
+        statement = statement.where(extra_filter)
+
+    with _get_session_ctx() as sess:
+        return sess.exec(statement).one()
