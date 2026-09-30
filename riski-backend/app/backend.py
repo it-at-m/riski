@@ -7,13 +7,13 @@ from app.api.routers.system import router as systems_router
 from app.core.observer import setup_langfuse
 from app.core.settings import BackendSettings, get_settings
 from app.utils.logging import getLogger
+from core.db.db import init_db
 from core.genai import create_embedding_model
 from fastapi import FastAPI
 from langchain_postgres import PGEngine, PGVectorStore
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlmodel import text
-from core.db.db import init_db
 
 logger = getLogger()
 
