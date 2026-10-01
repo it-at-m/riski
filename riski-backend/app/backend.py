@@ -7,6 +7,7 @@ from app.api.routers.system import router as systems_router
 from app.core.observer import setup_langfuse
 from app.core.settings import BackendSettings, get_settings
 from app.utils.logging import getLogger
+from core.db.db import init_db
 from core.genai import create_embedding_model
 from fastapi import FastAPI
 from langchain_postgres import PGEngine, PGVectorStore
@@ -26,6 +27,8 @@ def create_app() -> FastAPI:
     async def lifespan(app: FastAPI):
         # Setup database connection
         logger.info(msg="Starting up application and creating database handler")
+        init_db(settings.core.db.database_url)
+
         db_engine: AsyncEngine = create_async_engine(
             url=settings.core.db.async_database_url.encoded_string(),
             echo=True,

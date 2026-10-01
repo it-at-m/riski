@@ -1,10 +1,9 @@
+from logging import getLogger
 from urllib.parse import urlsplit
 
 from pydantic import PostgresDsn
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel, create_engine
-
-from src.logtools import getLogger
 
 _engine = None
 _SessionLocal = None

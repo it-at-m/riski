@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from typing import TypedDict
 
 from langchain_postgres import PGVectorStore
@@ -56,13 +57,18 @@ AGENT_CAPABILITIES_PROMPT: str = (
     "und der Bezirksausschüsse über eine semantische Ähnlichkeitssuche.\n"
     "- Beantwortung von inhaltlichen Fragen zu Stadtratsanträgen, Beschlüssen, Sitzungsprotokollen "
     "und anderen öffentlichen Dokumenten aus dem RIS.\n"
+    "- Exakte SQL-basierte Zählung von Stadtratsanträgen in einem gegebenen Zeitraum "
+    "(natürlichsprachlich, z.\u202fB. 'letzten Monat', oder explizit angegeben). "
+    "Nutze dafür ausschließlich das Werkzeug count_council_proposals_in_period, "
+    "niemals die Dokumentensuche zum Schätzen der Anzahl.\n"
     "- Antworten in der Sprache der jeweiligen Nutzerfrage (Deutsch, Englisch, Französisch u.\u202fa.).\n\n"
     "Wissensbasis:\n"
     "- Ausschließlich öffentliche Dokumente der Stadt München aus dem Zeitraum 2020 bis heute "
     "(aktuelle Legislaturperiode).\n"
     "- Keine Dokumente aus früheren Legislaturperioden oder externen Quellen.\n\n"
     "Grenzen:\n"
-    "- Keine statistischen Auswertungen möglich (z.\u202fB. 'Wie viele Dokumente gibt es zum Thema X?').\n"
+    "- Inhaltsbasierte Freitext-Statistiken sind nicht möglich; Zählungen von Stadtratsanträgen "
+    "nach Zeitraum sind über das dafür vorgesehene Werkzeug möglich.\n"
     "- Keine Echtzeitdaten oder Informationen außerhalb des RIS.\n"
     "- Keine allgemeinen Anfragen ohne Bezug zur Münchner Stadtverwaltung, zum Stadtrat "
     "oder zu den Bezirksausschüssen (z.\u202fB. Code schreiben, Gedichte verfassen, Mathe-Aufgaben lösen)."
@@ -115,3 +121,10 @@ class SuggestionsResponse(BaseModel):
         min_length=0,
         max_length=3,
     )
+
+
+class DateRange(BaseModel):
+    """Inclusive date range resolved from the user's request."""
+
+    start_date: date = Field(description="first included calendar date in YYYY-MM-DD format")
+    end_date: date = Field(description="last included calendar date in YYYY-MM-DD format")

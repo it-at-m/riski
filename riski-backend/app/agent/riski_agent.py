@@ -22,9 +22,7 @@ from .state import (
     TrackedDocument,
     TrackedProposal,
 )
-from .tools import (
-    get_agent_capabilities,
-)
+from .tools import count_council_proposals_in_period, get_agent_capabilities
 from .types import (
     AGENT_CAPABILITIES_PROMPT,
     CHECK_DOCUMENT_PROMPT_TEMPLATE,
@@ -77,6 +75,7 @@ def _extract_user_query(messages: list[AnyMessage]) -> str:
     return ""
 
 
+# Anmerkung;  func Name noch ändern
 def _is_capabilities_answer(messages: list[AnyMessage]) -> bool:
     """Return True if the last AIMessage was generated in response to get_agent_capabilities."""
     # Walk backwards: skip the last AIMessage (the answer), then look for the
@@ -88,7 +87,7 @@ def _is_capabilities_answer(messages: list[AnyMessage]) -> bool:
                 found_last_ai = True
             continue
         # First message before the final AIMessage
-        return isinstance(msg, ToolMessage) and msg.name == get_agent_capabilities.name
+        return isinstance(msg, ToolMessage) and msg.name in {get_agent_capabilities.name, count_council_proposals_in_period.name}
     return False
 
 
@@ -116,8 +115,10 @@ def _route_after_model(state: RiskiAgentState) -> str:
     if state.has_error:
         return END
     last_message = state["messages"][-1] if state["messages"] else None
+
     if isinstance(last_message, AIMessage) and last_message.tool_calls:
         return NODE_TOOLS
+
     if _is_capabilities_answer(state["messages"]):
         return END
     if state.has_documents and state.all_checked:
@@ -142,7 +143,7 @@ def _route_after_tools(state: RiskiAgentState) -> str:
     if state.has_error:
         return END
     last_message = state["messages"][-1] if state["messages"] else None
-    if isinstance(last_message, ToolMessage) and last_message.name == get_agent_capabilities.name:
+    if isinstance(last_message, ToolMessage) and last_message.name in {get_agent_capabilities.name, count_council_proposals_in_period.name}:
         return NODE_MODEL
     return NODE_GUARD
 
@@ -548,7 +549,7 @@ def build_riski_graph(
         # contains the correct [... HumanMessage, AIMessage(tool_calls), ToolMessage]
         # sequence that OpenAI expects.
         last_message = state["messages"][-1] if state["messages"] else None
-        if isinstance(last_message, ToolMessage) and last_message.name == get_agent_capabilities.name:
+        if isinstance(last_message, ToolMessage) and last_message.name in {get_agent_capabilities.name}:
             # The capabilities ToolMessage is already in state["messages"] (added by run_tools via
             # add_messages).  _sanitize_messages ensures no orphan tool-call pairs exist before
             # we hand the history to the LLM.
@@ -738,7 +739,7 @@ def build_riski_graph(
 
         # -- Short-circuit for get_agent_capabilities -------------------------
         for msg in tool_messages:
-            if isinstance(msg, ToolMessage) and msg.name == get_agent_capabilities.name:
+            if isinstance(msg, ToolMessage) and msg.name in {get_agent_capabilities.name}:
                 # Return only the ToolMessage – the model node will do the final LLM call
                 return {"messages": [msg]}
 

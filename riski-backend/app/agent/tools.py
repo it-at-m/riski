@@ -1,10 +1,12 @@
 import asyncio
 import json
+from datetime import date, timedelta
 from logging import Logger
 from typing import TypedDict
 
 from app.utils.logging import getLogger
-from core.model.data_models import File
+from core.db.db_access import request_count_by_date_range
+from core.model.data_models import File, Paper, PaperTypeEnum
 from langchain.tools import ToolException, ToolRuntime, tool
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig, RunnableLambda
@@ -14,7 +16,7 @@ from sqlalchemy.orm import defer, selectinload
 from sqlmodel import select
 
 from .state import TrackedDocument, TrackedProposal
-from .types import AGENT_CAPABILITIES_PROMPT, AgentContext
+from .types import AGENT_CAPABILITIES_PROMPT, AgentContext, DateRange
 
 logger: Logger = getLogger()
 
@@ -238,3 +240,54 @@ async def get_agent_capabilities(config: RunnableConfig) -> tuple[str, dict]:
     except Exception as e:
         logger.error(f"Error in get_agent_capabilities tool: {e}", exc_info=True)
         raise ToolException(f"Failed to retrieve agent capabilities: {str(e)}")
+
+
+class CountCouncilProposalsArtifact(TypedDict):
+    type: str
+    count: int
+    start_date: str
+    end_date: str
+
+
+@tool(
+    description=(
+        "Count council proposals (Stadtratsanträge) submitted within an inclusive date range. "
+        "Resolve the user's time expression into concrete start_date and end_date yourself, "
+        "using the current Berlin date provided in context. "
+        "Use for questions like 'How many proposals were submitted last month?'"
+    ),
+    args_schema=DateRange,
+    parse_docstring=False,
+    response_format="content_and_artifact",
+)
+async def count_council_proposals_in_period( start_date: date,end_date: date,    config: RunnableConfig,)-> tuple[str, CountCouncilProposalsArtifact]:
+
+    end_exclusive = end_date + timedelta(days=1)
+
+    try:
+        timeout = config["configurable"]["db_query_total_timeout_seconds"]
+        count = await asyncio.wait_for(
+            asyncio.to_thread(
+                request_count_by_date_range,
+                Paper,
+                Paper.date,
+                start_date,
+                end_exclusive,
+                extra_filter=Paper.paper_type == PaperTypeEnum.COUNCIL_PROPOSAL,
+            ),
+            timeout=timeout
+        )
+    except asyncio.TimeoutError:
+        raise ToolException("TIMEOUT: database query timed out")
+    except Exception as e:
+        logger.error(f"Error in count_council_proposals_in_period: {e}", exc_info=True)
+        raise ToolException(f"Failed to count council proposals: {e}")
+
+    content = f"{count} council proposals were submitted between {start_date} and {end_date}."
+    artifact: CountCouncilProposalsArtifact = {
+        "type": "count_result",
+        "count": count,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+    }
+    return content, artifact
