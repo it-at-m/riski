@@ -16,8 +16,7 @@ from sqlalchemy.orm import defer, selectinload
 from sqlmodel import select
 
 from .state import TrackedDocument, TrackedProposal
-from .timerange import DateRange
-from .types import AGENT_CAPABILITIES_PROMPT, AgentContext
+from .types import AGENT_CAPABILITIES_PROMPT, AgentContext, DateRange
 
 logger: Logger = getLogger()
 

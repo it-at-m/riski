@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from typing import TypedDict
 
 from langchain_postgres import PGVectorStore
@@ -120,3 +121,10 @@ class SuggestionsResponse(BaseModel):
         min_length=0,
         max_length=3,
     )
+
+
+class DateRange(BaseModel):
+    """Inclusive date range resolved from the user's request."""
+
+    start_date: date = Field(description="first included calendar date in YYYY-MM-DD format")
+    end_date: date = Field(description="last included calendar date in YYYY-MM-DD format")
