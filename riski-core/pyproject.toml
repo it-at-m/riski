@@ -9,11 +9,11 @@ dependencies = [
     "sqlmodel>=0.0.24",
     "psycopg[binary,pool]>=3.2.9",
     "pydantic[email]>=2.11.7",
-    "pydantic-settings==2.14.2",
+    "pydantic-settings==2.15.0",
     "pgvector<0.4",
-    "langchain-openai==1.1.14",
+    "langchain-openai==1.7.1",
     "truststore>=0.10.4",
-    "langchain-core==1.4.7",
+    "langchain-core==1.6.10",
     "langsmith==0.8.18",
 ]
 
