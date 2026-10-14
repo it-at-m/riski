@@ -34,4 +34,11 @@ GHSA-6688-9rhm-gjv2  # dompurify@3.4.13
 GHSA-g2v6-rqmx-r4w6  # @vue/server-renderer@3.5.27, @vue/server-renderer@3.5.41
 GHSA-p98j-92pf-mc4p  # dompurify@3.4.13
 GHSA-r3ph-w7gj-g6xm  # js-yaml@5.2.3
-
+CVE-2026-78675  # gitpython@3.1.58
+CVE-2026-78676  # gitpython@3.1.58
+CVE-2026-78677  # gitpython@3.1.58
+CVE-2026-78678  # gitpython@3.1.58
+CVE-2026-78679  # gitpython@3.1.58
+CVE-2026-87817  # gitpython@3.1.58
+CVE-2026-87819  # gitpython@3.1.58
+GHSA-59cr-6r3x-644w  # gitpython@3.1.58
