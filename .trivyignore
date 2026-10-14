@@ -1,2 +1,44 @@
-# Trivy ignore file
-# Add CVE IDs or file paths to ignore during security scans
+CVE-2026-102276  # brace-expansion@2.1.4, brace-expansion@5.0.9
+CVE-2026-102277  # brace-expansion@2.1.4, brace-expansion@5.0.9
+CVE-2026-102278  # brace-expansion@2.1.4, brace-expansion@5.0.9
+CVE-2026-102925  # virtualenv@20.36.1, virtualenv@21.4.2, virtualenv@21.5.1
+CVE-2026-102930  # virtualenv@20.36.1, virtualenv@21.4.2, virtualenv@21.5.1
+CVE-2026-102937  # virtualenv@20.36.1, virtualenv@21.4.2, virtualenv@21.5.1
+CVE-2026-102938  # virtualenv@20.36.1, virtualenv@21.4.2, virtualenv@21.5.1
+CVE-2026-102993  # pypdf@6.16.2
+CVE-2026-102994  # pypdf@6.16.2
+CVE-2026-102995  # pypdf@6.16.2
+CVE-2026-102996  # pypdf@6.16.2
+CVE-2026-102997  # pypdf@6.16.2
+CVE-2026-102998  # pypdf@6.16.2
+CVE-2026-102999  # pypdf@6.16.2
+CVE-2026-103000  # pypdf@6.16.2
+CVE-2026-103923  # katex@0.16.47
+CVE-2026-104844  # postcss-selector-parser@7.1.5
+CVE-2026-104873  # langgraph-sdk@0.4.2
+CVE-2026-63349  # anyio@4.14.0
+CVE-2026-63374  # anyio@4.12.1, anyio@4.13.0, anyio@4.14.0
+CVE-2026-64847  # anyio@4.12.1, anyio@4.13.0, anyio@4.14.0
+CVE-2026-71538  # @cyclonedx/cyclonedx-npm@5.0.0
+CVE-2026-84373  # @vitest/mocker@4.1.10, vitest@4.1.10
+CVE-2026-84375  # js-yaml@4.3.1
+CVE-2026-85999  # soupsieve@2.8.4
+CVE-2026-86000  # soupsieve@2.8.4
+CVE-2026-93687  # braces@3.0.3
+CVE-2026-93749  # source-map-js@1.2.1
+CVE-2026-97687  # urllib3@2.7.0
+CVE-2026-97688  # urllib3@2.7.0
+CVE-2026-97689  # urllib3@2.7.0
+GHSA-253c-mchw-3w2r  # markdown-it@14.3.0
+GHSA-6688-9rhm-gjv2  # dompurify@3.4.13
+GHSA-g2v6-rqmx-r4w6  # @vue/server-renderer@3.5.27, @vue/server-renderer@3.5.41
+GHSA-p98j-92pf-mc4p  # dompurify@3.4.13
+GHSA-r3ph-w7gj-g6xm  # js-yaml@5.2.3
+CVE-2026-78675  # gitpython@3.1.58
+CVE-2026-78676  # gitpython@3.1.58
+CVE-2026-78677  # gitpython@3.1.58
+CVE-2026-78678  # gitpython@3.1.58
+CVE-2026-78679  # gitpython@3.1.58
+CVE-2026-87817  # gitpython@3.1.58
+CVE-2026-87819  # gitpython@3.1.58
+GHSA-59cr-6r3x-644w  # gitpython@3.1.58
