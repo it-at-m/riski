@@ -8,7 +8,7 @@
     "markdown-it": "^15.0.0",
     "nanoid": "^6.0.1",
     "path-to-regexp": "^8.4.0",
-    "postcss": "^8.5.23",
+    "postcss": "^8.5.26",
     "uuid": "^14.0.1",
     "vite": "^8.2.1"
   },
