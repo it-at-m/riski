@@ -5,6 +5,11 @@ from core.db.db_access import _get_session_ctx, request_batch
 from core.model.data_models import File
 from mistralai import Mistral
 from pypdf import PdfReader, PdfWriter
+from pypdf.generic import (
+    ContentStream,
+    DictionaryObject,
+    NameObject,
+)
 
 from src.logtools import getLogger
 
@@ -52,7 +57,7 @@ def run_ocr_for_documents(settings):
             logger.info("Parsing %d files of batch (%d - %d).", len(docs_with_content), offset, offset + batch_size)
 
             for doc in docs_with_content:
-                logger.debug(f"Processing doc id={doc.id}")
+                logger.info(f"Processing doc id={doc.id}")
                 pages_text = []
                 try:
                     for pdf_chunk in chunk_pdf_into_max_page_blocks(
@@ -122,16 +127,40 @@ def is_chunk_size_valid(pdf_bytes: bytes, max_size_mb: int) -> bool:
     return payload_bytes <= size_in_bytes
 
 
-def split_pdf_with_size_guard(
-    reader: PdfReader,
-    start: int,
-    end: int,
-    max_size_mb: int,
-) -> list[bytes]:
+def remove_unused_xobjects(page, reader: PdfReader) -> None:
+    contents = page.get_contents()
+    used_xobjects = set()
+    if contents is not None:
+        content_stream = ContentStream(contents, reader)
+        used_xobjects = {operands[0] for operands, operator in content_stream.operations if operator == b"Do" and operands}
+
+    resources = page.get("/Resources")
+    if resources is None:
+        return
+    resources = resources.get_object()
+
+    local_resources = DictionaryObject()
+    for resource_type, resource_value in resources.items():
+        if resource_type != "/XObject":
+            local_resources[resource_type] = resource_value
+            continue
+        xobjects = resource_value.get_object()
+        local_xobjects = DictionaryObject()
+        for name, reference in xobjects.items():
+            if name in used_xobjects:
+                local_xobjects[name] = reference
+        if local_xobjects:
+            local_resources[NameObject("/XObject")] = local_xobjects
+    page[NameObject("/Resources")] = local_resources
+
+
+def split_pdf_with_size_guard(reader, start, end, max_size_mb):
     writer = PdfWriter()
 
     for page_num in range(start, end):
-        writer.add_page(reader.pages[page_num])
+        page = reader.pages[page_num]
+        remove_unused_xobjects(page, reader)
+        writer.add_page(page, excluded_keys=["/Annots"])
 
     stream = BytesIO()
     writer.write(stream)
@@ -143,15 +172,19 @@ def split_pdf_with_size_guard(
     num_pages = end - start
     if num_pages <= 1:
         logger.error(
-            "Single page exceeds max size limit. Page size: %d bytes, Max size: %d bytes.", len(chunk_bytes), max_size_mb * 1024 * 1024
+            "Single page exceeds max size limit. Page size: %d bytes, Max size: %d bytes. Skipping page.",
+            len(chunk_bytes),
+            max_size_mb * 1024 * 1024,
         )
-        return [chunk_bytes]
+        return []
 
     mid = start + num_pages // 2
 
-    logger.debug(f"Chunk too large ({len(chunk_bytes)} bytes). Splitting further...")
+    logger.info(f"Chunk too large ({len(chunk_bytes)} bytes). Splitting further...")
 
-    return split_pdf_with_size_guard(reader, start, mid, max_size_mb) + split_pdf_with_size_guard(reader, mid, end, max_size_mb)
+    return split_pdf_with_size_guard(reader=reader, start=start, end=mid, max_size_mb=max_size_mb) + split_pdf_with_size_guard(
+        reader=reader, start=mid, end=end, max_size_mb=max_size_mb
+    )
 
 
 def chunk_pdf_into_max_page_blocks(
@@ -179,6 +212,6 @@ def chunk_pdf_into_max_page_blocks(
         )
         output_chunks.extend(chunks)
 
-    logger.debug(f"Split PDF into {len(output_chunks)} chunks (max_pages={max_pages_per_chunk}, max_size={max_chunk_size_mb}MB)")
+    logger.info(f"Split PDF into {len(output_chunks)} chunks (max_pages={max_pages_per_chunk}, max_size={max_chunk_size_mb}MB)")
 
     return output_chunks
