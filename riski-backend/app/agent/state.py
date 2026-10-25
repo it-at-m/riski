@@ -175,6 +175,9 @@ class RiskiAgentState(BaseModel):
     tracked_documents: Annotated[list[TrackedDocument], _merge_tracked_documents] = Field(default_factory=list)
     tracked_proposals: list[TrackedProposal] = Field(default_factory=list)
 
+    statistics: list[dict[str, Any]] = Field(default_factory=list)
+    statistics_checked: bool = False
+
     # -- Error info (set when the agent cannot generate a response) --
     error_info: ErrorInfo | None = Field(default=None, description="Structured error info when the pipeline terminates early.")
 
@@ -224,3 +227,5 @@ class RiskiAgentStateUpdate(TypedDict, total=False):
     tracked_documents: list[TrackedDocument]
     tracked_proposals: list[TrackedProposal]
     error_info: ErrorInfo | None
+    statistics: list[dict[str, Any]]
+    statistics_checked: bool

@@ -4,7 +4,7 @@ from pydantic import PostgresDsn
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel, create_engine
 
-from src.logtools import getLogger
+from core.logtools import getLogger
 
 _engine = None
 _SessionLocal = None
