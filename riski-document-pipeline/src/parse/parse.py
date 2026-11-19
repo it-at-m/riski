@@ -3,7 +3,7 @@ from io import BytesIO
 
 from core.db.db_access import _get_session_ctx, request_batch
 from core.model.data_models import File
-from mistralai import Mistral
+from mistralai.client import Mistral
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import (
     ContentStream,
