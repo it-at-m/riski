@@ -45,3 +45,12 @@ GHSA-59cr-6r3x-644w  # gitpython@3.1.58
 CVE-2026-118764  # minimatch@10.2.6, minimatch@9.0.9
 CVE-2026-118773  # glob@10.5.0
 CVE-2026-112366  # picomatch@2.3.2, picomatch@4.0.5, picomatch@4.0.7
+CVE-2026-112942  # vite@8.2.1
+CVE-2026-112943  # vite@8.2.1
+CVE-2026-112944  # vite@8.2.1
+CVE-2026-112945  # vite@8.2.1
+CVE-2026-112946  # vite@8.2.1
+CVE-2026-112947  # vite@8.2.1
+CVE-2026-118764  # minimatch@10.2.6, minimatch@9.0.9
+CVE-2026-118773  # glob@10.5.0
+CVE-2026-112366  # picomatch@2.3.2, picomatch@4.0.5, picomatch@4.0.7
