@@ -32,9 +32,9 @@ pgvector = [
 [dependency-groups]
 dev = [
     "pre-commit==4.7.0",
-    "ty==0.0.87",
-    "pytest==9.1.1",
-    "faststream[kafka]==0.7.7",
+    "ty==0.0.108",
+    "pytest==9.2.0",
+    "faststream[kafka]==0.7.9",
     "ruff>=0.14.11",
     "python-dotenv>=1.2.1",
 ]
