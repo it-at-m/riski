@@ -1,4 +1,4 @@
-FROM node:22.23.3-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS builder
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS builder
 
 ENV GENERATE_SOURCEMAP=false
 ENV NODE_OPTIONS=--max_old_space_size=4096
@@ -10,7 +10,7 @@ COPY package*.json .npmrc ./
 
 # Install dependencies in a separate layer that's cached unless dependencies change
 RUN --mount=type=cache,target=/root/.npm \
-   npm ci --verbose
+    npm ci --verbose
 
 # Copy build configuration files (these change less frequently than source)
 COPY tsconfig*.json vite.config.ts ./
