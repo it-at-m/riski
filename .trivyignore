@@ -1,1 +1,3 @@
 CVE-2026-103923 # katex@0.16.47 from mermaid@11.16.1 
+CVE-2026-118773 # glob@10.5.0 
+CVE-2026-118764 # minimatch@10.2.6 
