@@ -23,7 +23,8 @@
     "vue": "^3.5.44"
   },
   "engines": {
-    "node": ">=22.19 <=22"
+    "node": ">=26.13 <27",
+    "npm": ">=11.20 <12"
   },
   "name": "riski-docs",
   "overrides": {
